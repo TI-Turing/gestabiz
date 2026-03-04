@@ -39,6 +39,7 @@ export function normalizeLocation(row: Row<'locations'>): Location {
       saturday: { open: '09:00', close: '17:00', closed: false },
       sunday: { open: '09:00', close: '17:00', closed: true },
     },
+    is_primary: (row as unknown as { is_primary?: boolean | null }).is_primary ?? undefined,
     is_active: row.is_active,
     created_at: row.created_at,
     updated_at: row.updated_at,

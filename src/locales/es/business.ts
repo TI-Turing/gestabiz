@@ -1,4 +1,4 @@
-// Business, Clients, Services, Locations, Employees - Módulo consolidado COMPLETO
+﻿// Business, Clients, Services, Locations, Employees - Módulo consolidado COMPLETO
 
 // Registro y Gestión de Negocios
 export const business = {
@@ -235,7 +235,7 @@ export const employees = {
     4: 'Personal',
   },
   hierarchy: {
-    changeLevel: 'Cambiar nivel jerárquico de {{name}}',
+    changeLevel: 'Cambiar nivel jerárquico de {name}',
     level: 'Nivel',
     note: 'Nota',
     noteLevel: 'El nivel determina la posición en el organigrama',
@@ -263,6 +263,12 @@ export const employees = {
     partTime: 'Tiempo Parcial',
     contractor: 'Contratista',
     intern: 'Practicante',
+  },
+  employeeTypes: {
+    service_provider: 'Proveedor de Servicios',
+    support_staff: 'Personal de Apoyo',
+    location_manager: 'Gerente de Sede',
+    manager: 'Gerente',
   },
   departments: {
     sales: 'Ventas',
@@ -324,7 +330,7 @@ export const employees = {
     search_placeholder: 'Buscar por nombre, categoría o ciudad...',
     request_to_join: 'Solicitar Unirse',
     request_form_title: 'Solicitud de Ingreso',
-    request_form_description: 'Enviar solicitud para unirse a {{businessName}}',
+    request_form_description: 'Enviar solicitud para unirse a {businessName}',
     message_label: 'Mensaje (Opcional)',
     message_placeholder: 'Cuéntale al dueño por qué quieres unirte a su equipo...',
     message_hint: 'Incluye tu experiencia y habilidades relevantes para este negocio',

@@ -50,7 +50,7 @@ export const userProfile = {
 
   // Footer
   footer: {
-    scheduleWith: 'Schedule with {{name}}',
+    scheduleWith: 'Schedule with {name}',
     notAvailable: 'Not available for booking',
     notLinkedMessage: 'This professional is not currently linked to any active business'
   }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { UserCircle2, Briefcase, Star, Loader2, Users, Ban, Check } from 'lucide-react';
+import { Star, Loader2, Users, Ban, Check } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -99,6 +99,45 @@ export function EmployeeSelection({
           return;
         }
 
+        // --- FILTRO DE CONFIGURACIÓN OBLIGATORIA ---
+        // Solo empleados con setup completo pueden recibir citas:
+        // 1. setup_completed = true  (se marca al asignar supervisor)
+        // 2. role IN (manager, owner)  (grandfathered / siempre listos)
+        // 3. tiene supervisor asignado en business_roles (reports_to IS NOT NULL)
+        // Tipo local para incluir el campo setup_completed (recién agregado a la BD)
+        interface BEWithSetup { employee_id: string | null; role: string | null; setup_completed: boolean }
+
+        const [{ data: beSetupRaw }, { data: brWithSupervisor }] = await Promise.all([
+          supabase
+            .from('business_employees')
+            .select('employee_id, role, setup_completed')
+            .eq('business_id', businessId)
+            .eq('is_active', true)
+            .in('employee_id', employeeIds),
+          supabase
+            .from('business_roles')
+            .select('user_id')
+            .eq('business_id', businessId)
+            .not('reports_to', 'is', null)
+            .in('user_id', employeeIds),
+        ]);
+
+        const beSetup = (beSetupRaw ?? []) as BEWithSetup[];
+        const withSupervisorSet = new Set(brWithSupervisor?.map(r => r.user_id) || []);
+        const bookableIds = new Set<string>([
+          ...beSetup
+            .filter(e => e.setup_completed || ['manager', 'owner'].includes(e.role || '') || withSupervisorSet.has(e.employee_id ?? ''))
+            .map(e => e.employee_id ?? '')
+            .filter(id => id !== ''),
+          ...Array.from(withSupervisorSet),
+        ]);
+
+        if (bookableIds.size === 0) {
+          setEmployees([]);
+          return;
+        }
+        // --- FIN FILTRO ---
+
         // Obtener calificaciones promedio de reviews para cada empleado
         const { data: reviews } = await supabase
           .from('reviews')
@@ -137,7 +176,7 @@ export function EmployeeSelection({
               total_reviews: stats?.count || 0,
             } as Employee;
           })
-          .filter((emp): emp is Employee => emp !== null);
+          .filter((emp): emp is Employee => emp !== null && bookableIds.has(emp.id));
 
         setEmployees(mappedEmployees);
       } catch (error) {
@@ -283,7 +322,7 @@ export function EmployeeSelection({
             <div className={cn(
               "absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none",
               isSelf && "hidden", // Ocultar hover si es el mismo usuario
-              "bg-gradient-to-br from-purple-500/10 to-transparent"
+              "bg-linear-to-br from-purple-500/10 to-transparent"
             )} />
           </button>
         );

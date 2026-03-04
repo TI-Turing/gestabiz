@@ -34,6 +34,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { sendAppointmentCancellationNotification } from '@/lib/mailService'
+import { ServiceProfileModal } from '@/components/admin/ServiceProfileModal'
 
 interface Service {
   id: string
@@ -95,10 +96,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [priceDisplay, setPriceDisplay] = useState('')
   const [pendingImageFiles, setPendingImageFiles] = useState<File[]>([])
-  const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const [profileService, setProfileService] = useState<Service | null>(null)
-  const [profileEmployees, setProfileEmployees] = useState<string[]>([])
-  const [profileLocations, setProfileLocations] = useState<string[]>([])
+  const [profileServiceId, setProfileServiceId] = useState<string | null>(null)
   const [showInactive, setShowInactive] = useState(false)
 
   // Evitar caché del navegador/CDN cuando la URL no cambia
@@ -615,53 +613,6 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
     )
   }
 
-  const openProfile = async (service: Service) => {
-    setProfileService(service)
-    try {
-      const { data: locAssign } = await supabase
-        .from('location_services')
-        .select('location_id')
-        .eq('service_id', service.id)
-      const { data: empAssign } = await supabase
-        .from('employee_services')
-        .select('employee_id')
-        .eq('service_id', service.id)
-      setProfileLocations((locAssign || []).map((a: any) => a.location_id))
-      setProfileEmployees((empAssign || []).map((a: any) => a.employee_id))
-
-      // Console log para verificar vinculación real en DB
-      if ((empAssign || []).length > 0) {
-        const employeeIds = (empAssign || []).map((a: any) => a.employee_id)
-        const { data: memberships, error: membershipsError } = await supabase
-          .from('business_employees')
-          .select('employee_id, business_id, location_id, status, is_active')
-          .eq('business_id', service.business_id)
-          .in('employee_id', employeeIds)
-        // eslint-disable-next-line no-console
-        console.log('[Perfil Sede] Verificación vinculación en DB', {
-          serviceId: service.id,
-          businessId: service.business_id,
-          locationsAsignadasAlServicio: (locAssign || []).map((a: any) => a.location_id),
-          empleadosAsignadosAlServicio: employeeIds,
-          membershipsError,
-          memberships
-        })
-      }
-    } catch {
-      toast.error('Error al cargar asignaciones')
-      setProfileLocations([])
-      setProfileEmployees([])
-    }
-    setIsProfileOpen(true)
-  }
-
-  const closeProfile = () => {
-    setIsProfileOpen(false)
-    setProfileService(null)
-    setProfileLocations([])
-    setProfileEmployees([])
-  }
-
   const filteredServices = showInactive ? services : services.filter((s) => s.is_active)
 
   return (
@@ -728,7 +679,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
             <Card
               key={service.id}
               className="group relative overflow-hidden border-border hover:border-border/80 transition-colors cursor-pointer"
-              onClick={() => openProfile(service)}
+              onClick={() => setProfileServiceId(service.id)}
             >
               <div
                 className="relative h-40 sm:h-48 w-full"
@@ -1070,132 +1021,14 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       </Dialog>
 
       {/* Perfil de Servicio */}
-      <Dialog open={isProfileOpen} onOpenChange={(open) => open ? setIsProfileOpen(true) : closeProfile()}>
-        <DialogContent hideClose className="max-w-4xl w-full max-h-[90vh] p-0 overflow-hidden flex flex-col">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Perfil de {profileService?.name || 'Servicio'}</DialogTitle>
-          </DialogHeader>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 z-50 bg-white/90 hover:bg-white text-gray-800 hover:text-gray-900 rounded-full shadow-md"
-            onClick={() => closeProfile()}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-
-          <div className="relative h-56 sm:h-72 flex-shrink-0">
-            {profileService?.image_url ? (
-              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${cacheBust(profileService.image_url)})` }} />
-            ) : (
-              <div className="absolute inset-0 bg-muted" />
-            )}
-            <div className="absolute inset-0 bg-black/40" />
-            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
-            <div className="relative z-10 p-4 sm:p-6 flex items-end h-full">
-              <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-white">{profileService?.name}</h3>
-                <div className="mt-2 flex items-center gap-3 text-white/90 text-xs sm:text-sm">
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span>$ {profileService ? profileService.price.toLocaleString('es-CO') : ''}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>{profileService?.duration_minutes} minutos</span>
-                  </div>
-                  {profileService?.category && (
-                    <Badge variant="default" className="bg-white/80 text-gray-800">{profileService.category}</Badge>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1">
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList>
-                <TabsTrigger value="overview">Detalle</TabsTrigger>
-                <TabsTrigger value="employees">Empleados ({profileEmployees.length})</TabsTrigger>
-                <TabsTrigger value="locations">Sedes ({profileLocations.length})</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="mt-4">
-                {profileService?.description ? (
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{profileService.description}</p>
-                ) : (
-                  <Card><CardContent className="p-6 text-muted-foreground text-center">Sin descripción</CardContent></Card>
-                )}
-              </TabsContent>
-
-              <TabsContent value="employees" className="mt-4">
-                {(() => {
-                  const assigned = employees.filter((e) => profileEmployees.includes(e.employee_id))
-                  return assigned.length === 0 ? (
-                    <Card><CardContent className="p-6 text-muted-foreground text-center">No hay empleados asignados</CardContent></Card>
-                  ) : (
-                    <div className="space-y-2">
-                      {assigned.map((e) => (
-                        <Card key={e.id}><CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={e.profiles?.avatar_url || undefined} alt={e.profiles?.full_name || 'Usuario'} />
-                              <AvatarFallback className="text-xs">
-                                {(e.profiles?.full_name || e.profiles?.email || 'U').charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="text-sm">
-                              <div className="font-medium">{e.profiles?.full_name || e.profiles?.email || 'Sin nombre'}</div>
-                            </div>
-                          </div>
-                        </CardContent></Card>
-                      ))}
-                    </div>
-                  )
-                })()}
-              </TabsContent>
-
-              <TabsContent value="locations" className="mt-4">
-                {(() => {
-                  const assigned = locations.filter((l) => profileLocations.includes(l.id))
-                  return assigned.length === 0 ? (
-                    <Card>
-                      <CardContent className="p-6 text-muted-foreground text-center space-y-3">
-                        <div>No hay sedes asignadas</div>
-                        {profileService && (
-                          <Button
-                            size="sm"
-                            className="bg-primary hover:bg-primary/90"
-                            onClick={() => {
-                              closeProfile()
-                              handleOpenDialog(profileService)
-                              toast.message('Asigna una o más sedes antes de publicar')
-                            }}
-                          >
-                            Asignar sedes
-                          </Button>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {assigned.map((l) => (
-                        <Card key={l.id}><CardContent className="p-4">
-                          <div className="flex items-center gap-2 text-sm">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">{l.name}</span>
-                          </div>
-                        </CardContent></Card>
-                      ))}
-                    </div>
-                  )
-                })()}
-              </TabsContent>
-            </Tabs>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ServiceProfileModal
+        serviceId={profileServiceId}
+        onClose={() => setProfileServiceId(null)}
+        onEditService={(id) => {
+          const svc = services.find((s) => s.id === id)
+          if (svc) handleOpenDialog(svc)
+        }}
+      />
     </div>
   )
 }

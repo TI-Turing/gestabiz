@@ -132,7 +132,7 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
           user={user}
           onRequestCreated={() => {
             // Refresh roles after request created
-            window.location.reload()
+            globalThis.location.reload()
           }}
         />
       )

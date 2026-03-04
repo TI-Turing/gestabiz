@@ -1,4 +1,4 @@
-// Reviews - Módulo completo de reseñas
+﻿// Reviews - Módulo completo de reseñas
 export const reviews = {
   title: 'Reseñas',
   subtitle: 'Reseñas y calificaciones de clientes',
@@ -22,7 +22,7 @@ export const reviews = {
   submitResponse: 'Enviar Respuesta',
   helpful: 'Útil',
   overallRating: 'Calificación General',
-  basedOn: 'Basado en {{count}} reseñas',
+  basedOn: 'Basado en {count} reseñas',
   ratingDistribution: 'Distribución de Calificaciones',
   filterByRating: 'Filtrar por Calificación',
   allRatings: 'Todas las Calificaciones',
@@ -35,9 +35,9 @@ export const reviews = {
   // Rating
   rating: {
     overall: 'Calificación General',
-    stars: '{{count}} estrellas',
+    stars: '{count} estrellas',
     outOf: 'de 5',
-    based: 'Basado en {{count}} reseñas',
+    based: 'Basado en {count} reseñas',
     distribution: 'Distribución de Calificaciones',
     avgRating: 'Calificación Promedio'
   },
@@ -64,8 +64,8 @@ export const reviews = {
     submitting: 'Enviando...',
     cancel: 'Cancelar',
     required: 'La calificación es requerida',
-    minLength: 'El comentario debe tener al menos {{min}} caracteres',
-    maxLength: 'El comentario no debe exceder {{max}} caracteres'
+    minLength: 'El comentario debe tener al menos {min} caracteres',
+    maxLength: 'El comentario no debe exceder {max} caracteres'
   },
 
   // Filters
@@ -88,7 +88,7 @@ export const reviews = {
     threeStars: '3 Estrellas',
     twoStars: '2 Estrellas',
     oneStar: '1 Estrella',
-    percentage: '{{percent}}%'
+    percentage: '{percent}%'
   },
 
   // Response
@@ -100,7 +100,7 @@ export const reviews = {
     submitResponse: 'Enviar Respuesta',
     editResponse: 'Editar Respuesta',
     deleteResponse: 'Eliminar Respuesta',
-    respondedOn: 'Respondió el {{date}}'
+    respondedOn: 'Respondió el {date}'
   },
 
   // Verified badge
@@ -137,7 +137,7 @@ export const reviews = {
     reviewDeleted: 'Reseña eliminada exitosamente',
     responseSubmitted: 'Respuesta enviada exitosamente',
     cannotReview: 'Debes completar una cita para dejar una reseña',
-    alreadyReviewed: 'Ya has reseñado este {{type}}',
+    alreadyReviewed: 'Ya has reseñado este {type}',
     confirmDelete: '¿Estás seguro de que deseas eliminar esta reseña?'
   },
 

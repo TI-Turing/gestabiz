@@ -1,4 +1,4 @@
-// Business, Clients, Services, Locations, Employees - Consolidated module with FULL content
+﻿// Business, Clients, Services, Locations, Employees - Consolidated module with FULL content
 
 // Business Registration and Management
 export const business = {
@@ -235,7 +235,7 @@ export const employees = {
     4: 'Staff',
   },
   hierarchy: {
-    changeLevel: 'Change hierarchy level for {{name}}',
+    changeLevel: 'Change hierarchy level for {name}',
     level: 'Level',
     note: 'Note',
     noteLevel: 'Level determines position in organizational chart',
@@ -265,6 +265,12 @@ export const employees = {
     partTime: 'Part Time',
     contractor: 'Contractor',
     intern: 'Intern',
+  },
+  employeeTypes: {
+    service_provider: 'Service Provider',
+    support_staff: 'Support Staff',
+    location_manager: 'Location Manager',
+    manager: 'Manager',
   },
   departments: {
     sales: 'Sales',
@@ -326,7 +332,7 @@ export const employees = {
     search_placeholder: 'Search by business name, category, or city...',
     request_to_join: 'Request to Join',
     request_form_title: 'Join Request',
-    request_form_description: 'Send a request to join {{businessName}}',
+    request_form_description: 'Send a request to join {businessName}',
     message_label: 'Message (Optional)',
     message_placeholder: 'Tell the business owner why you want to join their team...',
     message_hint: 'Include your experience and skills relevant to this business',

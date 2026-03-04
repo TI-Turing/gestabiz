@@ -459,7 +459,7 @@ export function UnifiedLayout({
                     className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1 px-2 py-1 hover:bg-muted rounded-md min-w-0 max-w-[160px]"
                   >
                     <MapPin className="h-3 w-3 shrink-0" />
-                    <span className="truncate">{preferredLocationName || 'Seleccionar sede'}</span>
+                    <span className="truncate">{preferredLocationName || 'Todas las sedes'}</span>
                     <ChevronDown className="h-3 w-3 shrink-0" />
                   </button>
                   {locationMenuOpen && (
@@ -471,7 +471,10 @@ export function UnifiedLayout({
                           onLocationSelect?.(null)
                           setLocationMenuOpen(false)
                         }}
-                        className="w-full text-left px-3 py-2 text-xs sm:text-sm hover:bg-muted/50 transition-colors first:rounded-t-md"
+                        className={cn(
+                          "w-full text-left px-3 py-2 text-xs sm:text-sm hover:bg-muted/50 transition-colors first:rounded-t-md",
+                          !preferredLocationName && "bg-primary/20 text-foreground font-semibold"
+                        )}
                       >
                         Todas las sedes
                       </button>

@@ -1,7 +1,7 @@
-// Dashboard - Complete with all dashboard views
+﻿// Dashboard - Complete with all dashboard views
 export const dashboard = {
   title: 'Dashboard',
-  welcome: 'Welcome back, {{name}}!',
+  welcome: 'Welcome back, {name}!',
   welcomeBack: 'Welcome back',
   overview: 'Here\'s what\'s happening with your business today',
   overview_client: 'Here\'s what\'s happening with your appointments today',

@@ -1,4 +1,4 @@
-// Calendar - Complete calendar module
+﻿// Calendar - Complete calendar module
 export const calendar = {
   title: 'Calendar',
   subtitle: 'Manage your appointments',
@@ -75,8 +75,8 @@ export const calendar = {
   // Integration
   integration: {
     googleCalendar: 'Google Calendar',
-    syncWith: 'Sync with {{provider}}',
-    lastSync: 'Last sync: {{time}}',
+    syncWith: 'Sync with {provider}',
+    lastSync: 'Last sync: {time}',
     syncNow: 'Sync Now',
     disconnect: 'Disconnect'
   },

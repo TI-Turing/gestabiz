@@ -1,4 +1,4 @@
-// Página de inicio y contenido de marketing - COMPLETO
+﻿// Página de inicio y contenido de marketing - COMPLETO
 export const landing = {
   nav: {
     features: 'Características',
@@ -199,7 +199,7 @@ export const employee = {
     search_placeholder: 'Buscar por nombre de negocio, categoría o ciudad...',
     request_to_join: 'Solicitar Unirse',
     request_form_title: 'Solicitud de Ingreso',
-    request_form_description: 'Enviar solicitud para unirse a {{businessName}}',
+    request_form_description: 'Enviar solicitud para unirse a {businessName}',
     message_label: 'Mensaje (Opcional)',
     message_placeholder: 'Cuéntale al dueño por qué quieres unirte a su equipo...',
     message_hint: 'Incluye tu experiencia y habilidades relevantes para este negocio',

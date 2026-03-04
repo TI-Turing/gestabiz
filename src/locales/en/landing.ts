@@ -1,4 +1,4 @@
-// Landing page and marketing content - COMPLETE
+﻿// Landing page and marketing content - COMPLETE
 export const landing = {
   nav: {
     features: 'Features',
@@ -199,7 +199,7 @@ export const employee = {
     search_placeholder: 'Search by business name, category, or city...',
     request_to_join: 'Request to Join',
     request_form_title: 'Join Request',
-    request_form_description: 'Send a request to join {{businessName}}',
+    request_form_description: 'Send a request to join {businessName}',
     message_label: 'Message (Optional)',
     message_placeholder: 'Tell the business owner why you want to join their team...',
     message_hint: 'Include your experience and skills relevant to this business',

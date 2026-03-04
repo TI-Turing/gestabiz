@@ -6,16 +6,22 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Users, List, Network, Filter } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Users, List, Network, Filter, AlertTriangle, Check, X, Loader2 } from 'lucide-react'
 import { useBusinessHierarchy } from '@/hooks/useBusinessHierarchy'
 import { usePreferredLocation } from '@/hooks/usePreferredLocation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { FiltersPanel } from './FiltersPanel'
 import { EmployeeListView } from './EmployeeListView'
 import { HierarchyMapView } from './HierarchyMapView'
 import { EmployeeProfileModal } from './EmployeeProfileModal'
+import supabase from '@/lib/supabase'
+import { toast } from 'sonner'
 import type { EmployeeHierarchy } from '@/types'
 
 // =====================================================
@@ -36,7 +42,7 @@ type ViewMode = 'list' | 'map'
 export function EmployeeManagementHierarchy({
   businessId,
   onEmployeeSelect,
-}: EmployeeManagementHierarchyProps) {
+}: Readonly<EmployeeManagementHierarchyProps>) {
   const { t } = useLanguage()
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [showFilters, setShowFilters] = useState(false)
@@ -54,7 +60,99 @@ export function EmployeeManagementHierarchy({
     filters,
     updateFilters,
     clearFilters,
+    assignSupervisorAsync,
+    isAssigning,
   } = useBusinessHierarchy(businessId)
+
+  // Estado para asignación inline en la sección de pendientes
+  const [assigningFor, setAssigningFor] = useState<string | null>(null)
+  const [pendingSupervisorId, setPendingSupervisorId] = useState('')
+  const queryClient = useQueryClient()
+
+  // Query: empleados sin configuración completa (sin supervisor y sin rol elevado)
+  const { data: pendingSetup = [] } = useQuery({
+    queryKey: ['pending-setup-employees', businessId],
+    queryFn: async () => {
+      // 1. Todos los empleados activos del negocio
+      const { data: allBE } = await supabase
+        .from('business_employees')
+        .select('employee_id, role')
+        .eq('business_id', businessId)
+        .eq('is_active', true)
+
+      if (!allBE || allBE.length === 0) return []
+
+      // 2. Excluir managers y owners (ya configurados por rol)
+      const regularIds = allBE
+        .filter(e => !['manager', 'owner'].includes(e.role || ''))
+        .map(e => e.employee_id)
+        .filter((id): id is string => !!id)
+
+      if (regularIds.length === 0) return []
+
+      // 3. Excluir quienes ya tienen supervisor asignado
+      const { data: withSupervisor } = await supabase
+        .from('business_roles')
+        .select('user_id')
+        .eq('business_id', businessId)
+        .not('reports_to', 'is', null)
+        .in('user_id', regularIds)
+
+      const supervisedSet = new Set(withSupervisor?.map(r => r.user_id) || [])
+
+      // 4. Excluir quienes tienen setup_completed = true
+      const { data: completedBE } = await supabase
+        .from('business_employees')
+        .select('employee_id')
+        .eq('business_id', businessId)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .eq('setup_completed' as any, true)
+        .in('employee_id', regularIds)
+
+      const completedSet = new Set(completedBE?.map(e => e.employee_id) || [])
+
+      const trulyPendingIds = regularIds.filter(
+        id => !supervisedSet.has(id) && !completedSet.has(id)
+      )
+
+      if (trulyPendingIds.length === 0) return []
+
+      // 5. Obtener perfiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url')
+        .in('id', trulyPendingIds)
+
+      return (
+        profiles?.map(p => ({
+          employee_id: p.id,
+          full_name: p.full_name ?? p.email,
+          email: p.email,
+          avatar_url: p.avatar_url,
+        })) ?? []
+      )
+    },
+    enabled: !!businessId,
+    staleTime: 30_000,
+  })
+
+  // Handler: asignar supervisor y marcar como configurado
+  const handlePendingAssign = async (employeeId: string) => {
+    if (!pendingSupervisorId) return
+    try {
+      await assignSupervisorAsync({
+        employeeId,
+        businessId,
+        newSupervisorId: pendingSupervisorId,
+      })
+      await queryClient.invalidateQueries({ queryKey: ['pending-setup-employees', businessId] })
+      setAssigningFor(null)
+      setPendingSupervisorId('')
+      toast.success('Jefe asignado correctamente. El empleado ya puede recibir citas.')
+    } catch {
+      toast.error('Error al asignar el jefe. Inténtalo de nuevo.')
+    }
+  }
   
   // Pre-seleccionar sede preferida al montar el componente
   useEffect(() => {
@@ -287,6 +385,90 @@ export function EmployeeManagementHierarchy({
         </Card>
       )}
 
+      {/* PENDING SETUP ALERT - empleados sin jefe asignado */}
+      {pendingSetup.length > 0 && (
+        <Card className="p-4 border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+            <h3 className="font-semibold text-sm text-amber-900 dark:text-amber-200">
+              {pendingSetup.length} empleado{pendingSetup.length > 1 ? 's' : ''} pendiente{pendingSetup.length > 1 ? 's' : ''} de configuración
+            </h3>
+            <Badge variant="outline" className="ml-auto border-amber-400 text-amber-700 text-xs dark:text-amber-300">
+              Sin jefe directo
+            </Badge>
+          </div>
+          <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
+            Estos empleados no aparecerán disponibles para recibir citas hasta que se les asigne un jefe directo.
+          </p>
+          <div className="space-y-2">
+            {pendingSetup.map(emp => (
+              <div key={emp.employee_id} className="flex items-center gap-3 p-3 bg-background rounded-lg border">
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarImage src={emp.avatar_url ?? undefined} />
+                  <AvatarFallback className="text-xs">
+                    {String(emp.full_name ?? '?')[0].toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{emp.full_name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{emp.email}</p>
+                </div>
+
+                {assigningFor === emp.employee_id ? (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Select value={pendingSupervisorId} onValueChange={setPendingSupervisorId}>
+                      <SelectTrigger className="w-44 h-8 text-xs">
+                        <SelectValue placeholder="Seleccionar jefe..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {employees
+                          .filter(e => e.user_id !== emp.employee_id &&
+                            e.hierarchy_level < (employees.find(pe => pe.user_id === emp.employee_id)?.hierarchy_level ?? 999))
+                          .map(e => (
+                            <SelectItem key={e.user_id} value={e.user_id} className="text-xs">
+                              {e.full_name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 shrink-0 text-green-600 hover:text-green-700"
+                      onClick={() => handlePendingAssign(emp.employee_id)}
+                      disabled={!pendingSupervisorId || isAssigning}
+                    >
+                      {isAssigning ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => { setAssigningFor(null); setPendingSupervisorId('') }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0 text-xs h-8 border-amber-400 text-amber-700 hover:bg-amber-50 dark:text-amber-300"
+                    onClick={() => { setAssigningFor(emp.employee_id); setPendingSupervisorId('') }}
+                  >
+                    Asignar jefe
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {/* MAIN CONTENT - LIST OR MAP VIEW */}
       <div className="flex-1">
         {viewMode === 'list' ? (
@@ -315,6 +497,7 @@ export function EmployeeManagementHierarchy({
         employee={selectedEmployee}
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
+        employees={employees}
       />
     </div>
   )

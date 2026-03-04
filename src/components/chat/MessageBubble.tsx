@@ -102,7 +102,7 @@ export function MessageBubble({
           alt={senderName}
           fallbackText={senderName}
           size="sm"
-          className="flex-shrink-0"
+          className="shrink-0"
           maxRetries={5}
           retryDelay={800}
         />
@@ -126,14 +126,14 @@ export function MessageBubble({
             )}
           >
             <div className="flex items-center gap-1 text-muted-foreground mb-0.5">
-              <Reply className="h-3 w-3 flex-shrink-0" />
+              <Reply className="h-3 w-3 shrink-0" />
               <span className="font-medium truncate">
                 {message.reply_to_message.sender_id === currentUserId
                   ? 'Tú'
                   : message.reply_to_message.sender?.full_name || 'Usuario'}
               </span>
             </div>
-            <p className="line-clamp-2 text-foreground/80 break-words">
+            <p className="line-clamp-2 text-foreground/80 wrap-break-word">
               {message.reply_to_message.body || '(mensaje sin contenido)'}
             </p>
           </div>
@@ -158,7 +158,7 @@ export function MessageBubble({
           )}
 
           {/* Contenido del mensaje con highlight (usa 'body' en vez de 'content') */}
-          <p className="text-sm sm:text-base whitespace-pre-wrap break-words">
+          <p className="text-sm sm:text-base whitespace-pre-wrap wrap-break-word">
             {isDeleted 
               ? <span className="flex items-center gap-1 opacity-50"><ProhibitInset size={16} weight="fill" /> Mensaje eliminado</span>
               : highlightText(message.body || '', searchQuery)

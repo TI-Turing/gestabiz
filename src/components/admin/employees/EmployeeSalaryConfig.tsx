@@ -31,20 +31,46 @@ export function EmployeeSalaryConfig({
   onSaveSuccess,
 }: Readonly<EmployeeSalaryConfigProps>) {
   const [saving, setSaving] = useState(false)
+  const [loadingData, setLoadingData] = useState(true)
 
-  const [salaryBase, setSalaryBase] = useState<number>(currentSalaryBase || 0)
+  const [salaryBase, setSalaryBase] = useState<number | ''>(currentSalaryBase || '')
   const [salaryType, setSalaryType] = useState<SalaryType>((currentSalaryType as SalaryType) || 'monthly')
   const [automatePayroll, setAutomatePayroll] = useState(true)
-  const [paymentDay, setPaymentDay] = useState(30) // Día del mes para pago mensual
+  const [paymentDay, setPaymentDay] = useState(30)
 
+  // Carga siempre los datos frescos de la BD al montar el componente,
+  // ignorando los props (que pueden estar cacheados y desactualizados).
   useEffect(() => {
-    if (currentSalaryBase !== undefined && currentSalaryBase !== null) {
-      setSalaryBase(currentSalaryBase)
+    let cancelled = false
+
+    const fetchSalary = async () => {
+      setLoadingData(true)
+      const { data, error } = await supabase
+        .from('business_employees')
+        .select('salary_base, salary_type')
+        .eq('employee_id', employeeId)
+        .eq('business_id', businessId)
+        .maybeSingle()
+
+      if (cancelled) return
+
+      if (!error && data) {
+        setSalaryBase(data.salary_base ?? '')
+        setSalaryType((data.salary_type as SalaryType) || 'monthly')
+      } else {
+        // Fallback a los props si falla la consulta
+        setSalaryBase(currentSalaryBase ?? '')
+        setSalaryType((currentSalaryType as SalaryType) || 'monthly')
+      }
+      setLoadingData(false)
     }
-    if (currentSalaryType) {
-      setSalaryType(currentSalaryType as SalaryType)
-    }
-  }, [currentSalaryBase, currentSalaryType])
+
+    void fetchSalary()
+
+    return () => { cancelled = true }
+  // Solo se ejecuta cuando cambia el empleado o negocio; ignora cambios en props de salario
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employeeId, businessId])
 
   const calculateNextPaymentDate = (
     frequency: SalaryType,
@@ -89,7 +115,7 @@ export function EmployeeSalaryConfig({
       const { error: employeeError } = await supabase
         .from('business_employees')
         .update({
-          salary_base: salaryBase > 0 ? salaryBase : null,
+          salary_base: salaryBase !== '' && salaryBase > 0 ? salaryBase : null,
           salary_type: salaryType,
           updated_at: new Date().toISOString(),
         })
@@ -98,8 +124,28 @@ export function EmployeeSalaryConfig({
 
       if (employeeError) throw employeeError
 
+      /*
+       * PENDIENTE: Integrar el salario con los egresos reales del negocio (tabla `transactions`).
+       * Al guardar (o al vencer cada período), se debe generar automáticamente un egreso
+       * en `transactions` con:
+       *   - type: 'expense'
+       *   - category: 'payroll'
+       *   - employee_id: FK al empleado
+       *   - amount: salary_base
+       *   - fiscal_period: período correspondiente (ej. "2026-03" para marzo)
+       *   - description: "Salario {frecuencia} - {nombre empleado}"
+       * La frecuencia debe discriminar el período de corte:
+       *   - monthly  → 1 egreso por mes  (fecha = paymentDay del mes)
+       *   - biweekly → 2 egresos por mes (días 15 y último del mes)
+       *   - weekly   → 1 egreso por semana
+       *   - daily    → 1 egreso por día laborado
+       *   - hourly   → acumular horas y generar egreso al cierre del mes
+       * Considerar usar la Edge Function `process-reminders` o un cron dedicado
+       * para materializar los egresos recurrentes según `recurring_expenses.next_payment_date`.
+       */
+
       // 2. Si automation habilitada y salaryBase > 0, crear/actualizar recurring_expense
-      if (salaryBase > 0) {
+      if (salaryBase !== '' && salaryBase > 0) {
         // Map salary_type to recurrence_frequency
         const frequencyMap: Record<SalaryType, string> = {
           monthly: 'monthly',
@@ -188,7 +234,13 @@ export function EmployeeSalaryConfig({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {loadingData ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="salary-base">Salario Base (COP)</Label>
             <Input
@@ -196,10 +248,10 @@ export function EmployeeSalaryConfig({
               type="number"
               min={0}
               value={salaryBase}
-              onChange={(e) => setSalaryBase(Number(e.target.value))}
+              onChange={(e) => setSalaryBase(e.target.value === '' ? '' : Number(e.target.value))}
               placeholder="1.300.000"
             />
-            {salaryBase > 0 && (
+            {salaryBase !== '' && salaryBase > 0 && (
               <p className="text-xs text-muted-foreground">
                 {formatCurrency(salaryBase)} {getSalaryTypeLabel(salaryType)}
               </p>
@@ -224,7 +276,7 @@ export function EmployeeSalaryConfig({
               </SelectContent>
             </Select>
           </div>
-        </div>
+          </div>
 
         {salaryType === 'monthly' && (
           <div className="space-y-2">
@@ -276,6 +328,8 @@ export function EmployeeSalaryConfig({
             )}
           </Button>
         </PermissionGate>
+          </> 
+        )} {/* fin loading ternario */}
       </CardContent>
     </Card>
   )

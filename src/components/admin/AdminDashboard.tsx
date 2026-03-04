@@ -69,7 +69,7 @@ export function AdminDashboard({
   const [chatConversationId, setChatConversationId] = useState<string | null>(null)
   
   // Hooks para sede preferida y ubicaciones
-  const { preferredLocationId, setPreferredLocation } = usePreferredLocation(business.id)
+  const { preferredLocationId, setPreferredLocation, isInitialized: locationInitialized, isExplicitlySet: locationExplicitlySet } = usePreferredLocation(business.id)
   const { locations, fetchLocations } = useSupabaseData({ user, autoFetch: false })
   
   // Estado para nombre de la sede
@@ -97,14 +97,24 @@ export function AdminDashboard({
     }
   }, [business.id, fetchLocations])
   
+  // Resolver nombre de la sede a partir del id preferido
   useEffect(() => {
     if (preferredLocationId && locations.length > 0) {
-      const location = locations.find(l => l.id === preferredLocationId)
-      setPreferredLocationName(location?.name || null)
+      const loc = locations.find(l => l.id === preferredLocationId)
+      setPreferredLocationName(loc?.name || null)
     } else {
       setPreferredLocationName(null)
     }
   }, [preferredLocationId, locations])
+
+  // Auto-selección en primer acceso: elegir sede principal (is_primary) o la primera disponible.
+  // Solo se ejecuta cuando el hook ya leyó localStorage y no hay ningún valor guardado.
+  useEffect(() => {
+    if (locationInitialized && !locationExplicitlySet && locations.length > 0) {
+      const primaryLoc = locations.find(l => l.is_primary) ?? locations[0]
+      setPreferredLocation(primaryLoc.id)
+    }
+  }, [locationInitialized, locationExplicitlySet, locations, setPreferredLocation])
 
   // ✅ Función para manejar cambios de página con navegación de URL
   const handlePageChange = (page: string, context?: Record<string, unknown>) => {

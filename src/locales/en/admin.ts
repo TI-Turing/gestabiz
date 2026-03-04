@@ -1,4 +1,4 @@
-// Admin & System modules - Resources, Permissions, Reports, Admin, Search
+﻿// Admin & System modules - Resources, Permissions, Reports, Admin, Search
 export const businessResources = {
   title: 'Business Resources',
   subtitle: 'Manage physical resources',
@@ -346,24 +346,24 @@ export const admin = {
       exportList: 'Export List'
     },
     risk: {
-      at_risk: 'Client at risk ({{days}} days)',
-      lost: 'Lost client ({{days}} days)'
+      at_risk: 'Client at risk ({days} days)',
+      lost: 'Lost client ({days} days)'
     },
     riskIndicators: {
       title: 'Client at Risk',
-      noRecentAppointments: 'No appointments in {{days}} days',
-      cancelledAppointments: '{{count}} cancelled appointments',
+      noRecentAppointments: 'No appointments in {days} days',
+      cancelledAppointments: '{count} cancelled appointments',
       lowEngagement: 'Low engagement'
     },
     whatsappIntegration: {
       button: 'Send WhatsApp',
       tooltip: 'Send message via WhatsApp',
       opening: 'Opening WhatsApp...',
-      defaultMessage: 'Hello {{name}}, we want to offer you...'
+      defaultMessage: 'Hello {name}, we want to offer you...'
     },
     whatsapp: {
       missing: 'Client has no WhatsApp number',
-      message_template: 'Hi {{name}}, hope you are well. Would you like to book your next appointment?'
+      message_template: 'Hi {name}, hope you are well. Would you like to book your next appointment?'
     }
   },
 
@@ -473,7 +473,7 @@ export const search = {
   // Results
   results: {
     title: 'Search Results',
-    showing: 'Showing {{count}} results',
+    showing: 'Showing {count} results',
     noResults: 'No results found',
     tryDifferent: 'Try a different search term',
     filters: 'Filters',
@@ -510,8 +510,8 @@ export const search = {
     availability: 'Availability',
     openNow: 'Open Now',
     acceptsOnlineBooking: 'Accepts Online Booking',
-    minRating: 'Minimum {{stars}} stars',
-    within: 'Within {{distance}} km',
+    minRating: 'Minimum {stars} stars',
+    within: 'Within {distance} km',
     apply: 'Apply Filters',
     clear: 'Clear All'
   },
@@ -536,19 +536,19 @@ export const search = {
       bookNow: 'Book Now',
       openNow: 'Open Now',
       closed: 'Closed',
-      opensAt: 'Opens at {{time}}',
-      rating: '{{rating}} ({{count}} reviews)',
-      distance: '{{distance}} km away'
+      opensAt: 'Opens at {time}',
+      rating: '{rating} ({count} reviews)',
+      distance: '{distance} km away'
     },
     services: {
-      duration: '{{duration}} min',
-      from: 'From {{price}}',
+      duration: '{duration} min',
+      from: 'From {price}',
       viewDetails: 'View Details',
       bookService: 'Book Service'
     },
     professionals: {
-      specialist: 'Specialist in {{specialty}}',
-      yearsExp: '{{years}} years experience',
+      specialist: 'Specialist in {specialty}',
+      yearsExp: '{years} years experience',
       viewProfile: 'View Profile',
       bookAppointment: 'Book Appointment'
     }

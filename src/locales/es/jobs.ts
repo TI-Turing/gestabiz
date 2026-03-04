@@ -1,4 +1,4 @@
-// Jobs - Módulo completo de reclutamiento
+﻿// Jobs - Módulo completo de reclutamiento
 export const jobs = {
   title: 'Vacantes Laborales',
   subtitle: 'Reclutamiento y aplicaciones',
@@ -18,7 +18,7 @@ export const jobs = {
   application: {
     title: 'Aplicación Laboral',
     apply: 'Aplicar Ahora',
-    applyFor: 'Aplicar para {{position}}',
+    applyFor: 'Aplicar para {position}',
     submit: 'Enviar Aplicación',
     sending: 'Enviando aplicación...',
     success: 'Aplicación enviada exitosamente',
@@ -45,7 +45,7 @@ export const jobs = {
     skillPlaceholder: 'Agregar una habilidad',
     addSkill: 'Agregar',
     experience: 'Experiencia Requerida',
-    yearsExperience: '{{years}} años',
+    yearsExperience: '{years} años',
     deadline: 'Fecha Límite',
     contactEmail: 'Email de Contacto',
     contactPhone: 'Teléfono de Contacto'
@@ -75,8 +75,8 @@ export const jobs = {
     reject: 'Rechazar',
     contact: 'Contactar',
     applicantInfo: 'Información del Aplicante',
-    appliedOn: 'Aplicó el {{date}}',
-    experience: '{{years}} años de experiencia'
+    appliedOn: 'Aplicó el {date}',
+    experience: '{years} años de experiencia'
   },
 
   // Applicant profile

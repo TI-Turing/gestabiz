@@ -1,4 +1,4 @@
-// Calendar - Módulo completo de calendario
+﻿// Calendar - Módulo completo de calendario
 export const calendar = {
   title: 'Calendario',
   subtitle: 'Gestiona tus citas',
@@ -75,8 +75,8 @@ export const calendar = {
   // Integration
   integration: {
     googleCalendar: 'Google Calendar',
-    syncWith: 'Sincronizar con {{provider}}',
-    lastSync: 'Última sincronización: {{time}}',
+    syncWith: 'Sincronizar con {provider}',
+    lastSync: 'Última sincronización: {time}',
     syncNow: 'Sincronizar Ahora',
     disconnect: 'Desconectar'
   },

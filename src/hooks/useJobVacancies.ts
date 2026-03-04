@@ -24,7 +24,7 @@ export interface JobVacancy {
   number_of_positions: number
   required_services?: string[]
   preferred_services?: string[]
-  status: 'draft' | 'open' | 'closed' | 'filled'
+  status: 'draft' | 'open' | 'active' | 'closed' | 'filled'
   published_at?: string
   expires_at?: string
   filled_at?: string

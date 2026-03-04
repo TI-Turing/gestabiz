@@ -1919,7 +1919,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             <div className="inline-block min-w-full">
               {/* Header with employee names */}
               <div className="flex border-b-2 border-border bg-muted/50 sticky top-0 z-20">
-                <div className="w-20 flex-shrink-0 p-3 font-semibold text-sm text-muted-foreground border-r-2 border-border bg-background">
+                <div className="w-20 shrink-0 p-3 font-semibold text-sm text-muted-foreground border-r-2 border-border bg-background">
                   Hora
                 </div>
                 {employeesToDisplay.map((employee, index) => (
@@ -1991,7 +1991,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                       </div>
                     )}
 
-                    <div className="w-20 flex-shrink-0 p-2 text-sm text-muted-foreground font-medium border-r-2 border-border bg-background">
+                    <div className="w-20 shrink-0 p-2 text-sm text-muted-foreground font-medium border-r-2 border-border bg-background">
                       {hour.toString().padStart(2, '0')}:00
                     </div>
                     {employeesToDisplay.map((employee, index) => {

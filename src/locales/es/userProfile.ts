@@ -50,7 +50,7 @@ export const userProfile = {
 
   // Pie de página
   footer: {
-    scheduleWith: 'Agendar con {{name}}',
+    scheduleWith: 'Agendar con {name}',
     notAvailable: 'No disponible para reservas',
     notLinkedMessage: 'Este profesional no está actualmente vinculado a ningún negocio activo'
   }

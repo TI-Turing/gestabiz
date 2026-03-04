@@ -236,7 +236,7 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
       <div className="bg-card border border-border rounded-lg shadow-sm p-6 flex flex-col md:flex-row items-start md:items-center gap-6">
         {/* Avatar con botón de upload */}
         <div className="relative flex flex-col items-center">
-          <div className="rounded-full bg-gradient-to-br from-primary/20 to-primary/5 p-1">
+          <div className="rounded-full bg-linear-to-br from-primary/20 to-primary/5 p-1">
             <ProfileAvatar
               key={formData.avatar_url}
               src={formData.avatar_url}

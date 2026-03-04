@@ -140,6 +140,16 @@ class HierarchyService {
         return { success: false, error: error.message };
       }
 
+      // Marcar configuración completa cuando se asigna supervisor
+      if (newSupervisorId) {
+        await supabase
+          .from('business_employees')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .update({ setup_completed: true } as any)
+          .eq('employee_id', employeeId)
+          .eq('business_id', businessId);
+      }
+
       return { success: true };
     } catch (error) {
       return {

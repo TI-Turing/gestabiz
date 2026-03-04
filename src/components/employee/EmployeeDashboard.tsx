@@ -7,6 +7,7 @@ import { MyEmployments } from '@/components/employee/MyEmploymentsEnhanced'
 import { EmployeeOnboarding } from '@/components/employee/EmployeeOnboarding'
 import { EmployeeAbsencesTab } from '@/components/employee/EmployeeAbsencesTab'
 import { EmployeeAppointmentsPage } from '@/components/employee/EmployeeAppointmentsPage'
+import { PhoneRequiredModal } from '@/components/employee/PhoneRequiredModal'
 import { usePendingNavigation } from '@/hooks/usePendingNavigation'
 import { useEmployeeAbsences } from '@/hooks/useEmployeeAbsences'
 import { useEmployeeBusinesses } from '@/hooks/useEmployeeBusinesses'
@@ -119,7 +120,7 @@ export function EmployeeDashboard({
   // Listen for avatar updates and refresh user
   useEffect(() => {
     const handleAvatarUpdate = () => {
-      const updatedUserStr = window.localStorage.getItem('current-user')
+      const updatedUserStr = globalThis.localStorage.getItem('current-user')
       if (updatedUserStr) {
         try {
           const updatedUser = JSON.parse(updatedUserStr)
@@ -130,8 +131,8 @@ export function EmployeeDashboard({
       }
     }
 
-    window.addEventListener('avatar-updated', handleAvatarUpdate)
-    return () => window.removeEventListener('avatar-updated', handleAvatarUpdate)
+    globalThis.addEventListener('avatar-updated', handleAvatarUpdate)
+    return () => globalThis.removeEventListener('avatar-updated', handleAvatarUpdate)
   }, [])
 
   // Update current user when prop changes
@@ -172,6 +173,13 @@ export function EmployeeDashboard({
   }
 
   const renderContent = () => {
+    // Verificar que el empleado tenga teléfono registrado antes de mostrar el dashboard
+    if (!currentUser.phone?.trim()) {
+      return (
+        <PhoneRequiredModal userId={currentUser.id} userName={currentUser.name} />
+      )
+    }
+
     switch (activePage) {
       case 'employments':
         return (

@@ -1,4 +1,4 @@
-// Absences - Sistema completo de ausencias y vacaciones
+﻿// Absences - Sistema completo de ausencias y vacaciones
 export const absences = {
   title: 'Ausencias y Vacaciones',
   subtitle: 'Gestionar ausencias de empleados',
@@ -33,8 +33,8 @@ export const absences = {
 
   daysRequested: {
     label: 'Días Solicitados',
-    total: '{{count}} días en total',
-    businessDays: '{{count}} días hábiles',
+    total: '{count} días en total',
+    businessDays: '{count} días hábiles',
     excludingWeekends: 'excluyendo fines de semana',
     excludingHolidays: 'excluyendo festivos'
   },
@@ -46,7 +46,7 @@ export const absences = {
     used: 'Usados',
     pending: 'Pendientes',
     remaining: 'Restantes',
-    days: '{{count}} días',
+    days: '{count} días',
     accrued: 'Acumulados Este Año',
     carriedOver: 'Transferidos'
   },
@@ -54,7 +54,7 @@ export const absences = {
   // Affected appointments
   affectedAppointments: {
     title: 'Citas Afectadas',
-    count: '{{count}} citas serán afectadas',
+    count: '{count} citas serán afectadas',
     noAppointments: 'No hay citas programadas durante este período',
     willBeCancelled: 'Estas citas serán canceladas:',
     clientsNotified: 'Los clientes serán notificados automáticamente'
@@ -67,7 +67,7 @@ export const absences = {
     success: 'Solicitud enviada exitosamente',
     error: 'Error al enviar solicitud',
     confirmTitle: 'Confirmar Solicitud de Ausencia',
-    confirmMessage: 'Esto afectará {{count}} citas. Los clientes serán notificados. ¿Continuar?',
+    confirmMessage: 'Esto afectará {count} citas. Los clientes serán notificados. ¿Continuar?',
     confirm: 'Confirmar',
     cancel: 'Cancelar'
   },
@@ -110,7 +110,7 @@ export const absences = {
     typeRequired: 'El tipo de ausencia es requerido',
     insufficientBalance: 'Balance de vacaciones insuficiente',
     overlapsExisting: 'Se superpone con ausencia existente',
-    tooFarInAdvance: 'No se puede solicitar con más de {{days}} días de anticipación',
+    tooFarInAdvance: 'No se puede solicitar con más de {days} días de anticipación',
     pastDate: 'No se pueden seleccionar fechas pasadas'
   },
 
@@ -127,13 +127,13 @@ export const absences = {
     title: 'Días Inválidos',
     weekends: 'Fines de Semana',
     holidays: 'Festivos',
-    total: '{{count}} días serán excluidos del conteo'
+    total: '{count} días serán excluidos del conteo'
   },
 
   // Public holidays
   holidays: {
     title: 'Festivos Públicos',
-    inRange: '{{count}} festivos en el rango seleccionado',
+    inRange: '{count} festivos en el rango seleccionado',
     excluded: 'Estos días están excluidos del conteo'
   },
 
@@ -153,9 +153,9 @@ export const absences = {
     rejected: 'Rechazado',
     cancelled: 'Cancelado',
     emergency: 'Emergencia',
-    requestedOn: 'Solicitado el {{date}}',
-    approvedBy: 'Aprobado por {{name}}',
-    rejectedBy: 'Rechazado por {{name}}'
+    requestedOn: 'Solicitado el {date}',
+    approvedBy: 'Aprobado por {name}',
+    rejectedBy: 'Rechazado por {name}'
   },
 
   // Vacation widget
@@ -170,7 +170,7 @@ export const absences = {
     noInfo: 'Información de vacaciones no disponible',
     used: 'Usados',
     pending: 'Pendientes',
-    available: '{{days}} disponibles',
+    available: '{days} disponibles',
     viewDetails: 'Ver Detalles',
     requestVacation: 'Solicitar Vacaciones'
   }

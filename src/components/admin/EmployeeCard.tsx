@@ -67,6 +67,18 @@ const getLevelLabel = (level: number, t: (key: string) => string): string => {
   return label
 }
 
+/**
+ * Traduce el valor raw de employee_type (ej. 'service_provider') usando las claves
+ * de `employees.employeeTypes.*`. Si no existe traducción, devuelve el valor original.
+ */
+const getEmployeeTypeLabel = (employeeType: string | undefined | null, t: (key: string) => string): string => {
+  if (!employeeType) return ''
+  const key = `employees.employeeTypes.${employeeType}`
+  const translated = t(key)
+  // Si la clave no existe, t() devuelve la clave misma — en ese caso usamos el valor raw
+  return translated === key ? employeeType : translated
+}
+
 const getInitials = (name: string): string => {
   return name
     .split(' ')
@@ -115,7 +127,7 @@ export function EmployeeCard({
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate">{employee.full_name}</p>
           <p className="text-sm text-muted-foreground truncate">
-            {employee.job_title || employee.employee_type}
+            {employee.job_title || getEmployeeTypeLabel(employee.employee_type, t)}
           </p>
         </div>
         <Badge className={getLevelBadgeColor(employee.hierarchy_level)}>
@@ -152,7 +164,7 @@ export function EmployeeCard({
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                {employee.job_title || employee.employee_type}
+                {employee.job_title || getEmployeeTypeLabel(employee.employee_type, t)}
               </p>
               <p className="text-xs text-muted-foreground mt-1">{employee.email}</p>
             </div>

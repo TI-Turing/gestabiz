@@ -1565,6 +1565,12 @@ export const translations = {
         contractor: 'Contractor',
         intern: 'Intern',
       },
+      employeeTypes: {
+        service_provider: 'Service Provider',
+        support_staff: 'Support Staff',
+        location_manager: 'Location Manager',
+        manager: 'Manager',
+      },
       departments: {
         sales: 'Sales',
         service: 'Service',
@@ -3826,6 +3832,12 @@ export const translations = {
         partTime: 'Medio Tiempo',
         contractor: 'Contratista',
         intern: 'Practicante',
+      },
+      employeeTypes: {
+        service_provider: 'Proveedor de Servicios',
+        support_staff: 'Personal de Apoyo',
+        location_manager: 'Gerente de Sede',
+        manager: 'Gerente',
       },
       departments: {
         sales: 'Ventas',

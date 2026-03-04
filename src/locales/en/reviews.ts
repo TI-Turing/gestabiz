@@ -1,4 +1,4 @@
-// Reviews - Complete reviews module
+﻿// Reviews - Complete reviews module
 export const reviews = {
   title: 'Reviews',
   subtitle: 'Client reviews and ratings',
@@ -22,7 +22,7 @@ export const reviews = {
   submitResponse: 'Submit Response',
   helpful: 'Helpful',
   overallRating: 'Overall Rating',
-  basedOn: 'Based on {{count}} reviews',
+  basedOn: 'Based on {count} reviews',
   ratingDistribution: 'Rating Distribution',
   filterByRating: 'Filter by Rating',
   allRatings: 'All Ratings',
@@ -35,9 +35,9 @@ export const reviews = {
   // Rating structure
   rating: {
     overall: 'Overall Rating',
-    stars: '{{count}} stars',
+    stars: '{count} stars',
     outOf: 'out of 5',
-    based: 'Based on {{count}} reviews',
+    based: 'Based on {count} reviews',
     distribution: 'Rating Distribution',
     avgRating: 'Average Rating'
   },
@@ -64,8 +64,8 @@ export const reviews = {
     submitting: 'Submitting...',
     cancel: 'Cancel',
     required: 'Rating is required',
-    minLength: 'Comment must be at least {{min}} characters',
-    maxLength: 'Comment must not exceed {{max}} characters'
+    minLength: 'Comment must be at least {min} characters',
+    maxLength: 'Comment must not exceed {max} characters'
   },
 
   // Filters
@@ -88,7 +88,7 @@ export const reviews = {
     threeStars: '3 Stars',
     twoStars: '2 Stars',
     oneStar: '1 Star',
-    percentage: '{{percent}}%'
+    percentage: '{percent}%'
   },
 
   // Response
@@ -100,7 +100,7 @@ export const reviews = {
     submitResponse: 'Submit Response',
     editResponse: 'Edit Response',
     deleteResponse: 'Delete Response',
-    respondedOn: 'Responded on {{date}}'
+    respondedOn: 'Responded on {date}'
   },
 
   // Verified badge
@@ -137,7 +137,7 @@ export const reviews = {
     reviewDeleted: 'Review deleted successfully',
     responseSubmitted: 'Response submitted successfully',
     cannotReview: 'You must complete an appointment to leave a review',
-    alreadyReviewed: 'You have already reviewed this {{type}}',
+    alreadyReviewed: 'You have already reviewed this {type}',
     confirmDelete: 'Are you sure you want to delete this review?'
   },
 

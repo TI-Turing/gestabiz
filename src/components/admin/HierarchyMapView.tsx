@@ -5,10 +5,11 @@
  * Phase 3 - UI Components
  */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { HierarchyNode } from './HierarchyNode'
+import { cn } from '@/lib/utils'
 import type { EmployeeHierarchy } from '@/types'
 
 // =====================================================
@@ -18,6 +19,31 @@ import type { EmployeeHierarchy } from '@/types'
 interface HierarchyMapViewProps {
   employees: EmployeeHierarchy[]
   onEmployeeSelect?: (employee: EmployeeHierarchy) => void
+  /** ID (user_id) del empleado a enfocar al abrir el mapa — expande sus ancestros y hace scroll hasta él */
+  focusEmployeeId?: string
+}
+
+// =====================================================
+// HELPER: calcula los IDs de ancestros de un nodo (para expandirlos)
+// =====================================================
+
+function computeAncestorIds(targetId: string, emps: EmployeeHierarchy[]): Set<string> {
+  const empMap = new Map<string, EmployeeHierarchy>()
+  for (const e of emps) {
+    const id = e.user_id ?? e.employee_id
+    if (id) empMap.set(id, e)
+  }
+  const ancestors = new Set<string>()
+  let cur = empMap.get(targetId)
+  while (cur?.reports_to) {
+    const parent = empMap.get(cur.reports_to)
+    if (!parent) break
+    const parentId = parent.user_id ?? parent.employee_id
+    if (!parentId) break
+    ancestors.add(parentId)
+    cur = parent
+  }
+  return ancestors
 }
 
 interface TreeNode {
@@ -30,10 +56,26 @@ interface TreeNode {
 // COMPONENTE
 // =====================================================
 
-export function HierarchyMapView({ employees, onEmployeeSelect }: Readonly<HierarchyMapViewProps>) {
+export function HierarchyMapView({ employees, onEmployeeSelect, focusEmployeeId }: Readonly<HierarchyMapViewProps>) {
   const [zoom, setZoom] = useState(100)
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
+  // Inicializar con los ancestros del empleado enfocado expandidos
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() =>
+    focusEmployeeId ? computeAncestorIds(focusEmployeeId, employees) : new Set()
+  )
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const getEmployeeId = (employee: EmployeeHierarchy): string | undefined => employee.user_id ?? employee.employee_id
+
+  // Scroll hasta el nodo enfocado tras el primer render (con debounce por la animación)
+  useEffect(() => {
+    if (!focusEmployeeId || !scrollContainerRef.current) return
+    const timer = setTimeout(() => {
+      const el = scrollContainerRef.current?.querySelector<HTMLElement>(
+        `[data-focus-employee="${focusEmployeeId}"]`
+      )
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
+    }, 200)
+    return () => clearTimeout(timer)
+  }, [focusEmployeeId])
 
   // =====================================================
   // TREE BUILDER
@@ -114,11 +156,16 @@ export function HierarchyMapView({ employees, onEmployeeSelect }: Readonly<Hiera
 
   const renderNode = (node: TreeNode, depth = 0): React.ReactElement => {
     const hasChildren = node.children.length > 0
-
     const nodeId = getEmployeeId(node.employee)
+    const isFocused = !!focusEmployeeId && nodeId === focusEmployeeId
+    const isOnlyChild = node.children.length === 1
 
     return (
-      <div key={nodeId ?? node.employee.email ?? node.employee.full_name} className="flex flex-col items-center">
+      <div
+        key={nodeId ?? node.employee.email ?? node.employee.full_name}
+        className="flex flex-col items-center"
+        {...(isFocused ? { 'data-focus-employee': nodeId } : {})}
+      >
         {/* NODO */}
         <HierarchyNode
           employee={node.employee}
@@ -126,26 +173,42 @@ export function HierarchyMapView({ employees, onEmployeeSelect }: Readonly<Hiera
           onToggleExpand={hasChildren ? () => toggleExpand(nodeId) : undefined}
           onClick={() => onEmployeeSelect?.(node.employee)}
           depth={depth}
+          className={isFocused ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : undefined}
         />
 
-        {/* CONECTOR VERTICAL */}
+        {/* CONECTORES Y DESCENDIENTES */}
         {hasChildren && node.isExpanded && (
-          <div className="w-0.5 h-8 bg-border" />
-        )}
+          <>
+            {/* Línea vertical que baja del card hasta el riel horizontal */}
+            <div className="w-0.5 h-8 bg-border shrink-0" />
 
-        {/* HIJOS */}
-        {hasChildren && node.isExpanded && (
-          <div className="flex items-start gap-8">
-            {node.children.map(child => (
-              <div key={getEmployeeId(child.employee) ?? child.employee.email ?? child.employee.full_name} className="relative">
-                {/* CONECTOR HORIZONTAL (para múltiples hijos) */}
-                {node.children.length > 1 && (
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-px h-8 bg-border" />
-                )}
-                {renderNode(child, depth + 1)}
-              </div>
-            ))}
-          </div>
+            {/* Fila de hijos */}
+            <div className="flex items-start gap-8">
+              {node.children.map((child, i) => {
+                const isFirst = i === 0
+                const isLast = i === node.children.length - 1
+                const childId = getEmployeeId(child.employee) ?? child.employee.email ?? child.employee.full_name
+                return (
+                  <div key={childId} className="relative flex flex-col items-center">
+                    {/* Riel horizontal: segmento que conecta con los hermanos */}
+                    {!isOnlyChild && (
+                      <div
+                        className={cn(
+                          'absolute top-0 h-0.5 bg-border',
+                          isFirst && 'left-1/2 right-[-16px]',
+                          isLast && 'left-[-16px] right-1/2',
+                          !isFirst && !isLast && 'left-[-16px] right-[-16px]',
+                        )}
+                      />
+                    )}
+                    {/* Stub vertical desde el riel hasta el nodo hijo */}
+                    <div className="w-0.5 h-8 bg-border" />
+                    {renderNode(child, depth + 1)}
+                  </div>
+                )
+              })}
+            </div>
+          </>
         )}
       </div>
     )
@@ -164,7 +227,7 @@ export function HierarchyMapView({ employees, onEmployeeSelect }: Readonly<Hiera
   }
 
   return (
-    <div className="relative h-full min-h-[600px] overflow-auto bg-accent/20 rounded-lg">
+    <div ref={scrollContainerRef} className="relative h-full min-h-[600px] overflow-auto bg-accent/20 rounded-lg">
       {/* ZOOM CONTROLS */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2 bg-background rounded-lg border p-2 shadow-sm">
         <Button

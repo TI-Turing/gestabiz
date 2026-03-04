@@ -349,7 +349,7 @@ export default function UserProfile({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-card flex flex-col">
         {/* Header */}
-        <div className="relative bg-gradient-to-r from-primary/20 to-secondary/20 p-8">
+        <div className="relative bg-linear-to-r from-primary/20 to-secondary/20 p-8">
           {/* Botón cerrar */}
           <button
             onClick={onClose}

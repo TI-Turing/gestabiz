@@ -177,7 +177,7 @@ export function ChatWindow({
             alt={title}
             fallbackText={title}
             size="md"
-            className="flex-shrink-0"
+            className="shrink-0"
             maxRetries={5}
             retryDelay={800}
           />
@@ -189,7 +189,7 @@ export function ChatWindow({
           </div>
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {/* Acciones futuras: llamada, videollamada - ocultas en móvil */}
           <Button variant="ghost" size="icon" disabled title="Llamada (próximamente)" className="hidden sm:flex h-9 w-9">
             <Phone className="h-4 w-4 sm:h-5 sm:w-5" />

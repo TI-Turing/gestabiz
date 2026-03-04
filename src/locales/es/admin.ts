@@ -1,4 +1,4 @@
-// Módulos de administración y sistema - Recursos, Permisos, Reportes, Admin, Búsqueda
+﻿// Módulos de administración y sistema - Recursos, Permisos, Reportes, Admin, Búsqueda
 export const businessResources = {
   title: 'Recursos del Negocio',
   subtitle: 'Gestionar recursos físicos',
@@ -344,24 +344,24 @@ export const admin = {
       exportList: 'Exportar Lista'
     },
     risk: {
-      at_risk: 'Cliente en riesgo ({{days}} días)',
-      lost: 'Cliente perdido ({{days}} días)'
+      at_risk: 'Cliente en riesgo ({days} días)',
+      lost: 'Cliente perdido ({days} días)'
     },
     riskIndicators: {
       title: 'Cliente en Riesgo',
-      noRecentAppointments: 'Sin citas en {{days}} días',
-      cancelledAppointments: '{{count}} citas canceladas',
+      noRecentAppointments: 'Sin citas en {days} días',
+      cancelledAppointments: '{count} citas canceladas',
       lowEngagement: 'Baja interacción'
     },
     whatsappIntegration: {
       button: 'Enviar WhatsApp',
       tooltip: 'Enviar mensaje vía WhatsApp',
       opening: 'Abriendo WhatsApp...',
-      defaultMessage: 'Hola {{name}}, queremos ofrecerte...'
+      defaultMessage: 'Hola {name}, queremos ofrecerte...'
     },
     whatsapp: {
       missing: 'El cliente no tiene número de WhatsApp',
-      message_template: 'Hola {{name}}, esperamos que estés bien. ¿Te gustaría reservar tu próxima cita?'
+      message_template: 'Hola {name}, esperamos que estés bien. ¿Te gustaría reservar tu próxima cita?'
     }
   },
 
@@ -471,7 +471,7 @@ export const search = {
   // Results
   results: {
     title: 'Resultados de Búsqueda',
-    showing: 'Mostrando {{count}} resultados',
+    showing: 'Mostrando {count} resultados',
     noResults: 'No se encontraron resultados',
     tryDifferent: 'Intenta con un término diferente',
     filters: 'Filtros',
@@ -508,8 +508,8 @@ export const search = {
     availability: 'Disponibilidad',
     openNow: 'Abierto Ahora',
     acceptsOnlineBooking: 'Acepta Reservas en Línea',
-    minRating: 'Mínimo {{stars}} estrellas',
-    within: 'Dentro de {{distance}} km',
+    minRating: 'Mínimo {stars} estrellas',
+    within: 'Dentro de {distance} km',
     apply: 'Aplicar Filtros',
     clear: 'Limpiar Todo'
   },
@@ -534,19 +534,19 @@ export const search = {
       bookNow: 'Reservar Ahora',
       openNow: 'Abierto Ahora',
       closed: 'Cerrado',
-      opensAt: 'Abre a las {{time}}',
-      rating: '{{rating}} ({{count}} reseñas)',
-      distance: '{{distance}} km de distancia'
+      opensAt: 'Abre a las {time}',
+      rating: '{rating} ({count} reseñas)',
+      distance: '{distance} km de distancia'
     },
     services: {
-      duration: '{{duration}} min',
-      from: 'Desde {{price}}',
+      duration: '{duration} min',
+      from: 'Desde {price}',
       viewDetails: 'Ver Detalles',
       bookService: 'Reservar Servicio'
     },
     professionals: {
-      specialist: 'Especialista en {{specialty}}',
-      yearsExp: '{{years}} años de experiencia',
+      specialist: 'Especialista en {specialty}',
+      yearsExp: '{years} años de experiencia',
       viewProfile: 'Ver Perfil',
       bookAppointment: 'Reservar Cita'
     }

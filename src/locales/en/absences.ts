@@ -1,4 +1,4 @@
-// Absences - Complete absences and vacation system
+﻿// Absences - Complete absences and vacation system
 export const absences = {
   title: 'Absences and Vacations',
   subtitle: 'Manage employee absences',
@@ -33,8 +33,8 @@ export const absences = {
 
   daysRequested: {
     label: 'Days Requested',
-    total: '{{count}} days total',
-    businessDays: '{{count}} business days',
+    total: '{count} days total',
+    businessDays: '{count} business days',
     excludingWeekends: 'excluding weekends',
     excludingHolidays: 'excluding holidays'
   },
@@ -46,7 +46,7 @@ export const absences = {
     used: 'Used',
     pending: 'Pending',
     remaining: 'Remaining',
-    days: '{{count}} days',
+    days: '{count} days',
     accrued: 'Accrued This Year',
     carriedOver: 'Carried Over'
   },
@@ -54,7 +54,7 @@ export const absences = {
   // Affected appointments
   affectedAppointments: {
     title: 'Affected Appointments',
-    count: '{{count}} appointments will be affected',
+    count: '{count} appointments will be affected',
     noAppointments: 'No appointments scheduled during this period',
     willBeCancelled: 'These appointments will be cancelled:',
     clientsNotified: 'Clients will be notified automatically'
@@ -67,7 +67,7 @@ export const absences = {
     success: 'Request submitted successfully',
     error: 'Error submitting request',
     confirmTitle: 'Confirm Absence Request',
-    confirmMessage: 'This will affect {{count}} appointments. Clients will be notified. Continue?',
+    confirmMessage: 'This will affect {count} appointments. Clients will be notified. Continue?',
     confirm: 'Confirm',
     cancel: 'Cancel'
   },
@@ -110,7 +110,7 @@ export const absences = {
     typeRequired: 'Absence type is required',
     insufficientBalance: 'Insufficient vacation balance',
     overlapsExisting: 'Overlaps with existing absence',
-    tooFarInAdvance: 'Cannot request more than {{days}} days in advance',
+    tooFarInAdvance: 'Cannot request more than {days} days in advance',
     pastDate: 'Cannot select past dates'
   },
 
@@ -127,13 +127,13 @@ export const absences = {
     title: 'Invalid Days',
     weekends: 'Weekends',
     holidays: 'Holidays',
-    total: '{{count}} days will be excluded from the count'
+    total: '{count} days will be excluded from the count'
   },
 
   // Public holidays
   holidays: {
     title: 'Public Holidays',
-    inRange: '{{count}} holidays in selected range',
+    inRange: '{count} holidays in selected range',
     excluded: 'These days are excluded from the count'
   },
 
@@ -153,9 +153,9 @@ export const absences = {
     rejected: 'Rejected',
     cancelled: 'Cancelled',
     emergency: 'Emergency',
-    requestedOn: 'Requested on {{date}}',
-    approvedBy: 'Approved by {{name}}',
-    rejectedBy: 'Rejected by {{name}}'
+    requestedOn: 'Requested on {date}',
+    approvedBy: 'Approved by {name}',
+    rejectedBy: 'Rejected by {name}'
   },
 
   // Vacation widget
@@ -170,7 +170,7 @@ export const absences = {
     noInfo: 'Vacation information not available',
     used: 'Used',
     pending: 'Pending',
-    available: '{{days}} available',
+    available: '{days} available',
     viewDetails: 'View Details',
     requestVacation: 'Request Vacation'
   }

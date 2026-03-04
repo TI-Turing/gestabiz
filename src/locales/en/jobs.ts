@@ -1,4 +1,4 @@
-// Jobs - Complete recruitment module
+﻿// Jobs - Complete recruitment module
 export const jobs = {
   title: 'Job Vacancies',
   subtitle: 'Recruitment and applications',
@@ -18,7 +18,7 @@ export const jobs = {
   application: {
     title: 'Job Application',
     apply: 'Apply Now',
-    applyFor: 'Apply for {{position}}',
+    applyFor: 'Apply for {position}',
     submit: 'Submit Application',
     sending: 'Sending application...',
     success: 'Application submitted successfully',
@@ -45,7 +45,7 @@ export const jobs = {
     skillPlaceholder: 'Add a skill',
     addSkill: 'Add',
     experience: 'Required Experience',
-    yearsExperience: '{{years}} years',
+    yearsExperience: '{years} years',
     deadline: 'Application Deadline',
     contactEmail: 'Contact Email',
     contactPhone: 'Contact Phone'
@@ -75,8 +75,8 @@ export const jobs = {
     reject: 'Reject',
     contact: 'Contact',
     applicantInfo: 'Applicant Information',
-    appliedOn: 'Applied on {{date}}',
-    experience: '{{years}} years experience'
+    appliedOn: 'Applied on {date}',
+    experience: '{years} years experience'
   },
 
   // Applicant profile

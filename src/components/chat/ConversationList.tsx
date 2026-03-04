@@ -204,7 +204,7 @@ function ConversationItem({ conversation, isActive, onClick }: ConversationItemP
         alt={title}
         fallbackText={title}
         size="lg"
-        className="flex-shrink-0"
+        className="shrink-0"
         maxRetries={5}
         retryDelay={800}
       />
@@ -216,10 +216,10 @@ function ConversationItem({ conversation, isActive, onClick }: ConversationItemP
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
             {/* TODO: Implementar is_pinned desde conversation_members */}
             {false && (
-              <Pin className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+              <Pin className="h-3.5 w-3.5 text-primary shrink-0" />
             )}
             {conversation.is_archived && (
-              <Archive className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+              <Archive className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             )}
             <h3
               className={cn(
@@ -231,7 +231,7 @@ function ConversationItem({ conversation, isActive, onClick }: ConversationItemP
             </h3>
           </div>
           {timestamp && (
-            <span className="text-xs text-muted-foreground flex-shrink-0">
+            <span className="text-xs text-muted-foreground shrink-0">
               {timestamp}
             </span>
           )}
