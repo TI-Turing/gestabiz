@@ -121,6 +121,7 @@ export const clients = {
   client_updated: 'Cliente actualizado exitosamente',
   client_deleted: 'Cliente eliminado exitosamente',
   no_clients: 'No se encontraron clientes',
+  none: 'No hay clientes disponibles',
   search_clients: 'Buscar clientes...',
   frequent_clients: 'Clientes Frecuentes',
   inactive_clients: 'Clientes Inactivos',
@@ -131,8 +132,11 @@ export const clients = {
 // Gestión de Servicios
 export const services = {
   title: 'Servicios',
+  new: 'Nuevo Servicio',
   new_service: 'Nuevo Servicio',
+  edit: 'Editar Servicio',
   edit_service: 'Editar Servicio',
+  create: 'Crear Servicio',
   service_details: 'Detalles del Servicio',
   name: 'Nombre',
   category: 'Categoría',
@@ -144,11 +148,18 @@ export const services = {
   create_service: 'Crear Servicio',
   update_service: 'Actualizar Servicio',
   delete_service: 'Eliminar Servicio',
+  created: 'Servicio creado exitosamente',
   service_created: 'Servicio creado exitosamente',
+  updated: 'Servicio actualizado exitosamente',
   service_updated: 'Servicio actualizado exitosamente',
   service_deleted: 'Servicio eliminado exitosamente',
   no_services: 'No se encontraron servicios',
-  minutes: 'minutos'
+  minutes: 'minutos',
+  basicInfo: 'Información Básica',
+  namePlaceholder: 'Ingrese el nombre del servicio',
+  descriptionPlaceholder: 'Ingrese la descripción del servicio',
+  selectCategory: 'Seleccione una categoría',
+  pricing: 'Tarifas'
 }
 
 // Gestión de Ubicaciones
@@ -232,8 +243,22 @@ export const employees = {
     updateSuccess: 'Nivel jerárquico actualizado exitosamente',
     updateError: 'Error al actualizar nivel jerárquico',
     confirmChange: '¿Estás seguro de que deseas cambiar el nivel?',
-  },
-  types: {
+  },  management: {
+    title: 'Gestión de Empleados',
+    subtitle: 'Administra la jerarquía y rendimiento de tu equipo',
+    listView: 'Vista de Lista',
+    mapView: 'Vista de Mapa',
+    totalEmployees: 'Total de Empleados',
+    byLevel: 'Por Nivel',
+    avgOccupancy: 'Ocupación Prom',
+    avgRating: 'Calificación Prom',
+    filters: 'Filtros',
+    clearFilters: 'Limpiar Filtros',
+    employeesShown: 'empleados mostrados',
+    noEmployees: 'No se encontraron empleados',
+    error: 'Error al cargar empleados',
+    retry: 'Reintentar',
+  },  types: {
     fullTime: 'Tiempo Completo',
     partTime: 'Tiempo Parcial',
     contractor: 'Contratista',

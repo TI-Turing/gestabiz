@@ -6,5 +6,8 @@ export const validation = {
   businessRequired: 'La selección de negocio es requerida',
   clientNameRequired: 'El nombre del cliente es requerido',
   dateRequired: 'La fecha es requerida',
-  invalidTimeRange: 'Rango de tiempo inválido'
+  invalidTimeRange: 'Rango de tiempo inválido',
+  durationRequired: 'La duración es requerida',
+  serviceNameRequired: 'El nombre del servicio es requerido',
+  invalidPrice: 'Precio inválido'
 };

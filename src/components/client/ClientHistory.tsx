@@ -90,7 +90,9 @@ interface Employee {
 }
 
 export function ClientHistory({ userId, appointments, loading }: ClientHistoryProps) {
+  // ✅ TODOS LOS HOOKS DEBEN IR AL PRINCIPIO (antes de cualquier return)
   const { t } = useLanguage()
+  
   const [searchTerm, setSearchTerm] = useState('')
   const [filtersCollapsed, setFiltersCollapsed] = useState(false)
   
@@ -103,23 +105,51 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
   const [employeeFilters, setEmployeeFilters] = useState<string[]>([])
   const [priceRangeFilter, setPriceRangeFilter] = useState<string>('all')
   
-  // Search states for filter popovers
+  // Search states for typeahead
   const [businessSearch, setBusinessSearch] = useState('')
-  const [businessPopoverOpen, setBusinessPopoverOpen] = useState(false)
   const [locationSearch, setLocationSearch] = useState('')
-  const [locationPopoverOpen, setLocationPopoverOpen] = useState(false)
   const [serviceSearch, setServiceSearch] = useState('')
-  const [servicePopoverOpen, setServicePopoverOpen] = useState(false)
-  const [categorySearch, setCategorySearch] = useState('')
-  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false)
   const [employeeSearch, setEmployeeSearch] = useState('')
+  
+  // Popover states
+  const [businessPopoverOpen, setBusinessPopoverOpen] = useState(false)
+  const [locationPopoverOpen, setLocationPopoverOpen] = useState(false)
+  const [servicePopoverOpen, setServicePopoverOpen] = useState(false)
+  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false)
+  const [categorySearch, setCategorySearch] = useState('')
   const [employeePopoverOpen, setEmployeePopoverOpen] = useState(false)
-
-  // Pagination state
+  
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 20
-
-  // Appointments received via props from parent dashboard
+  const appointmentsPerPage = 5
+  
+  // Date Range
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  
+  // ✅ DEBUG: Log para verificar qué se está recibiendo
+  console.log('[ClientHistory] Props recibidas:', {
+    userId,
+    appointmentsCount: appointments?.length,
+    loading,
+    isArray: Array.isArray(appointments),
+    firstAppointment: appointments?.[0] ? {
+      id: appointments[0].id,
+      status: appointments[0].status,
+      hasService: !!appointments[0].service,
+      hasBusiness: !!appointments[0].business
+    } : null
+  })
+  
+  // ✅ FIX: Early return DESPUÉS de todos los hooks
+  if (!appointments || !Array.isArray(appointments)) {
+    console.log('[ClientHistory] Early return: appointments no válidos')
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">No hay datos de citas disponibles</p>
+      </div>
+    )
+  }
 
   // ✅ OPTIMIZACIÓN: Consolidar 5 useEffect → 1 useMemo para extraer todas las entidades únicas
   const filterEntities = useMemo(() => {
@@ -128,6 +158,17 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
     const servicesMap = new Map<string, Service>()
     const categoriesMap = new Map<string, Category>()
     const employeesMap = new Map<string, Employee>()
+
+    // ✅ FIX: Validar que appointments exista y sea un array
+    if (!appointments || !Array.isArray(appointments)) {
+      return {
+        businesses: [],
+        locations: [],
+        services: [],
+        categories: [],
+        employees: []
+      }
+    }
 
     for (const apt of appointments) {
       // Extract businesses
@@ -168,22 +209,40 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
       }
     }
 
-    // Sort all entities alphabetically
+    // Sort all entities alphabetically (con null safety)
     return {
-      businesses: Array.from(businessesMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
-      locations: Array.from(locationsMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
-      services: Array.from(servicesMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
-      categories: Array.from(categoriesMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
-      employees: Array.from(employeesMap.values()).sort((a, b) => a.full_name.localeCompare(b.full_name))
+      businesses: Array.from(businessesMap.values()).sort((a, b) => 
+        (a.name || '').localeCompare(b.name || '')
+      ),
+      locations: Array.from(locationsMap.values()).sort((a, b) => 
+        (a.name || '').localeCompare(b.name || '')
+      ),
+      services: Array.from(servicesMap.values()).sort((a, b) => 
+        (a.name || '').localeCompare(b.name || '')
+      ),
+      categories: Array.from(categoriesMap.values()).sort((a, b) => 
+        (a.name || '').localeCompare(b.name || '')
+      ),
+      employees: Array.from(employeesMap.values()).sort((a, b) => 
+        (a.full_name || '').localeCompare(b.full_name || '')
+      )
     }
   }, [appointments])
 
   // Destructure memoized entities
   const { businesses, locations, services, categories, employees } = filterEntities
+  console.log('[ClientHistory] filterEntities extracted, entities counts:', {
+    businessesCount: businesses?.length,
+    locationsCount: locations?.length,
+    servicesCount: services?.length,
+    categoriesCount: categories?.length,
+    employeesCount: employees?.length
+  })
 
   // Filtered appointments
   // Helper functions for filtering
   const matchesStatus = useCallback((apt: AppointmentWithRelations): boolean => {
+    console.log('[ClientHistory] matchesStatus called for apt:', apt?.id)
     if (statusFilters.length === 0) return true
     return statusFilters.some(filter => {
       if (filter === 'attended') return apt.status === 'completed'
@@ -226,6 +285,11 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
 
   // Filtering logic
   const filteredAppointments = useMemo(() => {
+    // ✅ FIX: Validar que appointments exista y sea un array
+    if (!appointments || !Array.isArray(appointments)) {
+      return []
+    }
+    
     return appointments.filter(apt => {
       return (
         matchesStatus(apt) &&
@@ -244,62 +308,128 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
 
   // Statistics
   const stats = useMemo(() => {
-    return {
-      total: filteredAppointments.length,
-      attended: filteredAppointments.filter(a => a.status === 'completed').length,
-      cancelled: filteredAppointments.filter(a => a.status === 'cancelled').length,
-      noShow: filteredAppointments.filter(a => a.status === 'no_show').length,
-      totalSpent: filteredAppointments
-        .filter(a => a.status === 'completed')
-        .reduce((sum, a) => sum + (a.service?.price || a.price || 0), 0)
+    console.log('[ClientHistory] Computing stats from filteredAppointments, count:', filteredAppointments?.length)
+    try {
+      return {
+        total: filteredAppointments.length,
+        attended: filteredAppointments.filter(a => a.status === 'completed').length,
+        cancelled: filteredAppointments.filter(a => a.status === 'cancelled').length,
+        noShow: filteredAppointments.filter(a => a.status === 'no_show').length,
+        totalSpent: filteredAppointments
+          .filter(a => a.status === 'completed')
+          .reduce((sum, a) => sum + (a.service?.price || a.price || 0), 0)
+      }
+    } catch (error) {
+      console.error('[ClientHistory] Error computing stats:', error)
+      throw error
     }
   }, [filteredAppointments])
 
   // Filtered businesses by search
   const filteredBusinesses = useMemo(() => {
-    if (!businessSearch.trim()) return businesses
-    const search = businessSearch.toLowerCase()
-    return businesses.filter(b => b.name.toLowerCase().includes(search))
+    console.log('[ClientHistory] filteredBusinesses computing, businesses:', {
+      count: businesses?.length,
+      isArray: Array.isArray(businesses),
+      type: typeof businesses,
+      firstItem: businesses?.[0] ? { id: businesses[0].id, name: businesses[0].name } : null
+    })
+    try {
+      if (!businessSearch.trim()) {
+        console.log('[ClientHistory] No business search, returning all businesses')
+        return businesses || []
+      }
+      const search = businessSearch.toLowerCase()
+      const result = businesses?.filter(b => (b.name || '').toLowerCase().includes(search)) || []
+      console.log('[ClientHistory] filteredBusinesses filtered, result count:', result.length)
+      return result
+    } catch (error) {
+      console.error('[ClientHistory] Error in filteredBusinesses:', error)
+      throw error
+    }
   }, [businesses, businessSearch])
 
   // Filtered locations - only show locations from selected businesses or all if no business selected
   const filteredLocations = useMemo(() => {
-    let available = locations
-    // Filter by selected businesses
-    if (businessFilters.length > 0) {
-      available = locations.filter(loc => businessFilters.includes(loc.business_id))
+    console.log('[ClientHistory] filteredLocations computing, locations count:', locations?.length)
+    try {
+      let available = locations || []
+      // Filter by selected businesses
+      if (businessFilters.length > 0) {
+        available = available.filter(loc => businessFilters.includes(loc.business_id))
+      }
+      // Apply search
+      if (!locationSearch.trim()) {
+        console.log('[ClientHistory] filteredLocations returning:', available.length)
+        return available
+      }
+      const search = locationSearch.toLowerCase()
+      const result = available.filter(loc => (loc.name || '').toLowerCase().includes(search))
+      console.log('[ClientHistory] filteredLocations after search:', result.length)
+      return result
+    } catch (error) {
+      console.error('[ClientHistory] Error in filteredLocations:', error)
+      throw error
     }
-    // Apply search
-    if (!locationSearch.trim()) return available
-    const search = locationSearch.toLowerCase()
-    return available.filter(loc => loc.name.toLowerCase().includes(search))
   }, [locations, locationSearch, businessFilters])
 
   // Filtered services - only show services from selected businesses or all if no business selected
   const filteredServices = useMemo(() => {
-    let available = services
-    // Filter by selected businesses
-    if (businessFilters.length > 0) {
-      available = services.filter(svc => businessFilters.includes(svc.business_id))
+    console.log('[ClientHistory] filteredServices computing, services count:', services?.length)
+    try {
+      let available = services || []
+      // Filter by selected businesses
+      if (businessFilters.length > 0) {
+        available = available.filter(svc => businessFilters.includes(svc.business_id))
+      }
+      // Apply search
+      if (!serviceSearch.trim()) {
+        console.log('[ClientHistory] filteredServices returning:', available.length)
+        return available
+      }
+      const search = serviceSearch.toLowerCase()
+      const result = available.filter(svc => (svc.name || '').toLowerCase().includes(search))
+      console.log('[ClientHistory] filteredServices after search:', result.length)
+      return result
+    } catch (error) {
+      console.error('[ClientHistory] Error in filteredServices:', error)
+      throw error
     }
-    // Apply search
-    if (!serviceSearch.trim()) return available
-    const search = serviceSearch.toLowerCase()
-    return available.filter(svc => svc.name.toLowerCase().includes(search))
   }, [services, serviceSearch, businessFilters])
 
   // Filtered categories by search
   const filteredCategories = useMemo(() => {
-    if (!categorySearch.trim()) return categories
-    const search = categorySearch.toLowerCase()
-    return categories.filter(cat => cat.name.toLowerCase().includes(search))
+    console.log('[ClientHistory] filteredCategories computing, categories count:', categories?.length)
+    try {
+      if (!categorySearch.trim()) {
+        console.log('[ClientHistory] filteredCategories returning all:', categories?.length)
+        return categories || []
+      }
+      const search = categorySearch.toLowerCase()
+      const result = (categories || []).filter(cat => (cat.name || '').toLowerCase().includes(search))
+      console.log('[ClientHistory] filteredCategories after search:', result.length)
+      return result
+    } catch (error) {
+      console.error('[ClientHistory] Error in filteredCategories:', error)
+      throw error
+    }
   }, [categories, categorySearch])
 
   // Filtered employees by search
   const filteredEmployees = useMemo(() => {
-    if (!employeeSearch.trim()) return employees
-    const search = employeeSearch.toLowerCase()
-    return employees.filter(emp => emp.full_name.toLowerCase().includes(search))
+    console.log('[ClientHistory] filteredEmployees computing, employees count:', employees?.length)
+    try {
+      if (!employeeSearch.trim()) {
+        console.log('[ClientHistory] filteredEmployees returning all:', employees?.length)
+        return employees || []
+      }
+      const search = employeeSearch.toLowerCase()
+      const result = (employees || []).filter(emp => (emp.full_name || '').toLowerCase().includes(search))
+      console.log('[ClientHistory] filteredEmployees after search:', result.length)
+      return result
+    } catch (error) {
+      console.error('[ClientHistory] Error in filteredEmployees:', error)
+      throw error
+    }
   }, [employees, employeeSearch])
 
   const getStatusBadgeForAppointment = (appointment: AppointmentWithRelations) => {
@@ -391,9 +521,16 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
     searchTerm !== ''
 
   // Pagination logic
-  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedAppointments = filteredAppointments.slice(startIndex, startIndex + itemsPerPage)
+  console.log('[ClientHistory] Before totalPages calculation, filteredAppointments:', {
+    exists: !!filteredAppointments,
+    isArray: Array.isArray(filteredAppointments),
+    length: filteredAppointments?.length,
+    appointmentsPerPage
+  })
+  const totalPages = Math.ceil(filteredAppointments.length / appointmentsPerPage)
+  const startIndex = (currentPage - 1) * appointmentsPerPage
+  const paginatedAppointments = filteredAppointments.slice(startIndex, startIndex + appointmentsPerPage)
+  console.log('[ClientHistory] Pagination calculated:', { totalPages, startIndex, paginatedCount: paginatedAppointments.length })
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -407,6 +544,9 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
       </div>
     )
   }
+
+  console.log('[ClientHistory] About to render - stats:', { total: stats?.total, attended: stats?.attended })
+  console.log('[ClientHistory] Pagination:', { currentPage, totalPages, paginatedAppointmentsCount: paginatedAppointments?.length })
 
   return (
     <div className="space-y-6">

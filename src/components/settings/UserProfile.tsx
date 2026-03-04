@@ -3,7 +3,7 @@ import { useKV } from '@/lib/useKV'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
 import { Upload, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { User as UserType } from '@/types'
@@ -237,12 +237,16 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
         {/* Avatar con botón de upload */}
         <div className="relative flex flex-col items-center">
           <div className="rounded-full bg-gradient-to-br from-primary/20 to-primary/5 p-1">
-            <Avatar key={formData.avatar_url} className="h-24 w-24 border-2 border-primary/20">
-              <AvatarImage src={formData.avatar_url} alt={formData.name} />
-              <AvatarFallback className="text-2xl font-semibold bg-primary/10 text-primary">
-                {getInitials(formData.name)}
-              </AvatarFallback>
-            </Avatar>
+            <ProfileAvatar
+              key={formData.avatar_url}
+              src={formData.avatar_url}
+              alt={formData.name}
+              fallbackText={formData.name}
+              size="2xl"
+              className="border-2 border-primary/20"
+              maxRetries={5}
+              retryDelay={800}
+            />
           </div>
           <label className={`absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-2 shadow-md transition-all border-2 border-background ${
             isUploadingAvatar 

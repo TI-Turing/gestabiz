@@ -2,7 +2,7 @@ import { JobApplication } from '@/hooks/useJobApplications'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
 import { CheckCircle, XCircle, Eye, Mail, Phone, Calendar, DollarSign, MessageSquare, UserCheck, Clock } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -56,10 +56,14 @@ export function ApplicationCard({
         <div className="flex items-start justify-between mb-4">
           {/* Applicant Info */}
           <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={application.applicant?.avatar_url} alt={application.applicant?.full_name} />
-              <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
-            </Avatar>
+            <ProfileAvatar
+              src={application.applicant?.avatar_url}
+              alt={application.applicant?.full_name}
+              fallbackText={application.applicant?.full_name}
+              size="lg"
+              maxRetries={5}
+              retryDelay={800}
+            />
             <div>
               <h3 className="font-semibold text-lg">{application.applicant?.full_name}</h3>
               <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">

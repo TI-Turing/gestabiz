@@ -816,15 +816,37 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           return acc;
         }, {} as Record<string, { full_name: string; avatar_url: string | null }>);
 
-        // Get employee services
-        const { data: employeeServicesData } = employeeIds.length > 0
-          ? await supabase
-              .from('employee_services')
-              .select('employee_id, service_id, services(name)')
-              .in('employee_id', employeeIds)
-          : { data: [] };
+        // Get employee services - FILTERED BY LOCATION if selected
+        let employeeServicesQuery = supabase
+          .from('employee_services')
+          .select('employee_id, service_id, services(name)');
 
-        // Map services by employee_id
+        if (employeeIds.length > 0) {
+          employeeServicesQuery = employeeServicesQuery.in('employee_id', employeeIds);
+          
+          // Add location filter if a location is selected
+          const selectedLocationId = filterLocation.length > 0 ? filterLocation[0] : null;
+          if (selectedLocationId) {
+            employeeServicesQuery = employeeServicesQuery.eq('location_id', selectedLocationId);
+            if (DEBUG_MODE) {
+              console.log('🔍 [AppointmentsCalendar] Filtrando employee_services por location:', selectedLocationId);
+            }
+          }
+        }
+
+        let employeeServicesData = [];
+        if (employeeIds.length > 0) {
+          const response = await employeeServicesQuery;
+          employeeServicesData = response.data || [];
+          if (response.error) {
+            console.error('❌ Error cargando employee_services:', response.error);
+            if (DEBUG_MODE) {
+              console.log('Error details:', response.error);
+            }
+          }
+        }
+
+        // Map services by employee_id (now location-filtered)
         const servicesMap = (employeeServicesData || []).reduce((acc, es) => {
           if (!acc[es.employee_id]) {
             acc[es.employee_id] = [];
@@ -851,21 +873,133 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
 
         setEmployees(formattedEmployees);
         if (DEBUG_MODE) {
+          const selectedLocationId = filterLocation.length > 0 ? filterLocation[0] : null;
           console.log('👨‍💼 [AppointmentsCalendar] Empleados cargados:', {
             total: formattedEmployees.length,
-            empleados: formattedEmployees.map(e => ({ id: e.id, nombre: e.profile_name }))
+            ubicacion_filtrada: selectedLocationId || 'TODAS',
+            empleados: formattedEmployees.map(e => ({ 
+              id: e.id, 
+              nombre: e.profile_name,
+              servicios: e.services // Now location-filtered
+            }))
           });
         }
 
-        // Get services for this business
-        const { data: servicesData } = await supabase
-          .from('services')
-          .select('id, name')
-          .eq('business_id', resolvedBusinessId);
+        // Get services - FILTERED by both location AND employee if selected
+        const selectedLocationId = filterLocation.length > 0 ? filterLocation[0] : null;
+        let availableServices: Array<{ id: string; name: string }> = [];
         
-        if (servicesData) {
-          setServices(servicesData.map(s => ({ id: s.id, name: s.name })));
+        // Strategy: If both employee and location are selected, use employee_services
+        // If only location is selected, use location_services
+        // Otherwise, load all business services
+        
+        if (employeeIds.length > 0 && selectedLocationId) {
+          // CASE 1: Employee + Location selected → Use employee_services filtered by both
+          if (DEBUG_MODE) {
+            console.log('🎯 [AppointmentsCalendar] Filtrando servicios por EMPLEADO + SEDE:', {
+              empleados: employeeIds,
+              sede: selectedLocationId
+            });
+          }
+          
+          const { data: empServData, error: empServError } = await supabase
+            .from('employee_services')
+            .select('service_id, services(id, name)')
+            .in('employee_id', employeeIds)
+            .eq('location_id', selectedLocationId);
+
+          if (empServError) {
+            console.error('❌ Error cargando employee_services para filtro:', empServError);
+            setServices([]);
+            return;
+          }
+
+          // Extract unique services
+          const serviceMap = new Map<string, string>();
+          (empServData || []).forEach(es => {
+            if (es.services && typeof es.services === 'object' && 'id' in es.services && 'name' in es.services) {
+              serviceMap.set(es.services.id as string, es.services.name as string);
+            }
+          });
+
+          availableServices = Array.from(serviceMap.entries()).map(([id, name]) => ({ id, name }));
+          
+          if (DEBUG_MODE) {
+            console.log('✅ [AppointmentsCalendar] Servicios del empleado en esa sede:', {
+              total: availableServices.length,
+              servicios: availableServices.map(s => s.name)
+            });
+          }
+          
+        } else if (selectedLocationId) {
+          // CASE 2: Only location selected → Use location_services
+          if (DEBUG_MODE) {
+            console.log('📍 [AppointmentsCalendar] Filtrando servicios solo por SEDE:', selectedLocationId);
+          }
+          
+          const { data: locationServicesData, error: locServError } = await supabase
+            .from('location_services')
+            .select('service_id')
+            .eq('location_id', selectedLocationId);
+
+          if (locServError) {
+            console.error('❌ Error cargando location_services:', locServError);
+            setServices([]);
+            return;
+          }
+
+          const availableServiceIds = (locationServicesData || []).map(ls => ls.service_id);
+          
+          if (availableServiceIds.length > 0) {
+            const { data: servicesData, error: servError } = await supabase
+              .from('services')
+              .select('id, name')
+              .eq('business_id', resolvedBusinessId)
+              .in('id', availableServiceIds);
+
+            if (servError) {
+              console.error('❌ Error cargando services:', servError);
+              setServices([]);
+              return;
+            }
+
+            availableServices = (servicesData || []).map(s => ({ id: s.id, name: s.name }));
+          }
+          
+          if (DEBUG_MODE) {
+            console.log('✅ [AppointmentsCalendar] Servicios de la sede:', {
+              total: availableServices.length,
+              servicios: availableServices.map(s => s.name)
+            });
+          }
+          
+        } else {
+          // CASE 3: No filters → Load all business services
+          if (DEBUG_MODE) {
+            console.log('🌐 [AppointmentsCalendar] Cargando TODOS los servicios del negocio');
+          }
+          
+          const { data: servicesData, error: servError } = await supabase
+            .from('services')
+            .select('id, name')
+            .eq('business_id', resolvedBusinessId);
+
+          if (servError) {
+            console.error('❌ Error cargando services:', servError);
+            setServices([]);
+            return;
+          }
+
+          availableServices = (servicesData || []).map(s => ({ id: s.id, name: s.name }));
+          
+          if (DEBUG_MODE) {
+            console.log('✅ [AppointmentsCalendar] Servicios globales:', {
+              total: availableServices.length
+            });
+          }
         }
+
+        setServices(availableServices);
 
         // Nota: fetchAppointments se llamará desde el siguiente effect
         // cuando business.id esté disponible
@@ -878,7 +1012,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     };
 
     fetchData();
-  }, [user, propBusinessId]); // ✅ Añadido propBusinessId para que se recargue al cambiar de negocio
+  }, [user, propBusinessId, filterLocation, filterEmployee]); // ✅ Dependencias: user, business ID, filtro ubicación y filtro empleados
 
   // Fetch appointments cuando currentBusinessId o selectedDate cambian
   useEffect(() => {

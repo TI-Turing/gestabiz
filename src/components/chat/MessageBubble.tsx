@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Pencil, Reply, Trash2, Download } from 'lucide-react';
 import { PushPin, ProhibitInset } from '@phosphor-icons/react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { Button } from '@/components/ui/button';
 import { MessageStatus } from './MessageStatus';
 import { ImagePreview } from './ImagePreview';
@@ -97,10 +97,15 @@ export function MessageBubble({
     >
       {/* Avatar (solo para mensajes de otros) */}
       {!isOwnMessage && (
-        <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
-          <AvatarImage src={message.sender?.avatar_url || undefined} alt={senderName} />
-          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-        </Avatar>
+        <ProfileAvatar
+          src={message.sender?.avatar_url}
+          alt={senderName}
+          fallbackText={senderName}
+          size="sm"
+          className="flex-shrink-0"
+          maxRetries={5}
+          retryDelay={800}
+        />
       )}
 
       {/* Contenedor del mensaje */}

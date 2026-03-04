@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MoreVertical, Phone, Video, Search as SearchIcon } from 'lucide-react';
 import { ChatCircle, HandWaving, MagnifyingGlass } from '@phosphor-icons/react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -172,10 +172,15 @@ export function ChatWindow({
       {/* Header */}
       <div className="border-b bg-background p-3 sm:p-4 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-          <Avatar className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0">
-            <AvatarImage src={otherUser?.avatar_url || undefined} alt={title} />
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
+          <ProfileAvatar
+            src={otherUser?.avatar_url}
+            alt={title}
+            fallbackText={title}
+            size="md"
+            className="flex-shrink-0"
+            maxRetries={5}
+            retryDelay={800}
+          />
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold text-sm sm:text-base truncate">{title}</h2>
             {otherUser?.email && (

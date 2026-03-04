@@ -55,6 +55,11 @@ export const common = {
     print: 'Print',
   },
 
+  // General
+  note: 'Note',
+  submitting: 'Submitting...',
+  disabled: 'Disabled',
+
   // States
   states: {
     loading: 'Loading...',

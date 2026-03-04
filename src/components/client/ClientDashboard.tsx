@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Calendar, User as UserIcon, Plus, Clock, MapPin, Phone, Mail, FileText, List, CalendarDays, History, MessageCircle, X, Heart } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
 import { UnifiedLayout } from '@/components/layouts/UnifiedLayout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -756,20 +756,15 @@ export function ClientDashboard({
                                     const hasBg = !!(svcImg || locImg)
                                     return (
                                       <div className={`flex items-center gap-3 p-2 rounded-lg border ${hasBg ? 'bg-black/30 backdrop-blur-sm border-white/10' : 'bg-card/50 border-border/50'}`}>
-                                      <Avatar className="h-8 w-8 shrink-0">
-                                        <AvatarImage
-                                          src={appointment.employee?.avatar_url || undefined}
-                                          alt={appointment.employee?.full_name || 'Profesional'}
-                                        />
-                                        <AvatarFallback className="text-xs">
-                                          {(appointment.employee?.full_name || 'U')
-                                            .split(' ')
-                                            .map(n => n[0])
-                                            .join('')
-                                            .toUpperCase()
-                                            .slice(0, 2)}
-                                        </AvatarFallback>
-                                      </Avatar>
+                                      <ProfileAvatar
+                                        src={appointment.employee?.avatar_url}
+                                        alt={appointment.employee?.full_name || 'Profesional'}
+                                        fallbackText={appointment.employee?.full_name || 'U'}
+                                        size="sm"
+                                        className="shrink-0"
+                                        maxRetries={5}
+                                        retryDelay={800}
+                                      />
                                         <div className="min-w-0 flex-1">
                                           <p className={`text-sm font-medium line-clamp-1 ${hasBg ? 'text-white' : 'text-foreground'}`}>
                                             {appointment.employee.full_name}
@@ -1095,20 +1090,15 @@ export function ClientDashboard({
                     Profesional que te atenderá
                   </h3>
                   <div className="flex items-center gap-3 mt-2 p-3 bg-muted/30 rounded-lg">
-                    <Avatar className="h-12 w-12 border-2 border-primary/20">
-                      <AvatarImage
-                        src={selectedAppointment.employee.avatar_url || undefined}
-                        alt={selectedAppointment.employee.full_name || 'Profesional'}
-                      />
-                      <AvatarFallback>
-                        {(selectedAppointment.employee.full_name || 'U')
-                          .split(' ')
-                          .map(n => n[0])
-                          .join('')
-                          .toUpperCase()
-                          .slice(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <ProfileAvatar
+                      src={selectedAppointment.employee.avatar_url}
+                      alt={selectedAppointment.employee.full_name || 'Profesional'}
+                      fallbackText={selectedAppointment.employee.full_name || 'U'}
+                      size="lg"
+                      className="border-2 border-primary/20"
+                      maxRetries={5}
+                      retryDelay={800}
+                    />
                     <div className="flex-1">
                       <p className="text-base font-semibold text-foreground mb-1">
                         {selectedAppointment.employee.full_name}
@@ -1127,11 +1117,6 @@ export function ClientDashboard({
                           </p>
                         )}
                       </div>
-                      {!selectedAppointment.employee.avatar_url && (
-                        <p className="text-xs text-muted-foreground italic mt-1">
-                          Sin foto de perfil
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>

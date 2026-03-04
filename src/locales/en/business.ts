@@ -121,6 +121,7 @@ export const clients = {
   client_updated: 'Client updated successfully',
   client_deleted: 'Client deleted successfully',
   no_clients: 'No clients found',
+  none: 'No clients available',
   search_clients: 'Search clients...',
   frequent_clients: 'Frequent Clients',
   inactive_clients: 'Inactive Clients',
@@ -131,8 +132,11 @@ export const clients = {
 // Services Management
 export const services = {
   title: 'Services',
+  new: 'New Service',
   new_service: 'New Service',
+  edit: 'Edit Service',
   edit_service: 'Edit Service',
+  create: 'Create Service',
   service_details: 'Service Details',
   name: 'Name',
   category: 'Category',
@@ -144,11 +148,18 @@ export const services = {
   create_service: 'Create Service',
   update_service: 'Update Service',
   delete_service: 'Delete Service',
+  created: 'Service created successfully',
   service_created: 'Service created successfully',
+  updated: 'Service updated successfully',
   service_updated: 'Service updated successfully',
   service_deleted: 'Service deleted successfully',
   no_services: 'No services found',
-  minutes: 'minutes'
+  minutes: 'minutes',
+  basicInfo: 'Basic Information',
+  namePlaceholder: 'Enter service name',
+  descriptionPlaceholder: 'Enter service description',
+  selectCategory: 'Select a category',
+  pricing: 'Pricing'
 }
 
 // Locations Management
@@ -232,6 +243,22 @@ export const employees = {
     updateSuccess: 'Hierarchy level updated successfully',
     updateError: 'Error updating hierarchy level',
     confirmChange: 'Are you sure you want to change the level?',
+  },
+  management: {
+    title: 'Employee Management',
+    subtitle: 'Manage your team hierarchy and performance',
+    listView: 'List View',
+    mapView: 'Map View',
+    totalEmployees: 'Total Employees',
+    byLevel: 'By Level',
+    avgOccupancy: 'Avg Occupancy',
+    avgRating: 'Avg Rating',
+    filters: 'Filters',
+    clearFilters: 'Clear Filters',
+    employeesShown: 'employees shown',
+    noEmployees: 'No employees found',
+    error: 'Error loading employees',
+    retry: 'Retry',
   },
   types: {
     fullTime: 'Full Time',

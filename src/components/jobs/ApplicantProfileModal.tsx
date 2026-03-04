@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CheckCircle } from '@phosphor-icons/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -81,15 +81,14 @@ export function ApplicantProfileModal({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage
-                src={application.applicant?.avatar_url}
-                alt={application.applicant?.full_name}
-              />
-              <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <ProfileAvatar
+              src={application.applicant?.avatar_url}
+              alt={application.applicant?.full_name}
+              fallbackText={application.applicant?.full_name}
+              size="xl"
+              maxRetries={5}
+              retryDelay={800}
+            />
             <div>
               <h2 className="text-2xl font-bold">{application.applicant?.full_name}</h2>
               <p className="text-muted-foreground">Aplicación para: {application.vacancy?.title}</p>

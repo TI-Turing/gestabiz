@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
 import { toast } from 'sonner'
 import { 
   ArrowLeft, 
@@ -549,12 +549,14 @@ export function ApplicationDetail({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={application.profiles?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/20 text-primary text-lg">
-                    {application.profiles ? getInitials(application.profiles.full_name) : '??'}
-                  </AvatarFallback>
-                </Avatar>
+                <ProfileAvatar
+                  src={application.profiles?.avatar_url}
+                  alt={application.profiles?.full_name || 'Usuario Desconocido'}
+                  fallbackText={application.profiles?.full_name || 'U'}
+                  size="xl"
+                  maxRetries={5}
+                  retryDelay={800}
+                />
                 <div>
                   <p className="text-foreground font-semibold">
                     {application.profiles?.full_name || 'Usuario Desconocido'}

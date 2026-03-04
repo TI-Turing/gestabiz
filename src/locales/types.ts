@@ -23,7 +23,7 @@ export interface Translations {
   nav: typeof import('./en/navigation').nav
   ui: typeof import('./en/navigation').ui
   validation: typeof import('./en/navigation').validation
-  profile: typeof import('./en/navigation').profile
+  profile: typeof import('./en/navigation').profile & typeof import('./en/profile').profile
   
   // Business entities (Phase 4)
   business: typeof import('./en/business').business

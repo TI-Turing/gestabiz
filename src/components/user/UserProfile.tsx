@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useEmployeeBusinesses } from '@/hooks/useEmployeeBusinesses';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
@@ -360,19 +361,15 @@ export default function UserProfile({
           {/* Profile Info */}
           <div className="flex items-center gap-6">
             {/* Avatar */}
-            {userData.avatar_url ? (
-              <img 
-                src={userData.avatar_url} 
-                alt={userData.full_name}
-                className="w-24 h-24 rounded-full border-4 border-background object-cover"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-primary/10 border-4 border-background flex items-center justify-center">
-                <span className="text-4xl font-bold text-primary">
-                  {userData.full_name[0]?.toUpperCase()}
-                </span>
-              </div>
-            )}
+            <ProfileAvatar
+              src={userData.avatar_url}
+              alt={userData.full_name}
+              fallbackText={userData.full_name}
+              size="2xl"
+              className="border-4 border-background"
+              maxRetries={5}
+              retryDelay={800}
+            />
 
             {/* Name and Stats */}
             <div className="flex-1">

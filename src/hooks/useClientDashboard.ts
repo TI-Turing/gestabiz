@@ -287,6 +287,11 @@ export function useClientDashboard(clientId: string | null) {
       */
 
       console.log('[useClientDashboard] 🔍 Using RPC directly (Edge Function disabled for debugging)');
+      console.log('[useClientDashboard] 📊 Params:', { 
+        clientId, 
+        preferredCityName, 
+        preferredRegionName 
+      });
 
       // ✅ Fallback: Usar RPC directamente si Edge Function falla o no retorna datos
       if (!dashboardData) {
@@ -294,6 +299,12 @@ export function useClientDashboard(clientId: string | null) {
           p_client_id: clientId,
           p_preferred_city_name: preferredCityName,
           p_preferred_region_name: preferredRegionName,
+        });
+
+        console.log('[useClientDashboard] 🔥 RPC Response:', { 
+          hasData: !!rpcData,
+          error: rpcError,
+          suggestionsCount: rpcData?.suggestions?.length || 0
         });
 
         if (rpcError) {
@@ -318,6 +329,13 @@ export function useClientDashboard(clientId: string | null) {
         ? (suggestionsRaw as BusinessSuggestion[])
         : [];
       const suggestionsWithFrequent = mergeSuggestions(frequentBusinesses, baseSuggestions);
+
+      console.log('[useClientDashboard] ✅ Final data:', { 
+        appointmentsCount: normalizedAppointments.length,
+        frequentCount: frequentBusinesses.length,
+        baseSuggestionsCount: baseSuggestions.length,
+        mergedSuggestionsCount: suggestionsWithFrequent.length
+      });
 
       return {
         ...dashboardData,

@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
 import { toast } from 'sonner'
 import { 
   ArrowLeft, 
@@ -383,12 +383,14 @@ export function VacancyDetail({
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={application.profiles?.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary/20 text-primary">
-                          {application.profiles ? getInitials(application.profiles.full_name) : '??'}
-                        </AvatarFallback>
-                      </Avatar>
+                      <ProfileAvatar
+                        src={application.profiles?.avatar_url}
+                        alt={application.profiles?.full_name || 'Usuario Desconocido'}
+                        fallbackText={application.profiles?.full_name || 'U'}
+                        size="md"
+                        maxRetries={5}
+                        retryDelay={800}
+                      />
                       <div className="flex-1">
                         <p className="text-foreground font-medium">
                           {application.profiles?.full_name || 'Usuario Desconocido'}

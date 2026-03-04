@@ -22,7 +22,6 @@
 
 DROP FUNCTION IF EXISTS get_client_dashboard_data(uuid, text, text) CASCADE;
 DROP FUNCTION IF EXISTS get_client_dashboard_data(uuid) CASCADE;
-
 CREATE OR REPLACE FUNCTION get_client_dashboard_data(
   p_client_id uuid,
   p_preferred_city_name text DEFAULT NULL,
@@ -250,15 +249,12 @@ BEGIN
   );
 END;
 $$;
-
 GRANT EXECUTE ON FUNCTION get_client_dashboard_data(uuid, text, text) TO authenticated;
-
 COMMENT ON FUNCTION get_client_dashboard_data(uuid, text, text) IS 
 'Retorna todos los datos del dashboard del cliente en una sola llamada. 
 Incluye: appointments (con relaciones completas), reviewedAppointmentIds, pendingReviewsCount, 
 favorites (SIN filtro de ciudad), suggestions (con filtro de ciudad/región), y stats.
 OPTIMIZADO: Reduce 10-15 requests a 1 solo request.';
-
 -- =====================================================
 -- 2. ABSENCE FUNCTIONS
 -- =====================================================
@@ -276,10 +272,8 @@ BEGIN
   RETURN (p_end_date - p_start_date) + 1;
 END;
 $$;
-
 COMMENT ON FUNCTION calculate_absence_days(date, date) IS 
 'Calcula el número de días de ausencia entre dos fechas (inclusivo).';
-
 -- Verificar disponibilidad de empleado en fecha
 CREATE OR REPLACE FUNCTION is_employee_available_on_date(
   p_employee_id uuid,
@@ -304,10 +298,8 @@ BEGIN
   RETURN NOT v_has_absence;
 END;
 $$;
-
 COMMENT ON FUNCTION is_employee_available_on_date(uuid, uuid, date) IS 
 'Verifica si un empleado está disponible en una fecha específica (no tiene ausencias aprobadas).';
-
 -- =====================================================
 -- 3. TRIGGER FUNCTIONS
 -- =====================================================
@@ -345,10 +337,8 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 COMMENT ON FUNCTION auto_insert_owner_to_business_employees() IS 
 'Trigger function: Auto-registra al owner del negocio como empleado (manager) al crear un nuevo negocio.';
-
 -- Sincronizar business_roles desde business_employees
 CREATE OR REPLACE FUNCTION sync_business_roles_from_business_employees()
 RETURNS trigger
@@ -409,11 +399,9 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 COMMENT ON FUNCTION sync_business_roles_from_business_employees() IS 
 'Trigger function: Mantiene sincronizado business_roles con business_employees. 
 Manager → Admin (hierarchy_level=1), Employee → Employee (hierarchy_level=4).';
-
 -- =====================================================
 -- 4. TRIGGERS (solo si no existen)
 -- =====================================================
@@ -424,14 +412,12 @@ CREATE TRIGGER trg_auto_insert_owner_to_business_employees
   AFTER INSERT ON businesses
   FOR EACH ROW
   EXECUTE FUNCTION auto_insert_owner_to_business_employees();
-
 -- Trigger: Sincronizar business_roles desde business_employees
 DROP TRIGGER IF EXISTS trg_sync_business_roles_from_business_employees ON business_employees;
 CREATE TRIGGER trg_sync_business_roles_from_business_employees
   AFTER INSERT OR UPDATE ON business_employees
   FOR EACH ROW
   EXECUTE FUNCTION sync_business_roles_from_business_employees();
-
 -- =====================================================
 -- FIN DEL SNAPSHOT BASE
 -- =====================================================
@@ -441,4 +427,4 @@ CREATE TRIGGER trg_sync_business_roles_from_business_employees
 -- 2. NO incluye definiciones de tablas (ya existen en producción)
 -- 3. NO incluye RLS policies (ya existen en producción)
 -- 4. Si necesitas el esquema completo de tablas, ejecuta: npx supabase db pull
--- 5. Todas las migraciones anteriores están en: supabase/migrations_backup_20251201_100323/
+-- 5. Todas las migraciones anteriores están en: supabase/migrations_backup_20251201_100323/;

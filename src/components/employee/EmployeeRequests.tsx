@@ -3,7 +3,7 @@ import { useKV } from '@/lib/useKV'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
 import { Check, X, User, Clock, EnvelopeSimple as Mail, Phone } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { User as UserType, Business, EmployeeRequest } from '@/types'
@@ -113,12 +113,14 @@ export default function EmployeeRequests({ business, user }: Readonly<EmployeeRe
                 <div key={request.id} className="border rounded-lg p-4 space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={requestUser.avatar_url} alt={requestUser.name} />
-                        <AvatarFallback>
-                          {requestUser.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <ProfileAvatar
+                        src={requestUser.avatar_url}
+                        alt={requestUser.name}
+                        fallbackText={requestUser.name}
+                        size="md"
+                        maxRetries={5}
+                        retryDelay={800}
+                      />
                       <div>
                         <h4 className="font-semibold">{requestUser.name}</h4>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -194,12 +196,14 @@ export default function EmployeeRequests({ business, user }: Readonly<EmployeeRe
                 <div key={request.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={requestUser.avatar_url} alt={requestUser.name} />
-                        <AvatarFallback className="text-xs">
-                          {requestUser.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <ProfileAvatar
+                        src={requestUser.avatar_url}
+                        alt={requestUser.name}
+                        fallbackText={requestUser.name}
+                        size="sm"
+                        maxRetries={5}
+                        retryDelay={800}
+                      />
                       <div>
                         <h4 className="font-medium">{requestUser.name}</h4>
                         <p className="text-sm text-muted-foreground">{requestUser.email}</p>

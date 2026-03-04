@@ -5,13 +5,14 @@ import { appointments } from './appointments'
 import { dashboard } from './dashboard'
 import { calendar } from './calendar'
 import { settings } from './settings'
-import { nav, ui, validation, profile } from './navigation'
+import { nav, ui, validation, profile as navigationProfile } from './navigation'
+import { profile as profileTranslations } from './profile'
 import { business, clients, services, locations, employees } from './business'
 import { notifications } from './notifications'
 import { reviews } from './reviews'
 import { jobs } from './jobs'
 import { absences } from './absences'
-import { businessResources, permissions, reports, admin, search, taxConfiguration, userProfile } from './admin'
+import { businessResources, permissions, comprehensiveReports, clientManagement, reports, admin, search, taxConfiguration, userProfile } from './admin'
 import { landing, employee } from './landing'
 import { financial } from './financial'
 import { transactions } from './transactions'
@@ -62,7 +63,10 @@ export const en = {
   nav,
   ui,
   validation,
-  profile,
+  profile: {
+    ...navigationProfile,
+    ...profileTranslations
+  },
   // Business entities
   business,
   clients,
@@ -80,6 +84,8 @@ export const en = {
   // Admin & System
   businessResources,
   permissions,
+  comprehensiveReports,
+  clientManagement,
   reports,
   admin,
   search,

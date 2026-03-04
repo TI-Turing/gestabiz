@@ -5,6 +5,7 @@ export const businessResources = {
   addResource: 'Agregar Recurso',
   editResource: 'Editar Recurso',
   deleteResource: 'Eliminar Recurso',
+  allTypes: 'Todos los tipos',
   
   // Form
   form: {
@@ -50,6 +51,7 @@ export const businessResources = {
     capacity: 'Capacidad',
     status: 'Estado',
     rate: 'Tarifa por Hora',
+    price: 'Precio',
     actions: 'Acciones'
   },
 
@@ -104,11 +106,97 @@ export const permissions = {
   no_permissions: 'No hay permisos configurados',
 }
 
+export const comprehensiveReports = {
+  title: 'Reportes Integrales',
+  subtitle: 'Análisis e insights completos del negocio',
+  
+  // Actions
+  actions: {
+    update: 'Actualizar',
+    updating: 'Actualizando',
+  },
+  
+  // Errors
+  errors: {
+    generate_failed: 'Error al generar reportes',
+  },
+  
+  // WhatsApp
+  whatsapp: {
+    missing: 'No hay número de WhatsApp disponible para este cliente',
+    message_template: '¡Hola {name}! Te extrañamos en nuestro negocio. Agenda tu próxima cita.',
+  },
+  
+  // Status
+  status: {
+    active: 'Activo',
+    at_risk: 'En Riesgo',
+    lost: 'Perdido',
+  },
+  
+  // Metrics
+  metrics: {
+    total_appointments: 'Total de Citas',
+    revenue: 'Ingresos',
+    average: 'Promedio',
+    new_in_period: 'nuevos en período',
+    completion_rate: 'Tasa de Completación',
+  },
+  
+  // Tabs
+  tabs: {
+    summary: 'Resumen',
+  },
+  
+  // Descriptions
+  descriptions: {
+    by_status: 'Distribución de citas por estado',
+    client_metrics: 'Métricas de engagement y retención de clientes',
+    peak_hours: 'Horarios con mayor demanda de citas',
+    employee_performance: 'Métricas de rendimiento por empleado',
+    top_services: 'Servicios más populares por reservas',
+    recurring_clients: 'Clientes con múltiples citas',
+  },
+  
+  // Cards
+  cards: {
+    client_analysis: 'Análisis de Clientes',
+    peak_hours: 'Horarios Pico',
+    recurring_clients: 'Clientes Recurrentes',
+  },
+  
+  // Labels
+  labels: {
+    active_clients: 'Clientes Activos',
+    retention_rate: 'Tasa de Retención',
+    at: 'a las',
+    efficiency: 'eficiencia',
+    average_short: 'prom',
+    last_visit: 'Última visita',
+    days: 'días',
+  },
+}
+
+export const clientManagement = {
+  never: 'Nunca',
+}
+
 export const reports = {
   title: 'Reportes',
   subtitle: 'Analítica e insights del negocio',
+    // Period Selection
+  period_selection: 'Seleccionar Período',
+  this_week: 'Esta Semana',
+  this_month: 'Este Mes',
+  this_quarter: 'Este Trimestre',
+  last_year: 'Último Año',
   
-  // Business Overview Report
+  // Reports
+  peak_hours: 'Horarios Pico',
+  appointments_by_status: 'Citas por Estado',
+  employee_performance: 'Rendimiento de Empleados',
+  top_services: 'Servicios Más Populares',
+    // Business Overview Report
   business_overview: {
     title: 'Resumen del Negocio',
     totalRevenue: 'Ingresos Totales',
@@ -394,18 +482,25 @@ export const search = {
   sorting: {
     label: 'Ordenar por',
     relevance: 'Relevancia',
+    balanced: 'Balanceado',
     rating: 'Calificación',
     distance: 'Distancia',
     priceAsc: 'Precio: Menor a Mayor',
     priceDesc: 'Precio: Mayor a Menor',
     nameAsc: 'Nombre: A-Z',
     nameDesc: 'Nombre: Z-A',
-    newest: 'Más Recientes'
+    newest: 'Más Recientes',
+    oldest: 'Más Antiguos'
   },
 
   // Filters
   filters: {
     title: 'Filtros',
+    filters: 'Filtros',
+    filter: 'Filtro',
+    active: 'Activo',
+    enableLocation: 'Habilitar Ubicación',
+    enableLocationShort: 'Ubicación',
     category: 'Categoría',
     priceRange: 'Rango de Precio',
     rating: 'Calificación',
@@ -421,6 +516,19 @@ export const search = {
 
   // Results Page
   resultsPage: {
+    title: 'Resultados de Búsqueda',
+    searching: 'Buscando',
+    in: 'en',
+    resultsFor: 'resultado para',
+    resultsForPlural: 'resultados para',
+    noResultsTitle: 'No se encontraron resultados',
+    noResultsDescription: 'Intenta ajustar tus términos de búsqueda o filtros',
+    typeLabels: {
+      service: 'Servicio',
+      business: 'Negocio',
+      category: 'Categoría',
+      user: 'Usuario'
+    },
     businesses: {
       viewProfile: 'Ver Perfil',
       bookNow: 'Reservar Ahora',

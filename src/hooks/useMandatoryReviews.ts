@@ -16,8 +16,15 @@ export interface PendingReviewCheck {
 
 const REMIND_LATER_KEY = 'appointsync_remind_later_reviews';
 const REMIND_LATER_DURATION = 5 * 60 * 1000; // 5 minutes
+const LAST_CHECK_KEY = 'appointsync_last_review_check';
+const CHECK_THROTTLE_DURATION = 60 * 60 * 1000; // 1 hour
 
 interface RemindLaterEntry {
+  userId: string;
+  timestamp: number;
+}
+
+interface LastCheckEntry {
   userId: string;
   timestamp: number;
 }
@@ -37,22 +44,45 @@ export function useMandatoryReviews(
 ) {
   const [pendingReviewsCount, setPendingReviewsCount] = useState(0);
   const [shouldShowModal, setShouldShowModal] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
 
   // ✅ Calcular pending reviews SIN hacer query adicional
   const checkPendingReviews = useCallback(() => {
+    // Indicar que estamos validando (pero NO mostrar modal aún)
+    setIsValidating(true);
+    
+    // ✅ PRIMERO: Check throttling - solo verificar cada 1 hora (ANTES de cualquier otra validación)
+    if (userId) {
+      const lastCheckTime = getLastCheckTime(userId);
+      const now = Date.now();
+      const timeSinceLastCheck = now - lastCheckTime;
+
+      // Si ya verificamos hace menos de 1 hora, no mostrar modal
+      if (lastCheckTime > 0 && timeSinceLastCheck < CHECK_THROTTLE_DURATION) {
+        setPendingReviewsCount(0);
+        setShouldShowModal(false);
+        setIsValidating(false);
+        return;
+      }
+      
+      // Actualizar timestamp AHORA (independientemente de si hay citas o no)
+      updateLastCheckTime(userId);
+    }
+    
+    // SEGUNDO: Validar si hay userId y appointments
     if (!userId || completedAppointments.length === 0) {
       setPendingReviewsCount(0);
       setShouldShowModal(false);
-      setIsInitialized(true);
+      setIsValidating(false);
       return;
     }
 
-    // Check if user has "remind later" active
+    // TERCERO: Check "remind later"
     const remindLater = getRemindLaterStatus(userId);
     if (remindLater) {
+      setPendingReviewsCount(0);
       setShouldShowModal(false);
-      setIsInitialized(true);
+      setIsValidating(false);
       return;
     }
 
@@ -64,16 +94,11 @@ export function useMandatoryReviews(
 
     setPendingReviewsCount(pendingCount);
     
-    // FIX: Solo mostrar modal si hay reviews pendientes Y ya estamos inicializados
-    // Esto evita el flash del modal durante la carga inicial
-    if (isInitialized) {
-      setShouldShowModal(pendingCount > 0);
-    } else {
-      // Primera vez: mostrar solo si hay pendientes
-      setShouldShowModal(pendingCount > 0);
-      setIsInitialized(true);
-    }
-  }, [userId, completedAppointments, reviewedAppointmentIds, isInitialized]);
+    // ✅ SOLO mostrar modal si definitivamente hay reviews pendientes
+    // El modal NO se muestra durante la validación, solo cuando ya confirmamos que hay pendientes
+    setShouldShowModal(pendingCount > 0);
+    setIsValidating(false);
+  }, [userId, completedAppointments, reviewedAppointmentIds]);
 
   useEffect(() => {
     checkPendingReviews();
@@ -196,5 +221,44 @@ export function cleanupExpiredRemindLater() {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Error cleaning up remind later:', error);
+  }
+}
+
+// ✅ NEW: Helper para obtener el timestamp del último check
+function getLastCheckTime(userId: string): number {
+  try {
+    const existing = localStorage.getItem(LAST_CHECK_KEY);
+    if (!existing) return 0;
+
+    const entries: LastCheckEntry[] = JSON.parse(existing);
+    const userEntry = entries.find((e) => e.userId === userId);
+
+    return userEntry?.timestamp || 0;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error getting last check time:', error);
+    return 0;
+  }
+}
+
+// ✅ NEW: Helper para actualizar el timestamp del último check
+function updateLastCheckTime(userId: string): void {
+  try {
+    const existing = localStorage.getItem(LAST_CHECK_KEY);
+    const entries: LastCheckEntry[] = existing ? JSON.parse(existing) : [];
+
+    // Remove old entry for this user
+    const filtered = entries.filter((e) => e.userId !== userId);
+
+    // Add new entry
+    filtered.push({
+      userId,
+      timestamp: Date.now(),
+    });
+
+    localStorage.setItem(LAST_CHECK_KEY, JSON.stringify(filtered));
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Error updating last check time:', error);
   }
 }

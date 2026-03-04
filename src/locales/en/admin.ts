@@ -5,6 +5,7 @@ export const businessResources = {
   addResource: 'Add Resource',
   editResource: 'Edit Resource',
   deleteResource: 'Delete Resource',
+  allTypes: 'All types',
   
   // Form
   form: {
@@ -50,6 +51,7 @@ export const businessResources = {
     capacity: 'Capacity',
     status: 'Status',
     rate: 'Hourly Rate',
+    price: 'Price',
     actions: 'Actions'
   },
 
@@ -104,9 +106,97 @@ export const permissions = {
   no_permissions: 'No permissions configured',
 }
 
+export const comprehensiveReports = {
+  title: 'Comprehensive Reports',
+  subtitle: 'Complete business analytics and insights',
+  
+  // Actions
+  actions: {
+    update: 'Update',
+    updating: 'Updating',
+  },
+  
+  // Errors
+  errors: {
+    generate_failed: 'Failed to generate reports',
+  },
+  
+  // WhatsApp
+  whatsapp: {
+    missing: 'No WhatsApp number available for this client',
+    message_template: 'Hello {name}! We miss you at our business. Schedule your next appointment.',
+  },
+  
+  // Status
+  status: {
+    active: 'Active',
+    at_risk: 'At Risk',
+    lost: 'Lost',
+  },
+  
+  // Metrics
+  metrics: {
+    total_appointments: 'Total Appointments',
+    revenue: 'Revenue',
+    average: 'Average',
+    new_in_period: 'new in period',
+    completion_rate: 'Completion Rate',
+  },
+  
+  // Tabs
+  tabs: {
+    summary: 'Summary',
+  },
+  
+  // Descriptions
+  descriptions: {
+    by_status: 'Distribution of appointments by status',
+    client_metrics: 'Client engagement and retention metrics',
+    peak_hours: 'Busiest times for appointments',
+    employee_performance: 'Performance metrics by employee',
+    top_services: 'Most popular services by bookings',
+    recurring_clients: 'Clients with multiple appointments',
+  },
+  
+  // Cards
+  cards: {
+    client_analysis: 'Client Analysis',
+    peak_hours: 'Peak Hours',
+    recurring_clients: 'Recurring Clients',
+  },
+  
+  // Labels
+  labels: {
+    active_clients: 'Active Clients',
+    retention_rate: 'Retention Rate',
+    at: 'at',
+    efficiency: 'efficiency',
+    average_short: 'avg',
+    last_visit: 'Last visit',
+    days: 'days',
+  },
+}
+
+export const clientManagement = {
+  never: 'Never',
+}
+
 export const reports = {
   title: 'Reports',
   subtitle: 'Business analytics and insights',
+  
+  // Period Selection
+  period_selection: 'Select Period',
+  this_week: 'This Week',
+  this_month: 'This Month',
+  this_quarter: 'This Quarter',
+  last_year: 'Last Year',
+  
+  // Reports
+  peak_hours: 'Peak Hours',
+  appointments_by_status: 'Appointments by Status',
+  employee_performance: 'Employee Performance',
+  top_services: 'Top Services',
   
   // Business Overview Report
   business_overview: {
@@ -394,18 +484,25 @@ export const search = {
   sorting: {
     label: 'Sort by',
     relevance: 'Relevance',
+    balanced: 'Balanced',
     rating: 'Rating',
     distance: 'Distance',
     priceAsc: 'Price: Low to High',
     priceDesc: 'Price: High to Low',
     nameAsc: 'Name: A-Z',
     nameDesc: 'Name: Z-A',
-    newest: 'Newest First'
+    newest: 'Newest First',
+    oldest: 'Oldest First'
   },
 
   // Filters
   filters: {
     title: 'Filters',
+    filters: 'Filters',
+    filter: 'Filter',
+    active: 'Active',
+    enableLocation: 'Enable Location',
+    enableLocationShort: 'Location',
     category: 'Category',
     priceRange: 'Price Range',
     rating: 'Rating',
@@ -421,6 +518,19 @@ export const search = {
 
   // Results Page
   resultsPage: {
+    title: 'Search Results',
+    searching: 'Searching',
+    in: 'in',
+    resultsFor: 'result for',
+    resultsForPlural: 'results for',
+    noResultsTitle: 'No results found',
+    noResultsDescription: 'Try adjusting your search terms or filters',
+    typeLabels: {
+      service: 'Service',
+      business: 'Business',
+      category: 'Category',
+      user: 'User'
+    },
     businesses: {
       viewProfile: 'View Profile',
       bookNow: 'Book Now',

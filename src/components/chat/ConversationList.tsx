@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Search, Pin, Archive, X } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -199,13 +199,15 @@ function ConversationItem({ conversation, isActive, onClick }: ConversationItemP
       )}
     >
       {/* Avatar */}
-      <Avatar className="h-12 w-12 flex-shrink-0">
-        <AvatarImage
-          src={conversation.other_user?.avatar_url || undefined}
-          alt={title}
-        />
-        <AvatarFallback>{initials}</AvatarFallback>
-      </Avatar>
+      <ProfileAvatar
+        src={conversation.other_user?.avatar_url}
+        alt={title}
+        fallbackText={title}
+        size="lg"
+        className="flex-shrink-0"
+        maxRetries={5}
+        retryDelay={800}
+      />
 
       {/* Contenido */}
       <div className="flex-1 min-w-0">

@@ -55,7 +55,7 @@ export const settings = {
         description: 'Según las preferencias del sistema'
       }
     },
-    currentTheme: 'Tema actual: {{theme}}',
+    currentTheme: 'Tema actual: {theme}',
     systemThemeNote: 'El tema cambia automáticamente según las preferencias de tu sistema operativo',
     changeAnytime: 'Puedes cambiar el tema en cualquier momento'
   },
@@ -109,10 +109,22 @@ export const settings = {
     },
     operationSettings: {
       title: 'Configuración de Operación',
-      allowOnlineBooking: 'Permitir reservas en línea',
-      autoConfirm: 'Confirmación automática',
-      autoReminders: 'Recordatorios automáticos',
-      showPrices: 'Mostrar precios públicamente'
+      allowOnlineBooking: {
+        label: 'Permitir reservas en línea',
+        description: 'Permite que los clientes reserven en línea'
+      },
+      autoConfirm: {
+        label: 'Confirmación automática',
+        description: 'Confirma automáticamente las nuevas citas'
+      },
+      autoReminders: {
+        label: 'Recordatorios automáticos',
+        description: 'Envía recordatorios automáticamente a los clientes'
+      },
+      showPrices: {
+        label: 'Mostrar precios públicamente',
+        description: 'Muestra los precios en perfiles públicos'
+      }
     },
     nameRequired: 'El nombre del negocio es requerido',
     saveSettings: 'Guardar Configuración'
@@ -122,14 +134,39 @@ export const settings = {
   employeePrefs: {
     title: 'Preferencias de Empleado',
     subtitle: 'Configura tus preferencias de trabajo',
+    profileUpdateSuccess: 'Perfil actualizado exitosamente',
+    profileUpdateError: 'Error al actualizar perfil',
     availability: {
       title: 'Disponibilidad',
+      description: 'Administra tu disponibilidad para asignaciones y recordatorios',
+      availableForHire: {
+        label: 'Disponible para contratación',
+        description: 'Indica a los negocios que estás abierto a nuevas oportunidades'
+      },
+      notifyAssignments: {
+        label: 'Notificar asignaciones',
+        description: 'Recibe notificaciones de nuevas asignaciones'
+      },
+      reminders: {
+        label: 'Recordatorios',
+        description: 'Recibe recordatorios sobre tu agenda y citas'
+      },
       availableForAppointments: 'Disponible para nuevas citas',
       notifyNewAssignments: 'Notificar nuevas asignaciones',
       appointmentReminders: 'Recordatorios de citas'
     },
     schedule: {
       title: 'Mi Horario de Trabajo',
+      description: 'Define tu horario laboral para cada día de la semana',
+      days: {
+        monday: 'Lunes',
+        tuesday: 'Martes',
+        wednesday: 'Miércoles',
+        thursday: 'Jueves',
+        friday: 'Viernes',
+        saturday: 'Sábado',
+        sunday: 'Domingo'
+      },
       workingDay: 'Día laboral',
       restDay: 'Día de descanso',
       startTime: 'Inicio',
@@ -140,15 +177,29 @@ export const settings = {
     messages: {
       title: 'Mensajes de Clientes',
       allowMessages: 'Permitir mensajes de clientes',
-      description: 'Cuando está habilitado, los clientes pueden enviarte mensajes directos'
+      description: 'Cuando está habilitado, los clientes pueden enviarte mensajes directos',
+      allowClientMessages: {
+        label: 'Permitir mensajes de clientes',
+        description: 'Cuando está habilitado, los clientes pueden enviarte mensajes directos',
+        successEnabled: 'Mensajes de clientes habilitados',
+        successDisabled: 'Mensajes de clientes deshabilitados',
+        errorBusinessId: 'Se requiere el ID del negocio para actualizar esta preferencia',
+        error: 'Error al actualizar la preferencia de mensajes'
+      }
     },
     professionalInfo: {
       title: 'Información Profesional',
       subtitle: 'Tu experiencia y tipo de trabajo preferido',
+      description: 'Cuéntanos sobre tu experiencia profesional',
       summaryLabel: 'Resumen Profesional',
       summaryPlaceholder: 'Describe tu experiencia, habilidades y especialidades...',
+      minCharacters: '{count} / 50 caracteres mínimos',
       yearsExperienceLabel: 'Años de Experiencia',
       workTypeLabel: 'Tipo de Trabajo Preferido',
+      errors: {
+        summaryTooShort: 'El resumen debe tener al menos 50 caracteres',
+        experienceRange: 'La experiencia debe estar entre 0 y 50 años'
+      },
       workTypes: {
         fullTime: 'Tiempo Completo',
         partTime: 'Medio Tiempo',
@@ -158,28 +209,53 @@ export const settings = {
     },
     salary: {
       title: 'Expectativas Salariales',
+      description: 'Define tu rango salarial esperado',
       minLabel: 'Salario Mínimo Esperado',
       maxLabel: 'Salario Máximo Esperado',
       minPlaceholder: 'Monto mínimo',
       maxPlaceholder: 'Monto máximo',
-      invalidRange: 'El salario mínimo no puede ser mayor que el máximo'
+      invalidRange: 'El salario mínimo no puede ser mayor que el máximo',
+      errors: {
+        minGreaterThanMax: 'El salario mínimo no puede ser mayor que el máximo'
+      }
     },
     specializations: {
       title: 'Especializaciones',
+      description: 'Agrega tus especializaciones profesionales',
       noSpecializations: 'No hay especializaciones agregadas aún',
       newPlaceholder: 'Nueva especialización',
+      placeholder: 'Escribe una especialización',
+      successAdd: 'Especialización agregada exitosamente',
+      successRemove: 'Especialización eliminada exitosamente',
       addButton: 'Agregar'
     },
     languages: {
       title: 'Idiomas',
+      description: 'Agrega los idiomas que hablas',
       noLanguages: 'No hay idiomas agregados aún',
       newPlaceholder: 'Idioma (ej: Inglés - Avanzado)',
+      placeholder: 'Escribe un idioma',
+      successAdd: 'Idioma agregado exitosamente',
+      successRemove: 'Idioma eliminado exitosamente',
       addButton: 'Agregar'
     },
     certifications: {
       title: 'Certificaciones y Licencias',
+      description: 'Muestra tus certificaciones y credenciales',
       noCertifications: 'No hay certificaciones agregadas aún',
       addButton: 'Agregar Certificación',
+      namePlaceholder: 'Nombre de la certificación *',
+      issuerPlaceholder: 'Entidad emisora *',
+      issueDatePlaceholder: 'Fecha de emisión *',
+      expiryDatePlaceholder: 'Fecha de vencimiento',
+      credentialIdPlaceholder: 'ID de credencial',
+      credentialUrlPlaceholder: 'URL de credencial',
+      issuedLabel: 'Emitida',
+      expiresLabel: 'Vence',
+      viewCredential: 'Ver credencial',
+      requiredFields: 'Completa todos los campos requeridos',
+      successAdd: 'Certificación agregada exitosamente',
+      successRemove: 'Certificación eliminada exitosamente',
       form: {
         nameLabel: 'Nombre de la Certificación',
         namePlaceholder: 'Nombre de la certificación o licencia',
@@ -198,12 +274,16 @@ export const settings = {
     },
     links: {
       title: 'Enlaces Profesionales',
+      description: 'Agrega tus enlaces profesionales',
       portfolioLabel: 'Portafolio / Sitio Web',
       portfolioPlaceholder: 'https://tu-portafolio.com',
       linkedinLabel: 'LinkedIn',
-      linkedinPlaceholder: 'https://linkedin.com/in/tuperfil'
+      linkedinPlaceholder: 'https://linkedin.com/in/tuperfil',
+      githubLabel: 'GitHub',
+      githubPlaceholder: 'https://github.com/tu-usuario'
     },
     saveButton: 'Guardar Preferencias',
+    saveChanges: 'Guardar Cambios',
     resetButton: 'Restablecer'
   },
 
@@ -213,6 +293,23 @@ export const settings = {
     subtitle: 'Configura tus preferencias de reserva',
     bookingPrefs: {
       title: 'Preferencias de Reserva',
+      description: 'Gestiona cómo quieres recibir información de tus reservas',
+      reminders: {
+        label: 'Recordatorios de citas',
+        description: 'Recibe recordatorios antes de tus citas'
+      },
+      emailConfirmation: {
+        label: 'Confirmación por email',
+        description: 'Recibe un email de confirmación después de reservar'
+      },
+      promotions: {
+        label: 'Promociones',
+        description: 'Recibe promociones y ofertas especiales'
+      },
+      savePayment: {
+        label: 'Guardar método de pago',
+        description: 'Guarda tu método de pago para agilizar el checkout'
+      },
       appointmentReminders: 'Recordatorios de citas',
       emailConfirmation: 'Confirmación por email',
       promotionNotifications: 'Notificaciones de promociones',
@@ -220,8 +317,12 @@ export const settings = {
     },
     advanceTime: {
       title: 'Tiempo de Anticipación Preferido',
+      description: 'Con cuánta anticipación prefieres agendar tus citas',
       label: 'Tiempo de aviso preferido para citas',
       options: {
+        oneHour: '1 hora',
+        twoHours: '2 horas',
+        fourHours: '4 horas',
         sameDay: 'Mismo día',
         oneDay: '1 día',
         twoDays: '2 días',
@@ -232,11 +333,19 @@ export const settings = {
     serviceHistory: {
       title: 'Historial de Servicios',
       label: 'Guardar mi historial de servicios para recomendaciones',
-      description: 'Usamos esto para sugerir servicios similares'
+      description: 'Usamos esto para sugerir servicios similares',
+      completedServices: '{count} servicios completados',
+      viewHistory: 'Ver historial'
     },
     paymentMethods: {
       title: 'Métodos de Pago',
       noneAdded: 'No hay métodos de pago agregados',
+      options: {
+        card: 'Tarjeta de Crédito/Débito',
+        cash: 'Efectivo',
+        transfer: 'Transferencia Bancaria',
+        pse: 'PSE'
+      },
       types: {
         card: 'Tarjeta de Crédito/Débito',
         pse: 'PSE',
@@ -251,11 +360,26 @@ export const settings = {
   // Danger Zone
   dangerZone: {
     title: 'Zona de Peligro',
-    subtitle: 'Acciones irreversibles de la cuenta',
+    description: 'Acciones irreversibles de la cuenta',
+    warning: {
+      label: 'Advertencia',
+      message: 'Estas acciones son permanentes y no se pueden deshacer. Procede con extrema precaución.'
+    },
     deactivate: {
       title: 'Desactivar Cuenta',
+      subtitle: 'Suspender temporalmente tu cuenta. Puedes reactivarla en cualquier momento.',
       description: 'Suspender temporalmente tu cuenta. Puedes reactivarla en cualquier momento.',
       button: 'Desactivar Cuenta',
+      whatHappens: '¿Qué sucede cuando desactivas?',
+      consequences: {
+        markedInactive: 'Tu cuenta será marcada como inactiva',
+        sessionClosed: 'Todas las sesiones activas se cerrarán',
+        futureAppointments: 'Las citas futuras se cancelarán',
+        noLogin: 'No podrás iniciar sesión',
+        dataPreserved: 'Todos tus datos se conservarán'
+      },
+      dataNotDeleted: 'Tus datos NO serán eliminados',
+      contactSupport: 'Para reactivar, simplemente inicia sesión nuevamente o contacta soporte',
       confirmTitle: '¿Estás seguro de que deseas desactivar tu cuenta?',
       confirmDescription: 'Tu cuenta será suspendida temporalmente. Todos tus datos se conservarán y podrás reactivarla en cualquier momento iniciando sesión nuevamente.',
       inputLabel: 'Confirma tu email para continuar:',
@@ -268,6 +392,32 @@ export const settings = {
       title: 'Eliminar Cuenta',
       description: 'Eliminar permanentemente tu cuenta y todos los datos asociados. Esta acción no se puede deshacer.',
       button: 'Eliminar Cuenta',
+      step1Title: 'Confirma Tu Identidad',
+      step2Title: 'Confirmación Final',
+      step1Description: 'Por favor verifica tu dirección de email para continuar',
+      step2Description: 'Esta es tu última oportunidad para cancelar',
+      step1Warning: 'Esto eliminará permanentemente tu cuenta y todos los datos asociados',
+      emailPrompt: 'Confirma tu email',
+      emailPlaceholder: 'tu@email.com',
+      understandCheckbox: 'Entiendo que esta acción es permanente e irreversible',
+      finalWarning: 'Advertencia Final',
+      typeExactly: 'Escribe exactamente',
+      confirmPlaceholder: 'DESACTIVAR CUENTA',
+      confirmDetails: 'Qué será eliminado',
+      accountLabel: 'Cuenta',
+      profileLabel: 'Perfil',
+      rolesLabel: 'Roles',
+      activeLabel: 'activos',
+      appointmentsLabel: 'Citas',
+      cancelledAuto: 'Canceladas automáticamente',
+      dataPreservedNote: 'Los datos históricos se conservarán para cumplimiento legal',
+      continue: 'Continuar',
+      deactivating: 'Desactivando',
+      deactivateNow: 'Desactivar Ahora',
+      successTitle: 'Cuenta desactivada exitosamente',
+      successDescription: 'Tu cuenta ha sido desactivada. Puedes reactivarla iniciando sesión nuevamente.',
+      errorTitle: 'Error al desactivar cuenta',
+      unknownError: 'Ocurrió un error desconocido',
       confirmTitle: 'Eliminar cuenta permanentemente',
       warningTitle: 'Advertencia: Esta acción es irreversible',
       warningDescription: 'Estás a punto de eliminar permanentemente tu cuenta y todos los datos asociados. Esto incluye:',
@@ -279,7 +429,6 @@ export const settings = {
         preferences: 'Todas tus preferencias y configuraciones'
       },
       confirmText: 'Escribe "DESACTIVAR CUENTA" para confirmar',
-      confirmPlaceholder: 'DESACTIVAR CUENTA',
       mustTypeCorrectly: 'Debes escribir "DESACTIVAR CUENTA" para confirmar',
       cancel: 'Cancelar',
       confirm: 'Sí, eliminar permanentemente',
