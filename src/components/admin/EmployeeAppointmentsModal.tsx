@@ -23,6 +23,7 @@ import {
   Info,
   AlertCircle,
 } from 'lucide-react'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { supabase } from '@/lib/supabase'
 import {
   Dialog,
@@ -82,14 +83,7 @@ interface AppointmentDetail {
 // CONSTANTES
 // =====================================================
 
-const PERIOD_OPTIONS: { value: AppointmentsPeriod; label: string }[] = [
-  { value: '7d',  label: '7 días' },
-  { value: '30d', label: '30 días' },
-  { value: '90d', label: '90 días' },
-  { value: '6m',  label: '6 meses' },
-  { value: '1y',  label: '1 año' },
-  { value: 'all', label: 'Todo' },
-]
+// PERIOD_OPTIONS se construye dentro del componente para soportar i18n
 
 function periodToFrom(period: AppointmentsPeriod): Date | null {
   const now = new Date()
@@ -118,6 +112,16 @@ export function EmployeeAppointmentsModal({
   const [period, setPeriod] = useState<AppointmentsPeriod>('30d')
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const { t } = useLanguage()
+
+  const periodOptions: { value: AppointmentsPeriod; label: string }[] = [
+    { value: '7d',  label: t('employeeProfile.periods.7d') },
+    { value: '30d', label: t('employeeProfile.periods.30d') },
+    { value: '90d', label: t('employeeProfile.periods.90d') },
+    { value: '6m',  label: t('employeeProfile.periods.6m') },
+    { value: '1y',  label: t('employeeProfile.periods.1y') },
+    { value: 'all', label: t('employeeProfile.periods.all') },
+  ]
 
   // =====================================================
   // QUERY
@@ -221,7 +225,7 @@ export function EmployeeAppointmentsModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-500" />
-            Citas completadas — {employeeName}
+            {t('employeeProfile.appointments.headerTitle')} — {employeeName}
             {initialCount !== undefined && (
               <Badge variant="secondary" className="ml-1">
                 {initialCount}
@@ -233,8 +237,7 @@ export function EmployeeAppointmentsModal({
                   <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs text-sm">
-                  Historial de citas con estado "completada" atendidas por este empleado
-                  en el período seleccionado.
+                  {t('employeeProfile.appointments.infoTooltip')}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -243,7 +246,7 @@ export function EmployeeAppointmentsModal({
 
         {/* SELECTOR DE PERÍODO */}
         <div className="flex gap-2 flex-wrap">
-          {PERIOD_OPTIONS.map(opt => (
+          {periodOptions.map(opt => (
             <Button
               key={opt.value}
               variant={period === opt.value ? 'default' : 'outline'}
@@ -260,17 +263,17 @@ export function EmployeeAppointmentsModal({
           <div className="grid grid-cols-3 gap-3">
             <MiniStat
               icon={<CheckCircle className="w-4 h-4 text-green-500" />}
-              label="Completadas"
+              label={t('employeeProfile.appointments.stats.completed')}
               value={String(stats.total)}
             />
             <MiniStat
               icon={<DollarSign className="w-4 h-4 text-emerald-500" />}
-              label="Ingresos"
+              label={t('employeeProfile.appointments.stats.revenue')}
               value={`$${stats.totalRevenue.toLocaleString('es-CO')}`}
             />
             <MiniStat
               icon={<Clock className="w-4 h-4 text-blue-500" />}
-              label="Duración prom."
+              label={t('employeeProfile.appointments.stats.avgDuration')}
               value={stats.avgDuration > 0 ? `${stats.avgDuration} min` : '—'}
             />
           </div>
@@ -280,7 +283,7 @@ export function EmployeeAppointmentsModal({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por cliente, servicio o sede…"
+            placeholder={t('employeeProfile.appointments.searchPlaceholder')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9"
@@ -288,21 +291,23 @@ export function EmployeeAppointmentsModal({
         </div>
 
         {/* LISTA */}
-        {isLoading && <LoadingState />}
+        {isLoading && <LoadingState message={t('employeeProfile.appointments.loading')} />}
         {!isLoading && filtered.length === 0 && (
           <EmptyState
             message={
               search
-                ? 'No hay citas que coincidan con la búsqueda'
-                : 'No hay citas completadas en este período'
+                ? t('employeeProfile.appointments.noResults')
+                : t('employeeProfile.appointments.empty')
             }
           />
         )}
         {!isLoading && filtered.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
-              {filtered.length} cita{filtered.length === 1 ? '' : 's'}
-              {search ? ' encontradas' : ''}
+              {filtered.length === 1
+                ? t('employeeProfile.appointments.countSingular', { count: filtered.length })
+                : t('employeeProfile.appointments.countPlural', { count: filtered.length })}
+              {search ? ` ${t('employeeProfile.appointments.found')}` : ''}
             </p>
               {filtered.map(apt => (
               <AppointmentRow
@@ -336,6 +341,7 @@ function AppointmentRow({
   isExpanded,
   onToggle,
 }: Readonly<AppointmentRowProps>): ReactElement {
+  const { t } = useLanguage()
   return (
     <Card className="overflow-hidden">
       {/* FILA PRINCIPAL — siempre visible */}
@@ -358,7 +364,7 @@ function AppointmentRow({
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
           <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
           <span className="text-sm font-medium truncate">
-            {apt.client_name ?? 'Cliente sin nombre'}
+            {apt.client_name ?? t('employeeProfile.appointments.row.unknownClient')}
           </span>
         </div>
 
@@ -392,41 +398,41 @@ function AppointmentRow({
         <div className="border-t px-4 py-3 bg-secondary/30 grid grid-cols-2 gap-3 text-xs">
           <DetailItem
             icon={<Calendar className="w-3.5 h-3.5" />}
-            label="Fecha completa"
+            label={t('employeeProfile.appointments.row.fullDate')}
             value={format(parseISO(apt.start_time), "EEEE d 'de' MMMM yyyy, HH:mm", { locale: es })}
           />
           {apt.end_time && (
             <DetailItem
               icon={<Clock className="w-3.5 h-3.5" />}
-              label="Hora finalización"
+              label={t('employeeProfile.appointments.row.endTime')}
               value={format(parseISO(apt.end_time), 'HH:mm')}
             />
           )}
           {apt.duration_minutes != null && (
             <DetailItem
               icon={<Clock className="w-3.5 h-3.5" />}
-              label="Duración"
-              value={`${apt.duration_minutes} minutos`}
+              label={t('employeeProfile.appointments.row.duration')}
+              value={t('employeeProfile.appointments.row.minutes', { count: apt.duration_minutes })}
             />
           )}
           {apt.location_name && (
             <DetailItem
               icon={<MapPin className="w-3.5 h-3.5" />}
-              label="Sede"
+              label={t('employeeProfile.appointments.row.location')}
               value={apt.location_name}
             />
           )}
           {apt.client_phone && (
             <DetailItem
               icon={<User className="w-3.5 h-3.5" />}
-              label="Teléfono cliente"
+              label={t('employeeProfile.appointments.row.clientPhone')}
               value={apt.client_phone}
             />
           )}
           {apt.service_price != null && (
             <DetailItem
               icon={<DollarSign className="w-3.5 h-3.5" />}
-              label="Valor del servicio"
+              label={t('employeeProfile.appointments.row.serviceValue')}
               value={`$${apt.service_price.toLocaleString('es-CO')} COP`}
             />
           )}
@@ -434,7 +440,7 @@ function AppointmentRow({
             <div className="col-span-2">
               <DetailItem
                 icon={<Info className="w-3.5 h-3.5" />}
-                label="Notas"
+                label={t('employeeProfile.appointments.row.notes')}
                 value={apt.notes}
               />
             </div>
@@ -477,11 +483,11 @@ function MiniStat({
   )
 }
 
-function LoadingState(): ReactElement {
+function LoadingState({ message }: Readonly<{ message: string }>): ReactElement {
   return (
     <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
       <CheckCircle className="w-7 h-7 animate-pulse" />
-      <p className="text-sm">Cargando citas…</p>
+      <p className="text-sm">{message}</p>
     </div>
   )
 }

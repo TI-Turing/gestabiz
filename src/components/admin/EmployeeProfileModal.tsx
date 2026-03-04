@@ -34,7 +34,9 @@ import { ServiceProfileModal } from '@/components/admin/ServiceProfileModal'
 import { HierarchyMapView } from '@/components/admin/HierarchyMapView'
 import { EmployeeOccupancyModal } from '@/components/admin/EmployeeOccupancyModal'
 import { EmployeeAppointmentsModal } from '@/components/admin/EmployeeAppointmentsModal'
+import { EmployeeRevenueModal } from '@/components/admin/EmployeeRevenueModal'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useLanguage } from '@/contexts/LanguageContext'
 import type { EmployeeHierarchy } from '@/types'
 
 // =====================================================
@@ -53,13 +55,8 @@ interface EmployeeProfileModalProps {
 // CONSTANTES
 // =====================================================
 
-const HIERARCHY_LABELS = {
-  0: 'Propietario',
-  1: 'Administrador',
-  2: 'Gerente',
-  3: 'Líder de Equipo',
-  4: 'Personal',
-}
+// Labels of hierarchy, expertise, schedule days and absence types are
+// built inside the component using the i18n t() function.
 
 const HIERARCHY_COLORS = {
   0: 'bg-purple-100 text-purple-800',
@@ -67,32 +64,6 @@ const HIERARCHY_COLORS = {
   2: 'bg-green-100 text-green-800',
   3: 'bg-yellow-100 text-yellow-800',
   4: 'bg-gray-100 text-gray-800',
-}
-
-const EXPERTISE_LABELS: Record<string, string> = {
-  '1': 'Principiante',
-  '2': 'Básico',
-  '3': 'Intermedio',
-  '4': 'Avanzado',
-  '5': 'Experto',
-}
-
-const SCHEDULE_DAYS = [
-  { key: 'monday',    label: 'Lun' },
-  { key: 'tuesday',   label: 'Mar' },
-  { key: 'wednesday', label: 'Mié' },
-  { key: 'thursday',  label: 'Jue' },
-  { key: 'friday',    label: 'Vie' },
-  { key: 'saturday',  label: 'Sáb' },
-  { key: 'sunday',    label: 'Dom' },
-]
-
-const ABSENCE_TYPE_LABELS: Record<string, string> = {
-  vacation:   'Vacaciones',
-  emergency:  'Emergencia',
-  sick_leave: 'Ausencia Médica',
-  personal:   'Permiso Personal',
-  other:      'Otro',
 }
 
 const ABSENCE_TYPE_COLORS: Record<string, string> = {
@@ -122,6 +93,7 @@ export function EmployeeProfileModal({
   const [cargoValue, setCargoValue] = useState('')
   const [savingCargo, setSavingCargo] = useState(false)
   const queryClient = useQueryClient()
+  const { t } = useLanguage()
   // Estado para organigrama y perfil del supervisor
   const [showHierarchyMap, setShowHierarchyMap] = useState(false)
   const [supervisorEmployee, setSupervisorEmployee] = useState<EmployeeHierarchy | null>(null)
@@ -131,9 +103,11 @@ export function EmployeeProfileModal({
   const [supervisorSelectValue, setSupervisorSelectValue] = useState('')
   const [savingSupervisor, setSavingSupervisor] = useState(false)
   // Estado para modal de ocupación
-  const [showOccupancyModal, setShowOccupancyModal] = useState(false)
+  const [showOccupancyModal, setShowOccupancyModal]       = useState(false)
   // Estado para modal de historial de citas
   const [showAppointmentsModal, setShowAppointmentsModal] = useState(false)
+  // Estado para modal de ingresos
+  const [showRevenueModal, setShowRevenueModal]           = useState(false)
 
   // Horario y contrato del empleado
   const { data: empData } = useQuery({
@@ -199,7 +173,7 @@ export function EmployeeProfileModal({
   const clickable = 'cursor-pointer hover:bg-accent/40 transition-colors rounded-lg'
 
   const hierarchyLevel = employee.hierarchy_level || 4
-  const hierarchyLabel = HIERARCHY_LABELS[hierarchyLevel as keyof typeof HIERARCHY_LABELS] || 'Desconocido'
+  const hierarchyLabel = t(`employeeProfile.modal.hierarchy.${hierarchyLevel}`) || t('employeeProfile.modal.hierarchy.unknown')
   const hierarchyColor = HIERARCHY_COLORS[hierarchyLevel as keyof typeof HIERARCHY_COLORS]
 
   // Cargo actual: prioriza valor cargado de BD, luego el del objeto de jerarquía
@@ -223,11 +197,11 @@ export function EmployeeProfileModal({
         .eq('employee_id', employee.user_id)
         .eq('business_id', employee.business_id)
       if (error) throw error
-      toast.success('Cargo actualizado')
+      toast.success(t('employeeProfile.modal.cargo.updated'))
       await queryClient.invalidateQueries({ queryKey: ['employee-modal-detail', employee.user_id, employee.business_id] })
       setEditingCargo(false)
     } catch {
-      toast.error('Error al actualizar el cargo')
+      toast.error(t('employeeProfile.modal.cargo.updateError'))
     } finally {
       setSavingCargo(false)
     }
@@ -242,14 +216,14 @@ export function EmployeeProfileModal({
         businessId: employee.business_id,
         newSupervisorId: supervisorSelectValue === '__none__' ? null : supervisorSelectValue,
       })
-      if (!result.success) throw new Error(result.error ?? 'Error desconocido')
-      toast.success('Jefe directo actualizado')
+        if (!result.success) throw new Error(result.error ?? t('employeeProfile.modal.supervisor.unknownError'))
+      toast.success(t('employeeProfile.modal.supervisor.updated'))
       await queryClient.invalidateQueries({ queryKey: ['businessHierarchy', employee.business_id] })
       await queryClient.invalidateQueries({ queryKey: ['pending-setup-employees', employee.business_id] })
       await queryClient.invalidateQueries({ queryKey: ['employee-modal-detail', employee.user_id, employee.business_id] })
       setEditingSupervisor(false)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error al actualizar el jefe directo')
+      toast.error(err instanceof Error ? err.message : t('employeeProfile.modal.supervisor.updateError'))
     } finally {
       setSavingSupervisor(false)
     }
@@ -268,7 +242,7 @@ export function EmployeeProfileModal({
     </button>
   ) : (
     <span className={employee.supervisor_name ? 'text-sm font-medium truncate' : 'text-sm text-muted-foreground italic'}>
-      {employee.supervisor_name ?? 'Sin asignar'}
+      {employee.supervisor_name ?? t('employeeProfile.modal.supervisor.unassigned')}
     </span>
   )
 
@@ -301,8 +275,8 @@ export function EmployeeProfileModal({
           {/* PESTAÑAS FIJAS */}
           <div className="shrink-0 px-6 pb-3 border-b">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="info">Información</TabsTrigger>
-              <TabsTrigger value="payroll">Nómina</TabsTrigger>
+              <TabsTrigger value="info">{t('employeeProfile.modal.tabs.info')}</TabsTrigger>
+              <TabsTrigger value="payroll">{t('employeeProfile.modal.tabs.payroll')}</TabsTrigger>
             </TabsList>
           </div>
 
@@ -320,11 +294,11 @@ export function EmployeeProfileModal({
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 mb-2">
-                  <h3 className="font-semibold text-sm">Cargo</h3>
+                  <h3 className="font-semibold text-sm">{t('employeeProfile.modal.cargo.title')}</h3>
                   {!editingCargo && (
                     <button
                       className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-accent"
-                      title="Editar cargo"
+                      title={t('employeeProfile.modal.cargo.editTitle')}
                       onClick={e => { e.stopPropagation(); handleStartEditCargo() }}
                     >
                       <Pencil className="w-3 h-3 text-muted-foreground" />
@@ -345,7 +319,7 @@ export function EmployeeProfileModal({
                         if (e.key === 'Enter') handleSaveCargo()
                         if (e.key === 'Escape') setEditingCargo(false)
                       }}
-                      placeholder="Ej: Recepcionista, Estilista, Terapeuta..."
+                      placeholder={t('employeeProfile.modal.cargo.placeholder')}
                       className="h-8 text-sm"
                       autoFocus
                     />
@@ -371,7 +345,7 @@ export function EmployeeProfileModal({
                   </div>
                 ) : (
                   <p className="text-sm font-medium text-foreground">
-                    {currentJobTitle || <span className="text-muted-foreground italic">Sin cargo asignado</span>}
+                    {currentJobTitle || <span className="text-muted-foreground italic">{t('employeeProfile.modal.cargo.noAssigned')}</span>}
                   </p>
                 )}
               </div>
@@ -383,7 +357,7 @@ export function EmployeeProfileModal({
                 {employees && employees.length > 0 && (
                   <span className="text-xs text-muted-foreground flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Users className="w-3 h-3" />
-                    Ver organigrama
+                    {t('employeeProfile.modal.cargo.viewOrgChart')}
                   </span>
                 )}
               </div>
@@ -395,7 +369,7 @@ export function EmployeeProfileModal({
             <Card className="p-4 group">
               <div className="flex items-center gap-2 min-w-0">
                 <GitBranch className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span className="text-sm text-muted-foreground shrink-0">Jefe directo:</span>
+                <span className="text-sm text-muted-foreground shrink-0">{t('employeeProfile.modal.supervisor.label')}</span>
 
                 {editingSupervisor ? (
                   <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -404,11 +378,11 @@ export function EmployeeProfileModal({
                       onValueChange={setSupervisorSelectValue}
                     >
                       <SelectTrigger className="h-8 text-xs flex-1 min-w-0">
-                        <SelectValue placeholder="Seleccionar jefe..." />
+                        <SelectValue placeholder={t('employeeProfile.modal.supervisor.selectPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="__none__" className="text-xs text-muted-foreground">
-                          Sin jefe directo
+                          {t('employeeProfile.modal.supervisor.none')}
                         </SelectItem>
                         {employees
                           ?.filter(e => e.user_id !== employee.user_id && e.hierarchy_level < employee.hierarchy_level)
@@ -445,7 +419,7 @@ export function EmployeeProfileModal({
                     {employees && employees.length > 1 && (
                       <button
                         className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-accent shrink-0"
-                        title="Cambiar jefe directo"
+                        title={t('employeeProfile.modal.supervisor.changeTitle')}
                         onClick={() => {
                           setSupervisorSelectValue(employee.reports_to ?? '')
                           setEditingSupervisor(true)
@@ -465,28 +439,28 @@ export function EmployeeProfileModal({
           <Card className="p-4">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
               <Mail className="w-4 h-4" />
-              Información de Contacto
+              {t('employeeProfile.modal.contact.title')}
             </h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Email</p>
-                  <p className="text-sm font-medium">{employee.email || 'No especificado'}</p>
+                  <p className="text-xs text-muted-foreground">{t('employeeProfile.modal.contact.email')}</p>
+                  <p className="text-sm font-medium">{employee.email || t('employeeProfile.modal.contact.notSpecified')}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Teléfono</p>
-                  <p className="text-sm font-medium">{employee.phone ?? 'No especificado'}</p>
+                  <p className="text-xs text-muted-foreground">{t('employeeProfile.modal.contact.phone')}</p>
+                  <p className="text-sm font-medium">{employee.phone ?? t('employeeProfile.modal.contact.notSpecified')}</p>
                 </div>
               </div>
               {profileData?.linkedin_url && (
                 <div className="flex items-center gap-3">
                   <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
                   <div>
-                    <p className="text-xs text-muted-foreground">LinkedIn</p>
+                    <p className="text-xs text-muted-foreground">{t('employeeProfile.modal.contact.linkedin')}</p>
                     <a
                       href={profileData.linkedin_url}
                       target="_blank"
@@ -502,7 +476,7 @@ export function EmployeeProfileModal({
                 <div className="flex items-center gap-3">
                   <Globe className="w-4 h-4 text-muted-foreground shrink-0" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Portafolio</p>
+                    <p className="text-xs text-muted-foreground">{t('employeeProfile.modal.contact.portfolio')}</p>
                     <a
                       href={profileData.portfolio_url}
                       target="_blank"
@@ -518,14 +492,14 @@ export function EmployeeProfileModal({
                 <div className="flex items-center gap-3">
                   <Briefcase className="w-4 h-4 text-muted-foreground shrink-0" />
                   <div>
-                    <p className="text-xs text-muted-foreground">Experiencia</p>
-                    <p className="text-sm font-medium">{profileData.years_of_experience} año{profileData.years_of_experience === 1 ? '' : 's'}</p>
+                    <p className="text-xs text-muted-foreground">{t('employeeProfile.modal.contact.experience')}</p>
+                    <p className="text-sm font-medium">{profileData.years_of_experience} {profileData.years_of_experience === 1 ? t('employeeProfile.modal.contact.yearSingular') : t('employeeProfile.modal.contact.yearPlural')}</p>
                   </div>
                 </div>
               )}
               {profileData?.specializations && profileData.specializations.length > 0 && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Especializaciones</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t('employeeProfile.modal.contact.specializations')}</p>
                   <div className="flex flex-wrap gap-1">
                     {profileData.specializations.map((s) => (
                       <span key={s} className="text-xs bg-accent px-2 py-0.5 rounded-full">{s}</span>
@@ -535,7 +509,7 @@ export function EmployeeProfileModal({
               )}
               {profileData?.professional_summary && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">Resumen Profesional</p>
+                  <p className="text-xs text-muted-foreground mb-1">{t('employeeProfile.modal.contact.summary')}</p>
                   <p className="text-sm text-foreground leading-relaxed">{profileData.professional_summary}</p>
                 </div>
               )}
@@ -548,14 +522,14 @@ export function EmployeeProfileModal({
             <Card className="p-4">
               <h3 className="font-semibold mb-4 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Información Laboral
+              {t('employeeProfile.modal.work.title')}
               </h3>
               <div className="space-y-3">
                 {employee.hired_at && (
                   <div className="flex items-center gap-3">
                     <Calendar className="w-4 h-4 text-muted-foreground" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Fecha de Contratación</p>
+                      <p className="text-xs text-muted-foreground">{t('employeeProfile.modal.work.hireDate')}</p>
                       <p className="text-sm font-medium">
                         {new Date(employee.hired_at).toLocaleDateString('es-ES')}
                       </p>
@@ -564,7 +538,7 @@ export function EmployeeProfileModal({
                 )}
                 {employee.role && (
                   <div>
-                    <p className="text-xs text-muted-foreground">Rol</p>
+                    <p className="text-xs text-muted-foreground">{t('employeeProfile.modal.work.role')}</p>
                     <p className="text-sm font-medium capitalize">{employee.role}</p>
                   </div>
                 )}
@@ -576,19 +550,19 @@ export function EmployeeProfileModal({
           <Card className="p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
               <Sun className="w-4 h-4" />
-              Horario de Trabajo
+              {t('employeeProfile.modal.schedule.title')}
             </h3>
             <div className="space-y-1">
-              {SCHEDULE_DAYS.map(({ key, label }) => {
+              {(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const).map((key) => {
                 const isWeekend = key === 'saturday' || key === 'sunday'
                 return (
                   <div
                     key={key}
                     className={`grid grid-cols-[48px_1fr_1fr] items-center gap-2 px-2 py-1.5 rounded text-sm ${isWeekend ? 'opacity-50' : ''}`}
                   >
-                    <span className={`font-medium text-xs ${isWeekend ? 'text-muted-foreground' : 'text-foreground'}`}>{label}</span>
+                    <span className={`font-medium text-xs ${isWeekend ? 'text-muted-foreground' : 'text-foreground'}`}>{t(`employeeProfile.modal.days.${key}`)}</span>
                     <span className="text-muted-foreground text-xs">
-                      {isWeekend ? 'No laboral' : 'No configurado'}
+                      {isWeekend ? t('employeeProfile.modal.schedule.nonWorkDay') : t('employeeProfile.modal.schedule.notConfigured')}
                     </span>
                     <span />
                   </div>
@@ -598,14 +572,14 @@ export function EmployeeProfileModal({
             {empData?.has_lunch_break && (empData.lunch_break_start || empData.lunch_break_end) && (
               <div className="mt-3 pt-3 border-t flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span className="text-muted-foreground text-xs">Almuerzo:</span>
+                <span className="text-muted-foreground text-xs">{t('employeeProfile.modal.schedule.lunchBreak')}</span>
                 <span className="text-sm font-medium">
                   {empData.lunch_break_start ?? '—'} – {empData.lunch_break_end ?? '—'}
                 </span>
               </div>
             )}
             {empData && !empData.has_lunch_break && (
-              <p className="mt-3 pt-3 border-t text-xs text-muted-foreground">Sin pausa de almuerzo configurada</p>
+              <p className="mt-3 pt-3 border-t text-xs text-muted-foreground">{t('employeeProfile.modal.schedule.noLunchBreak')}</p>
             )}
           </Card>
 
@@ -618,7 +592,7 @@ export function EmployeeProfileModal({
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
-                  Ubicación Asignada
+                  {t('employeeProfile.modal.location.title')}
                 </h3>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </div>
@@ -641,12 +615,12 @@ export function EmployeeProfileModal({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Star className="w-4 h-4 text-yellow-500" />
-                    <p className="text-xs text-muted-foreground">Calificación</p>
+                    <p className="text-xs text-muted-foreground">{t('employeeProfile.modal.stats.rating')}</p>
                   </div>
                   <ChevronRight className="w-3 h-3 text-muted-foreground" />
                 </div>
                 <p className="text-2xl font-bold">{(employee.average_rating || 0).toFixed(1)}</p>
-                <p className="text-xs text-muted-foreground">{employee.total_reviews || 0} reseñas</p>
+                <p className="text-xs text-muted-foreground">{employee.total_reviews || 0} {t('employeeProfile.modal.stats.reviews')}</p>
               </Card>
             )}
 
@@ -661,7 +635,7 @@ export function EmployeeProfileModal({
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <TrendingUp className="w-4 h-4 text-blue-500" />
-                        <p className="text-xs text-muted-foreground">Ocupación</p>
+                        <p className="text-xs text-muted-foreground">{t('employeeProfile.modal.stats.occupancy')}</p>
                         <Info className="w-3 h-3 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                       <p className="text-2xl font-bold">{(employee.occupancy_rate || 0).toFixed(0)}%</p>
@@ -672,12 +646,12 @@ export function EmployeeProfileModal({
                         />
                       </div>
                       <p className="text-xs text-muted-foreground mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        Ver detalle de ocupación →
+                        {t('employeeProfile.modal.stats.occupancyDetail')}
                       </p>
                     </Card>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    Ocupación de los últimos 30 días. Clic para ver el análisis completo.
+                    {t('employeeProfile.modal.stats.occupancyTooltip')}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -694,42 +668,57 @@ export function EmployeeProfileModal({
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <Clock className="w-4 h-4 text-green-500" />
-                        <p className="text-xs text-muted-foreground">Citas Completadas</p>
+                        <p className="text-xs text-muted-foreground">{t('employeeProfile.modal.stats.completedAppointments')}</p>
                         <Info className="w-3 h-3 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                       <p className="text-2xl font-bold">{employee.completed_appointments || 0}</p>
                       <p className="text-xs text-muted-foreground mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        Ver historial de citas →
+                        {t('employeeProfile.modal.stats.completedDetail')}
                       </p>
                     </Card>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    Citas atendidas en los últimos 30 días. Clic para ver el historial completo.
+                    {t('employeeProfile.modal.stats.completedTooltip')}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
 
             {/* Ingresos */}
-            {/* PENDIENTE: Crear EmployeeRevenueModal para ver desglose de ingresos por período */}
             {employee.gross_revenue !== undefined && (
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-500" />
-                  <p className="text-xs text-muted-foreground">Ingresos Totales</p>
-                </div>
-                <p className="text-lg font-bold truncate">
-                  ${(employee.gross_revenue || 0).toLocaleString('es-CO')}
-                </p>
-              </Card>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Card
+                      className="p-4 cursor-pointer hover:ring-2 hover:ring-emerald-500/40 transition-all group"
+                      onClick={() => setShowRevenueModal(true)}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <TrendingUp className="w-4 h-4 text-emerald-500" />
+                        <p className="text-xs text-muted-foreground">{t('employeeProfile.modal.stats.totalRevenue')}</p>
+                        <Info className="w-3 h-3 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      <p className="text-lg font-bold truncate">
+                        ${(employee.gross_revenue || 0).toLocaleString('es-CO')}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {t('employeeProfile.modal.stats.revenueDetail')}
+                      </p>
+                    </Card>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {t('employeeProfile.modal.stats.revenueTooltip')}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
 
           {/* SERVICIOS — cada fila abre ServiceProfileModal */}
           {employee.services_offered && employee.services_offered.length > 0 && (
             <Card className="p-4">
-              <h3 className="font-semibold mb-1">Servicios que atiende</h3>
-              <p className="text-xs text-muted-foreground mb-3">Servicios que este empleado está autorizado a gestionar</p>
+              <h3 className="font-semibold mb-1">{t('employeeProfile.modal.services.title')}</h3>
+              <p className="text-xs text-muted-foreground mb-3">{t('employeeProfile.modal.services.subtitle')}</p>
               <div className="space-y-2">
                 {employee.services_offered.slice(0, 5).map((service) => (
                   <button
@@ -741,7 +730,7 @@ export function EmployeeProfileModal({
                     <span className="text-sm font-medium">{service.service_name}</span>
                     <div className="flex items-center gap-2 shrink-0">
                       <Badge variant="outline" className="text-xs">
-                        {EXPERTISE_LABELS[String(service.expertise_level)] ?? `Nivel ${service.expertise_level}`}
+                        {t(`employeeProfile.modal.expertise.${service.expertise_level}`) || `${t('employeeProfile.modal.expertise.levelFallback')} ${service.expertise_level}`}
                       </Badge>
                       <ChevronRight className="w-3 h-3 text-muted-foreground" />
                     </div>
@@ -749,7 +738,7 @@ export function EmployeeProfileModal({
                 ))}
                 {employee.services_offered.length > 5 && (
                   <p className="text-xs text-muted-foreground text-center pt-2">
-                    +{employee.services_offered.length - 5} servicios más
+                    +{employee.services_offered.length - 5} {t('employeeProfile.modal.services.more')}
                   </p>
                 )}
               </div>
@@ -760,8 +749,8 @@ export function EmployeeProfileModal({
           <Card className="p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2">
               <Umbrella className="w-4 h-4" />
-              Ausencias y Vacaciones
-              <span className="ml-auto text-xs text-muted-foreground font-normal">Solo aprobadas</span>
+              {t('employeeProfile.modal.absences.title')}
+              <span className="ml-auto text-xs text-muted-foreground font-normal">{t('employeeProfile.modal.absences.onlyApproved')}</span>
             </h3>
             {loadingAbsences && (
               <div className="flex justify-center py-4">
@@ -769,7 +758,7 @@ export function EmployeeProfileModal({
               </div>
             )}
             {!loadingAbsences && approvedAbsences.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-3">Sin ausencias aprobadas registradas</p>
+              <p className="text-sm text-muted-foreground text-center py-3">{t('employeeProfile.modal.absences.empty')}</p>
             )}
             {!loadingAbsences && approvedAbsences.length > 0 && (
               <div className="space-y-2">
@@ -778,13 +767,13 @@ export function EmployeeProfileModal({
                   const end = parseISO(absence.end_date)
                   const days = Math.ceil((end.getTime() - start.getTime()) / 86_400_000) + 1
                   const colorClass = ABSENCE_TYPE_COLORS[absence.absence_type] ?? 'bg-gray-100 text-gray-700 border-gray-200'
-                  const label = ABSENCE_TYPE_LABELS[absence.absence_type] ?? absence.absence_type
+                  const label = t(`employeeProfile.modal.absenceTypes.${absence.absence_type}`) || absence.absence_type
                   return (
                     <div key={absence.id} className="flex items-start gap-3 p-2 rounded-lg border">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
                           <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${colorClass}`}>{label}</span>
-                          <span className="text-xs text-muted-foreground shrink-0">{days} día{days === 1 ? '' : 's'}</span>
+                          <span className="text-xs text-muted-foreground shrink-0">{days} {days === 1 ? t('employeeProfile.modal.absences.daySingular') : t('employeeProfile.modal.absences.dayPlural')}</span>
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {format(start, 'dd MMM yyyy', { locale: esLocale })} – {format(end, 'dd MMM yyyy', { locale: esLocale })}
@@ -803,7 +792,7 @@ export function EmployeeProfileModal({
           {/* BOTÓN CERRAR */}
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={onClose}>
-              Cerrar
+              {t('employeeProfile.modal.close')}
             </Button>
           </div>
         </div>
@@ -850,7 +839,7 @@ export function EmployeeProfileModal({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              Organigrama del negocio
+              {t('employeeProfile.modal.orgChart.title')}
             </DialogTitle>
           </DialogHeader>
         </div>
@@ -867,7 +856,7 @@ export function EmployeeProfileModal({
             />
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-              No hay datos de jerarquía disponibles
+              {t('employeeProfile.modal.orgChart.noData')}
             </div>
           )}
         </div>
@@ -897,6 +886,18 @@ export function EmployeeProfileModal({
       />
     )}
 
+    {/* MODAL: Desglose de ingresos */}
+    {showRevenueModal && (
+      <EmployeeRevenueModal
+        employeeId={employee.user_id}
+        businessId={employee.business_id}
+        employeeName={employee.full_name}
+        currentRevenue={employee.gross_revenue ?? null}
+        isOpen={showRevenueModal}
+        onClose={() => setShowRevenueModal(false)}
+      />
+    )}
+
     {/* MODAL: Historial de citas completadas */}
     {showAppointmentsModal && (
       <EmployeeAppointmentsModal
@@ -916,7 +917,7 @@ export function EmployeeProfileModal({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Star className="w-5 h-5 text-yellow-500" />
-              Reseñas de {employee.full_name}
+              {t('employeeProfile.modal.reviews.title', { name: employee.full_name })}
             </DialogTitle>
           </DialogHeader>
         </div>

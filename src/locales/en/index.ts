@@ -46,6 +46,9 @@ import { reviewForm } from './reviewForm'
 import { reviewCard } from './reviewCard'
 import { reviewList } from './reviewList'
 
+// Employee profile modals module
+import { employeeProfile } from './employeeProfile'
+
 // Other modules
 import { profilePage } from './profilePage'
 import { cookieConsent } from './cookieConsent'
@@ -118,5 +121,7 @@ export const en = {
   // Landing & Employee
   landing,
   employee,
+  // Employee profile modals
+  employeeProfile,
 }
 

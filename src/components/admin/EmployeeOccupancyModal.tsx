@@ -44,6 +44,7 @@ import {
   AlertCircle,
   CalendarClock,
 } from 'lucide-react'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { supabase } from '@/lib/supabase'
 import {
   Dialog,
@@ -107,13 +108,7 @@ interface ServiceCount {
 // HELPERS
 // =====================================================
 
-const PERIOD_OPTIONS: { value: OccupancyPeriod; label: string }[] = [
-  { value: '7d',  label: '7 días' },
-  { value: '30d', label: '30 días' },
-  { value: '90d', label: '90 días' },
-  { value: '6m',  label: '6 meses' },
-  { value: '1y',  label: '1 año' },
-]
+// PERIOD_OPTIONS se construye dentro del componente para soportar i18n
 
 function periodToDays(period: OccupancyPeriod): number {
   switch (period) {
@@ -207,6 +202,15 @@ export function EmployeeOccupancyModal({
   onClose,
 }: Readonly<EmployeeOccupancyModalProps>) {
   const [period, setPeriod] = useState<OccupancyPeriod>('30d')
+  const { t } = useLanguage()
+
+  const periodOptions: { value: OccupancyPeriod; label: string }[] = [
+    { value: '7d',  label: t('employeeProfile.periods.7d') },
+    { value: '30d', label: t('employeeProfile.periods.30d') },
+    { value: '90d', label: t('employeeProfile.periods.90d') },
+    { value: '6m',  label: t('employeeProfile.periods.6m') },
+    { value: '1y',  label: t('employeeProfile.periods.1y') },
+  ]
 
   const now = useMemo(() => new Date(), [])
   const periodDays = periodToDays(period)
@@ -318,7 +322,7 @@ export function EmployeeOccupancyModal({
       r => r.status === 'completed' || r.status === 'confirmed',
     )
     for (const apt of relevant) {
-      const key = apt.service_name ?? 'Sin servicio'
+      const key = apt.service_name ?? t('employeeProfile.occupancy.services.noService')
       map.set(key, (map.get(key) ?? 0) + 1)
     }
     return Array.from(map.entries())
@@ -329,7 +333,7 @@ export function EmployeeOccupancyModal({
         value,
         color: SERVICE_COLORS[i % SERVICE_COLORS.length],
       }))
-  }, [pastAppointments])
+  }, [pastAppointments, t])
 
   const isLoading = loadingPast || loadingFuture
 
@@ -348,16 +352,14 @@ export function EmployeeOccupancyModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-500" />
-            Ocupación — {employeeName}
+            {t('employeeProfile.occupancy.headerTitle')} — {employeeName}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs text-sm">
-                  La ocupación refleja el porcentaje de citas completadas sobre el total de citas
-                  asignadas en un período. Las citas futuras se muestran como proyección sujeta a
-                  cancelaciones de los clientes.
+                  {t('employeeProfile.occupancy.infoTooltip')}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -366,7 +368,7 @@ export function EmployeeOccupancyModal({
 
         {/* SELECTOR DE PERÍODO */}
         <div className="flex gap-2 flex-wrap">
-          {PERIOD_OPTIONS.map(opt => (
+          {periodOptions.map(opt => (
             <Button
               key={opt.value}
               variant={period === opt.value ? 'default' : 'outline'}
@@ -381,7 +383,7 @@ export function EmployeeOccupancyModal({
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
             <BarChart2 className="w-8 h-8 animate-pulse" />
-            <p className="text-sm">Cargando datos de ocupación…</p>
+            <p className="text-sm">{t('employeeProfile.occupancy.loading')}</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -389,32 +391,32 @@ export function EmployeeOccupancyModal({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <StatCard
                 icon={<TrendingUp className="w-4 h-4 text-blue-500" />}
-                label="Ocupación"
-                tooltip="Citas completadas / total en el período seleccionado."
+                label={t('employeeProfile.occupancy.stats.occupancy')}
+                tooltip={t('employeeProfile.occupancy.stats.occupancyTooltip')}
                 value={`${stats.occupancy}%`}
-                sub={currentOccupancyRate == null ? undefined : `Global 30d: ${currentOccupancyRate.toFixed(0)}%`}
+                sub={currentOccupancyRate == null ? undefined : t('employeeProfile.occupancy.stats.global30d', { rate: currentOccupancyRate.toFixed(0) })}
                 highlight
               />
               <StatCard
                 icon={<CheckCircle className="w-4 h-4 text-green-500" />}
-                label="Completadas"
-                tooltip="Citas con estado 'completada' en el período."
+                label={t('employeeProfile.occupancy.stats.completed')}
+                tooltip={t('employeeProfile.occupancy.stats.completedTooltip')}
                 value={String(stats.completed)}
-                sub={`de ${stats.total} totales`}
+                sub={t('employeeProfile.occupancy.stats.ofTotal', { total: stats.total })}
               />
               <StatCard
                 icon={<XCircle className="w-4 h-4 text-red-500" />}
-                label="Canceladas"
-                tooltip="Incluye cancelaciones y no-shows."
+                label={t('employeeProfile.occupancy.stats.cancelled')}
+                tooltip={t('employeeProfile.occupancy.stats.cancelledTooltip')}
                 value={String(stats.cancelled)}
-                sub={stats.total > 0 ? `${Math.round((stats.cancelled / stats.total) * 100)}% del total` : ''}
+                sub={stats.total > 0 ? t('employeeProfile.occupancy.stats.cancelledPct', { pct: Math.round((stats.cancelled / stats.total) * 100) }) : ''}
               />
               <StatCard
                 icon={<CalendarClock className="w-4 h-4 text-amber-500" />}
-                label="Citas futuras"
-                tooltip="Citas confirmadas o pendientes a partir de hoy. Sujeto a cancelaciones."
+                label={t('employeeProfile.occupancy.stats.future')}
+                tooltip={t('employeeProfile.occupancy.stats.futureTooltip')}
                 value={String(futureAppointments.length)}
-                sub="próximas confirmadas"
+                sub={t('employeeProfile.occupancy.stats.futureConfirmed')}
               />
             </div>
 
@@ -422,21 +424,21 @@ export function EmployeeOccupancyModal({
             <Card className="p-4">
               <div className="flex items-center gap-2 mb-4">
                 <Calendar className="w-4 h-4 text-blue-500" />
-                <h3 className="font-semibold text-sm">Actividad en el período</h3>
+                <h3 className="font-semibold text-sm">{t('employeeProfile.occupancy.chart.title')}</h3>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      Línea verde = completadas. Azul = confirmadas. Rojo = canceladas.
+                      {t('employeeProfile.occupancy.chart.tooltip')}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
 
               {daySeries.length === 0 || stats.total === 0 ? (
-                <EmptyState message="Sin citas en este período" />
+                <EmptyState message={t('employeeProfile.occupancy.chart.noData')} />
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
                   <AreaChart data={daySeries} margin={{ top: 4, right: 16, left: -20, bottom: 0 }}>
@@ -465,9 +467,9 @@ export function EmployeeOccupancyModal({
                       contentStyle={{ fontSize: 12 }}
                       formatter={(value: number, name: string) => {
                         const labels: Record<string, string> = {
-                          completed: 'Completadas',
-                          confirmed: 'Confirmadas',
-                          cancelled: 'Canceladas',
+                          completed: t('employeeProfile.occupancy.chart.completed'),
+                          confirmed: t('employeeProfile.occupancy.chart.confirmed'),
+                          cancelled: t('employeeProfile.occupancy.chart.cancelled'),
                         }
                         return [value, labels[name] ?? name]
                       }}
@@ -504,9 +506,9 @@ export function EmployeeOccupancyModal({
               {/* Leyenda manual */}
               {stats.total > 0 && (
                 <div className="flex flex-wrap gap-4 mt-3 justify-center">
-                  <LegendDot color="#22c55e" label="Completadas" />
-                  <LegendDot color="#6366f1" label="Confirmadas" />
-                  <LegendDot color="#ef4444" label="Canceladas / No-show" dashed />
+                  <LegendDot color="#22c55e" label={t('employeeProfile.occupancy.chart.completed')} />
+                  <LegendDot color="#6366f1" label={t('employeeProfile.occupancy.chart.confirmed')} />
+                  <LegendDot color="#ef4444" label={t('employeeProfile.occupancy.chart.cancelledNoShow')} dashed />
                 </div>
               )}
             </Card>
@@ -515,25 +517,24 @@ export function EmployeeOccupancyModal({
             <Card className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <CalendarClock className="w-4 h-4 text-amber-500" />
-                <h3 className="font-semibold text-sm">Citas futuras confirmadas</h3>
+                <h3 className="font-semibold text-sm">{t('employeeProfile.occupancy.future.title')}</h3>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
-                      Proyección de ocupación futura. Estas citas pueden cancelarse por los clientes,
-                      por lo que son estimadas.
+                      {t('employeeProfile.occupancy.future.tooltip')}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
                 <Badge variant="secondary" className="ml-auto">
-                  {futureAppointments.length} citas
+                  {t('employeeProfile.occupancy.future.badge', { count: futureAppointments.length })}
                 </Badge>
               </div>
 
               {futureAppointments.length === 0 ? (
-                <EmptyState message="No hay citas futuras registradas" />
+                <EmptyState message={t('employeeProfile.occupancy.future.empty')} />
               ) : (
                 <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                   {futureAppointments.map(apt => (
@@ -546,7 +547,7 @@ export function EmployeeOccupancyModal({
                           {format(parseISO(apt.start_time), "d MMM, HH:mm", { locale: es })}
                         </span>
                         <span className="font-medium truncate max-w-[140px]">
-                          {apt.service_name ?? 'Servicio'}
+                          {apt.service_name ?? t('employeeProfile.occupancy.future.service')}
                         </span>
                       </div>
                       <StatusBadge status={apt.status} />
@@ -562,21 +563,21 @@ export function EmployeeOccupancyModal({
               <Card className="p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <Clock className="w-4 h-4 text-indigo-500" />
-                  <h3 className="font-semibold text-sm">Horas pico</h3>
+                  <h3 className="font-semibold text-sm">{t('employeeProfile.occupancy.peak.title')}</h3>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        Cantidad de citas completadas o confirmadas por hora del día.
+                        {t('employeeProfile.occupancy.peak.tooltip')}
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
 
                 {peakHours.every(h => h.count === 0) ? (
-                  <EmptyState message="Sin datos de horas" />
+                  <EmptyState message={t('employeeProfile.occupancy.peak.noData')} />
                 ) : (
                   <ResponsiveContainer width="100%" height={160}>
                     <BarChart data={peakHours} margin={{ top: 0, right: 8, left: -24, bottom: 0 }}>
@@ -585,7 +586,7 @@ export function EmployeeOccupancyModal({
                       <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                       <ReTooltip
                         contentStyle={{ fontSize: 12 }}
-                        formatter={(v: number) => [v, 'Citas']}
+                        formatter={(v: number) => [v, t('employeeProfile.occupancy.peak.appointments')]}
                       />
                       <Bar dataKey="count" radius={[3, 3, 0, 0]}>
                         {peakHours.map(entry => (
@@ -604,11 +605,11 @@ export function EmployeeOccupancyModal({
               <Card className="p-4">
                 <div className="flex items-center gap-2 mb-4">
                   <BarChart2 className="w-4 h-4 text-emerald-500" />
-                  <h3 className="font-semibold text-sm">Servicios más frecuentes</h3>
+                  <h3 className="font-semibold text-sm">{t('employeeProfile.occupancy.services.title')}</h3>
                 </div>
 
                 {topServices.length === 0 ? (
-                  <EmptyState message="Sin datos de servicios" />
+                  <EmptyState message={t('employeeProfile.occupancy.services.noData')} />
                 ) : (
                   <ResponsiveContainer width="100%" height={160}>
                     <PieChart>
@@ -628,7 +629,7 @@ export function EmployeeOccupancyModal({
                       <ReTooltip
                         contentStyle={{ fontSize: 12 }}
                         formatter={(v: number, _: string, props) => [
-                          `${v} citas`,
+                          t('employeeProfile.occupancy.services.appointments', { count: v }),
                           props.payload?.name ?? '',
                         ]}
                       />
@@ -644,7 +645,7 @@ export function EmployeeOccupancyModal({
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm font-medium">Tasa de ocupación en el período</span>
+                  <span className="text-sm font-medium">{t('employeeProfile.occupancy.progress.title')}</span>
                 </div>
                 <span className="text-2xl font-bold tabular-nums">{stats.occupancy}%</span>
               </div>
@@ -658,8 +659,8 @@ export function EmployeeOccupancyModal({
                 />
               </div>
               <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-                <span>Baja ocupación</span>
-                <span>Óptima</span>
+                <span>{t('employeeProfile.occupancy.progress.low')}</span>
+                <span>{t('employeeProfile.occupancy.progress.optimal')}</span>
               </div>
             </Card>
           </div>
@@ -719,17 +720,18 @@ function LegendDot({ color, label, dashed }: Readonly<{ color: string; label: st
 }
 
 function StatusBadge({ status }: Readonly<{ status: AppointmentRow['status'] }>) {
+  const { t } = useLanguage()
   switch (status) {
     case 'confirmed':
       return (
         <Badge variant="outline" className="text-xs text-blue-600 border-blue-300 bg-blue-50">
-          Confirmada
+          {t('employeeProfile.occupancy.status.confirmed')}
         </Badge>
       )
     case 'pending':
       return (
         <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 bg-amber-50">
-          Pendiente
+          {t('employeeProfile.occupancy.status.pending')}
         </Badge>
       )
     default:

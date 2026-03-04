@@ -83,5 +83,8 @@ export interface Translations {
   // Landing & Employee (Phase 4)
   landing: typeof import('./en/landing').landing
   employee: typeof import('./en/landing').employee
+
+  // Employee profile modals
+  employeeProfile: typeof import('./en/employeeProfile').employeeProfile
 }
 
