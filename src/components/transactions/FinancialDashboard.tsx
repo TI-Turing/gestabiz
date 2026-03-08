@@ -25,6 +25,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useChartData } from '@/hooks/useChartData';
 import type { TransactionFilters } from '@/types/types';
+import type { ReportFilters } from '@/types/accounting.types';
 import { cn } from '@/lib/utils';
 import { IncomeVsExpenseChart } from '@/components/accounting/IncomeVsExpenseChart';
 import { CategoryPieChart } from '@/components/accounting/CategoryPieChart';
@@ -79,6 +80,19 @@ export function FinancialDashboard({
   });
 
   const { summary, loading, refetch } = useTransactions(filters);
+  const reportFilters: ReportFilters = {
+    business_id: businessId,
+    location_id: filters.location_id,
+    date_range: filters.date_range,
+    is_verified: filters.is_verified,
+    min_amount: filters.min_amount,
+    max_amount: filters.max_amount,
+  };
+  const {
+    incomeVsExpenseData,
+    categoryDistributionData,
+    monthlyTrendData,
+  } = useChartData(businessId, reportFilters);
 
   // Update filters when period changes
   useEffect(() => {
@@ -271,24 +285,15 @@ export function FinancialDashboard({
         </TabsList>
 
         <TabsContent value="income-expense" className="space-y-4">
-          <IncomeVsExpenseChart
-            businessId={businessId}
-            filters={filters}
-          />
+          <IncomeVsExpenseChart data={incomeVsExpenseData} />
         </TabsContent>
 
         <TabsContent value="categories" className="space-y-4">
-          <CategoryPieChart
-            businessId={businessId}
-            filters={filters}
-          />
+          <CategoryPieChart data={categoryDistributionData} />
         </TabsContent>
 
         <TabsContent value="trends" className="space-y-4">
-          <MonthlyTrendChart
-            businessId={businessId}
-            filters={filters}
-          />
+          <MonthlyTrendChart data={monthlyTrendData} />
         </TabsContent>
       </Tabs>
     </div>

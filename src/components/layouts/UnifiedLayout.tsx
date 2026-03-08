@@ -66,6 +66,7 @@ interface UnifiedLayoutProps {
   onSearchViewMore?: (searchTerm: string, searchType: SearchType) => void
   chatConversationId?: string | null
   onChatClose?: () => void
+  hideBusinessSelector?: boolean
 }
 
 interface SidebarItem {
@@ -80,6 +81,9 @@ const roleLabels: Record<UserRole, string> = {
   employee: 'Empleado',
   client: 'Cliente'
 }
+
+const getBusinessCategoryName = (category: Business['category']) =>
+  typeof category === 'string' ? category : category?.name
 
 export function UnifiedLayout({
   children,
@@ -386,66 +390,66 @@ export function UnifiedLayout({
                       </div>
                       {business.category && (
                         <Badge variant="secondary" className="text-xs hidden md:inline-flex">
-                          {business.category.name}
+                          {getBusinessCategoryName(business.category)}
                         </Badge>
                       )}
                       <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
                     </div>
                   </DropdownMenuTrigger>
-                
-                <DropdownMenuContent align="start" className="w-64 bg-card border-border">
-                  <div className="px-3 py-2 border-b border-border">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase">
-                      Mis Negocios
-                    </p>
-                  </div>
-                  {businesses.map((biz) => (
-                    <DropdownMenuItem
-                      key={biz.id}
-                      onClick={() => onSelectBusiness?.(biz.id)}
-                      className={cn(
-                        "cursor-pointer flex items-center gap-3 py-3",
-                        biz.id === business.id && "bg-primary/20 text-foreground font-semibold"
-                      )}
-                    >
-                      {biz.logo_url ? (
-                        <img
-                          src={biz.logo_url}
-                          alt={biz.name}
-                          className="w-8 h-8 rounded-lg object-contain bg-muted p-1"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                          <Building2 className="h-4 w-4 text-primary" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{biz.name}</p>
-                        {biz.category && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {biz.category.name}
-                          </p>
-                        )}
-                      </div>
-                    </DropdownMenuItem>
-                  ))}
-                  
-                  {onCreateNew && (
-                    <>
-                      <div className="my-1 h-px bg-border" />
+
+                  <DropdownMenuContent align="start" className="w-64 bg-card border-border">
+                    <div className="px-3 py-2 border-b border-border">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase">
+                        Mis Negocios
+                      </p>
+                    </div>
+                    {businesses.map((biz) => (
                       <DropdownMenuItem
-                        onClick={onCreateNew}
-                        className="cursor-pointer flex items-center gap-3 py-3 text-primary hover:text-primary hover:bg-primary/10"
+                        key={biz.id}
+                        onClick={() => onSelectBusiness?.(biz.id)}
+                        className={cn(
+                          "cursor-pointer flex items-center gap-3 py-3",
+                          biz.id === business.id && "bg-primary/20 text-foreground font-semibold"
+                        )}
                       >
-                        <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                          <Plus className="h-4 w-4 text-primary" />
+                        {biz.logo_url ? (
+                          <img
+                            src={biz.logo_url}
+                            alt={biz.name}
+                            className="w-8 h-8 rounded-lg object-contain bg-muted p-1"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                            <Building2 className="h-4 w-4 text-primary" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{biz.name}</p>
+                          {biz.category && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {getBusinessCategoryName(biz.category)}
+                            </p>
+                          )}
                         </div>
-                        <span className="font-medium">Crear Nuevo Negocio</span>
                       </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    ))}
+
+                    {onCreateNew && (
+                      <>
+                        <div className="my-1 h-px bg-border" />
+                        <DropdownMenuItem
+                          onClick={onCreateNew}
+                          className="cursor-pointer flex items-center gap-3 py-3 text-primary hover:text-primary hover:bg-primary/10"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                            <Plus className="h-4 w-4 text-primary" />
+                          </div>
+                          <span className="font-medium">Crear Nuevo Negocio</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
               {/* Location Selector - Outside DropdownMenu */}
               {availableLocations.length > 0 && (

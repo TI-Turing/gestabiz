@@ -264,7 +264,7 @@ export function EmployeeSelection({
               {/* Selected indicator */}
               {isSelected && (
                 <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                  <Check size={14} weight="bold" className="text-primary-foreground" />
+                  <Check size={14} className="text-primary-foreground" />
                 </div>
               )}
 

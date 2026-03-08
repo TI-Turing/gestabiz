@@ -221,7 +221,7 @@ export function useSubscription(businessId: string | null) {
       if (!result.allowed) {
         showToast(
           result.message || `Límite alcanzado: ${result.current}/${result.limit} ${resource}`,
-          'warning'
+          'info'
         )
       }
       

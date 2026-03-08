@@ -44,7 +44,7 @@ export function SearchBar({ onResultSelect, onViewMore, className }: SearchBarPr
   const [isSearching, setIsSearching] = useState(false)
   const [results, setResults] = useState<SearchResult[]>([])
   const [showResults, setShowResults] = useState(false)
-  const debounceTimerRef = useRef<NodeJS.Timeout>()
+  const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const searchBarRef = useRef<HTMLDivElement>(null)
   const [, setLastSearch] = useKV<{ term: string; type: SearchType }>('last-search', { term: '', type: 'businesses' })
 

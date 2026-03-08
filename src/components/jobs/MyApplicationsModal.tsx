@@ -208,7 +208,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
               <CardTitle className="text-lg">{application.vacancy?.title}</CardTitle>
             </div>
             <CardDescription className="text-sm">
-              {application.vacancy?.business_id}
+              {application.vacancy?.business_name || application.vacancy?.business_id}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">

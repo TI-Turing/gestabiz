@@ -71,7 +71,7 @@ export function AdminOnboarding({
         city_id: null,
         country_id: null,
         banner_url: null,
-      } as Business
+      } as unknown as Business
 
   const sidebarItems = [
     {
@@ -143,6 +143,7 @@ export function AdminOnboarding({
       onSelectBusiness={onSelectBusiness}
       sidebarItems={sidebarItems}
       activePage="overview"
+      onPageChange={() => {}}
       onLogout={onLogout}
       currentRole={currentRole}
       availableRoles={availableRoles}

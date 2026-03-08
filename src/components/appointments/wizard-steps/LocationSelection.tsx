@@ -230,7 +230,7 @@ export function LocationSelection({
               {/* Selected indicator */}
               {isSelected && (
                 <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center z-10">
-                  <Check size={14} weight="bold" className="text-primary-foreground" />
+                  <Check size={14} className="text-primary-foreground" />
                 </div>
               )}
 

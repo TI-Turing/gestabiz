@@ -359,7 +359,7 @@ export default function BusinessManagement({ user }: Readonly<BusinessManagement
               <div>
                 <Label className="text-base font-medium">{t('business.registration.business_hours')}</Label>
                 <div className="mt-4 space-y-3">
-      {Object.entries(business.business_hours).map(([day, hours]) => (
+      {Object.entries(business.business_hours || {}).map(([day, hours]) => (
                     <div key={day} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
                         <Switch 

@@ -51,7 +51,6 @@ export function normalizeBusiness(row: Row<'businesses'>): Business {
     id: row.id,
     name: row.name,
     description: row.description ?? '',
-    category: 'Services',
     logo_url: row.logo_url ?? undefined,
     website: row.website ?? undefined,
     phone: row.phone ?? undefined,
@@ -73,6 +72,7 @@ export function normalizeBusiness(row: Row<'businesses'>): Business {
       sunday: { open: '09:00', close: '17:00', closed: true },
     },
     timezone: 'America/Bogota',
+    resource_model: 'professional',
     owner_id: row.owner_id,
     settings: (row.settings as unknown as Business['settings']) || {
       appointment_buffer: 15,

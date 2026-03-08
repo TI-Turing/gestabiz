@@ -85,7 +85,7 @@ export function useEmployeeRequests(options: UseEmployeeRequestsOptions = {}) {
         userId,
       });
       setError(err instanceof Error ? err.message : 'Error desconocido')
-      toast.error('Error al cargar solicitudes')
+      // toast.error silenciado - manejado internamente para evitar ruido en UI
     } finally {
       setIsLoading(false)
     }

@@ -61,7 +61,7 @@ function getNestedValue<T extends Record<string, unknown>>(obj: T, path: string)
 interface LanguageContextType {
   language: Language
   setLanguage: (language: Language) => void
-  t: (key: string, params?: Record<string, string>) => string
+  t: (key: string, params?: Record<string, string | number>) => string
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
@@ -70,7 +70,7 @@ export function LanguageProvider({ children }: Readonly<{ children: React.ReactN
   const [language, setLanguage] = useKV<Language>('user-language', 'es')
 
   // Translation function with memoization
-  const t = useMemo(() => (key: string, params?: Record<string, string>): string => {
+  const t = useMemo(() => (key: string, params?: Record<string, string | number>): string => {
     const translation = getNestedValue(mergedTranslations[language], key)
     
     if (!translation) {

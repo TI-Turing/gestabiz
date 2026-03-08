@@ -244,7 +244,7 @@ export function EmployeeCard({
                 <p className="text-xs text-muted-foreground">{t('employees.card.rating')}</p>
                 <p className="font-semibold">
                   {employee.average_rating !== null && employee.average_rating !== undefined
-                    ? `${Number(employee.average_rating).toFixed(1)} ⭐`
+                    ? <span className="flex items-center gap-1">{Number(employee.average_rating).toFixed(1)}<Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /></span>
                     : 'N/A'}
                 </p>
               </div>

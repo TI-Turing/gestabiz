@@ -168,16 +168,16 @@ function Dashboard({
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          {user.activeRole !== 'client' && (
+        {(user.activeRole as string) !== 'client' && (
             <TabsTrigger value="overview">{t('dashboard.overview')}</TabsTrigger>
           )}
           <TabsTrigger value="appointments">{t('nav.appointments')}</TabsTrigger>
-          {user.activeRole !== 'client' && (
+          {(user.activeRole as string) !== 'client' && (
             <TabsTrigger value="clients">{t('nav.clients')}</TabsTrigger>
           )}
         </TabsList>
 
-        {user.activeRole !== 'client' && (
+        {(user.activeRole as string) !== 'client' && (
           <TabsContent value="overview" className="space-y-4">
             <DashboardOverview 
               user={user}
@@ -191,7 +191,7 @@ function Dashboard({
           <AppointmentsView user={user} />
         </TabsContent>
 
-        {user.activeRole !== 'client' && (
+        {(user.activeRole as string) !== 'client' && (
           <TabsContent value="clients" className="space-y-4">
             <ClientsView user={user} />
           </TabsContent>

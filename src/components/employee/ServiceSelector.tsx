@@ -399,7 +399,7 @@ export function ServiceSelector({
 
                   {service.is_offering && (
                     <div className="flex items-center gap-2 text-sm text-primary">
-                      <Check className="h-4 w-4" />
+                      <CheckIcon className="h-4 w-4" />
                       <span>Ya ofreces este servicio</span>
                     </div>
                   )}

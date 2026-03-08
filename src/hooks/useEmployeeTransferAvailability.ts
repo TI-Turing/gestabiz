@@ -33,7 +33,7 @@ export function useEmployeeTransferAvailability() {
     transfer_effective_date: string | null;
     transfer_to_location_id: string | null;
   } | null>>(new Map());
-  const pendingRef = useRef<Map<string, Promise<{
+  const pendingRef = useRef<Map<string, PromiseLike<{
     location_id: string | null;
     transfer_status: 'pending' | 'completed' | 'cancelled' | null;
     transfer_effective_date: string | null;
@@ -71,18 +71,28 @@ export function useEmployeeTransferAvailability() {
             .maybeSingle()
             .then(({ data }) => {
               // Guardar en cache y limpiar pending
-              infoCacheRef.current.set(cacheKey, (data as any) || null);
+              infoCacheRef.current.set(cacheKey, (data as {
+                location_id: string | null;
+                transfer_status: 'pending' | 'completed' | 'cancelled' | null;
+                transfer_effective_date: string | null;
+                transfer_to_location_id: string | null;
+              } | null) || null);
               pendingRef.current.delete(cacheKey);
-              return (data as any) || null;
-            })
-            .catch(() => {
-              // En caso de error, cachear null para evitar repetición inmediata
-              infoCacheRef.current.set(cacheKey, null);
-              pendingRef.current.delete(cacheKey);
-              return null;
+              return (data as {
+                location_id: string | null;
+                transfer_status: 'pending' | 'completed' | 'cancelled' | null;
+                transfer_effective_date: string | null;
+                transfer_to_location_id: string | null;
+              } | null) || null;
             });
           pendingRef.current.set(cacheKey, promise);
-          return await promise;
+          try {
+            return await promise;
+          } catch {
+            infoCacheRef.current.set(cacheKey, null);
+            pendingRef.current.delete(cacheKey);
+            return null;
+          }
         };
         const employeeData = await getInfo();
         if (!employeeData) {
@@ -117,8 +127,8 @@ export function useEmployeeTransferAvailability() {
             transferStatus: 'pending',
             reason: `El empleado se trasladará a otra sede el ${effectiveDate.toLocaleDateString('es-CO')}. No puede agendar citas después de esa fecha en esta sede.`,
             effectiveDate,
-            currentLocation: currentLocationId,
-            transferLocation: transferLocationId,
+            currentLocation: currentLocationId || undefined,
+            transferLocation: transferLocationId || undefined,
           };
         }
 
@@ -133,8 +143,8 @@ export function useEmployeeTransferAvailability() {
             transferStatus: 'pending',
             reason: `El empleado no estará disponible en esta sede hasta el ${effectiveDate.toLocaleDateString('es-CO')}.`,
             effectiveDate,
-            currentLocation: currentLocationId,
-            transferLocation: transferLocationId,
+            currentLocation: currentLocationId || undefined,
+            transferLocation: transferLocationId || undefined,
           };
         }
 
@@ -143,8 +153,8 @@ export function useEmployeeTransferAvailability() {
           isAvailable: true,
           transferStatus: 'pending',
           effectiveDate,
-          currentLocation: currentLocationId,
-          transferLocation: transferLocationId,
+          currentLocation: currentLocationId || undefined,
+          transferLocation: transferLocationId || undefined,
         };
       } catch {
         // En caso de error, permitir (no bloquear por error)

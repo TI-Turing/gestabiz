@@ -172,7 +172,7 @@ export function useJobVacancies(businessId?: string) {
 
   const updateVacancy = async (
     vacancyId: string,
-    updates: Partial<CreateVacancyInput>
+    updates: Partial<CreateVacancyInput & { published_at: string }>
   ): Promise<boolean> => {
     try {
       // Si está cambiando a 'open', actualizar published_at

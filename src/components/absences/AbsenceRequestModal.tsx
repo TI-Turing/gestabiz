@@ -144,7 +144,7 @@ export function AbsenceRequestModal({ isOpen, onClose, businessId }: Readonly<Ab
     // Nota: Los días no laborales y festivos se permiten, pero no se cuentan
     // en el balance de vacaciones (ya están restados del conteo)
 
-    const success = await requestAbsence({
+    await requestAbsence({
       absenceType,
       startDate: format(startDate, 'yyyy-MM-dd'),
       endDate: format(endDate, 'yyyy-MM-dd'),
@@ -152,18 +152,16 @@ export function AbsenceRequestModal({ isOpen, onClose, businessId }: Readonly<Ab
       employeeNotes: employeeNotes.trim() || undefined,
     });
 
-    if (success) {
-      // Limpiar formulario
-      setAbsenceType('vacation');
-      setStartDate(undefined);
-      setEndDate(undefined);
-      setReason('');
-      setEmployeeNotes('');
-      setAffectedAppointmentsCount(0);
-      setInvalidWorkDays([]);
-      setHolidaysInRange([]);
-      onClose();
-    }
+    // Limpiar formulario
+    setAbsenceType('vacation');
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setReason('');
+    setEmployeeNotes('');
+    setAffectedAppointmentsCount(0);
+    setInvalidWorkDays([]);
+    setHolidaysInRange([]);
+    onClose();
   };
 
   const handleClose = () => {

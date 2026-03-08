@@ -4,11 +4,11 @@ import { Platform } from 'react-native'
 // Import mobile scanner only on React Native
 // Import web scanner only on web
 const QRScannerMobile = Platform.OS !== 'web' 
-  ? require('./mobile/QRScanner').QRScanner 
+  ? require('./mobile/QRScanner').QRScanner // eslint-disable-line @typescript-eslint/no-require-imports
   : null
 
 const QRScannerWebComponent = Platform.OS === 'web'
-  ? require('./ui/QRScannerWeb').QRScannerWeb
+  ? require('./ui/QRScannerWeb').QRScannerWeb // eslint-disable-line @typescript-eslint/no-require-imports
   : null
 
 interface BusinessInvitationQRData {

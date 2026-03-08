@@ -65,10 +65,10 @@ export function usePermissions(businessId?: string) {
     isOwner,
     isAdmin,
     isEmployee,
-    canProvideServices,
+    canOfferServices,
     userPermissions,
     businessRoles,
-    getActivePermissions,
+    activePermissions,
     isLoading
   } = v2Hook
   
@@ -127,12 +127,12 @@ export function usePermissions(businessId?: string) {
     isOwner: v2Enabled ? isOwner : false,
     isAdmin: v2Enabled ? isAdmin : false,
     isEmployee: v2Enabled ? isEmployee : false,
-    canProvideServices: v2Enabled ? canProvideServices : false,
+    canProvideServices: v2Enabled ? canOfferServices : false,
     
     // ========== Datos raw ==========
     userPermissions: v2Enabled ? userPermissions : [],
     businessRoles: v2Enabled ? businessRoles : [],
-    getActivePermissions: v2Enabled ? getActivePermissions : () => [],
+    getActivePermissions: v2Enabled ? () => activePermissions : () => [],
     
     // ========== Loading states ==========
     isLoading: v2Enabled ? isLoading : false,

@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { DollarSign, Calendar, User, Package, TrendingUp } from 'lucide-react'
+import { DollarSign, Calendar, User, Package, TrendingUp, Banknote, CreditCard, Landmark, Phone, IdCard, Mail, PencilLine } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { QuickSaleForm } from '@/components/sales/QuickSaleForm'
 import supabase from '@/lib/supabase'
@@ -36,7 +36,7 @@ interface QuickSalesPageProps {
   businessId: string
 }
 
-export function QuickSalesPage({ businessId }: QuickSalesPageProps) {
+export function QuickSalesPage({ businessId }: Readonly<QuickSalesPageProps>) {
   const [recentSales, setRecentSales] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
@@ -74,7 +74,14 @@ export function QuickSalesPage({ businessId }: QuickSalesPageProps) {
         .limit(10)
 
       if (error) throw error
-      setRecentSales(data || [])
+      const normalized = (data || []).map((row) => {
+        const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles
+        return {
+          ...row,
+          profiles: profile,
+        }
+      }) as Transaction[]
+      setRecentSales(normalized)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
       toast.error(`Error al cargar ventas: ${errorMessage}`)
@@ -134,11 +141,96 @@ export function QuickSalesPage({ businessId }: QuickSalesPageProps) {
 
   const formatPaymentMethod = (method: string) => {
     const paymentMethodLabels: Record<string, React.ReactNode> = {
-      cash: <span className="flex items-center gap-2"><Money size={16} weight="fill" /> Efectivo</span>,
-      card: <span className="flex items-center gap-2"><CreditCard size={16} weight="fill" /> Tarjeta</span>,
-      transfer: <span className="flex items-center gap-2"><Bank size={16} weight="fill" /> Transferencia</span>,
+      cash: <span className="flex items-center gap-2"><Banknote size={16} /> Efectivo</span>,
+      card: <span className="flex items-center gap-2"><CreditCard size={16} /> Tarjeta</span>,
+      transfer: <span className="flex items-center gap-2"><Landmark size={16} /> Transferencia</span>,
     }
-    return methods[method] || method
+    return paymentMethodLabels[method] || method
+  }
+
+  const renderRecentSales = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      )
+    }
+
+    if (recentSales.length === 0) {
+      return (
+        <div className="text-center py-8 text-muted-foreground">
+          <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
+          <p>No hay ventas registradas aún</p>
+          <p className="text-sm">Registra tu primera venta rápida arriba</p>
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-3">
+        {recentSales.map((sale) => (
+          <div
+            key={sale.id}
+            className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+          >
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">
+                  {sale.metadata?.client_name || 'Cliente sin nombre'}
+                </span>
+                {sale.metadata?.client_phone && (
+                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Phone size={14} /> {sale.metadata.client_phone}
+                  </span>
+                )}
+              </div>
+              {(sale.metadata?.client_document || sale.metadata?.client_email) && (
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mb-1">
+                  {sale.metadata?.client_document && (
+                    <span className="flex items-center gap-1"><IdCard size={14} /> {sale.metadata.client_document}</span>
+                  )}
+                  {sale.metadata.client_email && (
+                    <span className="flex items-center gap-1"><Mail size={14} /> {sale.metadata.client_email}</span>
+                  )}
+                </div>
+              )}
+              <p className="text-sm text-muted-foreground">
+                {sale.description}
+              </p>
+              {sale.metadata?.notes && (
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <PencilLine size={14} /> {sale.metadata.notes}
+                </p>
+              )}
+              {sale.profiles?.full_name && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Atendió: {sale.profiles.full_name}
+                </p>
+              )}
+            </div>
+
+            <div className="text-right space-y-1">
+              <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                ${sale.amount.toLocaleString('es-CO')}
+              </div>
+              <Badge variant="outline" className="text-xs">
+                {formatPaymentMethod(sale.payment_method)}
+              </Badge>
+              <div className="text-xs text-muted-foreground">
+                {new Date(sale.created_at).toLocaleDateString('es-CO', {
+                  day: '2-digit',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
   }
 
   return (
@@ -200,82 +292,7 @@ export function QuickSalesPage({ businessId }: QuickSalesPageProps) {
           <CardTitle>Ventas Recientes</CardTitle>
           <CardDescription>Últimas 10 ventas registradas</CardDescription>
         </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-            </div>
-          ) : recentSales.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>No hay ventas registradas aún</p>
-              <p className="text-sm">Registra tu primera venta rápida arriba</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentSales.map((sale) => (
-                <div
-                  key={sale.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">
-                        {sale.metadata?.client_name || 'Cliente sin nombre'}
-                      </span>
-                      {sale.metadata?.client_phone && (
-                        <span className="text-sm text-muted-foreground flex items-center gap-1">
-                          <Phone size={14} weight="fill" /> {sale.metadata.client_phone}
-                        </span>
-                      )}
-                    </div>
-                    {(sale.metadata?.client_document || sale.metadata?.client_email) && (
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground mb-1">
-                        {sale.metadata?.client_document && (
-                          <span className="flex items-center gap-1"><IdentificationCard size={14} weight="fill" /> {sale.metadata.client_document}</span>
-                        )}
-                        {sale.metadata.client_email && (
-                          <span className="flex items-center gap-1"><EnvelopeSimple size={14} weight="fill" /> {sale.metadata.client_email}</span>
-                        )}
-                      </div>
-                    )}
-                    <p className="text-sm text-muted-foreground">
-                      {sale.description}
-                    </p>
-                    {sale.metadata?.notes && (
-                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                        <NotePencil size={14} weight="fill" /> {sale.metadata.notes}
-                      </p>
-                    )}
-                    {sale.profiles?.full_name && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Atendió: {sale.profiles.full_name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="text-right space-y-1">
-                    <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                      ${sale.amount.toLocaleString('es-CO')}
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      {formatPaymentMethod(sale.payment_method)}
-                    </Badge>
-                    <div className="text-xs text-muted-foreground">
-                      {new Date(sale.created_at).toLocaleDateString('es-CO', {
-                        day: '2-digit',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
+        <CardContent>{renderRecentSales()}</CardContent>
       </Card>
     </div>
   )

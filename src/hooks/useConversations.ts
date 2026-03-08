@@ -153,7 +153,7 @@ export function useConversations(
         // Track analytics
         trackChatEvent(ChatEvents.CONVERSATIONS_LOADED, {
           count: filtered.length,
-          business_id: businessId,
+          ...(businessId ? { business_id: businessId } : {}),
         })
       } catch (err: any) {
         console.error('Error fetching conversations:', err)  

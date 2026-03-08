@@ -436,7 +436,7 @@ export default function BusinessRegistration({ user, onBusinessCreated, onCancel
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
                   <Building2 className="h-5 w-5" />
-                  Ubicación Legal del Negocio
+                  País y Región del Negocio
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Indica dónde está registrado legalmente tu negocio (no la dirección física de las sedes)

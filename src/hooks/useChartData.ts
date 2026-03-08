@@ -221,7 +221,7 @@ export function useChartData(
       .forEach(t => {
         const empId = t.employee_id!;
         const current = employeeMap.get(empId) || {
-          name: t.employee!.full_name || 'Sin nombre',
+          name: t.employee!.name || 'Sin nombre',
           revenue: 0,
           appointments: 0,
         };
@@ -300,7 +300,7 @@ export function useChartData(
 // ============================================================================
 
 function getCategoryLabel(category: TransactionCategory): string {
-  const labels: Record<TransactionCategory, string> = {
+  const labels: Partial<Record<TransactionCategory, string>> = {
     // Ingresos
     appointment_payment: 'Pago de Citas',
     product_sale: 'Venta de Productos',
@@ -329,7 +329,7 @@ function getCategoryLabel(category: TransactionCategory): string {
 
 // Agrupar categorías en grupos lógicos
 function getCategoryGroup(category: TransactionCategory): string {
-  const groups: Record<TransactionCategory, string> = {
+  const groups: Partial<Record<TransactionCategory, string>> = {
     // INGRESOS
     appointment_payment: 'Servicios',
     product_sale: 'Ventas',
@@ -386,7 +386,7 @@ function getGroupColor(group: string): string {
 
 // Colores para gráficos de categorías individuales (LEGACY - mantener para compatibilidad)
 export function getCategoryColor(category: TransactionCategory): string {
-  const colors: Record<TransactionCategory, string> = {
+  const colors: Partial<Record<TransactionCategory, string>> = {
     // Ingresos (verdes/azules)
     appointment_payment: '#10b981',
     product_sale: '#3b82f6',

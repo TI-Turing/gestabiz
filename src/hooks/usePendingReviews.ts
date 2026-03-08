@@ -93,17 +93,23 @@ export function usePendingReviews() {
 
       const filtered = appointmentsWithoutReviews
         .filter(apt => !validRemindLater.some(entry => entry.appointmentId === apt.id))
-        .map((apt) => ({
-          appointment_id: apt.id,
-          appointment_date: apt.start_time?.split(' ')[0],
-          appointment_start_time: apt.start_time,
-          business_id: apt.business_id,
-          business_name: apt.businesses?.name || 'Negocio',
-          service_name: apt.services?.name,
-          employee_id: apt.employee_id || undefined,
-          employee_name: apt.employee?.full_name,
-          completed_at: apt.updated_at
-        }));
+        .map((apt) => {
+          const business = Array.isArray(apt.businesses) ? apt.businesses[0] : apt.businesses
+          const service = Array.isArray(apt.services) ? apt.services[0] : apt.services
+          const employee = Array.isArray(apt.employee) ? apt.employee[0] : apt.employee
+
+          return {
+            appointment_id: apt.id,
+            appointment_date: apt.start_time?.split(' ')[0],
+            appointment_start_time: apt.start_time,
+            business_id: apt.business_id,
+            business_name: business?.name || 'Negocio',
+            service_name: service?.name,
+            employee_id: apt.employee_id || undefined,
+            employee_name: employee?.full_name,
+            completed_at: apt.updated_at
+          }
+        });
 
       setPendingReviews(filtered);
     } catch (err: unknown) {

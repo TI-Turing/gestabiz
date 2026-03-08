@@ -69,6 +69,11 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
   if (!dashboard?.subscription) {
     return (
       <div className="space-y-6">
+        {/* Page Title */}
+        <div className="space-y-1">
+          <h2 className="text-3xl font-bold tracking-tight">Facturación</h2>
+          <p className="text-muted-foreground">Administra tu suscripción y métodos de pago</p>
+        </div>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -149,6 +154,11 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
 
   return (
     <div className="space-y-6">
+      {/* Page Title */}
+      <div className="space-y-1">
+        <h2 className="text-3xl font-bold tracking-tight">Facturación</h2>
+        <p className="text-muted-foreground">Administra tu suscripción y métodos de pago</p>
+      </div>
       {/* Header con información de suscripción */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

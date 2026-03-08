@@ -4,7 +4,6 @@ export const demoBusiness: Business = {
   id: 'demo-business',
   name: 'Clínica Dental Sonrisas',
   description: 'Clínica dental profesional con servicios integrales',
-  category: 'Salud',
   logo_url: '',
   website: 'https://clinicasonrisas.com',
   phone: '+1 (555) 000-0000',
@@ -26,6 +25,7 @@ export const demoBusiness: Business = {
     sunday: { open: '00:00', close: '00:00', closed: true }
   },
   timezone: 'Europe/Madrid',
+  resource_model: 'professional',
   owner_id: 'demo-user',
   settings: {
   appointment_buffer: 15,
@@ -67,8 +67,7 @@ export const demoLocations: Location[] = [
   is_active: true,
   is_main: true,
     created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-  created_by: 'demo-user'
+  updated_at: '2024-01-01T00:00:00Z'
   },
   {
     id: 'demo-location-2',
@@ -95,8 +94,7 @@ export const demoLocations: Location[] = [
   is_active: true,
   is_main: false,
     created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z',
-  created_by: 'demo-user'
+  updated_at: '2024-01-01T00:00:00Z'
   }
 ]
 

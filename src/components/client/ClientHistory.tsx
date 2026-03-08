@@ -141,16 +141,6 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
     } : null
   })
   
-  // ✅ FIX: Early return DESPUÉS de todos los hooks
-  if (!appointments || !Array.isArray(appointments)) {
-    console.log('[ClientHistory] Early return: appointments no válidos')
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">No hay datos de citas disponibles</p>
-      </div>
-    )
-  }
-
   // ✅ OPTIMIZACIÓN: Consolidar 5 useEffect → 1 useMemo para extraer todas las entidades únicas
   const filterEntities = useMemo(() => {
     const businessesMap = new Map<string, Business>()

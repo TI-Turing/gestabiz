@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Check, Building2, Filter, Search } from 'lucide-react';
+import { Check, Building2, Filter, Search, Star } from 'lucide-react';
 import { MapPin, Phone } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { withCache } from '@/lib/cache';
@@ -13,6 +13,8 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useAuth } from '@/contexts/AuthContext';
 import { BOGOTA_REGION_ID, BOGOTA_CITY_ID, BOGOTA_CITY_NAME } from '@/constants';
 import { useKV } from '@/lib/useKV';
+
+type SearchType = 'all' | 'businesses' | 'services' | 'categories' | 'users';
 
 interface Business {
   id: string;
@@ -514,14 +516,14 @@ export function BusinessSelection({
       {/* Título */}
       <div>
         <h3 className="text-xl font-semibold text-foreground mb-2">
-          Select a Business
+          Selecciona un Negocio
         </h3>
         <p className="text-muted-foreground mb-4">
-          Choose the business where you want to book your appointment
+          Elige el negocio donde deseas agendar tu cita
         </p>
         {(preferredCityName || preferredRegionName) && (
           <p className="text-xs text-muted-foreground mb-3">
-            Preferred location: {preferredCityName || preferredRegionName}
+            Ubicación preferida: {preferredCityName || preferredRegionName}
           </p>
         )}
 
@@ -674,7 +676,7 @@ export function BusinessSelection({
                   return (
                     <div className="mb-2">
                       <Badge variant="secondary" className="text-[10px] sm:text-xs">
-                        {`⭐ ${Number(rs.average_rating || 0).toFixed(1)} · ${rs.review_count || 0} reseñas`}
+                        {`${Number(rs.average_rating || 0).toFixed(1)} `}<Star className="inline h-3.5 w-3.5 fill-yellow-400 text-yellow-400 mb-0.5" />{` · ${rs.review_count || 0} reseñas`}
                       </Badge>
                     </div>
                   );

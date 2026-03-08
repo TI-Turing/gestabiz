@@ -140,7 +140,7 @@ export function SimpleChatLayout({
     
     // Solo marcar si hay mensajes sin leer del otro usuario
     const unreadMessages = activeMessages.filter(
-      msg => msg.sender_id !== userId && (!msg.read_by || !msg.read_by.includes(userId))
+      msg => msg.sender_id !== userId && (!msg.read_by || !msg.read_by.some(r => r.user_id === userId))
     );
     
     if (unreadMessages.length > 0) {

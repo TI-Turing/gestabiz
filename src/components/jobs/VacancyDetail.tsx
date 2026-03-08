@@ -273,7 +273,7 @@ export function VacancyDetail({
               <div>
                 <p className="text-sm text-muted-foreground">Ubicación</p>
                 <p className="text-foreground font-medium">
-                  {vacancy.locations ? `${vacancy.locations.name}, ${vacancy.locations.city}` : 'Sin ubicación'}
+                  {vacancy.locations ? vacancy.locations.name : 'Sin ubicación'}
                 </p>
               </div>
             </div>

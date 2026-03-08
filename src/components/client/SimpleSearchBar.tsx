@@ -28,7 +28,7 @@ export function SimpleSearchBar({ onSearch, className, placeholder }: SimpleSear
   const { t } = useLanguage()
   const [searchType, setSearchType] = useState<SearchType>('businesses')
   const [searchTerm, setSearchTerm] = useState('')
-  const debounceTimerRef = useRef<NodeJS.Timeout>()
+  const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   const Icon = searchTypeIconConfig[searchType]
   const typeLabel = t(`search.types.${searchType}`)

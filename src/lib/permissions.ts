@@ -114,7 +114,7 @@ export function getAllPermissions(): Permission[] {
 }
 
 // Permission descriptions for UI
-export const PERMISSION_DESCRIPTIONS: Record<Permission, string> = {
+export const PERMISSION_DESCRIPTIONS: Partial<Record<Permission, string>> = {
   'read_appointments': 'Ver citas',
   'write_appointments': 'Crear y editar citas',
   'delete_appointments': 'Eliminar citas',

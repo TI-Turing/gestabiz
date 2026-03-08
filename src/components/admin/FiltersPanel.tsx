@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Search, X } from 'lucide-react'
+import { Search, X, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -254,8 +254,8 @@ export function FiltersPanel({ businessId, filters, onFiltersChange, onClear }: 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label>Rating</Label>
-          <span className="text-sm text-muted-foreground">
-            {ratingRange.min.toFixed(1)} - {ratingRange.max.toFixed(1)} ⭐
+          <span className="text-sm text-muted-foreground flex items-center gap-1">
+            {ratingRange.min.toFixed(1)} - {ratingRange.max.toFixed(1)} <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
           </span>
         </div>
         <Slider

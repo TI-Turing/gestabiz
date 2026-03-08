@@ -112,9 +112,9 @@ export const landing = {
       withGestabiz: 'Con Gestabiz',
       recovered: 'Recuperas',
       appointmentsRecovered: 'Citas recuperadas (70%)',
-      cost: 'Costo de AppointSync',
+      cost: 'Costo de Gestabiz',
       netProfit: 'Ganancia Neta',
-      paysSelf: '🎉 La inversión se PAGA SOLA el primer mes'
+      paysSelf: 'La inversión se PAGA SOLA el primer mes'
     }
   },
   pricing: {
@@ -136,7 +136,7 @@ export const landing = {
       carlos: {
         name: 'Dr. Carlos Ramírez',
         business: 'Consultorio Dental SmileCare - Bogotá',
-        text: 'Como doctor, mi tiempo es oro. AppointSync me devolvió 10 horas a la semana. Ahora veo más pacientes y mi contador está feliz.',
+        text: 'Como doctor, mi tiempo es oro. Gestabiz me devolvió 10 horas a la semana. Ahora veo más pacientes y mi contador está feliz.',
         stat: '800% ROI'
       },
       juan: {
@@ -184,6 +184,7 @@ export const landing = {
       licenses: 'Licencias'
     },
     copyright: '© 2025 Gestabiz. Todos los derechos reservados.',
+    rightsReserved: 'Todos los derechos reservados.',
     madeIn: 'Hecho con ❤️ en Colombia 🇨🇴',
     developedBy: 'Desarrollado por',
     company: 'Ti Turing',

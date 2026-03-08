@@ -74,14 +74,14 @@ interface WizardData {
 }
 
 const STEP_LABELS_MAP: Record<string, string> = {
-  business: 'Business Selection',
-  location: 'Location Selection',
-  service: 'Service Selection',
-  employee: 'Employee Selection',
-  employeeBusiness: 'Employee Business',
-  dateTime: 'Date & Time',
-  confirmation: 'Confirmation',
-  success: 'Complete',
+  business: 'Selección de Negocio',
+  location: 'Selección de Sede',
+  service: 'Selección de Servicio',
+  employee: 'Selección de Profesional',
+  employeeBusiness: 'Negocio del Profesional',
+  dateTime: 'Fecha y Hora',
+  confirmation: 'Confirmación',
+  success: 'Completado',
 };
 
 export function AppointmentWizard({ 
@@ -120,7 +120,7 @@ export function AppointmentWizard({
 
     const tfMatch = time.match(twentyFourRegex);
     if (tfMatch) {
-      let hourNum = Number.parseInt(tfMatch[1], 10);
+      const hourNum = Number.parseInt(tfMatch[1], 10);
       const minuteStr = tfMatch[2];
       const suffix = hourNum >= 12 ? 'PM' : 'AM';
       let hour12 = hourNum % 12;
@@ -258,7 +258,7 @@ export function AppointmentWizard({
     const skippable: string[] = [];
     
     // ⭐ VALIDACIÓN: Verificar que el cache esté cargado
-    if (!dataCache.locations || !dataCache.services || !dataCache.employees || !dataCache.serviceEmployees) {
+    if (!dataCache.locations || !dataCache.services) {
       return skippable; // Retornar array vacío si el cache no está listo
     }
     
@@ -272,16 +272,6 @@ export function AppointmentWizard({
       );
       if (servicesForLocation.length === 1) {
         skippable.push('service');
-        
-        // Si también solo hay un empleado para ese servicio, se puede omitir
-        const employeesForService = dataCache.employees.filter(employee =>
-          dataCache.serviceEmployees.some(se => 
-            se.service_id === servicesForLocation[0].id && se.employee_id === employee.id
-          )
-        );
-        if (employeesForService.length === 1) {
-          skippable.push('employee');
-        }
       }
     } else if (wizardData.locationId) {
       // Si ya hay ubicación seleccionada, verificar servicios
@@ -290,26 +280,6 @@ export function AppointmentWizard({
       );
       if (servicesForLocation.length === 1) {
         skippable.push('service');
-        
-        // Si también solo hay un empleado para ese servicio, se puede omitir
-        const employeesForService = dataCache.employees.filter(employee =>
-          dataCache.serviceEmployees.some(se => 
-            se.service_id === servicesForLocation[0].id && se.employee_id === employee.id
-          )
-        );
-        if (employeesForService.length === 1) {
-          skippable.push('employee');
-        }
-      } else if (wizardData.serviceId) {
-        // Si ya hay servicio seleccionado, verificar empleados
-        const employeesForService = dataCache.employees.filter(employee =>
-          dataCache.serviceEmployees.some(se => 
-            se.service_id === wizardData.serviceId && se.employee_id === employee.id
-          )
-        );
-        if (employeesForService.length === 1) {
-          skippable.push('employee');
-        }
       }
     }
     
@@ -397,7 +367,7 @@ export function AppointmentWizard({
 
   const handleNext = async () => {
     // ⭐ VALIDACIÓN: Verificar que el cache esté cargado antes de aplicar optimizaciones
-    if (!dataCache.locations || !dataCache.services || !dataCache.employees || !dataCache.serviceEmployees) {
+    if (!dataCache.locations || !dataCache.services) {
       // Si el cache no está listo, proceder con navegación normal
       setCurrentStep(currentStep + 1);
       return;
@@ -457,38 +427,10 @@ export function AppointmentWizard({
           serviceId: singleService.id,
           service: singleService,
         });
-        
-        // Verificar si también podemos auto-seleccionar el empleado
-        const employeesForService = dataCache.employees.filter(employee =>
-          dataCache.serviceEmployees.some(se => 
-            se.service_id === singleService.id && se.employee_id === employee.id
-          )
-        );
-        
-        if (employeesForService.length === 1) {
-          const singleEmployee = employeesForService[0];
-          updateWizardData({
-            employeeId: singleEmployee.id,
-            employee: singleEmployee,
-          });
-          
-          // Auto-asignar negocio del empleado si corresponde
-          const contextBusinessId = wizardData.businessId || businessId || null;
-          if (contextBusinessId && !initiatedFromEmployeeProfile) {
-            updateWizardData({
-              employeeBusinessId: contextBusinessId,
-              employeeBusiness: wizardData.business || null,
-            });
-          }
-          
-          // Saltar directamente a fecha/hora
-          setCurrentStep(getStepNumber('dateTime'));
-          return;
-        } else {
-          // Saltar a selección de empleado
-          setCurrentStep(getStepNumber('employee'));
-          return;
-        }
+
+        // Saltar a selección de empleado
+        setCurrentStep(getStepNumber('employee'));
+        return;
       } else {
         // Saltar a selección de servicio
         setCurrentStep(getStepNumber('service'));
@@ -508,67 +450,7 @@ export function AppointmentWizard({
           serviceId: singleService.id,
           service: singleService,
         });
-        
-        // Verificar si también podemos auto-seleccionar el empleado
-        const employeesForService = dataCache.employees.filter(employee =>
-          dataCache.serviceEmployees.some(se => 
-            se.service_id === singleService.id && se.employee_id === employee.id
-          )
-        );
-        
-        if (employeesForService.length === 1) {
-          const singleEmployee = employeesForService[0];
-          updateWizardData({
-            employeeId: singleEmployee.id,
-            employee: singleEmployee,
-          });
-          
-          // Auto-asignar negocio del empleado si corresponde
-          const contextBusinessId = wizardData.businessId || businessId || null;
-          if (contextBusinessId && !initiatedFromEmployeeProfile) {
-            updateWizardData({
-              employeeBusinessId: contextBusinessId,
-              employeeBusiness: wizardData.business || null,
-            });
-          }
-          
-          // Saltar directamente a fecha/hora
-          setCurrentStep(getStepNumber('dateTime'));
-          return;
-        } else {
-          // Saltar a selección de empleado
-          setCurrentStep(getStepNumber('employee'));
-          return;
-        }
-      }
-    }
-
-    // ⭐ OPTIMIZACIÓN: Auto-seleccionar empleado si solo hay uno disponible para el servicio
-    if (currentStep === getStepNumber('employee') && wizardData.serviceId) {
-      const employeesForService = dataCache.employees.filter(employee =>
-        dataCache.serviceEmployees.some(se => 
-          se.service_id === wizardData.serviceId && se.employee_id === employee.id
-        )
-      );
-      
-      if (employeesForService.length === 1) {
-        const singleEmployee = employeesForService[0];
-        updateWizardData({
-          employeeId: singleEmployee.id,
-          employee: singleEmployee,
-        });
-        
-        // Auto-asignar negocio del empleado si corresponde
-        const contextBusinessId = wizardData.businessId || businessId || null;
-        if (contextBusinessId && !initiatedFromEmployeeProfile) {
-          updateWizardData({
-            employeeBusinessId: contextBusinessId,
-            employeeBusiness: wizardData.business || null,
-          });
-        }
-        
-        // Saltar directamente a fecha/hora
-        setCurrentStep(getStepNumber('dateTime'));
+        setCurrentStep(getStepNumber('employee'));
         return;
       }
     }
@@ -830,7 +712,7 @@ export function AppointmentWizard({
       } else {
         // MODO CREACIÓN: Usar el hook useSupabase.createAppointment que incluye notificaciones
         console.log('🚀 [WIZARD] Usando useSupabase.createAppointment con notificaciones automáticas');
-        await createAppointmentWithNotifications(appointmentData);
+        await createAppointmentWithNotifications(appointmentData as unknown as Parameters<typeof createAppointmentWithNotifications>[0]);
 
         // Track booking completed (conversión exitosa) - Solo para nuevas citas
         analytics.trackBookingCompleted({
@@ -915,6 +797,8 @@ export function AppointmentWizard({
           "h-[95vh] sm:min-h-[600px] sm:max-h-[85vh]", // Full height mobile; stable desktop height
           "[&>button]:hidden" // Ocultar el botón de cerrar por defecto del DialogContent
         )}
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
       >
         {/* DialogTitle para accesibilidad (screen readers) */}
         <DialogTitle className="sr-only">

@@ -311,7 +311,7 @@ export const settings = {
         description: 'Guarda tu método de pago para agilizar el checkout'
       },
       appointmentReminders: 'Recordatorios de citas',
-      emailConfirmation: 'Confirmación por email',
+      emailConfirmationText: 'Confirmación por email',
       promotionNotifications: 'Notificaciones de promociones',
       savePaymentMethods: 'Guardar métodos de pago'
     },

@@ -456,7 +456,7 @@ export function useAuth() {
 
       const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
-        password: password
+        password: password ?? ''
       })
 
       if (error) {

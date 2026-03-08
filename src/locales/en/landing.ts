@@ -112,9 +112,9 @@ export const landing = {
       withGestabiz: 'With Gestabiz',
       recovered: 'You Recover',
       appointmentsRecovered: 'Appointments recovered (70%)',
-      cost: 'AppointSync Cost',
+      cost: 'Gestabiz Cost',
       netProfit: 'Net Profit',
-      paysSelf: '🎉 Investment pays for ITSELF in the first month'
+      paysSelf: 'Investment pays for ITSELF in the first month'
     }
   },
   pricing: {
@@ -136,7 +136,7 @@ export const landing = {
       carlos: {
         name: 'Dr. Carlos Ramírez',
         business: 'SmileCare Dental Office - Bogotá',
-        text: "As a doctor, my time is gold. AppointSync gave me back 10 hours a week. Now I see more patients and my accountant is happy.",
+        text: "As a doctor, my time is gold. Gestabiz gave me back 10 hours a week. Now I see more patients and my accountant is happy.",
         stat: '800% ROI'
       },
       juan: {
@@ -184,6 +184,7 @@ export const landing = {
       licenses: 'Licenses'
     },
     copyright: '© 2025 Gestabiz. All rights reserved.',
+    rightsReserved: 'All rights reserved.',
     madeIn: 'Made with ❤️ in Colombia 🇨🇴',
     developedBy: 'Developed by',
     company: 'Ti Turing',

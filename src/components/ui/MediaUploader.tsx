@@ -11,6 +11,8 @@ export interface MediaItemPending {
   isBanner?: boolean
   isPrimary?: boolean
   durationSec?: number
+  trimStart?: number
+  trimEnd?: number
 }
 
 interface MediaUploaderProps {

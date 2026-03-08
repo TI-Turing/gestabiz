@@ -118,7 +118,7 @@ const normalizeAppointment = (appointment: Record<string, unknown>): Appointment
   const service = (appointment.service ?? appointment.services) as AppointmentWithRelations['service'];
 
   return {
-    ...(appointment as AppointmentWithRelations),
+    ...(appointment as unknown as AppointmentWithRelations),
     business: business ?? null,
     location: location ?? null,
     service: service ?? null,
@@ -171,7 +171,7 @@ const buildFrequentBusinesses = (appointments: AppointmentWithRelations[]): Busi
     .map(({ business, visitsCount, lastAppointmentDate }) => ({
       id: business?.id || '',
       name: business?.name || 'Negocio',
-      description: business?.description,
+      description: business?.description ?? null,
       logo_url: business?.logo_url || null,
       banner_url: business?.banner_url || null,
       average_rating: business?.average_rating ?? null,
@@ -263,7 +263,7 @@ export function useClientDashboard(clientId: string | null) {
       };
 
       let dashboardData: ClientDashboardData | null = null;
-      let lastError: Error | null = null;
+      const lastError: Error | null = null;
 
       // ⚠️ TEMPORAL: Deshabilitar Edge Function para depuración
       /*
@@ -308,7 +308,7 @@ export function useClientDashboard(clientId: string | null) {
         });
 
         if (rpcError) {
-          throw new Error(rpcError.message || lastError?.message || 'Failed to fetch client dashboard data');
+          throw new Error(rpcError.message || 'Failed to fetch client dashboard data');
         }
 
         dashboardData = (rpcData as ClientDashboardData | null) ?? null;

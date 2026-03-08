@@ -112,7 +112,7 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
           const notification = payload.new as InAppNotification
           const { activeConversationId, isChatOpen } = stateRef.current
           
-          console.log('[NotificationContext] 📨 New notification:', {
+          if (import.meta.env.DEV) console.log('[NotificationContext] 📨 New notification:', {
             type: notification.type,
             title: notification.title,
             activeConversationId,
@@ -120,28 +120,13 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
             conversationId: notification.data?.conversation_id
           })
           
-          // 🔍 DEBUG: Verificar cada condición
-          console.log('🔍 [DEBUG] Checking suppression conditions:', {
-            isChat: notification.type === 'chat_message',
-            isChatOpen: isChatOpen,
-            hasActiveConv: activeConversationId !== null,
-            activeConvId: activeConversationId,
-            messageConvId: notification.data?.conversation_id,
-            matches: notification.data?.conversation_id === activeConversationId,
-            WILL_SUPPRESS: (
-              notification.type === 'chat_message' && 
-              isChatOpen &&
-              notification.data?.conversation_id === activeConversationId
-            )
-          })
-          
-          // ✅ REGLA 1: Si es chat message Y el chat de esa conversación está abierto → SUPRIMIR 
+          // Verificar condiciones de supresión 
           if (
             notification.type === 'chat_message' && 
             isChatOpen &&
             notification.data?.conversation_id === activeConversationId
           ) {
-            console.log('❌ [SUPPRESSED] Toast will NOT show - chat is open for this conversation')
+            if (import.meta.env.DEV) console.log('❌ [SUPPRESSED] Toast will NOT show - chat is open for this conversation')
             playActiveChatMessageSound()
             return // No mostrar toast, solo sonido
           }
@@ -149,15 +134,10 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
           // ✅ REGLA 2: Si el chat está abierto (lista de conversaciones) pero no es la activa → MOSTRAR
           // ✅ REGLA 3: Si el chat está completamente cerrado → MOSTRAR
           
-          console.log('✅ [PASSED] Suppression check passed, checking if unread...')
-          
           // Solo mostrar si es unread
           if (notification.status !== 'unread') {
-            console.log('⏭️ [SKIP] Notification is not unread, skipping toast')
             return
           }
-          
-          console.log('🎯 [SHOWING] About to show toast...')
           
           // Reproducir sonido
           const soundType = notification.priority === 2 ? 'alert' : 'message'
@@ -177,7 +157,7 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
             } : undefined
           })
           
-          console.log('[NotificationContext] ✅ Notification displayed:', notification.title)
+          if (import.meta.env.DEV) console.log('[NotificationContext] ✅ Notification displayed:', notification.title)
         }
       )
       // NOTE: Do NOT subscribe to `chat_messages` here using a subselect filter.
@@ -188,12 +168,12 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
       // react to chat_messages globally, subscribe to `chat_participants` or
       // create explicit filters with conversation ids.
       .subscribe((status) => {
-        console.log('[NotificationContext] 📡 Global channel status:', status)
+        if (import.meta.env.DEV) console.log('[NotificationContext] 📡 Global channel status:', status)
       })
 
     // Cleanup
     return () => {
-      console.log('[NotificationContext] 🔌 Unsubscribing global channel')
+      if (import.meta.env.DEV) console.log('[NotificationContext] 🔌 Unsubscribing global channel')
       supabase.removeChannel(channel)
       // ⭐ Reset guard al desmontar
       hasSubscribedRef.current = false

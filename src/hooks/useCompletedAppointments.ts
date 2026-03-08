@@ -93,11 +93,16 @@ export function useCompletedAppointments(
       }
 
       // Transform data to match our interface (businesses and services are already single objects)
-      return (data || []).map(apt => ({
-        ...apt,
-        businesses: apt.businesses || { id: '', name: '' },
-        services: apt.services || { id: '', name: '', price: 0 },
-      })) as CompletedAppointment[];
+      return (data || []).map((apt) => {
+        const businessRelation = Array.isArray(apt.businesses) ? apt.businesses[0] : apt.businesses;
+        const serviceRelation = Array.isArray(apt.services) ? apt.services[0] : apt.services;
+
+        return {
+          ...apt,
+          businesses: businessRelation || { id: '', name: '' },
+          services: serviceRelation || { id: '', name: '', price: 0 },
+        };
+      }) as CompletedAppointment[];
     },
     enabled: !!clientId,
     staleTime: QUERY_CONFIG.STABLE.staleTime, // 5 minutos

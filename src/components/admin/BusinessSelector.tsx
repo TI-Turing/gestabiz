@@ -26,6 +26,8 @@ export function BusinessSelector({
 }: BusinessSelectorProps) {
   const { t } = useLanguage()
   const selectedBusiness = businesses.find((b) => b.id === selectedBusinessId)
+  const getCategoryName = (business: Business) =>
+    typeof business.category === 'string' ? business.category : business.category?.name
 
   // Si solo hay un negocio, mostrar info card sin selector
   if (businesses.length === 1) {
@@ -47,7 +49,7 @@ export function BusinessSelector({
           <h3 className="font-semibold text-foreground truncate">{business.name}</h3>
           {business.category && (
             <Badge variant="secondary" className="mt-1 text-xs">
-              {business.category.name}
+              {getCategoryName(business)}
             </Badge>
           )}
         </div>
@@ -77,7 +79,7 @@ export function BusinessSelector({
                 <div className="flex flex-col items-start">
                   <span className="font-semibold text-foreground">{selectedBusiness.name}</span>
                   {selectedBusiness.category && (
-                    <span className="text-xs text-muted-foreground">{selectedBusiness.category.name}</span>
+                    <span className="text-xs text-muted-foreground">{getCategoryName(selectedBusiness)}</span>
                   )}
                 </div>
               </div>
@@ -110,7 +112,7 @@ export function BusinessSelector({
                   <span className="font-semibold text-foreground">{business.name}</span>
                   {business.category && (
                     <Badge variant="secondary" className="mt-1 text-xs">
-                      {business.category.name}
+                      {getCategoryName(business)}
                     </Badge>
                   )}
                   {business.subcategories && business.subcategories.length > 0 && (

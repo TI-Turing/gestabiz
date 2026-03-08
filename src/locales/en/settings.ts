@@ -311,7 +311,7 @@ export const settings = {
         description: 'Save your payment method for faster checkout'
       },
       appointmentReminders: 'Appointment reminders',
-      emailConfirmation: 'Email confirmation',
+      emailConfirmationText: 'Email confirmation',
       promotionNotifications: 'Promotion notifications',
       savePaymentMethods: 'Save payment methods'
     },

@@ -77,43 +77,29 @@ export function ChatLayout({
     }
   }, [initialConversationId, hookSetActiveConversation]);
 
-  // Fetch conversaciones inicial y suscribir a cambios
+  // Fetch conversaciones inicial
   useEffect(() => {
     if (userId) {
-      fetchConversations({ business_id: businessId });
-      subscribeToConversations(businessId);
+      fetchConversations();
     }
+  }, [userId, businessId, fetchConversations]);
 
-    return () => {
-      unsubscribeFromConversations();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, businessId]); // ✅ Callbacks excluidos para evitar re-subscripciones
-
-  // Suscribir a mensajes cuando cambia conversación activa
+  // Cargar mensajes cuando cambia conversación activa
   useEffect(() => {
     if (activeConversationId) {
-      // ✅ Primero cargar mensajes existentes
-      fetchMessages(activeConversationId);
-      // ✅ Luego suscribirse a nuevos mensajes
-      subscribeToMessages();
+      hookSetActiveConversation(activeConversationId);
     }
-
-    return () => {
-      unsubscribeFromMessages();
-    };
-     
-  }, [activeConversationId]); // ✅ Callbacks excluidos para evitar re-subscripciones
+  }, [activeConversationId, hookSetActiveConversation]);
 
   // Marcar conversación como leída cuando se abre
   useEffect(() => {
     if (activeConversationId && messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage && lastMessage.sender_id !== userId) {
-        markConversationRead(activeConversationId);
+        markMessagesAsRead(activeConversationId);
       }
     }
-  }, [activeConversationId, messages, userId, markConversationRead]);
+  }, [activeConversationId, messages, userId, markMessagesAsRead]);
 
   /**
    * Manejar selección de conversación
@@ -136,10 +122,13 @@ export function ChatLayout({
   ) => {
     if (!activeConversation) return;
 
+    if (!activeConversationId) return;
+    
     await sendMessage({
+      conversation_id: activeConversationId,
+      content: content,
       type: 'text',
-      body: content,
-      reply_to: replyToId,
+      reply_to_id: replyToId,
     });
   };
 
@@ -155,46 +144,39 @@ export function ChatLayout({
   /**
    * Wrapper de editMessage
    */
-  const handleEditMessage = async (messageId: string, newContent: string) => {
-    await editMessage(messageId, newContent);
+  const handleEditMessage = async (_messageId: string, _newContent: string) => {
+    // TODO: Implementar editMessage en useChat
+    console.log('Edit message not implemented yet');
   };
 
   /**
    * Wrapper de deleteMessage
    */
-  const handleDeleteMessage = async (messageId: string) => {
-    await deleteMessage(messageId);
+  const handleDeleteMessage = async (_messageId: string) => {
+    // TODO: Implementar deleteMessage en useChat
+    console.log('Delete message not implemented yet');
   };
 
   /**
    * Wrapper de toggleArchive
    */
-  const handleToggleArchive = async (convId: string, isArchived: boolean) => {
-    await archiveConversation(convId, isArchived);
-
-    // Si se archiva la conversación activa, limpiar selección
-    if (isArchived && convId === activeConversation?.id) {
-      setActiveConversationId(null);
-      if (onNavigate) {
-        onNavigate(null);
-      }
-    }
+  const handleToggleArchive = async (_convId: string, _isArchived: boolean) => {
+    // TODO: Implementar archive en useChat
+    console.log('Archive conversation not implemented yet');
   };
 
   /**
    * Wrapper de toggleMute
    */
   const handleToggleMute = async (convId: string, isMuted: boolean) => {
-    await muteConversation(convId, isMuted);
+    await toggleMuteConversation(convId, isMuted);
   };
 
   /**
-   * Wrapper de togglePin (TODO: implementar en tabla)
+   * Wrapper de togglePin
    */
-   
-  const handleTogglePin = async (_convId: string, _isPinned: boolean) => {
-    // TODO: Agregar campo is_pinned a conversation_members
-    console.log('Pin/unpin not implemented yet');
+  const handleTogglePin = async (convId: string, isPinned: boolean) => {
+    await togglePinConversation(convId, isPinned);
   };
 
   // Calcular total de mensajes sin leer
@@ -205,7 +187,7 @@ export function ChatLayout({
       {/* Sidebar: Lista de conversaciones */}
       <div className="w-80 flex-shrink-0">
         <ConversationList
-          conversations={conversations}
+          conversations={conversations as any}
           activeConversationId={activeConversation?.id || null}
           onSelectConversation={handleSelectConversation}
           totalUnreadCount={totalUnreadCount}
@@ -247,7 +229,7 @@ export function ChatLayout({
             onToggleArchive={handleToggleArchive}
             onToggleMute={handleToggleMute}
             onTogglePin={handleTogglePin}
-            loading={loading || sending}
+            loading={loading}
           />
         </ChatErrorBoundary>
       </div>

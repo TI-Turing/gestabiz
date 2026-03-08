@@ -28,7 +28,7 @@ import {
 interface AbsenceCardProps {
   absence: EmployeeAbsence;
   canCancel?: boolean;
-  onCancel?: (absenceId: string) => Promise<boolean>;
+  onCancel?: (absenceId: string) => Promise<void>;
 }
 
 function AbsenceCard({ absence, canCancel = false, onCancel }: Readonly<AbsenceCardProps>) {

@@ -145,7 +145,7 @@ export function ServiceSelection({
 
       {services.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-[#94a3b8]">No services available</p>
+          <p className="text-[#94a3b8]">No hay servicios disponibles</p>
         </div>
       )}
     </div>

@@ -64,7 +64,7 @@ interface Employee {
     full_name?: string
     email?: string
     avatar_url?: string
-  }
+  } | null
 }
 
 interface ServicesManagerProps {
@@ -149,7 +149,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
         .select(`
           id,
           employee_id,
-          profiles:employee_id (
+          profiles:employee_id!inner (
             full_name,
             email,
             avatar_url
@@ -159,10 +159,16 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
 
       if (employeesError) throw employeesError
 
+      // Normalizar profiles (Supabase puede retornar array)
+      const normalizedEmployees = (employeesData || []).map(emp => ({
+        ...emp,
+        profiles: Array.isArray(emp.profiles) ? emp.profiles[0] : emp.profiles
+      }));
+
       // Establecer datos (pueden ser arrays vacíos, no es error)
       setServices(servicesData || [])
       setLocations(locationsData || [])
-      setEmployees(employeesData || [])
+      setEmployees(normalizedEmployees)
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error al cargar datos:', error)
@@ -536,6 +542,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
 
       // 4) Notificar a clientes: forzar in-app + email (MVP mail service)
       for (const appt of (apptsToCancel ?? [])) {
+        const profile = Array.isArray(appt?.profiles) ? appt.profiles[0] : appt?.profiles;
         const startDate = new Date(appt.start_time)
         const dateStr = startDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
         const timeStr = startDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
@@ -544,8 +551,8 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
           appointmentId: appt.id,
           businessId: appt.business_id,
           recipientUserId: appt.client_id,
-          recipientEmail: appt?.profiles?.email,
-          recipientName: appt?.profiles?.full_name || 'Cliente',
+          recipientEmail: profile?.email,
+          recipientName: profile?.full_name || 'Cliente',
           date: dateStr,
           time: timeStr,
           service: serviceData?.name || 'Servicio',

@@ -41,6 +41,7 @@ import {
   History,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 // =====================================================
 // INTERFACES
@@ -168,7 +169,7 @@ export function PermissionsManager({
           </p>
         </div>
         <PermissionGate permission="permissions.assign_role" businessId={businessId} mode="hide">
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => toast.info('Selecciona un usuario de la lista para asignar o modificar su rol')}>
             <UserPlus className="h-4 w-4" />
             Asignar Rol
           </Button>
@@ -412,9 +413,11 @@ export function PermissionsManager({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">
-                Componente PermissionEditor en desarrollo...
-              </p>
+              <div className="flex flex-col items-center gap-3 py-8 text-center text-muted-foreground">
+                <Shield className="h-10 w-10 opacity-30" />
+                <p className="text-sm">Editor de permisos individuales por usuario</p>
+                <p className="text-xs">(Próximamente disponible)</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -429,9 +432,11 @@ export function PermissionsManager({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">
-                Componente PermissionTemplates en desarrollo...
-              </p>
+              <div className="flex flex-col items-center gap-3 py-8 text-center text-muted-foreground">
+                <FileText className="h-10 w-10 opacity-30" />
+                <p className="text-sm">Plantillas predefinidas y personalizadas de permisos</p>
+                <p className="text-xs">(Próximamente disponible)</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -446,9 +451,11 @@ export function PermissionsManager({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">
-                Componente AuditLog en desarrollo...
-              </p>
+              <div className="flex flex-col items-center gap-3 py-8 text-center text-muted-foreground">
+                <History className="h-10 w-10 opacity-30" />
+                <p className="text-sm">Historial de auditoría de cambios en permisos</p>
+                <p className="text-xs">(Próximamente disponible)</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

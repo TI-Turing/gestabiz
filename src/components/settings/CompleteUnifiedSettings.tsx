@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { Check, AlertTriangle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -259,13 +260,13 @@ export default function CompleteUnifiedSettings({
                   <SelectContent>
                     <SelectItem value="es">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">🇪🇸</span>
+                        <span className="font-mono text-xs font-bold bg-muted px-1.5 py-0.5 rounded">ES</span>
                         <span>{t('settings.spanish')}</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="en">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">🇺🇸</span>
+                        <span className="font-mono text-xs font-bold bg-muted px-1.5 py-0.5 rounded">EN</span>
                         <span>{t('settings.english')}</span>
                       </div>
                     </SelectItem>
@@ -1655,7 +1656,7 @@ function DangerZone({ user }: DangerZoneProps) {
                 </ul>
                 <div className="mt-3 pt-3 border-t border-border">
                   <p className="text-sm font-medium text-green-600 dark:text-green-400 mb-1 flex items-center gap-2">
-                    <CheckIcon size={16} weight="bold" /> {t('settings.dangerZone.deactivate.dataNotDeleted')}
+                    <Check size={16} /> {t('settings.dangerZone.deactivate.dataNotDeleted')}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {t('settings.dangerZone.deactivate.contactSupport')}
@@ -1735,7 +1736,7 @@ function DangerZone({ user }: DangerZoneProps) {
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription className="text-sm font-semibold flex items-center gap-2">
-                  <WarningIcon size={16} weight="fill" /> {t('settings.dangerZone.delete.finalWarning')}
+                  <AlertTriangle size={16} /> {t('settings.dangerZone.delete.finalWarning')}
                 </AlertDescription>
               </Alert>
 
@@ -1758,14 +1759,14 @@ function DangerZone({ user }: DangerZoneProps) {
                   {t('settings.dangerZone.delete.confirmDetails')}:
                 </p>
                 <ul className="text-xs text-muted-foreground space-y-1">
-                  <li className="flex items-center gap-2"><WarningIcon size={12} weight="fill" /> {t('settings.dangerZone.delete.accountLabel')}: {user.email}</li>
-                  <li className="flex items-center gap-2"><WarningIcon size={12} weight="fill" /> {t('settings.dangerZone.delete.profileLabel')}: {user.name}</li>
-                  <li className="flex items-center gap-2"><WarningIcon size={12} weight="fill" /> {t('settings.dangerZone.delete.rolesLabel')}: {user.roles?.length || 0} {t('settings.dangerZone.delete.activeLabel')}</li>
-                  <li className="flex items-center gap-2"><WarningIcon size={12} weight="fill" /> {t('settings.dangerZone.delete.appointmentsLabel')}: {t('settings.dangerZone.delete.cancelledAuto')}</li>
+                  <li className="flex items-center gap-2"><AlertTriangle size={12} /> {t('settings.dangerZone.delete.accountLabel')}: {user.email}</li>
+                  <li className="flex items-center gap-2"><AlertTriangle size={12} /> {t('settings.dangerZone.delete.profileLabel')}: {user.name}</li>
+                  <li className="flex items-center gap-2"><AlertTriangle size={12} /> {t('settings.dangerZone.delete.rolesLabel')}: {user.roles?.length || 0} {t('settings.dangerZone.delete.activeLabel')}</li>
+                  <li className="flex items-center gap-2"><AlertTriangle size={12} /> {t('settings.dangerZone.delete.appointmentsLabel')}: {t('settings.dangerZone.delete.cancelledAuto')}</li>
                 </ul>
                 <div className="mt-3 pt-3 border-t border-border">
                   <p className="text-xs font-medium text-green-600 dark:text-green-400 flex items-center gap-2">
-                    <CheckIcon size={14} weight="bold" /> {t('settings.dangerZone.delete.dataPreservedNote')}
+                    <Check size={14} /> {t('settings.dangerZone.delete.dataPreservedNote')}
                   </p>
                 </div>
               </div>

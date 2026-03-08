@@ -144,7 +144,7 @@ export function useFinancialReports(): UseFinancialReportsReturn {
         logger.error('Failed to generate P&L report', error, {
           component: 'useFinancialReports',
           operation: 'generateProfitAndLossReport',
-          businessId: filters.businessId,
+          businessId: filters.business_id,
         });
         setError(error);
         throw error;

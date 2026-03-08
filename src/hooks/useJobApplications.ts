@@ -24,6 +24,7 @@ export interface JobApplication {
     id: string;
     title: string;
     business_id: string;
+    business_name?: string;
     position_type?: string;
     salary_min?: number;
     salary_max?: number;
@@ -71,7 +72,8 @@ export function useJobApplications(filters?: ApplicationFilters) {
           *,
           vacancy:job_vacancies(
             id, title, business_id, position_type,
-            salary_min, salary_max, currency, status
+            salary_min, salary_max, currency, status,
+            businesses:businesses(name)
           )
         `)
         .order('created_at', { ascending: false });
@@ -101,8 +103,17 @@ export function useJobApplications(filters?: ApplicationFilters) {
             .eq('id', app.user_id)
             .single();
           
+          // Map nested businesses join to business_name
+          const vacancy = app.vacancy ? {
+            ...app.vacancy,
+            business_name: (app.vacancy as Record<string, unknown>).businesses 
+              ? ((app.vacancy as Record<string, unknown>).businesses as { name: string })?.name 
+              : undefined,
+          } : undefined;
+
           return {
             ...app,
+            vacancy,
             applicant: userData || undefined
           };
         })

@@ -198,7 +198,7 @@ export const appointmentsService = {
     const appointment = normalizeAppointment(data as Row<'appointments'>)
     
     // Enviar email de confirmación automáticamente si la cita requiere confirmación
-    if (appointment.status === 'pending') {
+    if (appointment.status === 'scheduled') {
       try {
         await sendAppointmentConfirmationEmail(appointment.id)
       } catch (emailError) {

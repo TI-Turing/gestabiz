@@ -89,7 +89,7 @@ export function BusinessBranding({ businessId }: Readonly<BusinessBrandingProps>
       const croppedFile = new File([croppedBlob], fileName, { type: 'image/jpeg' })
       const path = `${businessId}/${fileName}`
 
-      const result = await uploadFile(croppedFile, path, {
+      const result = await uploadFile(croppedFile, path, undefined, {
         allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
         maxSizeMB: 2
       })
@@ -132,7 +132,7 @@ export function BusinessBranding({ businessId }: Readonly<BusinessBrandingProps>
       const croppedFile = new File([croppedBlob], fileName, { type: 'image/jpeg' })
       const path = `${businessId}/${fileName}`
 
-      const result = await uploadFile(croppedFile, path, {
+      const result = await uploadFile(croppedFile, path, undefined, {
         allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
         // Banner puede ser más grande: permitir hasta 5MB
         maxSizeMB: 5

@@ -415,8 +415,9 @@ export function ServicesManagement({ user, businessId }: Readonly<ServicesManage
 
       // 4) Notificar por correo a clientes afectados (si tienen email)
       for (const appt of (apptsToCancel ?? [])) {
-        const recipientEmail = appt?.profiles?.email
-        const recipientName = appt?.profiles?.full_name || 'Cliente'
+        const profile = Array.isArray(appt?.profiles) ? appt.profiles[0] : appt?.profiles
+        const recipientEmail = profile?.email
+        const recipientName = profile?.full_name || 'Cliente'
         if (!recipientEmail) continue
 
         const startDate = new Date(appt.start_time)

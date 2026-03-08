@@ -201,7 +201,7 @@ export const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({
         <DialogHeader>
           <DialogTitle>Aplicar a Vacante</DialogTitle>
           <DialogDescription>
-            {vacancy.title} - {vacancy.business_id}
+            {vacancy.title} - {vacancy.business_name || vacancy.business_id}
           </DialogDescription>
         </DialogHeader>
 

@@ -24,11 +24,6 @@ export function VideoTrimmer({
   onOpenChange,
   className,
 }: VideoTrimmerProps) {
-  // Validación temprana para evitar errores
-  if (!videoFile) {
-    return null
-  }
-
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState(0)

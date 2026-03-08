@@ -27,6 +27,7 @@ interface AppContextType extends AppState {
   showErrorToast: (error: string) => void
   showSuccessToast: (message: string) => void
   showInfoToast: (message: string) => void
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void
 }
 
 const initialState: AppState = {
@@ -80,7 +81,12 @@ export function AppStateProvider({ children }: Readonly<{ children: React.ReactN
     isLoadingState: (key: string) => state.loadingStates[key] || false,
     showErrorToast: (error: string) => toast.error(error),
     showSuccessToast: (message: string) => toast.success(message),
-    showInfoToast: (message: string) => toast.info(message)
+    showInfoToast: (message: string) => toast.info(message),
+    showToast: (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+      if (type === 'success') toast.success(message)
+      else if (type === 'error') toast.error(message)
+      else toast.info(message)
+    }
   }), [state])
 
   return (

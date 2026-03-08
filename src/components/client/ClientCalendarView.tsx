@@ -550,7 +550,7 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
                               })}
                             </div>
                             <div className="truncate text-muted-foreground">
-                              {apt.service?.name || apt.title}
+                              {apt.service?.name || apt.notes || ''}
                             </div>
                           </button>
                         ))}

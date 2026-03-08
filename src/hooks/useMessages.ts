@@ -283,7 +283,7 @@ export function useMessages(
         // Track analytics
         trackChatEvent(ChatEvents.MESSAGE_EDITED, {
           message_id: messageId,
-          conversation_id: conversationId,
+          ...(conversationId ? { conversation_id: conversationId } : {}),
         })
       } catch (err: any) {
         console.error('Error editing message:', err)
@@ -336,7 +336,7 @@ export function useMessages(
         // Track analytics
         trackChatEvent(ChatEvents.MESSAGE_DELETED, {
           message_id: messageId,
-          conversation_id: conversationId,
+          ...(conversationId ? { conversation_id: conversationId } : {}),
         })
       } catch (err: any) {
         console.error('Error deleting message:', err)

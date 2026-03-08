@@ -185,13 +185,6 @@ export const reports = {
   title: 'Reports',
   subtitle: 'Business analytics and insights',
   
-  // Period Selection
-  period_selection: 'Select Period',
-  this_week: 'This Week',
-  this_month: 'This Month',
-  this_quarter: 'This Quarter',
-  last_year: 'Last Year',
-  
   // Reports
   peak_hours: 'Peak Hours',
   appointments_by_status: 'Appointments by Status',

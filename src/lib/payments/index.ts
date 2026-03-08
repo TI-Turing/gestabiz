@@ -5,4 +5,4 @@
  */
 
 export * from './PaymentGateway'
-export { StripeGateway, paymentGateway } from './StripeGateway'
+export { StripeGateway } from './StripeGateway'

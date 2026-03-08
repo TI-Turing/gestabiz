@@ -10,6 +10,8 @@ export default tseslint.config(
     ignores: [
       'dist/**',
       'node_modules/**',
+      'coverage/**',
+      '.vite/**',
       // Ignore non-web surfaces and serverless functions
       'supabase/**',
       'src/supabase/**',
@@ -19,7 +21,21 @@ export default tseslint.config(
       'src/browser-extension/**',
       'docs/**',
       'database/**',
+      'tests/**',
+      'src/tests/**',
+      'src/**/__tests__/**',
+      'src/**/*.test.ts',
+      'src/**/*.test.tsx',
+      'src/types/supabase.ts',
+      'src/types/database.ts',
+      'src/types/supabase.gen.ts',
+      'src/types/supabase.gen.tmp.ts',
+      'test-auth-console.js',
+      'test-*.js',
+      'test-*.ts',
       'tailwind.config.js',
+      // Scripts de utilidad (no son código de producción)
+      'scripts/**',
     ],
   },
   {

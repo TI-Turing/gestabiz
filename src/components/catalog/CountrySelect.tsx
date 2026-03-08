@@ -2,7 +2,7 @@
  * Componente Select para Países con búsqueda integrada
  * Por defecto deshabilitado y apuntando a Colombia
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Select,
   SelectContent,
@@ -46,9 +46,13 @@ export function CountrySelect({
   }, [countries]);
 
   // Si defaultToColombia está activo y no hay valor, usar Colombia
-  if (defaultToColombia && !value && colombiaCountry && onChange) {
-    onChange(colombiaCountry.id);
-  }
+  // Usar useEffect para evitar llamar onChange durante la fase de render (anti-patrón React)
+  useEffect(() => {
+    if (defaultToColombia && !value && colombiaCountry) {
+      onChange?.(colombiaCountry.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colombiaCountry?.id, defaultToColombia, value]);
 
   // Filtrar países según búsqueda
   const filteredCountries = useMemo(() => {

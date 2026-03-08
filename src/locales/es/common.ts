@@ -1,5 +1,21 @@
 // Traducciones comunes usadas en múltiples componentes
 export const common = {
+  // Aliases directos (compatibilidad hacia atrás con t('common.cancel') etc.)
+  cancel: 'Cancelar',
+  save: 'Guardar',
+  loading: 'Cargando...',
+  close: 'Cerrar',
+  edit: 'Editar',
+  delete: 'Eliminar',
+  confirm: 'Confirmar',
+  back: 'Volver',
+  next: 'Siguiente',
+  submit: 'Enviar',
+  create: 'Crear',
+  update: 'Actualizar',
+  search: 'Buscar',
+  add: 'Agregar',
+  remove: 'Eliminar',
   // Actions
   actions: {
     save: 'Guardar',

@@ -5,25 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Star, MapPin, Building2, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import type { BusinessSuggestion } from '@/hooks/useClientDashboard';
 
-interface SimpleBusiness {
-  id: string;
-  name: string;
-  description?: string;
-  logo_url: string | null;
-  banner_url?: string | null;
-  average_rating: number;
-  total_reviews?: number;
-  city?: string;
-  state?: string;
-  isFrequent?: boolean;
-  visitsCount?: number;
-  lastAppointmentDate?: string;
-}
+// Type alias for backward compatibility
+type SimpleBusiness = BusinessSuggestion;
 
 interface BusinessSuggestionsProps {
   // ✅ v2.0: Recibir sugerencias desde useClientDashboard (consolidado)
-  suggestions: SimpleBusiness[];
+  suggestions: BusinessSuggestion[];
   isLoading: boolean;
   preferredCityName: string | null;
   preferredRegionName: string | null; // ✅ NEW: For region-level filtering display
@@ -107,11 +96,11 @@ export function BusinessSuggestions({
             ) : null}
             
             {/* Rating */}
-            {business.average_rating > 0 && (
+            {(business.average_rating ?? 0) > 0 && (
               <div className="flex items-center gap-1.5 mt-1">
                 <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
                 <span className="text-xs font-medium text-foreground">
-                  {business.average_rating.toFixed(1)}
+                  {(business.average_rating ?? 0).toFixed(1)}
                 </span>
                 {business.total_reviews !== undefined && business.total_reviews > 0 && (
                   <span className="text-xs text-muted-foreground">

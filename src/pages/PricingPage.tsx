@@ -3,7 +3,7 @@
 // Integra con create-checkout-session Edge Function
 
 import React, { useState } from 'react'
-import { Check, X, Sparkles, Building2, Rocket, Crown } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -107,15 +107,17 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
   }
 
   const getPrice = (plan: Plan) => {
-    if (plan.price === 0) return null // Custom pricing
+    const monthlyPrice = plan.price ?? 0
+    if (monthlyPrice === 0) return null // Plan gratuito / precio no definido
     
-    const basePrice = billingCycle === 'monthly' ? plan.price : (plan.priceAnnual || 0) / 12
+    const annualPrice = plan.priceAnnual ?? 0
+    const basePrice = billingCycle === 'monthly' ? monthlyPrice : annualPrice / 12
     const discount = appliedDiscount?.discount || 0
     const finalPrice = basePrice - discount
 
     return {
       base: basePrice,
-      final: finalPrice > 0 ? finalPrice : 0,
+      final: Math.max(0, finalPrice),
       hasDiscount: discount > 0,
     }
   }
@@ -123,7 +125,7 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
   const yearlyDiscount = 17 // 17% discount for yearly billing
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-linear-to-br from-background to-muted/20 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -176,7 +178,7 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
             >
               {appliedDiscount ? (
                 <>
-                  Aplicado <Check size={14} weight="bold" />
+                  Aplicado <Check size={14} />
                 </>
               ) : (
                 'Aplicar'
@@ -261,9 +263,9 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
                     {plan.features.map((feature) => (
                       <li key={feature.name} className="flex items-start gap-2">
                         {feature.included ? (
-                          <Check className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                          <Check className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
                         ) : (
-                          <X className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                          <X className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                         )}
                         <span className={feature.included ? 'text-foreground' : 'text-muted-foreground'}>
                           {feature.name}

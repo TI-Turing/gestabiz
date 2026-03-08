@@ -172,7 +172,7 @@ export function EmployeeProfileModal({
   // Clase reutilizable para cards clickeables
   const clickable = 'cursor-pointer hover:bg-accent/40 transition-colors rounded-lg'
 
-  const hierarchyLevel = employee.hierarchy_level || 4
+  const hierarchyLevel = employee.hierarchy_level ?? 4
   const hierarchyLabel = t(`employeeProfile.modal.hierarchy.${hierarchyLevel}`) || t('employeeProfile.modal.hierarchy.unknown')
   const hierarchyColor = HIERARCHY_COLORS[hierarchyLevel as keyof typeof HIERARCHY_COLORS]
 
@@ -191,16 +191,30 @@ export function EmployeeProfileModal({
     if (!employee) return
     setSavingCargo(true)
     try {
-      const { error } = await supabase
+      const { data: updatedRows, error } = await supabase
         .from('business_employees')
         .update({ job_title: cargoValue.trim() || null })
         .eq('employee_id', employee.user_id)
         .eq('business_id', employee.business_id)
+        .select('employee_id, business_id, job_title')
       if (error) throw error
+      // Si no se actualizó ninguna fila, avisar en consola para diagnóstico
+      if (!updatedRows || updatedRows.length === 0) {
+        console.warn('[handleSaveCargo] Update ejecutado sin error pero sin filas actualizadas.', {
+          employee_id: employee.user_id,
+          business_id: employee.business_id,
+          newValue: cargoValue.trim() || null,
+        })
+      }
       toast.success(t('employeeProfile.modal.cargo.updated'))
       await queryClient.invalidateQueries({ queryKey: ['employee-modal-detail', employee.user_id, employee.business_id] })
+      await queryClient.invalidateQueries({ queryKey: ['businessHierarchy', employee.business_id] })
       setEditingCargo(false)
-    } catch {
+    } catch (err) {
+      console.error('[handleSaveCargo] Error al guardar cargo:', err, {
+        employee_id: employee.user_id,
+        business_id: employee.business_id,
+      })
       toast.error(t('employeeProfile.modal.cargo.updateError'))
     } finally {
       setSavingCargo(false)
@@ -312,6 +326,7 @@ export function EmployeeProfileModal({
                     onClick={e => e.stopPropagation()}
                     onKeyDown={e => e.stopPropagation()}
                   >
+
                     <Input
                       value={cargoValue}
                       onChange={e => setCargoValue(e.target.value)}

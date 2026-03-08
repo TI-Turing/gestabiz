@@ -72,13 +72,18 @@ export default function AppointmentCancellation() {
         return
       }
 
+      const client = Array.isArray(data.clients) ? data.clients[0] : data.clients
+      const service = Array.isArray(data.services) ? data.services[0] : data.services
+      const business = Array.isArray(data.businesses) ? data.businesses[0] : data.businesses
+      const location = Array.isArray(data.locations) ? data.locations[0] : data.locations
+
       setAppointment({
         id: data.id,
-        client_name: data.clients.name,
-        client_email: data.clients.email,
-        service_name: data.services.name,
-        business_name: data.businesses.name,
-        location_address: data.locations.address,
+        client_name: client?.name || 'Cliente',
+        client_email: client?.email || '',
+        service_name: service?.name || 'Servicio',
+        business_name: business?.name || 'Negocio',
+        location_address: location?.address || '',
         appointment_date: data.appointment_date,
         appointment_time: data.appointment_time,
         status: data.status,
@@ -101,7 +106,7 @@ export default function AppointmentCancellation() {
         return
       }
 
-      const { data, error } = await supabase.rpc('cancel_appointment_by_token', {
+      const { error } = await supabase.rpc('cancel_appointment_by_token', {
         p_token: token,
         p_reason: cancellationReason || 'Cancelado por el cliente'
       })

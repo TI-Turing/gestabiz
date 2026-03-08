@@ -99,7 +99,7 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Rutas públicas */}
-      <Route path="/" element={<LandingPage onNavigateToAuth={() => navigate('/login')} />} />
+      <Route path="/" element={<LandingPage onNavigateToAuth={() => navigate('/login')} onNavigateToRegister={() => navigate('/register')} />} />
       <Route path="/login" element={<AuthScreen onLoginSuccess={() => navigate('/app', { replace: true })} />} />
       <Route path="/register" element={<AuthScreen onLoginSuccess={() => navigate('/app', { replace: true })} />} />
       

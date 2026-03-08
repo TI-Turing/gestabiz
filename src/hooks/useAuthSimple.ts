@@ -39,9 +39,12 @@ const buildUserFromSession = (sessionUser: SupabaseUser, profile?: ProfileRow | 
   const username = sessionUser.user_metadata?.username || baseEmail.split('@')[0] || baseName
   const isActive = profile?.is_active ?? true
   const metadata = sessionUser.user_metadata || {}
-  const resolvedAvatar = (metadata as Record<string, unknown>)?.['avatar_url']
-    || (profile?.avatar_url as string | undefined)
-    || (metadata as Record<string, unknown>)?.['picture'] as string | undefined
+  const metadataAvatar = (metadata as Record<string, unknown>)?.['avatar_url']
+  const metadataPicture = (metadata as Record<string, unknown>)?.['picture']
+  const resolvedAvatar =
+    (typeof metadataAvatar === 'string' ? metadataAvatar : undefined)
+    || profile?.avatar_url
+    || (typeof metadataPicture === 'string' ? metadataPicture : undefined)
 
   return {
     id: sessionUser.id,
@@ -49,7 +52,7 @@ const buildUserFromSession = (sessionUser: SupabaseUser, profile?: ProfileRow | 
     name: baseName,
     username,
     avatar_url: resolvedAvatar || undefined,
-    timezone: profile?.timezone || 'America/Bogota',
+    timezone: 'America/Bogota',
     roles: [{
       id: profile ? `simple-role-${profile.id}` : 'simple-role-default',
       user_id: sessionUser.id,
@@ -64,14 +67,14 @@ const buildUserFromSession = (sessionUser: SupabaseUser, profile?: ProfileRow | 
     business_id: undefined,
     location_id: undefined,
     phone: profile?.phone || sessionUser.user_metadata?.phone || '',
-    language: (profile?.language as User['language']) || 'es',
-    notification_preferences: (profile?.notification_preferences as User['notification_preferences']) || defaultPreferences,
+    language: 'es',
+    notification_preferences: defaultPreferences,
     permissions: [],
     created_at: profile?.created_at || new Date().toISOString(),
     updated_at: profile?.updated_at || new Date().toISOString(),
     is_active: isActive,
     deactivated_at: profile?.deactivated_at || undefined,
-    last_login: profile?.last_login || undefined,
+    last_login: undefined,
     accountInactive: profile ? profile.is_active === false : undefined
   }
 }

@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Users, List, Network, Filter, AlertTriangle, Check, X, Loader2 } from 'lucide-react'
+import { Users, List, Network, Filter, AlertTriangle, Check, X, Loader2, Star } from 'lucide-react'
 import { useBusinessHierarchy } from '@/hooks/useBusinessHierarchy'
 import { usePreferredLocation } from '@/hooks/usePreferredLocation'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -22,7 +22,7 @@ import { HierarchyMapView } from './HierarchyMapView'
 import { EmployeeProfileModal } from './EmployeeProfileModal'
 import supabase from '@/lib/supabase'
 import { toast } from 'sonner'
-import type { EmployeeHierarchy } from '@/types'
+import type { EmployeeHierarchy as EmployeeHierarchyFromTypes } from '@/types'
 
 // =====================================================
 // TIPOS
@@ -30,7 +30,7 @@ import type { EmployeeHierarchy } from '@/types'
 
 interface EmployeeManagementHierarchyProps {
   businessId: string
-  onEmployeeSelect?: (employee: EmployeeHierarchy) => void
+  onEmployeeSelect?: (employee: EmployeeHierarchyFromTypes) => void
 }
 
 type ViewMode = 'list' | 'map'
@@ -46,7 +46,7 @@ export function EmployeeManagementHierarchy({
   const { t } = useLanguage()
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [showFilters, setShowFilters] = useState(false)
-  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeHierarchy | null>(null)
+  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeHierarchyFromTypes | null>(null)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   
   // Hook de sede preferida
@@ -54,7 +54,8 @@ export function EmployeeManagementHierarchy({
 
   // Hook principal de jerarquía
   const {
-    data: employees,
+    data: rawEmployees,
+    rawData: allEmployeesUnfiltered,
     isLoading,
     error,
     filters,
@@ -63,6 +64,9 @@ export function EmployeeManagementHierarchy({
     assignSupervisorAsync,
     isAssigning,
   } = useBusinessHierarchy(businessId)
+  const employees = rawEmployees as unknown as EmployeeHierarchyFromTypes[]
+  // Lista sin filtro de sede para el combobox de supervisores (un supervisor puede estar en cualquier sede)
+  const allEmployees = (allEmployeesUnfiltered ?? []) as unknown as EmployeeHierarchyFromTypes[]
 
   // Estado para asignación inline en la sección de pendientes
   const [assigningFor, setAssigningFor] = useState<string | null>(null)
@@ -101,13 +105,13 @@ export function EmployeeManagementHierarchy({
       const supervisedSet = new Set(withSupervisor?.map(r => r.user_id) || [])
 
       // 4. Excluir quienes tienen setup_completed = true
-      const { data: completedBE } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: completedBE } = (await (supabase as any)
         .from('business_employees')
         .select('employee_id')
         .eq('business_id', businessId)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .eq('setup_completed' as any, true)
-        .in('employee_id', regularIds)
+        .eq('setup_completed', true)
+        .in('employee_id', regularIds)) as unknown as { data: { employee_id: string }[] | null }
 
       const completedSet = new Set(completedBE?.map(e => e.employee_id) || [])
 
@@ -186,7 +190,7 @@ export function EmployeeManagementHierarchy({
   // HANDLERS
   // =====================================================
 
-  const handleEmployeeClick = (employee: EmployeeHierarchy) => {
+  const handleEmployeeClick = (employee: EmployeeHierarchyFromTypes) => {
     setSelectedEmployee(employee)
     setIsProfileModalOpen(true)
     onEmployeeSelect?.(employee)
@@ -333,7 +337,7 @@ export function EmployeeManagementHierarchy({
               <p className="text-xs sm:text-sm text-muted-foreground">
                 {t('employees.management.avgRating')}
               </p>
-              <p className="text-xl sm:text-2xl font-bold mt-1">{stats.avgRating.toFixed(1)} ⭐</p>
+              <p className="text-xl sm:text-2xl font-bold mt-1 flex items-center gap-1">{stats.avgRating.toFixed(1)}<Star className="h-5 w-5 fill-yellow-400 text-yellow-400" /></p>
             </div>
           </Card>
         </div>
@@ -421,9 +425,9 @@ export function EmployeeManagementHierarchy({
                         <SelectValue placeholder="Seleccionar jefe..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {employees
+                        {allEmployees
                           .filter(e => e.user_id !== emp.employee_id &&
-                            e.hierarchy_level < (employees.find(pe => pe.user_id === emp.employee_id)?.hierarchy_level ?? 999))
+                            e.hierarchy_level < (allEmployees.find(pe => pe.user_id === emp.employee_id)?.hierarchy_level ?? 999))
                           .map(e => (
                             <SelectItem key={e.user_id} value={e.user_id} className="text-xs">
                               {e.full_name}

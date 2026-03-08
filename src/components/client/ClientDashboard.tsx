@@ -25,7 +25,7 @@ import { useChat } from '@/hooks/useChat'
 import { useMandatoryReviews } from '@/hooks/useMandatoryReviews'
 import { usePendingNavigation } from '@/hooks/usePendingNavigation'
 import { usePreferredCity } from '@/hooks/usePreferredCity'
-import { useClientDashboard } from '@/hooks/useClientDashboard'
+import { useClientDashboard, type AppointmentWithRelations as ClientDashboardAppointment } from '@/hooks/useClientDashboard'
 import type { UserRole, User } from '@/types/types'
 import type { SearchType } from '@/components/client/SearchBar'
 import supabase from '@/lib/supabase'
@@ -67,54 +67,8 @@ interface SearchResultItem {
   currency?: string
 }
 
-// Extended appointment type with relations
-interface AppointmentWithRelations {
-  id: string
-  business_id: string
-  location_id?: string
-  service_id?: string
-  client_id: string
-  employee_id?: string
-  start_time: string
-  end_time: string
-  status: 'pending' | 'pending_confirmation' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show'
-  notes?: string
-  price?: number
-  currency?: string
-  business?: {
-    id: string
-    name: string
-    description?: string
-  }
-  location?: {
-    id: string
-    name: string
-    address?: string
-    city?: string
-    state?: string
-    postal_code?: string
-    country?: string
-    latitude?: number
-    longitude?: number
-    google_maps_url?: string
-  }
-  employee?: {
-    id: string
-    full_name: string
-    email?: string
-    phone?: string
-    avatar_url?: string
-  }
-  service?: {
-    id: string
-    name: string
-    description?: string
-    duration?: number
-    price?: number
-    currency?: string
-    image_url?: string
-  }
-}
+// Use appointment type from hook instead of local definition
+type AppointmentWithRelations = ClientDashboardAppointment;
 
 interface ClientDashboardProps {
   currentRole: UserRole
@@ -138,11 +92,6 @@ export function ClientDashboard({
   user,
   initialBookingContext
 }: Readonly<ClientDashboardProps>) {
-  // DEBUG: Log user prop at component mount
-  console.log('[ClientDashboard] MOUNT - user:', user);
-  console.log('[ClientDashboard] MOUNT - user?.id:', user?.id);
-  console.log('[ClientDashboard] MOUNT - user object:', JSON.stringify(user, null, 2));
-  
   const navigate = useNavigate()
   const location = useLocation()
   
@@ -318,7 +267,6 @@ export function ClientDashboard({
     
     // Usar el businessId pasado como parámetro o el selectedBusinessId
     const businessIdToUse = businessId || selectedBusinessId
-    console.log('[ClientDashboard] businessIdToUse:', businessIdToUse);
     
     // Guardar preselección de servicio, ubicación y empleado ANTES de abrir el wizard
     setBookingPreselection({
@@ -326,10 +274,8 @@ export function ClientDashboard({
       locationId,
       employeeId
     })
-    console.log('[ClientDashboard] Set bookingPreselection:', { serviceId, locationId, employeeId });
     
     // Open appointment wizard with preselected business and location/service/employee
-    console.log('[ClientDashboard] About to setAppointmentWizardBusinessId');
     if (businessIdToUse) {
       setAppointmentWizardBusinessId(businessIdToUse)
     }
@@ -337,7 +283,6 @@ export function ClientDashboard({
     // Close profile modal
     setSelectedBusinessId(null)
     setSelectedUserId(null)
-    console.log('[ClientDashboard] About to setShowAppointmentWizard(true)');
     setShowAppointmentWizard(true)
   }, [selectedBusinessId])
   
@@ -669,8 +614,8 @@ export function ClientDashboard({
                 {/* Calendar View */}
                 {viewMode === 'calendar' ? (
                   <ClientCalendarView
-                    appointments={appointments}
-                    onAppointmentClick={setSelectedAppointment}
+                    appointments={appointments as any}
+                    onAppointmentClick={setSelectedAppointment as any}
                     onCreateAppointment={handleCreateAppointmentFromCalendar}
                   />
                 ) : (
@@ -784,7 +729,7 @@ export function ClientDashboard({
                                   
                                   // Calcular hora de finalización
                                   const endTime = appointment.end_time || (() => {
-                                    const duration = appointment.service?.duration || 60
+                                    const duration = appointment.service?.duration_minutes || 60
                                     const startDate = new Date(appointment.start_time)
                                     startDate.setMinutes(startDate.getMinutes() + duration)
                                     return startDate.toISOString()
@@ -878,7 +823,7 @@ export function ClientDashboard({
             {currentUser && (
               <ClientHistory 
                 userId={currentUser.id} 
-                appointments={dashboardData?.appointments || []}
+                appointments={(dashboardData?.appointments || []) as any}
                 loading={isDashboardLoading}
               />
             )}
@@ -961,7 +906,7 @@ export function ClientDashboard({
           userId={user.id}
           preselectedDate={preselectedDate}
           preselectedTime={preselectedTime}
-          appointmentToEdit={appointmentToEdit} // Pasar cita a editar
+          appointmentToEdit={appointmentToEdit as unknown as import('@/types/types').Appointment | null} // Pasar cita a editar
           onSuccess={() => {
             handleCloseWizard()
             refetchDashboard() // ✅ Recargar dashboard después de crear cita
@@ -1074,9 +1019,9 @@ export function ClientDashboard({
                       hour12: true
                     })}
                   </p>
-                  {selectedAppointment.service?.duration && (
+                  {selectedAppointment.service?.duration_minutes && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Duración: {selectedAppointment.service.duration} min
+                      Duración: {selectedAppointment.service.duration_minutes} min
                     </p>
                   )}
                 </div>
@@ -1165,14 +1110,14 @@ export function ClientDashboard({
   )}
 
               {/* Description */}
-              {selectedAppointment.description && (
+              {selectedAppointment.notes && (
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground mb-1 flex items-center gap-2">
                     <FileText className="h-4 w-4" />
                     Descripción
                   </h3>
                   <p className="text-base text-foreground whitespace-pre-wrap">
-                    {selectedAppointment.description}
+                    {selectedAppointment.notes}
                   </p>
                 </div>
               )}
@@ -1196,9 +1141,9 @@ export function ClientDashboard({
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-medium text-muted-foreground">Valor del Servicio</h3>
-                      {selectedAppointment.service?.duration && (
+                      {selectedAppointment.service?.duration_minutes && (
                         <p className="text-xs text-muted-foreground">
-                          Duración estimada: {selectedAppointment.service.duration} minutos
+                          Duración estimada: {selectedAppointment.service.duration_minutes} minutos
                         </p>
                       )}
                     </div>
@@ -1275,15 +1220,10 @@ export function ClientDashboard({
           onClose={() => setSelectedBusinessId(null)}
           onBookAppointment={handleBookAppointment}
           onChatStarted={(conversationId) => {
-            console.log('[ClientDashboard] onChatStarted called with conversationId:', conversationId);
             // Cambiar a la página de chat y establecer la conversación activa
-            console.log('[ClientDashboard] Setting activePage to chat');
             setActivePage('chat');
-            console.log('[ClientDashboard] Setting chatConversationId:', conversationId);
             setChatConversationId(conversationId);
-            console.log('[ClientDashboard] Closing business profile modal');
             setSelectedBusinessId(null); // Cerrar el modal de perfil
-            console.log('[ClientDashboard] Chat flow completed, chat should open automatically');
           }}
           userLocation={
             geolocation.hasLocation

@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { UserRole, User } from '@/types/types'
+import type { UserRole, User, Business } from '@/types/types'
 
 // Lazy load components that are not critical on initial render
 const AvailableVacanciesMarketplace = lazy(() => 
@@ -71,10 +71,35 @@ export function EmployeeDashboard({
   // Obtener todos los negocios donde el empleado trabaja
   const { businesses: employeeBusinesses, loading: loadingBusinesses } = useEmployeeBusinesses(user?.id)
   const { t } = useLanguage()
+
+  const normalizedBusinesses: Business[] = employeeBusinesses.map((business) => ({
+    id: business.id,
+    name: business.name,
+    description: business.description,
+    logo_url: business.logo_url,
+    phone: business.phone,
+    email: business.email,
+    address: business.address,
+    city: business.city,
+    state: business.state,
+    owner_id: user.id,
+    settings: {
+      appointment_buffer: 0,
+      advance_booking_days: 30,
+      cancellation_policy: 24,
+      auto_confirm: false,
+      require_deposit: false,
+      deposit_percentage: 0,
+      currency: 'COP',
+    },
+    created_at: new Date(0).toISOString(),
+    updated_at: new Date(0).toISOString(),
+    resource_model: 'professional',
+  }))
   
   // Hook de ausencias para el widget y el modal
   // Usa el negocio seleccionado, o el primero si hay múltiples, o el que viene por props
-  const effectiveBusinessId = selectedBusinessId || businessId || employeeBusinesses[0]?.id
+  const effectiveBusinessId = selectedBusinessId || businessId || normalizedBusinesses[0]?.id
   const { vacationBalance, refresh: refreshAbsences } = useEmployeeAbsences(effectiveBusinessId || '')
   
   // Hook para verificar solicitudes pendientes del usuario
@@ -310,9 +335,9 @@ export function EmployeeDashboard({
       onLogout={onLogout}
       sidebarItems={sidebarItems}
       activePage={activePage}
-      onPageChange={setActivePage}
-      business={employeeBusinesses.find(b => b.id === selectedBusinessId) || employeeBusinesses[0]}
-      businesses={employeeBusinesses}
+      onPageChange={handlePageChange}
+      business={normalizedBusinesses.find(b => b.id === selectedBusinessId) || normalizedBusinesses[0]}
+      businesses={normalizedBusinesses}
       onSelectBusiness={handleBusinessSelect}
       user={currentUser ? {
         id: currentUser.id,

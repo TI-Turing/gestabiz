@@ -1,5 +1,21 @@
 // Common translations used across multiple components
 export const common = {
+  // Direct aliases (backward compat with t('common.cancel') etc.)
+  cancel: 'Cancel',
+  save: 'Save',
+  loading: 'Loading...',
+  close: 'Close',
+  edit: 'Edit',
+  delete: 'Delete',
+  confirm: 'Confirm',
+  back: 'Back',
+  next: 'Next',
+  submit: 'Submit',
+  create: 'Create',
+  update: 'Update',
+  search: 'Search',
+  add: 'Add',
+  remove: 'Remove',
   // Actions
   actions: {
     save: 'Save',

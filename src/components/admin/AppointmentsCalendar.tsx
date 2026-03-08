@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import React, { useState, useEffect, useMemo, useRef, useLayoutEffect, useCallback } from 'react';
-import { Calendar, Clock, ChevronLeft, ChevronRight, User, X, Check, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Calendar, Clock, ChevronLeft, ChevronRight, User, X, Check, AlertCircle, Eye, EyeOff, DollarSign } from 'lucide-react';
 import { Money } from '@phosphor-icons/react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -82,7 +82,7 @@ const formatTimeInColombia = (isoString: string): string => {
 };
 
 // Small portal dropdown that positions itself next to an anchor button
-function DropdownPortal({ anchorRef, isOpen, onClose, children }: { anchorRef: React.RefObject<HTMLElement>, isOpen: boolean, onClose: () => void, children: React.ReactNode }) {
+function DropdownPortal({ anchorRef, isOpen, onClose, children }: { anchorRef: React.RefObject<HTMLElement | null>, isOpen: boolean, onClose: () => void, children: React.ReactNode }) {
   const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const portalRef = useRef<HTMLDivElement | null>(null);
 
@@ -834,10 +834,15 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           }
         }
 
-        let employeeServicesData = [];
+        let employeeServicesData: Array<{ employee_id: string; service_id?: string; services?: { name?: string } | null }> = [];
         if (employeeIds.length > 0) {
           const response = await employeeServicesQuery;
-          employeeServicesData = response.data || [];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          employeeServicesData = ((response.data || []) as any[]).map((item: any) => ({
+            employee_id: item.employee_id,
+            service_id: item.service_id,
+            services: Array.isArray(item.services) ? item.services[0] : item.services,
+          }));
           if (response.error) {
             console.error('❌ Error cargando employee_services:', response.error);
             if (DEBUG_MODE) {
@@ -847,7 +852,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         }
 
         // Map services by employee_id (now location-filtered)
-        const servicesMap = (employeeServicesData || []).reduce((acc, es) => {
+        const servicesMap = employeeServicesData.reduce((acc, es) => {
           if (!acc[es.employee_id]) {
             acc[es.employee_id] = [];
           }
@@ -1369,23 +1374,17 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         return false;
       }
 
-      // ✅ Filtro de ubicación - si está vacío, NO mostrar nada (requiere selección)
-      if (filterLocation.length === 0) {
-        return false;
-      }
-      if (!filterLocation.includes(apt.location_id || '')) {
+      // ✅ Filtro de ubicación - si está vacío, mostrar todas (pass-through)
+      if (filterLocation.length > 0 && !filterLocation.includes(apt.location_id || '')) {
         return false;
       }
 
-      // ✅ Filtro de servicio - si está vacío, NO mostrar nada (requiere selección)
-      if (filterService.length === 0) {
-        return false;
-      }
-      if (!filterService.includes(apt.service_id)) {
+      // ✅ Filtro de servicio - si está vacío, mostrar todos (pass-through)
+      if (filterService.length > 0 && !filterService.includes(apt.service_id)) {
         return false;
       }
 
-      // ✅ Filtro de empleado - si está vacío, NO mostrar nada (requiere selección)
+      // ✅ Filtro de empleado - si está vacío, NO mostrar nada (requiere selección para columnas)
       if (filterEmployee.length === 0) {
         return false;
       }
@@ -1709,7 +1708,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                   onClick={() => setOpenDropdowns(prev => ({ ...prev, status: !prev.status }))}
                   className="px-3 py-2 pr-8 text-sm border border-border rounded-md bg-background text-foreground hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all min-w-[160px] flex items-center justify-between"
                 >
-                  <span className="truncate">{filterStatus.length} seleccionados</span>
+                  <span className="truncate">{filterStatus.length} {filterStatus.length === 1 ? 'seleccionado' : 'seleccionados'}</span>
                   <ChevronRight className={`h-4 w-4 text-muted-foreground ml-2 transition-transform ${openDropdowns.status ? 'rotate-90' : ''}`} />
                 </button>
                 <DropdownPortal anchorRef={statusBtnRef} isOpen={openDropdowns.status} onClose={() => setOpenDropdowns(prev => ({ ...prev, status: false }))}>
@@ -1802,7 +1801,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                   onClick={() => setOpenDropdowns(prev => ({ ...prev, service: !prev.service }))}
                   className="px-3 py-2 pr-8 text-sm border border-border rounded-md bg-background text-foreground hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all min-w-[160px] flex items-center justify-between"
                 >
-                  <span className="truncate">{filterService.length} seleccionados</span>
+                  <span className="truncate">{filterService.length} {filterService.length === 1 ? 'seleccionado' : 'seleccionados'}</span>
                   <ChevronRight className={`h-4 w-4 text-muted-foreground ml-2 transition-transform ${openDropdowns.service ? 'rotate-90' : ''}`} />
                 </button>
                 <DropdownPortal anchorRef={serviceBtnRef} isOpen={openDropdowns.service} onClose={() => setOpenDropdowns(prev => ({ ...prev, service: false }))}>
@@ -1844,7 +1843,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                   onClick={() => setOpenDropdowns(prev => ({ ...prev, employee: !prev.employee }))}
                   className="px-3 py-2 pr-8 text-sm border border-border rounded-md bg-background text-foreground hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all min-w-[160px] flex items-center justify-between"
                 >
-                  <span className="truncate">{filterEmployee.length} seleccionados</span>
+                  <span className="truncate">{filterEmployee.length} {filterEmployee.length === 1 ? 'seleccionado' : 'seleccionados'}</span>
                   <ChevronRight className={`h-4 w-4 text-muted-foreground ml-2 transition-transform ${openDropdowns.employee ? 'rotate-90' : ''}`} />
                 </button>
                 <DropdownPortal anchorRef={employeeBtnRef} isOpen={openDropdowns.employee} onClose={() => setOpenDropdowns(prev => ({ ...prev, employee: false }))}>

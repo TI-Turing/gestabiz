@@ -412,8 +412,9 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
 
             let notifiedCount = 0
             for (const appt of (apptsToNotify ?? [])) {
-              const recipientEmail = appt?.profiles?.email
-              const recipientName = appt?.profiles?.full_name || 'Cliente'
+              const profile = Array.isArray(appt?.profiles) ? appt.profiles[0] : appt?.profiles;
+              const recipientEmail = profile?.email
+              const recipientName = profile?.full_name || 'Cliente'
               if (!recipientEmail) continue
 
               const startDate = new Date(appt.start_time)
@@ -534,6 +535,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
 
         // Notificar al cliente: forzar in-app + email usando servicio centralizado
         for (const appt of (apptsToCancel ?? [])) {
+          const profile = Array.isArray(appt?.profiles) ? appt.profiles[0] : appt?.profiles;
+          const service = Array.isArray(appt?.service) ? appt.service[0] : appt?.service;
           const startDate = new Date(appt.start_time)
           const dateStr = startDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })
           const timeStr = startDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
@@ -542,11 +545,11 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
             appointmentId: appt.id,
             businessId: appt.business_id,
             recipientUserId: appt.client_id,
-            recipientEmail: appt?.profiles?.email,
-            recipientName: appt?.profiles?.full_name || 'Cliente',
+            recipientEmail: profile?.email,
+            recipientName: profile?.full_name || 'Cliente',
             date: dateStr,
             time: timeStr,
-            service: appt?.service?.name || 'Servicio',
+            service: service?.name || 'Servicio',
           })
         }
       }
@@ -839,8 +842,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                         </Badge>
                       )}
                       {preferredLocationId === location.id && (
-                        <Badge variant="outline" className="text-[10px] sm:text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-300 dark:border-green-700">
-                          ⭐ Administrada
+                        <Badge variant="outline" className="text-[10px] sm:text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-300 dark:border-green-700 flex items-center gap-1">
+                          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /> Administrada
                         </Badge>
                       )}
                     </div>
@@ -855,6 +858,7 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Editar sede ${location.name}`}
                       onClick={(e) => { e.stopPropagation(); handleOpenDialog(location) }}
                       className={`min-w-[44px] min-h-[44px] ${locationBanners[location.id] ? 'text-white/80 hover:text-white bg-black/20 hover:bg-black/30' : 'text-muted-foreground hover:text-foreground'}`}
                     >
@@ -865,6 +869,7 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Eliminar sede ${location.name}`}
                       onClick={(e) => { e.stopPropagation(); handleDelete(location.id) }}
                       className={`min-w-[44px] min-h-[44px] ${locationBanners[location.id] ? 'text-white/80 hover:text-red-300 bg-black/20 hover:bg-red-500/30' : 'text-muted-foreground hover:text-red-400'}`}
                     >
@@ -1281,7 +1286,7 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={handleCloseDialog}
+                onClick={() => handleCloseDialog()}
                 className="min-h-[44px] w-full sm:w-auto"
                 disabled={isSaving}
               >
@@ -1314,10 +1319,10 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       {/* Banner Cropper */}
       {bannerImageToEdit && (
         <BannerCropper
-          open={isBannerCropperOpen}
-          onOpenChange={setIsBannerCropperOpen}
-          imageUrl={bannerImageToEdit}
-          onSave={handleBannerSave}
+          isOpen={isBannerCropperOpen}
+          onClose={() => setIsBannerCropperOpen(false)}
+          imageFile={null}
+          onCropComplete={(blob: Blob) => { void handleBannerSave(blob) }}
         />
       )}
     </div>

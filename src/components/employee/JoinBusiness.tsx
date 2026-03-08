@@ -18,7 +18,7 @@ interface JoinBusinessProps {
   onRequestSent: () => void
 }
 
-export default function JoinBusiness({ user, onRequestSent }: JoinBusinessProps) {
+export default function JoinBusiness({ user, onRequestSent }: Readonly<JoinBusinessProps>) {
   const { t } = useLanguage()
   const [businesses] = useKV<Business[]>('businesses', [])
   const [employeeRequests, setEmployeeRequests] = useKV<EmployeeRequest[]>('employee-requests', [])
@@ -41,9 +41,17 @@ export default function JoinBusiness({ user, onRequestSent }: JoinBusinessProps)
   })
 
   const filteredBusinesses = availableBusinesses.filter(business =>
+    {
+      const categoryText = typeof business.category === 'string'
+        ? business.category
+        : (business.category?.name ?? '')
+
+      return (
     business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    business.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    categoryText.toLowerCase().includes(searchTerm.toLowerCase()) ||
     business.city?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
   )
 
   const handleSelectBusiness = (business: Business) => {
@@ -80,17 +88,32 @@ export default function JoinBusiness({ user, onRequestSent }: JoinBusinessProps)
   }
 
   const getBusinessHours = (business: Business) => {
+    if (!business.business_hours) {
+      return t('business.hours.not_available')
+    }
+
     const today = new Date().getDay() // 0 = Sunday, 1 = Monday, etc.
     const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-    const currentDay = dayNames[today] as keyof Business['business_hours']
+    const currentDay = dayNames[today] as keyof NonNullable<Business['business_hours']>
     
     const hours = business.business_hours[currentDay]
+    if (!hours) {
+      return t('business.hours.not_available')
+    }
     
     if (hours.closed) {
       return t('business.hours.closed')
     }
     
     return `${hours.open} - ${hours.close}`
+  }
+
+  const getBusinessCategoryLabel = (business: Business) => {
+    if (typeof business.category === 'string') {
+      return business.category
+    }
+
+    return business.category?.name || t('business.categories.general')
   }
 
   // hasExistingRequest helper not used in render
@@ -144,7 +167,7 @@ export default function JoinBusiness({ user, onRequestSent }: JoinBusinessProps)
                         <div>
                           <h3 className="font-semibold text-lg">{business.name}</h3>
                           <Badge variant="secondary" className="text-xs">
-                            {t(`business.categories.${business.category}`)}
+                            {getBusinessCategoryLabel(business)}
                           </Badge>
                         </div>
                         {requestStatus && (() => {
@@ -221,7 +244,7 @@ export default function JoinBusiness({ user, onRequestSent }: JoinBusinessProps)
               <div className="space-y-1 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">
-                    {t(`business.categories.${selectedBusiness.category}`)}
+                    {getBusinessCategoryLabel(selectedBusiness)}
                   </Badge>
                 </div>
                 {selectedBusiness.city && (

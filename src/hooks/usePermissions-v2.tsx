@@ -101,6 +101,8 @@ export function usePermissions({ userId, businessId, ownerId }: UsePermissionsOp
       // Mapear y agregar conteo de permisos
       const usersWithProfiles = await Promise.all(
         (data || []).map(async (role) => {
+          const profile = Array.isArray(role.profiles) ? role.profiles[0] : role.profiles
+
           // Contar permisos activos del usuario
           const { count } = await supabase
             .from('user_permissions')
@@ -111,9 +113,9 @@ export function usePermissions({ userId, businessId, ownerId }: UsePermissionsOp
 
           return {
             id: role.user_id,
-            full_name: role.profiles?.full_name || 'Usuario sin nombre',
-            email: role.profiles?.email || 'sin-email@gestabiz.com',
-            avatar_url: role.profiles?.avatar_url,
+            full_name: profile?.full_name || 'Usuario sin nombre',
+            email: profile?.email || 'sin-email@gestabiz.com',
+            avatar_url: profile?.avatar_url,
             role: role.role,
             employee_type: role.employee_type,
             is_active: role.is_active,

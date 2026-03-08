@@ -97,19 +97,19 @@ export function PricingPlans({ showCTA = false, onSelectPlan, compact = false }:
               <div className="mb-6 p-4 bg-purple-50 rounded-lg space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Ubicaciones:</span>
-                  <span className="font-semibold text-gray-900">{plan.limits.locations}</span>
+                  <span className="font-semibold text-gray-900">{plan.limits?.locations ?? '-'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Empleados:</span>
-                  <span className="font-semibold text-gray-900">{plan.limits.employees}</span>
+                  <span className="font-semibold text-gray-900">{plan.limits?.employees ?? '-'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Citas/mes:</span>
-                  <span className="font-semibold text-gray-900">{plan.limits.appointments}</span>
+                  <span className="font-semibold text-gray-900">{plan.limits?.appointments ?? '-'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Clientes:</span>
-                  <span className="font-semibold text-gray-900">{plan.limits.clients}</span>
+                  <span className="font-semibold text-gray-900">{plan.limits?.clients ?? '-'}</span>
                 </div>
               </div>
             )}

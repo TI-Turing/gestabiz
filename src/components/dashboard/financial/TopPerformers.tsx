@@ -131,7 +131,6 @@ export function TopPerformers({
         if (revError) throw revError;
 
         // Calculate metrics for each employee
-        // eslint-disable-next-line sonarjs/cognitive-complexity
         const performersData: PerformerData[] = employees.map(emp => {
           const profile = emp.profiles;
           
@@ -142,8 +141,8 @@ export function TopPerformers({
           // Calculate revenue
           let totalRevenue = 0;
           for (const appt of completedAppointments) {
-            const service = appt.service;
-            const price = Array.isArray(service) ? service[0]?.price : service?.price;
+            const serviceData = (appt as any).service;
+            const price = Array.isArray(serviceData) ? serviceData[0]?.price : serviceData?.price;
             totalRevenue += price || 0;
           }
           

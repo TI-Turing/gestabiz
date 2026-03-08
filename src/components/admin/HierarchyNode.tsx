@@ -5,7 +5,7 @@
  * Phase 3 - UI Components
  */
 
-import { ChevronDown, ChevronRight, Users } from 'lucide-react'
+import { ChevronDown, ChevronRight, Users, Star } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -154,7 +154,7 @@ export function HierarchyNode({
             <p className="text-gray-300">Rating</p>
             <p className="font-semibold text-white">
               {employee.average_rating !== null && employee.average_rating !== undefined
-                ? `${Number(employee.average_rating).toFixed(1)} ⭐`
+                ? <span className="flex items-center gap-1 justify-center">{Number(employee.average_rating).toFixed(1)}<Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /></span>
                 : '-'}
             </p>
           </div>

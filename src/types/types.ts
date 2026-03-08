@@ -291,6 +291,7 @@ export type Permission =
   | 'delete_services'
   | 'manage_settings'
   | 'send_notifications'
+  | string
 
 // Core user profile interface matching Supabase schema
 export interface User {
@@ -391,11 +392,27 @@ export interface BusinessSubcategory {
   subcategory?: BusinessCategory // Populated cuando se hace join
 }
 
+type BusinessDaySchedule = {
+  open: string
+  close: string
+  closed?: boolean
+  is_open?: boolean
+}
+
+type BusinessWeekSchedule = Partial<{
+  monday: BusinessDaySchedule
+  tuesday: BusinessDaySchedule
+  wednesday: BusinessDaySchedule
+  thursday: BusinessDaySchedule
+  friday: BusinessDaySchedule
+  saturday: BusinessDaySchedule
+  sunday: BusinessDaySchedule
+}>
+
 // Business information
 export interface Business {
   id: string
   name: string
-  slug?: string  // URL-friendly unique identifier (autogenerado desde name)
   description?: string
   category_id?: string // FK to business_categories (categoría PRINCIPAL)
   legal_entity_type?: LegalEntityType // Empresa o independiente
@@ -404,7 +421,7 @@ export interface Business {
   registration_number?: string // Registro mercantil
   logo_url?: string
   // Computed properties (frontend only - se cargan con joins)
-  category?: BusinessCategory // Categoría principal poblada
+  category?: BusinessCategory | string // Categoría principal poblada (retrocompatible)
   subcategories?: BusinessSubcategory[] // Máximo 3 subcategorías
   website?: string
   phone?: string
@@ -428,15 +445,7 @@ export interface Business {
   
   // ⚠️ DEPRECATED - Los negocios NO tienen horarios - las SEDES sí
   // Este campo se mantiene por retrocompatibilidad pero NO se usa en nuevos negocios
-  business_hours?: {
-    monday: { open: string; close: string; closed: boolean }
-    tuesday: { open: string; close: string; closed: boolean }
-    wednesday: { open: string; close: string; closed: boolean }
-    thursday: { open: string; close: string; closed: boolean }
-    friday: { open: string; close: string; closed: boolean }
-    saturday: { open: string; close: string; closed: boolean }
-    sunday: { open: string; close: string; closed: boolean }
-  }
+  business_hours?: BusinessWeekSchedule
   
   timezone?: string  // Zona horaria (Ej: America/Bogota)
   owner_id: string
@@ -456,6 +465,7 @@ export interface Business {
   created_at: string
   updated_at: string
   is_active?: boolean
+  is_configured?: boolean
   
   // Public profile fields for SEO and discoverability
   slug?: string                    // URL-friendly unique identifier (e.g., 'salon-belleza-medellin')
@@ -472,7 +482,7 @@ export interface Business {
   service_count?: number           // Count of active services
   
   // NUEVO: Modelo de Negocio Flexible (21/10/2025)
-  resource_model: ResourceModel    // Tipo de recurso que ofrece el negocio
+  resource_model?: ResourceModel    // Tipo de recurso que ofrece el negocio
   resources?: BusinessResource[]   // Recursos físicos disponibles (computed)
   resource_count?: number          // Cantidad de recursos activos (computed)
 }
@@ -494,15 +504,7 @@ export interface Location {
   email?: string
   description?: string
   images?: string[] // Array of image URLs from Supabase Storage
-  business_hours: {
-    monday: { open: string; close: string; closed: boolean }
-    tuesday: { open: string; close: string; closed: boolean }
-    wednesday: { open: string; close: string; closed: boolean }
-    thursday: { open: string; close: string; closed: boolean }
-    friday: { open: string; close: string; closed: boolean }
-    saturday: { open: string; close: string; closed: boolean }
-    sunday: { open: string; close: string; closed: boolean }
-  }
+  business_hours: BusinessWeekSchedule
   is_active: boolean
   is_main?: boolean
   is_primary?: boolean // Indica si es la sede principal del negocio (solo puede haber una)
@@ -519,6 +521,7 @@ export interface Service {
   name: string
   description?: string
   duration: number // in minutes
+  duration_minutes?: number // retrocompatibilidad
   price: number
   currency?: string
   category: string
@@ -1403,7 +1406,7 @@ export interface EmployeeRequest {
   id: string
   business_id: string
   user_id: string
-  invitation_code: string
+  invitation_code?: string
   status: EmployeeRequestStatus
   created_at: string
   responded_at?: string

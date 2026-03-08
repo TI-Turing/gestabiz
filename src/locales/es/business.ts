@@ -58,7 +58,7 @@ export const business = {
     placeholders: {
       business_name: 'Ingresa el nombre de tu negocio',
       category: 'Selecciona una categoría',
-      description: 'Describe tu negocio',
+      description: 'Describe los servicios que ofreces, tu experiencia y lo que te hace especial...',
       phone: '+57 (300) 123-4567',
       website: 'https://www.tunegocio.com',
       address: 'Dirección',
@@ -243,22 +243,8 @@ export const employees = {
     updateSuccess: 'Nivel jerárquico actualizado exitosamente',
     updateError: 'Error al actualizar nivel jerárquico',
     confirmChange: '¿Estás seguro de que deseas cambiar el nivel?',
-  },  management: {
-    title: 'Gestión de Empleados',
-    subtitle: 'Administra la jerarquía y rendimiento de tu equipo',
-    listView: 'Vista de Lista',
-    mapView: 'Vista de Mapa',
-    totalEmployees: 'Total de Empleados',
-    byLevel: 'Por Nivel',
-    avgOccupancy: 'Ocupación Prom',
-    avgRating: 'Calificación Prom',
-    filters: 'Filtros',
-    clearFilters: 'Limpiar Filtros',
-    employeesShown: 'empleados mostrados',
-    noEmployees: 'No se encontraron empleados',
-    error: 'Error al cargar empleados',
-    retry: 'Reintentar',
-  },  types: {
+  },
+  types: {
     fullTime: 'Tiempo Completo',
     partTime: 'Tiempo Parcial',
     contractor: 'Contratista',

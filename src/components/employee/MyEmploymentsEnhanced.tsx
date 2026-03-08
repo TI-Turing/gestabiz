@@ -20,6 +20,7 @@ interface MyEmploymentsProps {
 export function MyEmployments({ employeeId, onJoinBusiness, hasPendingRequest = false }: MyEmploymentsProps) {
   const [showPrevious, setShowPrevious] = useState(false);
   const [enrichedBusinesses, setEnrichedBusinesses] = useState<EnhancedBusiness[]>([]);
+  const [isEnriching, setIsEnriching] = useState(false);
   const { businesses, loading, error } = useEmployeeBusinesses(employeeId, true);
   const { createRequest } = useEmployeeTimeOff(employeeId);
 
@@ -49,9 +50,11 @@ export function MyEmployments({ employeeId, onJoinBusiness, hasPendingRequest = 
     const enrichBusinesses = async () => {
       if (businesses.length === 0) {
         setEnrichedBusinesses([]);
+        setIsEnriching(false);
         return;
       }
 
+      setIsEnriching(true);
       const enriched = await Promise.all(
         businesses.map(async (business) => {
           try {
@@ -144,6 +147,7 @@ export function MyEmployments({ employeeId, onJoinBusiness, hasPendingRequest = 
       );
 
       setEnrichedBusinesses(enriched);
+      setIsEnriching(false);
     };
 
     enrichBusinesses();
@@ -233,7 +237,7 @@ export function MyEmployments({ employeeId, onJoinBusiness, hasPendingRequest = 
     }
   };
 
-  if (loading) {
+  if (loading || (businesses.length > 0 && enrichedBusinesses.length === 0 && isEnriching)) {
     return (
       <div className="p-4 sm:p-6">
         <div className="flex items-center justify-center py-12">
@@ -256,7 +260,20 @@ export function MyEmployments({ employeeId, onJoinBusiness, hasPendingRequest = 
   }
 
   // Separar empleos activos y anteriores
-  const activeEmployments = enrichedBusinesses.filter(b => b.id); // TODO: Filtrar por is_active
+  // Usar enrichedBusinesses si están listos, sino usar businesses como fallback para evitar mostrar 0
+  const displayBusinesses = enrichedBusinesses.length > 0 ? enrichedBusinesses : businesses.map(b => ({
+    ...b,
+    isOwner: false,
+    location_id: null,
+    location_name: null,
+    employee_avg_rating: 0,
+    employee_total_reviews: 0,
+    services_count: 0,
+    job_title: null,
+    role: null,
+    employee_type: null,
+  } as EnhancedBusiness));
+  const activeEmployments = displayBusinesses.filter(b => b.id);
   const previousEmployments: EnhancedBusiness[] = [];
 
   // Contar propietarios y empleados

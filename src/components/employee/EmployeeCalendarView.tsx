@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -335,7 +335,7 @@ export function EmployeeCalendarView({ appointments, onRefresh }: EmployeeCalend
                             </div>
                             {apt.location_name && (
                               <div className="text-xs opacity-60 truncate mt-1 flex items-center gap-1">
-                                <MapPin size={12} weight="fill" /> {apt.location_name}
+                                <MapPin size={12} /> {apt.location_name}
                               </div>
                             )}
                           </button>

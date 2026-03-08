@@ -29,9 +29,10 @@ import logoTiTuring from '@/assets/images/tt/1.png'
 
 interface LandingPageProps {
   onNavigateToAuth: () => void
+  onNavigateToRegister?: () => void
 }
 
-export function LandingPage({ onNavigateToAuth }: LandingPageProps) {
+export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const analytics = useAnalytics()
@@ -112,7 +113,7 @@ export function LandingPage({ onNavigateToAuth }: LandingPageProps) {
                 {t('landing.nav.signIn')}
               </Button>
               <Button 
-                onClick={onNavigateToAuth}
+                onClick={onNavigateToRegister ?? onNavigateToAuth}
                 className="bg-purple-600 hover:bg-purple-700 text-white"
               >
                 {t('landing.nav.getStarted')}
@@ -156,7 +157,7 @@ export function LandingPage({ onNavigateToAuth }: LandingPageProps) {
               </Button>
               <Button 
                 className="w-full bg-primary hover:bg-primary/90"
-                onClick={onNavigateToAuth}
+                onClick={onNavigateToRegister ?? onNavigateToAuth}
               >
                 {t('landing.nav.getStarted')}
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -190,7 +191,7 @@ export function LandingPage({ onNavigateToAuth }: LandingPageProps) {
                 <Button 
                   size="lg" 
                   className="bg-purple-600 hover:bg-purple-700 text-white text-lg"
-                  onClick={onNavigateToAuth}
+                  onClick={onNavigateToRegister ?? onNavigateToAuth}
                 >
                   {t('landing.hero.cta.trial')}
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -435,7 +436,7 @@ export function LandingPage({ onNavigateToAuth }: LandingPageProps) {
                 ))}
               </div>
 
-              <Button size="lg" onClick={onNavigateToAuth}>
+              <Button size="lg" onClick={onNavigateToRegister ?? onNavigateToAuth}>
                 {t('landing.benefits.cta')}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -589,7 +590,7 @@ export function LandingPage({ onNavigateToAuth }: LandingPageProps) {
                   size="lg" 
                   variant="secondary"
                   className="bg-white text-purple-600 hover:bg-white/90 text-lg"
-                  onClick={onNavigateToAuth}
+                  onClick={onNavigateToRegister ?? onNavigateToAuth}
                 >
                   {t('landing.cta.buttons.trial')}
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -643,35 +644,35 @@ export function LandingPage({ onNavigateToAuth }: LandingPageProps) {
               <ul className="space-y-2 text-sm text-gray-600">
                 <li><a href="#features" className="hover:text-purple-600">{t('landing.footer.product.features')}</a></li>
                 <li><a href="#pricing" className="hover:text-purple-600">{t('landing.footer.product.pricing')}</a></li>
-                <li><a href="/integrations" className="hover:text-purple-600">{t('landing.footer.product.integrations')}</a></li>
-                <li><a href="/api" className="hover:text-purple-600">{t('landing.footer.product.api')}</a></li>
+                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.product.integrations')}</a></li>
+                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.product.api')}</a></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-semibold mb-4 text-gray-900">{t('landing.footer.resources.title')}</h4>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li><a href="/blog" className="hover:text-purple-600">{t('landing.footer.resources.blog')}</a></li>
-                <li><a href="/help" className="hover:text-purple-600">{t('landing.footer.resources.help')}</a></li>
-                <li><a href="/tutorials" className="hover:text-purple-600">{t('landing.footer.resources.tutorials')}</a></li>
-                <li><a href="/contact" className="hover:text-purple-600">{t('landing.footer.resources.contact')}</a></li>
+                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.resources.blog')}</a></li>
+                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.resources.help')}</a></li>
+                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.resources.tutorials')}</a></li>
+                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.resources.contact')}</a></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-semibold mb-4 text-gray-900">{t('landing.footer.legal.title')}</h4>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li><a href="/terms" className="hover:text-purple-600">{t('landing.footer.legal.terms')}</a></li>
-                <li><a href="/privacy" className="hover:text-purple-600">{t('landing.footer.legal.privacy')}</a></li>
-                <li><a href="/cookies" className="hover:text-purple-600">{t('landing.footer.legal.cookies')}</a></li>
-                <li><a href="/licenses" className="hover:text-purple-600">{t('landing.footer.legal.licenses')}</a></li>
+                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.legal.terms')}</a></li>
+                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.legal.privacy')}</a></li>
+                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.legal.cookies')}</a></li>
+                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.legal.licenses')}</a></li>
               </ul>
             </div>
           </div>
           
           <div className="border-t border-gray-200 pt-8 space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600">
-              <p>{t('landing.footer.copyright')}</p>
+              <p>© {new Date().getFullYear()} Gestabiz. {t('landing.footer.rightsReserved')}</p>
               <p>{t('landing.footer.madeIn')}</p>
             </div>
             

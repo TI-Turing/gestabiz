@@ -130,7 +130,7 @@ export function SearchResults({
             if (error) throw error
 
             // Fetch business info and locations
-            const businessIds = [...new Set(servicesData?.map((s: any) => s.business_id).filter(Boolean))] || []
+            const businessIds = [...new Set(servicesData?.map((s: any) => s.business_id).filter(Boolean))]
             
             const { data: businessesData } = await supabase
               .from('businesses')
@@ -643,7 +643,7 @@ export function SearchResults({
                         {/* Location */}
                         {result.location?.city && (
                           <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
-                            <MapPin size={12} weight="fill" /> {result.location.city}
+                            <MapPin size={12} /> {result.location.city}
                           </div>
                         )}
 

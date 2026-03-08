@@ -78,14 +78,15 @@ export const AvailableVacanciesMarketplace: React.FC<AvailableVacanciesMarketpla
     fetchMatchingVacancies(userId, filters);
   }, []);
 
-  // Búsqueda en tiempo real
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchMatchingVacancies(userId, { ...filters, city: searchQuery || undefined });
-    }, 300); // Debounce 300ms
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  // Búsqueda en tiempo real - filtrado client-side por título
+  // (la RPC solo soporta p_city, no búsqueda por texto)
+  const filteredVacancies = searchQuery
+    ? vacancies.filter((v) =>
+        v.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.business_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : vacancies;
 
   // Apply filters cuando cambian
   useEffect(() => {
@@ -367,7 +368,7 @@ export const AvailableVacanciesMarketplace: React.FC<AvailableVacanciesMarketpla
             <span>Cargando...</span>
           ) : (
             <span>
-              {vacancies.length} {vacancies.length === 1 ? 'vacante encontrada' : 'vacantes encontradas'}
+              {filteredVacancies.length} {filteredVacancies.length === 1 ? 'vacante encontrada' : 'vacantes encontradas'}
             </span>
           )}
         </div>
@@ -400,7 +401,7 @@ export const AvailableVacanciesMarketplace: React.FC<AvailableVacanciesMarketpla
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : vacancies.length === 0 ? (
+      ) : filteredVacancies.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -413,7 +414,7 @@ export const AvailableVacanciesMarketplace: React.FC<AvailableVacanciesMarketpla
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {vacancies.map((vacancy) => (
+          {filteredVacancies.map((vacancy) => (
             <VacancyCard
               key={vacancy.id}
               vacancy={vacancy}
@@ -427,7 +428,7 @@ export const AvailableVacanciesMarketplace: React.FC<AvailableVacanciesMarketpla
 
       {/* Application Modal */}
       <ApplicationFormModal
-        vacancy={selectedVacancy}
+        vacancy={selectedVacancy as never}
         userId={userId}
         isOpen={showApplicationModal}
         onClose={() => {
@@ -459,20 +460,16 @@ export const AvailableVacanciesMarketplace: React.FC<AvailableVacanciesMarketpla
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {viewDetailsVacancy.requirements && (
+              {viewDetailsVacancy.required_services && viewDetailsVacancy.required_services.length > 0 && (
                 <div>
                   <h4 className="font-semibold mb-2">Requisitos</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {viewDetailsVacancy.requirements}
-                  </p>
-                </div>
-              )}
-              {viewDetailsVacancy.responsibilities && (
-                <div>
-                  <h4 className="font-semibold mb-2">Responsabilidades</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {viewDetailsVacancy.responsibilities}
-                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {viewDetailsVacancy.required_services.map((skill, index) => (
+                      <Badge key={index} variant="secondary">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
               {viewDetailsVacancy.benefits && viewDetailsVacancy.benefits.length > 0 && (

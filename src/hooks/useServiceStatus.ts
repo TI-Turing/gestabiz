@@ -89,7 +89,7 @@ export function useServiceStatus() {
       if (responseTime > 10000) {
         supabaseStatus = 'degraded'
         error = 'La conexión está lenta. Estamos trabajando para mejorarla.'
-      } else if (authStatus === 'down' || databaseStatus === 'down') {
+      } else if ((authStatus as ServiceStatus) === 'down' || (databaseStatus as ServiceStatus) === 'down') {
         supabaseStatus = 'down'
         error = 'No pudimos conectarnos. Estamos verificando el problema.'
       }

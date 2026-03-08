@@ -924,9 +924,14 @@ export function useChat(userId: string | null) {
           console.log('[useChat] 📨 Full message data:', newMessage);
           
           if (newMessage) {
+            const normalizedSender = Array.isArray(newMessage.sender)
+              ? newMessage.sender[0]
+              : newMessage.sender;
+
             // ✅ Mapear content → body para compatibilidad UI
-            const mappedMessage = {
+            const mappedMessage: ChatMessage & { body: string; reply_to: string | null } = {
               ...newMessage,
+              sender: normalizedSender,
               body: newMessage.content,
               reply_to: newMessage.reply_to_id,
             };

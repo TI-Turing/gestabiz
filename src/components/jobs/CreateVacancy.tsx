@@ -50,11 +50,18 @@ export function CreateVacancy({ businessId, vacancyId, onClose, onSuccess }: Rea
   })
 
   // Pre-select preferred location when creating new vacancy
+  // Guard: only set after locations are loaded and the preferred location exists in them,
+  // to avoid Radix Select infinite re-render when value doesn't match any item.
   useEffect(() => {
-    if (!vacancyId && preferredLocationId && formData.location_id === '') {
-      setFormData(prev => ({ ...prev, location_id: preferredLocationId }))
+    if (!vacancyId && preferredLocationId && locations.some(loc => loc.id === preferredLocationId)) {
+      setFormData(prev => {
+        if (prev.location_id === '') {
+          return { ...prev, location_id: preferredLocationId }
+        }
+        return prev
+      })
     }
-  }, [vacancyId, preferredLocationId, formData.location_id])
+  }, [vacancyId, preferredLocationId, locations])
 
   const loadLocations = useCallback(async () => {
     try {
@@ -413,7 +420,7 @@ export function CreateVacancy({ businessId, vacancyId, onClose, onSuccess }: Rea
                     <SelectItem value="COP">COP (Peso Colombiano)</SelectItem>
                     <SelectItem value="USD">USD (Dólar)</SelectItem>
                     <SelectItem value="EUR">EUR (Euro)</SelectItem>
-                    <SelectItem value="COP">COP (Peso Mexicano)</SelectItem>
+                    <SelectItem value="MXN">MXN (Peso Mexicano)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -444,7 +451,7 @@ export function CreateVacancy({ businessId, vacancyId, onClose, onSuccess }: Rea
                   <SelectItem value="no-location">Sin ubicación específica</SelectItem>
                   {locations.map((location) => (
                     <SelectItem key={location.id} value={location.id}>
-                      {location.name} - {location.city}
+                      {location.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

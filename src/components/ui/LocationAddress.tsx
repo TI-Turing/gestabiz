@@ -29,7 +29,7 @@ export function LocationAddress({
     return <span className={`text-muted-foreground ${className}`}>Cargando...</span>;
   }
 
-  const parts = [];
+  const parts: string[] = [];
   
   if (showFullAddress && address) {
     parts.push(address);

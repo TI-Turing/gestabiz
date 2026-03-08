@@ -330,8 +330,8 @@ export function OverviewTab({ business }: OverviewTabProps) {
                     </Badge>
                   )}
                   {business.is_configured === false && (
-                    <Badge variant="destructive" className="bg-red-500 text-white">
-                      🔴 No disponible al público
+                    <Badge variant="destructive" className="bg-red-500 text-white flex items-center gap-1">
+                      <XCircle className="h-3 w-3" /> No disponible al público
                     </Badge>
                   )}
                 </div>
@@ -369,7 +369,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
             <div>
               <p className="text-sm text-muted-foreground">Categoría</p>
               <div className="flex items-center gap-2 mt-1">
-                <Badge variant="secondary">{business.category?.name || 'Sin categoría'}</Badge>
+                <Badge variant="secondary">{(typeof business.category === 'string' ? business.category : business.category?.name) || 'Sin categoría'}</Badge>
               </div>
             </div>
             {business.subcategories && business.subcategories.length > 0 && (

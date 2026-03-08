@@ -184,13 +184,6 @@ export const clientManagement = {
 export const reports = {
   title: 'Reportes',
   subtitle: 'Analítica e insights del negocio',
-    // Period Selection
-  period_selection: 'Seleccionar Período',
-  this_week: 'Esta Semana',
-  this_month: 'Este Mes',
-  this_quarter: 'Este Trimestre',
-  last_year: 'Último Año',
-  
   // Reports
   peak_hours: 'Horarios Pico',
   appointments_by_status: 'Citas por Estado',
