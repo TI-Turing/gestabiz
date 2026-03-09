@@ -1174,8 +1174,8 @@ export function ClientDashboard({
                 )}
                 
                 {/* Reschedule button - only if not completed, cancelled or no_show */}
+                {/* IMPORTANT: Clients should ALWAYS be able to reschedule their own appointments */}
                 {!['completed', 'cancelled', 'no_show'].includes(selectedAppointment.status) && (
-                  <PermissionGate permission="appointments.reschedule_own" businessId={selectedAppointment.business_id} mode="hide">
                     <Button
                       variant="outline"
                       onClick={() => handleRescheduleAppointment(selectedAppointment)}
@@ -1184,7 +1184,6 @@ export function ClientDashboard({
                       <Calendar className="h-4 w-4" />
                       Reprogramar
                     </Button>
-                  </PermissionGate>
                 )}
                 
                 {/* Cancel button - only if not completed, cancelled or no_show */}

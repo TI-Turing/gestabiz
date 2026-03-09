@@ -41,14 +41,14 @@ export function useEmployeeRequests(options: UseEmployeeRequestsOptions = {}) {
           ),
           user:profiles!employee_requests_user_id_fkey(
             id,
-            name,
+            full_name,
             email,
             avatar_url,
             phone
           ),
           responder:profiles!employee_requests_responded_by_fkey(
             id,
-            name,
+            full_name,
             email
           )
         `)

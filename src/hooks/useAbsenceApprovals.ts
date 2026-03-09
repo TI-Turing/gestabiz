@@ -75,8 +75,8 @@ export function useAbsenceApprovals(businessId: string) {
       // Calcular días solicitados para cada ausencia
       const absencesWithDays = await Promise.all(
         data.map(async (absence) => {
-          const start = new Date(absence.start_date);
-          const end = new Date(absence.end_date);
+          const start = new Date(absence.start_date + 'T00:00:00');
+          const end = new Date(absence.end_date + 'T00:00:00');
           const daysRequested = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
           // Contar citas afectadas si está pendiente
@@ -123,7 +123,7 @@ export function useAbsenceApprovals(businessId: string) {
         vacationDaysUsed: data
           .filter((a) => a.absence_type === 'vacation' && a.status === 'approved')
           .reduce((sum, a) => {
-            const days = Math.floor((new Date(a.end_date).getTime() - new Date(a.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+            const days = Math.floor((new Date(a.end_date + 'T00:00:00').getTime() - new Date(a.start_date + 'T00:00:00').getTime()) / (1000 * 60 * 60 * 24)) + 1;
             return sum + days;
           }, 0),
         emergencyAbsences: data.filter((a) => a.absence_type === 'emergency').length,

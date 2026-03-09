@@ -8,6 +8,7 @@ import { LocationTransferModal } from './LocationTransferModal';
 import { TransferStatusBadge } from './TransferStatusBadge';
 import supabase from '@/lib/supabase';
 import { toast } from 'sonner';
+import { LocationAddress } from '@/components/ui/LocationAddress';
 
 interface Location {
   id: string;
@@ -255,11 +256,7 @@ export function LocationSelector({
               {(location.address || location.city || location.state) && (
                 <div className="text-sm space-y-1">
                   <p className="font-medium text-muted-foreground">Dirección</p>
-                  <p className="text-foreground">
-                    {[location.address, location.city, location.state, location.country]
-                      .filter(Boolean)
-                      .join(', ')}
-                  </p>
+                  <LocationAddress address={location.address} cityId={location.city} stateId={location.state} showCountry={false} />
                   {location.postal_code && (
                     <p className="text-muted-foreground">CP: {location.postal_code}</p>
                   )}

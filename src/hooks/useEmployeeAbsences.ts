@@ -92,10 +92,10 @@ export function useEmployeeAbsences(businessId: string) {
 
       return {
         year: data.year,
-        totalDaysAvailable: data.total_vacation_days,
-        daysUsed: data.days_used,
-        daysPending: data.days_pending,
-        daysRemaining: data.days_remaining,
+        totalDaysAvailable: data.total_vacation_days ?? 0,
+        daysUsed: data.days_used ?? 0,
+        daysPending: data.days_pending ?? 0,
+        daysRemaining: data.days_remaining ?? 0,
       } as VacationBalance;
     },
     ...QUERY_CONFIG.FREQUENT,
@@ -135,6 +135,9 @@ export function useEmployeeAbsences(businessId: string) {
       queryClient.invalidateQueries({
         queryKey: QUERY_CONFIG.KEYS.EMPLOYEE_ABSENCES(user?.id || '', businessId),
       });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_CONFIG.KEYS.VACATION_BALANCE(user?.id || '', businessId, new Date().getFullYear()),
+      });
     },
     onError: (err: Error) => {
       toast.error(err.message || 'No se pudo crear la solicitud');
@@ -160,6 +163,9 @@ export function useEmployeeAbsences(businessId: string) {
       toast.success('La solicitud ha sido cancelada exitosamente');
       queryClient.invalidateQueries({
         queryKey: QUERY_CONFIG.KEYS.EMPLOYEE_ABSENCES(user?.id || '', businessId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_CONFIG.KEYS.VACATION_BALANCE(user?.id || '', businessId, new Date().getFullYear()),
       });
     },
     onError: (err: Error) => {

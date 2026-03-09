@@ -184,8 +184,8 @@ export function usePermissions({ userId, businessId, ownerId }: UsePermissionsOp
         .from('permission_audit_log')
         .select(`
           *,
-          user:profiles!permission_audit_log_user_id_fkey (id, name, email),
-          performed_by_user:profiles!permission_audit_log_performed_by_fkey (id, name, email)
+          user:profiles!permission_audit_log_user_id_fkey (id, full_name, email),
+          performed_by_user:profiles!permission_audit_log_performed_by_fkey (id, full_name, email)
         `)
         .eq('business_id', businessId)
         .order('performed_at', { ascending: false })
@@ -197,8 +197,8 @@ export function usePermissions({ userId, businessId, ownerId }: UsePermissionsOp
       const mapped = (data || []).map(entry => ({
         ...entry,
         created_at: entry.performed_at, // Usar performed_at como created_at
-        user_name: entry.user?.name || 'Usuario desconocido',
-        performed_by_name: entry.performed_by_user?.name || 'Sistema',
+        user_name: entry.user?.full_name || 'Usuario desconocido',
+        performed_by_name: entry.performed_by_user?.full_name || 'Sistema',
       }))
       
       return mapped as PermissionAuditLog[]

@@ -65,7 +65,7 @@ export function AbsenceApprovalCard({ absence, onApprove, onReject, loading }: R
     setActionType(null);
   };
 
-  const daysCount = differenceInDays(new Date(absence.endDate), new Date(absence.startDate)) + 1;
+  const daysCount = differenceInDays(new Date(absence.endDate + 'T00:00:00'), new Date(absence.startDate + 'T00:00:00')) + 1;
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -89,8 +89,8 @@ export function AbsenceApprovalCard({ absence, onApprove, onReject, loading }: R
         <div className="flex items-center gap-2 text-sm">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span>
-            {format(new Date(absence.startDate), "d 'de' MMMM", { locale: es })} -{' '}
-            {format(new Date(absence.endDate), "d 'de' MMMM, yyyy", { locale: es })}
+            {format(new Date(absence.startDate + 'T00:00:00'), "d 'de' MMMM", { locale: es })} -{' '}
+            {format(new Date(absence.endDate + 'T00:00:00'), "d 'de' MMMM, yyyy", { locale: es })}
           </span>
           <Badge variant="outline">{daysCount} día{daysCount !== 1 ? 's' : ''}</Badge>
         </div>

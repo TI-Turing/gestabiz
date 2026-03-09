@@ -28,6 +28,7 @@ import { supabase } from '@/lib/supabase'
 import { usePreferredCity } from '@/hooks/usePreferredCity'
 import { useAuth } from '@/hooks/useAuth'
 import type { SearchType } from './SearchBar'
+import { LocationAddress } from '@/components/ui/LocationAddress'
 
 interface SearchResultsProps {
   searchTerm: string
@@ -643,7 +644,7 @@ export function SearchResults({
                         {/* Location */}
                         {result.location?.city && (
                           <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
-                            <MapPin size={12} /> {result.location.city}
+                            <MapPin size={12} /> <LocationAddress cityId={result.location.city} showFullAddress={false} showCountry={false} />
                           </div>
                         )}
 

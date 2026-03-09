@@ -11,7 +11,9 @@ import { business, clients, services, locations, employees } from './business'
 import { notifications } from './notifications'
 import { reviews } from './reviews'
 import { jobs } from './jobs'
-import { absences } from './absences'
+// absences: NOT exported from modular system — old monolithic translations are used
+// The modular absences.ts has incompatible nested structure vs flat keys expected by components
+// import { absences } from './absences'
 import { businessResources, permissions, comprehensiveReports, clientManagement, reports, admin, search, taxConfiguration, userProfile } from './admin'
 import { landing, employee } from './landing'
 import { financial } from './financial'
@@ -80,7 +82,7 @@ export const en = {
   notifications,
   reviews,
   jobs,
-  absences,
+  // absences — uses old monolithic translations (flat keys)
   // Financial & Transactions
   financial,
   transactions,

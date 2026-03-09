@@ -37,6 +37,7 @@ import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
 import { useLocationTransfer } from '@/hooks/useLocationTransfer';
+import { LocationAddress } from '@/components/ui/LocationAddress';
 
 interface Location {
   id: string;
@@ -249,7 +250,7 @@ export function LocationTransferModal({
                   {locations.map((location) => (
                     <SelectItem key={location.id} value={location.id}>
                       {location.name}
-                      {location.city && ` - ${location.city}`}
+                      {location.city && <>{' - '}<LocationAddress cityId={location.city} showFullAddress={false} showCountry={false} /></>}
                     </SelectItem>
                   ))}
                 </SelectContent>

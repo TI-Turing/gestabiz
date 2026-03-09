@@ -15,6 +15,7 @@ import { useReviews } from '@/hooks/useReviews';
 import { useFavorites } from '@/hooks/useFavorites';
 import { toast } from 'sonner';
 import ChatWithAdminModal from './ChatWithAdminModal';
+import { LocationAddress } from '@/components/ui/LocationAddress';
 
 interface BusinessProfileProps {
   readonly businessId: string;
@@ -639,9 +640,7 @@ export default function BusinessProfile({
                             <div className="space-y-2 text-sm text-muted-foreground">
                               <div className="flex items-start gap-2">
                                 <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-                                <span>
-                                  {location.address}, {location.city}, {location.state} {location.postal_code}
-                                </span>
+                                <LocationAddress address={location.address} cityId={location.city} stateId={location.state} postalCode={location.postal_code} />
                               </div>
                               {location.phone && (
                                 <div className="flex items-center gap-2">

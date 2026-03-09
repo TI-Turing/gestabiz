@@ -4,6 +4,7 @@ import { useBusinessProfileData } from '@/hooks/useBusinessProfileData';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageMeta } from '@/hooks/usePageMeta';
+import { LocationAddress } from '@/components/ui/LocationAddress';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -421,9 +422,7 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
                       <div className="space-y-2 text-sm">
                         <div className="flex items-start gap-2 text-muted-foreground">
                           <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
-                          <span>
-                            {location.address}, {location.city}, {location.state} {location.postal_code}
-                          </span>
+                          <LocationAddress address={location.address} cityId={location.city} stateId={location.state} postalCode={location.postal_code} />
                         </div>
                         {location.phone && (
                           <div className="flex items-center gap-2 text-muted-foreground">

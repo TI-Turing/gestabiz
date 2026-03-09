@@ -87,7 +87,12 @@ export function PermissionGate({
   mode = 'block',
   deniedMessage
 }: PermissionGateProps) {
-  const { checkPermission, isOwner } = usePermissions(businessId);
+  const { checkPermission, isOwner, isLoading } = usePermissions(businessId);
+  
+  // Mientras cargan los permisos, mostrar children para evitar flash de "Sin permisos"
+  if (isLoading) {
+    return <>{children}</>;
+  }
   
   // Verificar permiso
   const result = checkPermission(permission);

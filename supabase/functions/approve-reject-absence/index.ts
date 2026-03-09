@@ -60,8 +60,8 @@ serve(async (req) => {
       .from('employee_absences')
       .select(`
         *,
-        employee:employee_id(full_name, email),
-        business:business_id(owner_id, business_name)
+        employee:profiles!employee_absences_employee_id_fkey(id, full_name, email),
+        business:businesses!employee_absences_business_id_fkey(id, owner_id, name)
       `)
       .eq('id', absenceId)
       .single();
@@ -121,10 +121,11 @@ serve(async (req) => {
         .from('appointments')
         .select(`
           id,
+          client_id,
           start_time,
           end_time,
           service:service_id(service_name),
-          client:client_id(full_name, email)
+          client:client_id(id, full_name, email)
         `)
         .eq('employee_id', absence.employee_id)
         .eq('business_id', absence.business_id)

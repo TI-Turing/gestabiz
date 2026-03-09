@@ -5,13 +5,14 @@
  * Phase 3 - UI Components
  */
 
-import { MoreVertical, User, TrendingUp, Star, DollarSign, Edit, Eye, UserPlus } from 'lucide-react'
+import { MoreVertical, User, TrendingUp, Star, DollarSign, Edit, Eye, UserPlus, UserX, UserCheck } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +20,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { HierarchyLevelSelector } from './HierarchyLevelSelector'
 import { useUpdateEmployeeHierarchySimple } from '@/hooks/useUpdateEmployeeHierarchy'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { supabase } from '@/lib/supabase'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import type { EmployeeHierarchy } from '@/types'
 
 // =====================================================
@@ -101,9 +105,37 @@ export function EmployeeCard({
   compact = false,
 }: Readonly<EmployeeCardProps>) {
   const { t } = useLanguage()
+  const queryClient = useQueryClient()
   const initials = getInitials(employee.full_name)
   const employeeId = employee.user_id ?? employee.employee_id
   const { updateLevel, isUpdating } = useUpdateEmployeeHierarchySimple(businessId)
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: async (newIsActive: boolean) => {
+      if (!employeeId) throw new Error('No employee ID')
+      const { error } = await supabase
+        .from('business_employees')
+        .update({ is_active: newIsActive })
+        .eq('employee_id', employeeId)
+        .eq('business_id', businessId)
+      if (error) throw error
+    },
+    onSuccess: (_data, newIsActive) => {
+      toast.success(t(newIsActive ? 'employees.card.activateSuccess' : 'employees.card.deactivateSuccess'))
+      queryClient.invalidateQueries({ queryKey: ['businessHierarchy', businessId] })
+    },
+    onError: () => {
+      toast.error(t('employees.card.toggleError'))
+    },
+  })
+
+  const handleToggleActive = () => {
+    const newState = !employee.is_active
+    const confirmMsg = t(newState ? 'employees.card.confirmActivate' : 'employees.card.confirmDeactivate')
+    if (globalThis.confirm(confirmMsg)) {
+      toggleActiveMutation.mutate(newState)
+    }
+  }
 
   const handleLevelChange = async (newLevel: number) => {
     if (!employeeId) {
@@ -188,6 +220,18 @@ export function EmployeeCard({
                 <DropdownMenuItem onClick={() => onAssignSupervisor?.(employee)}>
                   <UserPlus className="h-4 w-4 mr-2" />
                   {t('employees.card.assignSupervisor')}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleToggleActive}
+                  disabled={toggleActiveMutation.isPending}
+                  className={employee.is_active ? 'text-destructive focus:text-destructive' : 'text-green-600 focus:text-green-600'}
+                >
+                  {employee.is_active ? (
+                    <><UserX className="h-4 w-4 mr-2" />{t('employees.card.deactivate')}</>
+                  ) : (
+                    <><UserCheck className="h-4 w-4 mr-2" />{t('employees.card.activate')}</>
+                  )}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

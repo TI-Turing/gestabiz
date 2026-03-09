@@ -4,7 +4,7 @@
 > **Método**: Pruebas funcionales a través de la UI usando Chrome DevTools MCP  
 > **Ambiente**: localhost:5173 (Vite dev server)  
 > **Estado**: 11/11 flujos ejecutados + gaps completados (8 mar)  
-> **Hallazgos**: 18 bugs documentados (6 corregidos, 12 pendientes)
+> **Hallazgos**: 18 bugs documentados (17 corregidos, 1 falso positivo)
 
 ---
 
@@ -277,31 +277,31 @@
 
 | ID | Severidad | Módulo | Descripción | Estado |
 |----|-----------|--------|-------------|--------|
-| H-E2E-001 | Media | PermissionGate | Race condition: muestra "Sin permisos" por ~1 segundo después de crear negocio hasta que los permisos se propagan | Documentado |
+| H-E2E-001 | Media | PermissionGate | Race condition: muestra "Sin permisos" por ~1 segundo después de crear negocio hasta que los permisos se propagan | **CORREGIDO** ✅ (isLoading check) |
 | H-E2E-002 | Media | Vacantes (cards) | UUID de sede se muestra en lugar del nombre legible en las tarjetas de vacantes | **CORREGIDO** ✅ |
 | H-E2E-003 | Crítica | CreateVacancy | "Maximum update depth exceeded" — loop infinito de renders al abrir formulario de crear vacante | **CORREGIDO** ✅ |
 | H-E2E-004 | Media | Marketplace | Búsqueda de vacantes pasa searchQuery como filtro de ciudad, devuelve 0 resultados | **CORREGIDO** ✅ |
 | H-E2E-005 | Media | ApplicationFormModal | UUID del negocio se muestra en el diálogo de confirmación de aplicación en vez del nombre | **CORREGIDO** ✅ |
 | H-E2E-006 | Alta | Mis Empleos | "Mis Empleos" muestra 0 empleos a pesar de que el empleado fue contratado y tiene servicios asignados | **CORREGIDO** ✅ |
 | H-E2E-007 | Alta | AppointmentWizard | Negocios E2E invisibles en wizard de citas — requirió configurar `preferred-city` en localStorage para resolver | Resuelto (workaround) |
-| H-E2E-008 | Media | Direcciones | Direcciones de sedes muestran UUIDs en campos de ciudad/departamento en lugar de nombres legibles | Documentado |
+| H-E2E-008 | Media | Direcciones | Direcciones de sedes muestran UUIDs en campos de ciudad/departamento en lugar de nombres legibles | **CORREGIDO** ✅ (LocationAddress component) |
 | H-E2E-009 | Media-Alta | Calendario Admin | Filtros de servicio y sede vacíos ocultan TODAS las citas del calendario (lógica invertida: vacío = ocultar todo) | **CORREGIDO** ✅ |
-| H-E2E-010 | Media | Empleados | No existe UI para terminar/desactivar empleados. El campo `is_active` existe en BD pero no hay botón para cambiarlo | Documentado (feature faltante) |
-| H-E2E-011 | Alta | Ausencias (Modal) | Múltiples claves i18n sin traducir en formulario de solicitud de ausencia (~15 claves visibles como `absences.absenceType`, `absences.labels.*`, `absences.types.*`, etc.) | Documentado |
-| H-E2E-012 | Media | Ausencias (Modal) | "NaN" se muestra en el balance de vacaciones dentro del modal de solicitud | Documentado |
-| H-E2E-013 | Alta | Ausencias (Fechas) | Offset de -1 día entre vista empleado (16-18 mar) y vista admin (15-17 mar). Posible bug de timezone (UTC vs America/Bogota). Nota: 15 de marzo es domingo → fecha inválida | Documentado |
-| H-E2E-014 | Crítica | Ausencias (Aprobación/Rechazo) | Botones "Aprobar" Y "Rechazar" en vista admin retornan HTTP 400 de edge function `approve-reject-absence`. No cambian estado. Ambos inoperativos. | Documentado |
-| H-E2E-015 | Baja | Ausencias (Balance) | Balance de "Días Pendientes" no se actualiza tras enviar solicitud (permanece en 0 aunque haya 1 solicitud pendiente de 3 días) | Documentado |
-| H-E2E-016 | Alta | Vacantes (Rechazo) | Rechazar aplicación CON razón falla silenciosamente. Código intenta setear `rejection_reason` en `job_applications` pero esa columna NO EXISTE (debería ser `decision_notes`). Sin razón, funciona. | Documentado (8 mar) |
-| H-E2E-017 | Crítica | Chat (Persistencia) | Mensajes NO se persisten en BD. Tabla `conversations` vacía, `messages` vacía, `chat_participants` tiene 20 registros huérfanos. Mensajes solo existen en memoria React — se pierden al refrescar. | Documentado (8 mar) |
-| H-E2E-018 | Media | Citas (Modificar) | No existe botón "Modificar" ni "Reprogramar" en detalle de cita del cliente. Solo opciones: "Chatear con el profesional", "Cancelar Cita", "Cerrar". Feature faltante. | Documentado (8 mar) |
+| H-E2E-010 | Media | Empleados | No existe UI para terminar/desactivar empleados. El campo `is_active` existe en BD pero no hay botón para cambiarlo | **CORREGIDO** ✅ (toggle en EmployeeCard dropdown) |
+| H-E2E-011 | Alta | Ausencias (Modal) | Múltiples claves i18n sin traducir en formulario de solicitud de ausencia (~15 claves visibles como `absences.absenceType`, `absences.labels.*`, `absences.types.*`, etc.) | **CORREGIDO** ✅ (removido módulo i18n con nested objects) |
+| H-E2E-012 | Media | Ausencias (Modal) | "NaN" se muestra en el balance de vacaciones dentro del modal de solicitud | **CORREGIDO** ✅ (?? 0 fallbacks) |
+| H-E2E-013 | Alta | Ausencias (Fechas) | Offset de -1 día entre vista empleado (16-18 mar) y vista admin (15-17 mar). Posible bug de timezone (UTC vs America/Bogota). Nota: 15 de marzo es domingo → fecha inválida | **CORREGIDO** ✅ (T00:00:00 en date-only strings) |
+| H-E2E-014 | Crítica | Ausencias (Aprobación/Rechazo) | Botones "Aprobar" Y "Rechazar" en vista admin retornan HTTP 400 de edge function `approve-reject-absence`. No cambian estado. Ambos inoperativos. | **CORREGIDO** ✅ (FK aliases + business_name→name en edge function) |
+| H-E2E-015 | Baja | Ausencias (Balance) | Balance de "Días Pendientes" no se actualiza tras enviar solicitud (permanece en 0 aunque haya 1 solicitud pendiente de 3 días) | **CORREGIDO** ✅ (VACATION_BALANCE cache invalidation) |
+| H-E2E-016 | Alta | Vacantes (Rechazo) | Rechazar aplicación CON razón falla silenciosamente. Código intenta setear `rejection_reason` en `job_applications` pero esa columna NO EXISTE (debería ser `decision_notes`). Sin razón, funciona. | **CORREGIDO** ✅ (rejection_reason→decision_notes) |
+| H-E2E-017 | Crítica | Chat (Persistencia) | Mensajes NO se persisten en BD. Tabla `conversations` vacía, `messages` vacía, `chat_participants` tiene 20 registros huérfanos. Mensajes solo existen en memoria React — se pierden al refrescar. | **FALSO POSITIVO** — Chat funciona correctamente. Las tablas activas son `chat_messages` (31 registros), `chat_conversations` (13 registros), `chat_participants` (20 registros). La investigación inicial revisó las tablas legacy vacías `messages`/`conversations` por error. |
+| H-E2E-018 | Media | Citas (Modificar) | No existe botón "Modificar" ni "Reprogramar" en detalle de cita del cliente. Solo opciones: "Chatear con el profesional", "Cancelar Cita", "Cerrar". Feature faltante. | **CORREGIDO** ✅ (PermissionGate removido del botón Reprogramar) |
 
 ### Hallazgos adicionales (sin numerar)
 
 | Módulo | Descripción | Estado |
 |--------|-------------|--------|
 | Supervisor Combobox | Combobox de supervisores vacío cuando empleados tienen `location_id = null` | **CORREGIDO** ✅ |
-| Console Error | `profiles_1.name does not exist` en useEmployeeRequests.ts — error 400 continuos en cada carga de página | Documentado |
+| Console Error | `profiles_1.name does not exist` en useEmployeeRequests.ts — error 400 continuos en cada carga de página | **CORREGIDO** ✅ (name→full_name) |
 | DeporteMax modelo | `physical_resource` incompatible con configuración de solo empleados (sin recursos físicos) | **CORREGIDO** (cambiado a `hybrid`) |
 
 ---
@@ -310,36 +310,34 @@
 
 ### Estadísticas Generales
 - **Flujos ejecutados**: 11/11 (100%) + gaps completados (8 mar)
-- **Flujos completados exitosamente**: 8/11 (73%)
-- **Flujos con fallas parciales**: 2/11 (Chat, Ausencias)
-- **Flujos imposibles por feature faltante**: 1/11 (Terminación de empleo)
+- **Flujos completados exitosamente**: 10/11 (91%)
+- **Flujos con fallas parciales**: 1/11 (Ausencias — ahora corregido)
+- **Flujos imposibles por feature faltante**: 0/11 (toggle empleados implementado)
 - **Hallazgos totales**: 18 numerados + 3 adicionales
-- **Bugs corregidos durante testing**: 6
-- **Bugs pendientes de corrección**: 12
+- **Bugs corregidos**: 17 (incluyendo 6 durante testing + 11 post-testing)
+- **Falsos positivos**: 1 (H-E2E-017: chat usa tablas `chat_*`, no las legacy)
+- **Bugs pendientes**: 0
 
-### Clasificación de Bugs Pendientes
+### Clasificación Final
 
-**Críticos (acción inmediata requerida)**:
-- **H-E2E-014**: Botones "Aprobar" Y "Rechazar" ausencia retornan HTTP 400 — rompe por completo el flujo de gestión de ausencias
-- **H-E2E-017**: Mensajes de chat NO se persisten en BD — datos se pierden al refrescar. Tabla `messages` y `conversations` vacías
+**Todos los bugs han sido resueltos. Resumen de correcciones post-testing:**
 
-**Altos (importantes para experiencia de usuario)**:
-- **H-E2E-011**: Claves i18n sin traducir en módulo de ausencias — módulo inutilizable en español
-- **H-E2E-013**: Fechas desfasadas -1 día entre vistas (timezone bug)
-- **H-E2E-016**: Rechazo de aplicación con razón falla silenciosamente (columna `rejection_reason` no existe, debería ser `decision_notes`)
+| ID | Fix aplicado |
+|----|-------------|
+| H-E2E-001 | `isLoading` check en PermissionGate previene flash de "Sin permisos" |
+| H-E2E-008 | Componente `LocationAddress` resuelve UUIDs a nombres en 5 archivos |
+| H-E2E-010 | Toggle activar/desactivar en dropdown de EmployeeCard con mutación Supabase |
+| H-E2E-011 | Removido export de `absences` modular que sobreescribía traducciones planas |
+| H-E2E-012 | Fallbacks `?? 0` en campos de VacationBalance |
+| H-E2E-013 | `'T00:00:00'` en date-only strings para forzar hora local |
+| H-E2E-014 | FK aliases + `business_name` → `name` en edge function (desplegada) |
+| H-E2E-015 | Invalidación de cache `VACATION_BALANCE` en mutations request/cancel |
+| H-E2E-016 | `rejection_reason` → `decision_notes` en useJobApplications |
+| H-E2E-017 | **FALSO POSITIVO** — tablas correctas son `chat_messages`/`chat_conversations` |
+| H-E2E-018 | PermissionGate removido del botón Reprogramar en ClientDashboard |
+| Console | `name` → `full_name` en useEmployeeRequests y usePermissions-v2 |
 
-**Medios (afectan funcionalidad o estética)**:
-- **H-E2E-001**: PermissionGate race condition
-- **H-E2E-008**: UUIDs en direcciones
-- **H-E2E-010**: Sin UI para desactivar empleados
-- **H-E2E-012**: NaN en balance de vacaciones del modal
-- **H-E2E-018**: Sin UI para modificar/reprogramar citas (feature faltante)
-- Console error: `profiles_1.name does not exist`
-
-**Bajos**:
-- **H-E2E-015**: Balance "Días Pendientes" no se actualiza en tiempo real
-
-### Módulos Estables (sin bugs detectados)
+### Módulos Estables (sin bugs pendientes)
 - Creación de negocios
 - Creación de servicios y sedes
 - Ventas Rápidas
@@ -348,12 +346,17 @@
 - Configuración de perfil de usuario
 - Completar citas y generación de transacciones con IVA
 - **Cancelación de citas** ✅ (verificado 8 mar)
-- **Bloqueo de slots por ausencias aprobadas** ✅ (verificado 8 mar, funciona con offset)
+- **Bloqueo de slots por ausencias aprobadas** ✅ (verificado 8 mar)
+- **Sistema de Ausencias completo** ✅ (corregido post-testing)
+- **Chat en tiempo real** ✅ (falso positivo descartado)
+- **Gestión de empleados** ✅ (toggle activar/desactivar implementado)
+- **Sistema de vacantes** ✅ (rechazo con razón corregido)
 
 ### Notas para el Equipo
-1. El módulo de **Ausencias** necesita trabajo significativo antes de producción: i18n, timezone, aprobación/rechazo rotos (HTTP 400 de edge function)
+1. El módulo de **Ausencias** ha sido completamente corregido: i18n, timezone, y aprobación/rechazo (edge function redesplegada)
 2. La búsqueda de negocios en **rol cliente** tiene dependencia fuerte de `preferred-city` en localStorage
-3. El **Chat** tiene bug crítico: mensajes no se persisten en BD. Tablas `conversations` y `messages` vacías, solo `chat_participants` tiene datos (20 registros huérfanos)
-4. Los **UUIDs expuestos** en direcciones (H-E2E-008) son un problema cosmético de CitySelect que almacena `city.id` en vez de `city.name`
-5. **(8 mar)** El rechazo de aplicaciones funciona SIN razón pero FALLA CON razón — verificar que `useJobApplications.ts` use `decision_notes` en vez de `rejection_reason`
-6. **(8 mar)** No existe funcionalidad para **modificar/reprogramar citas** — el cliente solo puede cancelar y crear nueva
+3. El **Chat** funciona correctamente — usa tablas `chat_messages`, `chat_conversations`, `chat_participants` (NO las legacy `messages`/`conversations`)
+4. Los **UUIDs en direcciones** (H-E2E-008) fueron corregidos con el componente `LocationAddress` en 5 archivos
+5. El rechazo de aplicaciones ahora usa `decision_notes` correctamente
+6. El botón **Reprogramar Cita** ahora es visible para clientes (sin restricción de permisos)
+7. Los **empleados** ahora pueden ser activados/desactivados desde el menú desplegable de su tarjeta

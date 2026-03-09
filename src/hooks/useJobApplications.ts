@@ -12,7 +12,7 @@ export interface JobApplication {
   expected_salary?: number;
   available_from?: string; // DATE: cuando puede comenzar
   availability_notes?: string; // TEXT: notas adicionales sobre disponibilidad
-  rejection_reason?: string;
+  decision_notes?: string;
   created_at: string;
   updated_at: string;
   reviewed_at?: string;
@@ -280,7 +280,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
       };
 
       if (status === 'rejected' && rejectionReason) {
-        updates.rejection_reason = rejectionReason;
+        updates.decision_notes = rejectionReason;
       }
 
       const { error: updateError } = await supabase
