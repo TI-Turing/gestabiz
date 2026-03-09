@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
-import { Upload, Loader2 } from 'lucide-react'
+import { Upload, Loader2, CalendarDays } from 'lucide-react'
 import { toast } from 'sonner'
 import { User as UserType } from '@/types'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -281,7 +281,7 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
             </div>
             <div className="text-left md:text-right">
               <span className="inline-flex items-center gap-1.5 text-xs bg-muted text-muted-foreground px-3 py-1.5 rounded-full border border-border">
-                <span>�</span> 
+                <CalendarDays className="h-3 w-3" /> 
                 <span className="font-medium">{t('profile.joined_on')}:</span>
                 <span>{formatDate(user.created_at)}</span>
               </span>
