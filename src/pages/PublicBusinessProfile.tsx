@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Phone, Mail, Globe, Star, Clock, ChevronRight, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Phone, Mail, Globe, Star, Clock, ChevronRight, MessageCircle, Sparkles, Heart, Dumbbell, BookOpen, Briefcase, Home, Car, UtensilsCrossed, PawPrint, Laptop, Palette, HardHat, MoreHorizontal } from 'lucide-react';
 import { useBusinessProfileData } from '@/hooks/useBusinessProfileData';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +14,13 @@ import { ReviewList } from '@/components/reviews/ReviewList';
 import ChatWithAdminModal from '@/components/business/ChatWithAdminModal';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useEffect, useMemo, useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
+
+const categoryIconMap: Record<string, LucideIcon> = {
+  Sparkles, Heart, Dumbbell, BookOpen, Briefcase, Home, Car,
+  Utensils: UtensilsCrossed, UtensilsCrossed, Calendar, PawPrint,
+  Laptop, Palette, HardHat, MoreHorizontal,
+};
 
 interface PublicBusinessProfileProps {
   readonly slug?: string;
@@ -268,7 +275,10 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
                 </h1>
                 {business.category && (
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                    {business.category.icon && <span>{business.category.icon}</span>}
+                    {business.category.icon && (() => {
+                      const IconComponent = categoryIconMap[business.category.icon];
+                      return IconComponent ? <IconComponent className="h-4 w-4" /> : null;
+                    })()}
                     <span>{business.category.name}</span>
                   </div>
                 )}
@@ -478,17 +488,17 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
                         {employee.avatar_url ? (
                           <img
                             src={employee.avatar_url}
-                            alt={`${employee.first_name} ${employee.last_name}`}
+                            alt={employee.name}
                             className="w-12 h-12 rounded-full object-cover"
                           />
                         ) : (
                           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                            {employee.first_name[0]}{employee.last_name[0]}
+                            {employee.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                           </div>
                         )}
                         <div className="flex-1">
                           <h3 className="font-semibold">
-                            {employee.first_name} {employee.last_name}
+                            {employee.name}
                           </h3>
                           {employee.title && (
                             <p className="text-sm text-muted-foreground">{employee.title}</p>
@@ -523,7 +533,7 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
                         className="w-full"
                         onClick={() => handleBookAppointment(undefined, undefined, employee.id)}
                       >
-                        Reservar con {employee.first_name}
+                        Reservar con {employee.name?.split(' ')[0]}
                       </Button>
                     </Card>
                   ))}

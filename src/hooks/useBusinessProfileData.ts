@@ -45,8 +45,7 @@ interface Service {
 interface Employee {
   id: string;
   user_id: string;
-  first_name: string;
-  last_name: string;
+  name: string;
   email: string;
   phone?: string;
   avatar_url?: string;
@@ -186,13 +185,10 @@ export function useBusinessProfileData({ businessId, slug, userLocation }: UseBu
         .from('business_employees')
         .select(`
           id,
-          user_id,
-          title,
-          bio,
-          specializations,
-          profiles!business_employees_user_id_fkey (
-            first_name,
-            last_name,
+          employee_id,
+          job_title,
+          profiles!business_employees_employee_id_fkey (
+            full_name,
             email,
             phone,
             avatar_url
@@ -294,15 +290,14 @@ export function useBusinessProfileData({ businessId, slug, userLocation }: UseBu
         
         return {
           id: emp.id,
-          user_id: emp.user_id,
-          first_name: profile?.first_name || '',
-          last_name: profile?.last_name || '',
+          user_id: emp.employee_id,
+          name: profile?.full_name || '',
           email: profile?.email || '',
           phone: profile?.phone,
           avatar_url: profile?.avatar_url,
-          title: emp.title,
-          bio: emp.bio,
-          specializations: emp.specializations,
+          title: emp.job_title,
+          bio: undefined,
+          specializations: undefined,
           rating: employeeRatings[emp.id]?.rating,
           review_count: employeeRatings[emp.id]?.review_count,
           services: employeeServices[emp.id] || []
