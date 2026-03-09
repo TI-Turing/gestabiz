@@ -1,5 +1,7 @@
 # Plan de Pruebas Rol Administrador
 
+> **REGLA**: SOLO se documentan bugs. NO se toca código ni se intentan solucionar. La corrección se hará en fase posterior.
+
 ## 1. Objetivo y Alcance
 - Validar de extremo a extremo todos los flujos habilitados para usuarios con rol Administrador (owner o admin delegado) dentro de Gestabiz Web.
 - Cubrir módulos críticos: creación y gestión de negocios, sedes, servicios, recursos físicos, empleados, permisos, citas, ausencias, ventas rápidas, contabilidad, reportes, billing, reclutamiento y ajustes globales.

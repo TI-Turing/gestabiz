@@ -1,9 +1,22 @@
 # Plan de Pruebas Funcionales - Gestabiz
 
-> **Fecha**: 7 de marzo de 2026  
+> **Fecha**: 7 de marzo de 2026 | **Ejecución**: 9 de marzo de 2026  
 > **Objetivo**: Recorrer TODA la aplicación probando cada componente y flujo funcional  
 > **Método**: Navegación manual vía Chrome MCP + documentación de hallazgos  
 > **Regla**: NO se corrige nada, solo se documenta
+
+---
+
+## REGLA FUNDAMENTAL DE EJECUCIÓN
+
+> **SOLO SE REALIZARÁN PRUEBAS. NO SE TOCARÁ EL CÓDIGO NI SE INTENTARÁ SOLUCIONAR NINGÚN BUG ENCONTRADO.**
+>
+> - El objetivo es **DOCUMENTAR** todos los bugs, issues y hallazgos encontrados durante la ejecución.
+> - Los bugs serán registrados con su descripción, pasos para reproducir, resultado esperado vs obtenido, y severidad.
+> - La solución de bugs se realizará en una fase posterior, separada de la ejecución de pruebas.
+> - No se modificarán archivos `.ts`, `.tsx`, `.css`, `.sql` ni ningún otro archivo de código fuente.
+> - No se ejecutarán migraciones, scripts ni queries directas en Supabase.
+> - El único archivo que se actualizará durante la ejecución es el reporte de resultados.
 
 ---
 

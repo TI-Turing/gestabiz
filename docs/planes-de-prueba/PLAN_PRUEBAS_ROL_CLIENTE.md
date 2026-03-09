@@ -1,5 +1,7 @@
 # Plan de Pruebas Rol Cliente
 
+> **REGLA**: SOLO se documentan bugs. NO se toca código ni se intentan solucionar. La corrección se hará en fase posterior.
+
 ## 1. Objetivo y Alcance
 - Validar de forma integral todos los flujos disponibles para usuarios con rol Cliente dentro de la plataforma web Gestabiz (React 18 + Supabase + Vite).
 - Cubrir escenarios funcionales, negativos, permisos, integraciones con Supabase/edge functions, experiencia responsive y consideraciones mobile (WebView Expo).

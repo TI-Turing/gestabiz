@@ -1,6 +1,8 @@
 # PLAN DE PRUEBAS INTEGRAL - ROL EMPLEADO (Employee Dashboard)
 ## VERSIÓN EXHAUSTIVA CON ANÁLISIS DE PERFORMANCE Y OPTIMIZACIONES
 
+> **REGLA**: SOLO se documentan bugs. NO se toca código ni se intentan solucionar. La corrección se hará en fase posterior.
+
 **Fecha**: 17 de noviembre de 2025  
 **Proyecto**: Gestabiz  
 **Stack**: React 18 + TypeScript 5.7 + Vite 6 + Supabase + Tailwind 4  
