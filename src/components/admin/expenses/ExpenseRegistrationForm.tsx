@@ -21,7 +21,7 @@ interface ExpenseRegistrationFormProps {
   editingExpense?: RecurringExpense | null;
 }
 
-const EXPENSE_CATEGORIES: Array<{ value: TransactionCategory; label: string; group: string }> = [
+export const EXPENSE_CATEGORIES: Array<{ value: TransactionCategory; label: string; group: string }> = [
   // Payroll
   { value: 'salary', label: 'Salario Base', group: 'Nómina' },
   { value: 'payroll', label: 'Nómina General', group: 'Nómina' },

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ExpenseRegistrationForm } from './ExpenseRegistrationForm';
+import { ExpenseRegistrationForm, EXPENSE_CATEGORIES } from './ExpenseRegistrationForm';
 import { PermissionGate } from '@/components/ui/PermissionGate';
 import { toast } from 'sonner';
 import {
@@ -46,6 +46,23 @@ const formatDate = (dateStr: string) => {
     day: 'numeric',
   });
 };
+
+// Lookup helpers for human-readable labels
+const getCategoryLabel = (category: string): string => {
+  const found = EXPENSE_CATEGORIES.find(c => c.value === category);
+  return found ? found.label : category;
+};
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cash: 'Efectivo',
+  transfer: 'Transferencia',
+  check: 'Cheque',
+  credit_card: 'Tarjeta de Crédito',
+  debit_card: 'Tarjeta Débito',
+};
+
+const getPaymentMethodLabel = (method: string): string =>
+  PAYMENT_METHOD_LABELS[method] || method;
 
 export const ExpensesManagementPage: React.FC<ExpensesManagementPageProps> = ({ businessId }) => {
   const navigate = useNavigate();
@@ -336,12 +353,12 @@ export const ExpensesManagementPage: React.FC<ExpensesManagementPageProps> = ({ 
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{expense.description}</span>
-                          <Badge variant="outline">{expense.category}</Badge>
+                          <Badge variant="outline">{getCategoryLabel(expense.category)}</Badge>
                         </div>
                         <div className="text-sm text-muted-foreground mt-1">
                           {formatDate(expense.transaction_date)}
                           {expense.location && ` • ${expense.location.name}`}
-                          {expense.payment_method && ` • ${expense.payment_method}`}
+                          {expense.payment_method && ` • ${getPaymentMethodLabel(expense.payment_method)}`}
                         </div>
                       </div>
                       <div className="text-lg font-semibold text-destructive">
@@ -384,7 +401,7 @@ export const ExpensesManagementPage: React.FC<ExpensesManagementPageProps> = ({ 
                           <span className="font-medium">
                             {expense.name || expense.description}
                           </span>
-                          <Badge variant="outline">{expense.category}</Badge>
+                          <Badge variant="outline">{getCategoryLabel(expense.category)}</Badge>
                           <Badge variant={expense.is_active ? 'default' : 'secondary'}>
                             {expense.is_active ? 'Activo' : 'Inactivo'}
                           </Badge>
@@ -548,7 +565,7 @@ const ExpenseSummaryByCategory: React.FC<{
           <div key={cat.category} className="space-y-1">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
-                <Badge variant="outline">{cat.category}</Badge>
+                <Badge variant="outline">{getCategoryLabel(cat.category)}</Badge>
                 <span className="text-muted-foreground">
                   {cat.transaction_count} transacciones
                 </span>
