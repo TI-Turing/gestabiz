@@ -37,6 +37,7 @@ interface Service {
   name: string;
   description: string;
   duration: number;
+  duration_minutes: number;
   price: number;
   category?: string;
   is_active: boolean;

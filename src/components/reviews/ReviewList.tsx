@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Star, Filter, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,15 +45,10 @@ export function ReviewList({
     respondToReview,
     toggleReviewVisibility,
     deleteReview,
-    refetch,
   } = useReviews(filters);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRating, setSelectedRating] = useState<string>('all');
-
-  useEffect(() => {
-    refetch();
-  }, [filters, refetch]);
 
   const handleRatingFilter = (value: string) => {
     setSelectedRating(value);

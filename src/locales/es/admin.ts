@@ -451,7 +451,9 @@ export const search = {
     all: 'Todos',
     businesses: 'Negocios',
     services: 'Servicios',
-    professionals: 'Profesionales'
+    professionals: 'Profesionales',
+    categories: 'Categorías',
+    users: 'Profesionales'
   },
 
   // Placeholders by type
@@ -468,7 +470,8 @@ export const search = {
     noResults: 'No se encontraron resultados',
     tryDifferent: 'Intenta con un término diferente',
     filters: 'Filtros',
-    clearFilters: 'Limpiar Filtros'
+    clearFilters: 'Limpiar Filtros',
+    viewAll: 'Ver todos los resultados →'
   },
 
   // Sorting

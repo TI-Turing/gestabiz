@@ -317,7 +317,17 @@ export function AppointmentWizard({
     if (currentStepName === 'employeeBusiness') {
       currentStepName = 'employee';
     }
-    return effectiveSteps.indexOf(currentStepName);
+    const idx = effectiveSteps.indexOf(currentStepName);
+    if (idx >= 0) return idx;
+    // If current step was skipped, find the next effective step
+    const allSteps = getStepOrder();
+    for (let i = currentStep + 1; i < allSteps.length; i++) {
+      let stepName = allSteps[i];
+      if (stepName === 'employeeBusiness') stepName = 'employee';
+      const effectiveIdx = effectiveSteps.indexOf(stepName);
+      if (effectiveIdx >= 0) return effectiveIdx;
+    }
+    return Math.max(0, effectiveSteps.length - 1);
   };
 
   // Calcular los pasos completados dinámicamente

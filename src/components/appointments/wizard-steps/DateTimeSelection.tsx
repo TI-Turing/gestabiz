@@ -6,9 +6,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import type { Service, Appointment } from '@/types/types';
 import { format, addMinutes, parse, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
+import { es, enUS } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useEmployeeTransferAvailability } from '@/hooks/useEmployeeTransferAvailability';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface DateTimeSelectionProps {
   readonly service: Service | null;
@@ -110,6 +112,8 @@ export function DateTimeSelection({
   appointmentToEdit,
   clientId,
 }: DateTimeSelectionProps) {
+  const { t, language } = useLanguage();
+  const dateLocale = language === 'es' ? es : enUS;
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [locationSchedule, setLocationSchedule] = useState<LocationSchedule | null>(null);
   const [employeeSchedule, setEmployeeSchedule] = useState<EmployeeSchedule | null>(null);
@@ -566,7 +570,7 @@ export function DateTimeSelection({
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-      <h3 className="text-xl font-semibold text-foreground mb-6">Select Date & Time</h3>
+      <h3 className="text-xl font-semibold text-foreground mb-6">{t('appointments.wizard.selectDateTime')}</h3>
 
       {/* Aviso si la fecha/hora preseleccionada no está disponible */}
       {selectedDate && selectedTime && (
@@ -587,7 +591,7 @@ export function DateTimeSelection({
 
       {service && (
         <div className="mb-6 p-3 bg-card rounded-lg border border-border">
-          <p className="text-sm text-muted-foreground">Selected service:</p>
+          <p className="text-sm text-muted-foreground">{t('appointments.wizard.selectedService')}</p>
           <p className="text-foreground font-semibold">
             {service.name}{' '}
             {(() => {
@@ -633,7 +637,7 @@ export function DateTimeSelection({
         <div className="flex-1 space-y-4 min-w-0">
           {selectedDate ? (
             <>
-              <h3 className="text-lg font-semibold text-foreground">Available on {format(selectedDate, 'MMMM d, yyyy')}</h3>
+              <h3 className="text-lg font-semibold text-foreground">{t('appointments.wizard.availableOn')} {format(selectedDate, 'd MMMM yyyy', { locale: dateLocale })}</h3>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto pr-2">
                 {timeSlots.map((slot) => {
@@ -675,7 +679,7 @@ export function DateTimeSelection({
             </>
           ) : (
             <div className="flex items-center justify-center h-full min-h-[200px]">
-              <p className="text-[#94a3b8] text-center">Please select a date to see available time slots</p>
+              <p className="text-[#94a3b8] text-center">{t('appointments.wizard.selectDatePrompt')}</p>
             </div>
           )}
         </div>

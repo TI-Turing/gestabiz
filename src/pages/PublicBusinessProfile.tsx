@@ -402,7 +402,7 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Clock className="w-4 h-4" />
-                          <span>{service.duration} min</span>
+                          <span>{service.duration_minutes || service.duration} min</span>
                         </div>
                         <Button 
                           size="sm" 

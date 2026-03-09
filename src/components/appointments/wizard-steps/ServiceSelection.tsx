@@ -5,6 +5,7 @@ import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Service } from '@/types/types';
 import supabase from '@/lib/supabase';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ServiceSelectionProps {
   readonly businessId: string;
@@ -23,6 +24,7 @@ export function ServiceSelection({
 }: ServiceSelectionProps) {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(!preloadedServices);
+  const { t } = useLanguage();
 
   const loadServices = useCallback(async () => {
     // Si ya tenemos datos pre-cargados, usarlos (MÁS RÁPIDO)
@@ -64,7 +66,7 @@ export function ServiceSelection({
       <div className="p-8 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-[#8b5cf6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#94a3b8]">Loading services...</p>
+          <p className="text-[#94a3b8]">{t('appointments.wizard.loadingServices')}</p>
         </div>
       </div>
     );
@@ -73,7 +75,7 @@ export function ServiceSelection({
   return (
     <div className="p-6">
       <h3 className="text-xl font-semibold text-foreground mb-6">
-        Select a Service
+        {t('appointments.wizard.selectAService')}
       </h3>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

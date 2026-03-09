@@ -4,6 +4,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Calendar, Clock, MapPin, User, Scissors } from 'lucide-react';
 import { format } from 'date-fns';
+import { es, enUS } from 'date-fns/locale';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface WizardData {
   serviceId: string | null;
@@ -47,12 +49,14 @@ export function ConfirmationStep({
   onUpdateNotes,
 }: ConfirmationStepProps) {
   const { service, date, startTime, endTime, notes, location, employee } = wizardData;
+  const { t, language } = useLanguage();
+  const dateLocale = language === 'es' ? es : enUS;
 
   return (
     <div className="p-6 space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-foreground mb-2">New Appointment</h2>
-        <p className="text-muted-foreground">Confirm the details below to finalize the booking</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">{t('appointments.wizard.newAppointment')}</h2>
+        <p className="text-muted-foreground">{t('appointments.wizard.confirmDetails')}</p>
       </div>
 
       {/* Appointment Summary Card */}
@@ -61,14 +65,14 @@ export function ConfirmationStep({
           {/* Header con icono */}
           <div className="flex items-center gap-2 mb-4">
             <Calendar className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold text-foreground">Appointment Summary</h3>
+            <h3 className="text-lg font-semibold text-foreground">{t('appointments.wizard.appointmentSummary')}</h3>
           </div>
 
           {/* Service */}
           <InfoRow
             icon={<Scissors className="h-5 w-5" />}
-            label="Service"
-            value={service?.name || 'Not selected'}
+            label={t('appointments.service')}
+            value={service?.name || t('appointments.wizard.notSelected')}
           />
 
           {/* Duration */}
@@ -78,8 +82,8 @@ export function ConfirmationStep({
           })() && (
             <InfoRow
               icon={<Clock className="h-5 w-5" />}
-              label="Duration"
-              value={`${service?.duration ?? (service as any)?.duration_minutes} minutes`}
+              label={t('appointments.duration')}
+              value={`${service?.duration ?? (service as any)?.duration_minutes} ${t('appointments.wizard.minutes')}`}
             />
           )}
 
@@ -88,15 +92,15 @@ export function ConfirmationStep({
           {/* Date */}
           <InfoRow
             icon={<Calendar className="h-5 w-5" />}
-            label="Date"
-            value={date ? format(date, 'EEEE, MMMM d, yyyy') : 'Not selected'}
+            label={t('appointments.date')}
+            value={date ? format(date, 'EEEE, d MMMM yyyy', { locale: dateLocale }) : t('appointments.wizard.notSelected')}
           />
 
           {/* Time */}
           <InfoRow
             icon={<Clock className="h-5 w-5" />}
-            label="Time"
-            value={startTime && endTime ? `${startTime} - ${endTime}` : 'Not selected'}
+            label={t('appointments.time')}
+            value={startTime && endTime ? `${startTime} - ${endTime}` : t('appointments.wizard.notSelected')}
           />
 
           {/* Location */}
@@ -105,7 +109,7 @@ export function ConfirmationStep({
               <Separator className="bg-white/10" />
               <InfoRow
                 icon={<MapPin className="h-5 w-5" />}
-                label="Location"
+                label={t('appointments.wizard.location')}
                 value={location.name}
               />
             </>
@@ -117,7 +121,7 @@ export function ConfirmationStep({
               <Separator className="bg-white/10" />
               <InfoRow
                 icon={<User className="h-5 w-5" />}
-                label="Professional"
+                label={t('appointments.wizard.professional')}
                 value={employee.full_name || employee.email}
               />
             </>
@@ -128,7 +132,7 @@ export function ConfirmationStep({
             <>
               <Separator className="bg-white/10" />
               <div className="flex justify-between items-center pt-2">
-                <span className="text-[#94a3b8] font-medium">Total</span>
+                <span className="text-[#94a3b8] font-medium">{t('appointments.wizard.total')}</span>
                 <span className="text-2xl font-bold text-[#ff8c00]">
                   ${service.price.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </span>
@@ -141,13 +145,13 @@ export function ConfirmationStep({
       {/* Notes Section */}
       <div className="space-y-3">
         <label htmlFor="appointment-notes" className="text-sm font-medium text-foreground">
-          Optional Notes
+          {t('appointments.wizard.optionalNotes')}
         </label>
         <Textarea
           id="appointment-notes"
           value={notes}
           onChange={(e) => onUpdateNotes(e.target.value)}
-          placeholder="Add any special requests or notes..."
+          placeholder={t('appointments.wizard.notesPlaceholder')}
           className="bg-background border-border text-foreground placeholder:text-muted-foreground min-h-[100px]
                      focus:border-primary focus:ring-primary/20"
         />
@@ -156,7 +160,7 @@ export function ConfirmationStep({
       {/* Footer info */}
       <div className="text-center pt-4">
         <p className="text-xs text-[#94a3b8]">
-          You will receive a confirmation via email and WhatsApp
+          {t('appointments.wizard.confirmationMessage')}
         </p>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ProgressBarProps {
   currentStep: number;
@@ -10,6 +11,7 @@ interface ProgressBarProps {
 }
 
 export function ProgressBar({ currentStep, totalSteps, label, completedSteps = [] }: ProgressBarProps) {
+  const { t } = useLanguage();
   const percentage = (currentStep / totalSteps) * 100;
 
   // Generar array de todos los pasos
@@ -20,7 +22,7 @@ export function ProgressBar({ currentStep, totalSteps, label, completedSteps = [
       {/* Header con step indicator y label */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium text-muted-foreground">
-          Step {currentStep} of {totalSteps}
+          {t('appointments.wizard.step')} {currentStep} {t('appointments.wizard.of')} {totalSteps}
         </span>
         <span className="text-sm font-semibold text-primary">
           {label}
@@ -80,10 +82,10 @@ export function ProgressBar({ currentStep, totalSteps, label, completedSteps = [
       {/* Porcentaje y estado */}
       <div className="flex items-center justify-between mt-2">
         <p className="text-xs text-muted-foreground">
-          {completedSteps.length} of {totalSteps} steps completed
+          {completedSteps.length} {t('appointments.wizard.of')} {totalSteps} {t('appointments.wizard.stepsCompleted')}
         </p>
         <p className="text-xs font-semibold text-primary">
-          {Math.round(percentage)}% Complete
+          {Math.round(percentage)}% {t('appointments.wizard.complete')}
         </p>
       </div>
     </div>
