@@ -202,6 +202,7 @@ export function EmployeeCard({
             </div>
 
             {/* ACTIONS DROPDOWN */}
+            <div onClick={e => e.stopPropagation()}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -235,6 +236,7 @@ export function EmployeeCard({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           </div>
 
           {/* HIERARCHY INFO */}
