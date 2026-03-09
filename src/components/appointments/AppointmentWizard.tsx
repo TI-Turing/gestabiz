@@ -558,6 +558,78 @@ export function AppointmentWizard({
     setWizardData(prev => ({ ...prev, ...data }));
   }, []);
 
+  // ⭐ EDIT MODE: Poblar wizardData con objetos de appointmentToEdit
+  // Cuando se abre en modo edición, appointmentToEdit contiene service/employee/location
+  // como objetos anidados, pero wizardData solo se inicializa con IDs (los objetos quedan null).
+  // Este efecto rellena los objetos faltantes para que ConfirmationStep los muestre correctamente.
+  const hasHydratedEditRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!open || !appointmentToEdit || hasHydratedEditRef.current) return;
+    hasHydratedEditRef.current = true;
+
+    const apt = appointmentToEdit as unknown as Record<string, unknown>;
+    const updates: Partial<WizardData> = {};
+
+    // Extraer service object si existe en appointmentToEdit
+    const svc = apt.service as Record<string, unknown> | null | undefined;
+    if (svc && !wizardData.service) {
+      updates.service = {
+        id: (svc.id as string) || wizardData.serviceId || '',
+        name: (svc.name as string) || '',
+        duration: (svc.duration_minutes as number) ?? (svc.duration as number) ?? 0,
+        price: (svc.price as number) ?? undefined,
+      } as unknown as Service;
+    }
+
+    // Extraer employee object si existe en appointmentToEdit
+    const emp = apt.employee as Record<string, unknown> | null | undefined;
+    if (emp && !wizardData.employee) {
+      updates.employee = {
+        id: (emp.id as string) || wizardData.employeeId || '',
+        full_name: (emp.full_name as string) || null,
+        email: (emp.email as string) || '',
+        role: (emp.role as string) || '',
+        avatar_url: (emp.avatar_url as string) || null,
+      };
+    }
+
+    // Extraer location object si existe en appointmentToEdit
+    const loc = apt.location as Record<string, unknown> | null | undefined;
+    if (loc && !wizardData.location) {
+      updates.location = {
+        id: (loc.id as string) || wizardData.locationId || '',
+        name: (loc.name as string) || '',
+        address: (loc.address as string) || null,
+      } as unknown as Location;
+    }
+
+    // Extraer business object si existe en appointmentToEdit
+    const biz = apt.business as Record<string, unknown> | null | undefined;
+    if (biz && !wizardData.business) {
+      updates.business = {
+        id: (biz.id as string) || wizardData.businessId || '',
+        name: (biz.name as string) || '',
+        description: (biz.description as string) || null,
+      };
+    }
+
+    // Notas de la cita original
+    if (apt.notes && !wizardData.notes) {
+      updates.notes = apt.notes as string;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updateWizardData(updates);
+    }
+  }, [open, appointmentToEdit, wizardData.service, wizardData.employee, wizardData.location, wizardData.business, wizardData.serviceId, wizardData.employeeId, wizardData.locationId, wizardData.businessId, wizardData.notes, updateWizardData]);
+
+  // Resetear ref de hydrate al cerrar
+  React.useEffect(() => {
+    if (!open) {
+      hasHydratedEditRef.current = false;
+    }
+  }, [open]);
+
   // Ref para evitar ejecuciones múltiples del backfill
   const hasBackfilledRef = React.useRef(false);
 

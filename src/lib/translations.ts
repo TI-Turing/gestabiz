@@ -742,7 +742,7 @@ export const translations = {
         search_placeholder: 'Search by business name, category, or city...',
         request_to_join: 'Request to Join',
         request_form_title: 'Join Request',
-        request_form_description: 'Send a request to join {{businessName}}',
+        request_form_description: 'Send a request to join {businessName}',
         message_label: 'Message (Optional)',
         message_placeholder: 'Tell the business owner why you want to join their team...',
         message_hint: 'Include your experience and skills relevant to this business',
@@ -854,7 +854,7 @@ export const translations = {
             description: 'According to system preferences'
           }
         },
-        currentTheme: 'Current theme: {{theme}}',
+        currentTheme: 'Current theme: {theme}',
         systemThemeNote: 'The theme automatically changes according to your operating system preferences',
         changeAnytime: 'You can change the theme at any time'
       },
@@ -1085,7 +1085,7 @@ export const translations = {
     // Dashboard
     dashboard: {
       title: 'Dashboard',
-      welcome: 'Welcome back, {{name}}!',
+      welcome: 'Welcome back, {name}!',
   overview: 'Here\'s what\'s happening with your business today',
   overview_client: 'Here\'s what\'s happening with your appointments today',
       quick_stats: 'Quick Stats',
@@ -1359,12 +1359,12 @@ export const translations = {
           contact: 'Contact'
         },
         risk: {
-          at_risk: 'Client at risk ({{days}} days)',
-          lost: 'Lost client ({{days}} days)'
+          at_risk: 'Client at risk ({days} days)',
+          lost: 'Lost client ({days} days)'
         },
         whatsapp: {
           missing: 'Client has no WhatsApp number',
-          message_template: 'Hi {{name}}, hope you are well. Would you like to book your next appointment?'
+          message_template: 'Hi {name}, hope you are well. Would you like to book your next appointment?'
         }
       },
       comprehensiveReports: {
@@ -1408,7 +1408,7 @@ export const translations = {
         },
         whatsapp: {
           missing: 'This client has no WhatsApp configured',
-          message_template: 'Hi {{name}}! We noticed it has been a while since your last visit. Would you like to schedule a new appointment? We miss you! 😊'
+          message_template: 'Hi {name}! We noticed it has been a while since your last visit. Would you like to schedule a new appointment? We miss you! 😊'
         },
         errors: {
           generate_failed: 'Could not generate reports'
@@ -1486,7 +1486,7 @@ export const translations = {
       submitResponse: 'Submit Response',
       helpful: 'Helpful',
       overallRating: 'Overall Rating',
-      basedOn: 'Based on {{count}} reviews',
+      basedOn: 'Based on {count} reviews',
       ratingDistribution: 'Rating Distribution',
       filterByRating: 'Filter by Rating',
       allRatings: 'All Ratings',
@@ -1550,7 +1550,7 @@ export const translations = {
         4: 'Staff',
       },
       hierarchy: {
-        changeLevel: 'Change hierarchy level for {{name}}',
+        changeLevel: 'Change hierarchy level for {name}',
         level: 'Level',
         note: 'Note',
         noteLevel: 'Level determines position in organizational chart',
@@ -1769,17 +1769,17 @@ export const translations = {
       },
       invalidDays: {
         title: 'Non-working days',
-        message: 'The following days are not in your work schedule: {{days}}',
+        message: 'The following days are not in your work schedule: {days}',
         instruction: 'Please select only days when you work.',
       },
       holidays: {
         title: 'Public holidays in range',
-        message: 'The following days are public holidays and cannot be requested as absence: {{days}}',
+        message: 'The following days are public holidays and cannot be requested as absence: {days}',
         instruction: 'Adjust your dates excluding these days.',
       },
       affected: {
-        title: '{{count}} appointment affected',
-        titlePlural: '{{count}} appointments affected',
+        title: '{count} appointment affected',
+        titlePlural: '{count} appointments affected',
         messageSingle: 'This appointment will be cancelled if the absence is approved',
         messagePlural: 'These appointments will be cancelled if the absence is approved',
       },
@@ -1794,7 +1794,7 @@ export const translations = {
       },
       vacationWidget: {
         title: 'Vacation',
-        titleWithYear: 'Vacation {{year}}',
+        titleWithYear: 'Vacation {year}',
         totalDays: 'total days',
         daysAvailable: 'Days Available',
         daysUsed: 'Used',
@@ -3023,7 +3023,7 @@ export const translations = {
         search_placeholder: 'Buscar por nombre, categoría o ciudad...',
         request_to_join: 'Solicitar Unirse',
         request_form_title: 'Solicitud de Unión',
-        request_form_description: 'Enviar solicitud para unirse a {{businessName}}',
+        request_form_description: 'Enviar solicitud para unirse a {businessName}',
         message_label: 'Mensaje (Opcional)',
         message_placeholder: 'Cuéntale al dueño del negocio por qué quieres unirte a su equipo...',
         message_hint: 'Incluye tu experiencia y habilidades relevantes para este negocio',
@@ -3135,7 +3135,7 @@ export const translations = {
             description: 'Según preferencias del sistema'
           }
         },
-        currentTheme: 'Tema actual: {{theme}}',
+        currentTheme: 'Tema actual: {theme}',
         systemThemeNote: 'El tema cambia automáticamente según las preferencias de tu sistema operativo',
         changeAnytime: 'Puedes cambiar el tema en cualquier momento'
       },
@@ -3366,7 +3366,7 @@ export const translations = {
     // Dashboard
     dashboard: {
       title: 'Panel Principal',
-      welcome: '¡Bienvenido de vuelta, {{name}}!',
+      welcome: '¡Bienvenido de vuelta, {name}!',
   overview: 'Esto es lo que está pasando con tu negocio hoy',
   overview_client: 'Aquí puedes ver el estado de tus citas. ¿Quieres agendar una nueva?',
   schedule_appointment: 'Agendar cita',
@@ -3641,12 +3641,12 @@ export const translations = {
           contact: 'Contactar'
         },
         risk: {
-          at_risk: 'Cliente en riesgo ({{days}} días)',
-          lost: 'Cliente perdido ({{days}} días)'
+          at_risk: 'Cliente en riesgo ({days} días)',
+          lost: 'Cliente perdido ({days} días)'
         },
         whatsapp: {
           missing: 'Cliente no tiene WhatsApp registrado',
-          message_template: 'Hola {{name}}, esperamos que estés bien. Te esperamos pronto para tu próxima cita.'
+          message_template: 'Hola {name}, esperamos que estés bien. Te esperamos pronto para tu próxima cita.'
         }
       },
       comprehensiveReports: {
@@ -3690,7 +3690,7 @@ export const translations = {
         },
         whatsapp: {
           missing: 'Este cliente no tiene WhatsApp configurado',
-          message_template: '¡Hola {{name}}! Hemos notado que hace tiempo no vienes a vernos. ¿Te gustaría agendar una nueva cita? ¡Te extrañamos! 😊'
+          message_template: '¡Hola {name}! Hemos notado que hace tiempo no vienes a vernos. ¿Te gustaría agendar una nueva cita? ¡Te extrañamos! 😊'
         },
         errors: {
           generate_failed: 'No se pudieron generar los reportes'
@@ -3761,7 +3761,7 @@ export const translations = {
       submitResponse: 'Enviar Respuesta',
       helpful: 'Útil',
       overallRating: 'Calificación General',
-      basedOn: 'Basado en {{count}} reseñas',
+      basedOn: 'Basado en {count} reseñas',
       ratingDistribution: 'Distribución de Calificaciones',
       filterByRating: 'Filtrar por Calificación',
       allRatings: 'Todas las Calificaciones',
@@ -3825,7 +3825,7 @@ export const translations = {
         4: 'Personal',
       },
       hierarchy: {
-        changeLevel: 'Cambiar nivel jerárquico de {{name}}',
+        changeLevel: 'Cambiar nivel jerárquico de {name}',
         level: 'Nivel',
         note: 'Nota',
         noteLevel: 'El nivel determina la posición en el organigrama',
@@ -4044,17 +4044,17 @@ export const translations = {
       },
       invalidDays: {
         title: 'Días no laborales',
-        message: 'Los siguientes días no están en tu horario de trabajo: {{days}}',
+        message: 'Los siguientes días no están en tu horario de trabajo: {days}',
         instruction: 'Por favor, selecciona solamente días en los que trabajas.',
       },
       holidays: {
         title: 'Festivos en el rango',
-        message: 'Los siguientes días son festivos públicos y no se pueden solicitar como ausencia: {{days}}',
+        message: 'Los siguientes días son festivos públicos y no se pueden solicitar como ausencia: {days}',
         instruction: 'Ajusta tus fechas excluyendo estos días.',
       },
       affected: {
-        title: '{{count}} cita afectada',
-        titlePlural: '{{count}} citas afectadas',
+        title: '{count} cita afectada',
+        titlePlural: '{count} citas afectadas',
         messageSingle: 'Esta cita será cancelada si se aprueba la ausencia',
         messagePlural: 'Estas citas serán canceladas si se aprueba la ausencia',
       },
@@ -4069,7 +4069,7 @@ export const translations = {
       },
       vacationWidget: {
         title: 'Vacaciones',
-        titleWithYear: 'Vacaciones {{year}}',
+        titleWithYear: 'Vacaciones {year}',
         totalDays: 'días totales',
         daysAvailable: 'Días Disponibles',
         daysUsed: 'Usados',
