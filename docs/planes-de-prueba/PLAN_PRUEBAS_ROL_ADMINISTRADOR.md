@@ -2,6 +2,104 @@
 
 > **REGLA**: SOLO se documentan bugs. NO se toca código ni se intentan solucionar. La corrección se hará en fase posterior.
 
+---
+
+## 📊 TABLA DE SEGUIMIENTO DE CASOS
+
+> **Flags**: Probado (✅/❌) | Resultado (✅ Pasó / ⚠️ Falló / ⏸️ No probado) | Por solucionar (🔧 Sí / ✅ No / ⏸️ N/A)
+
+### Fase 1: Acceso, Cambio de Rol y Onboarding
+
+| Caso | Descripción | Probado | Resultado | Por solucionar |
+|------|-------------|---------|-----------|----------------|
+| ADM-01 | Cambio a rol Admin desde selector | ✅ | ✅ Pasó | ✅ No |
+| ADM-02 | Onboarding sin negocios | ✅ | ✅ Pasó | 🔧 Sí (BUG-ADM-02: botón Cancelar no funciona) |
+| ADM-03 | Cambio automático por notificación | ✅ | ⚠️ Falló | 🔧 Sí |
+| ADM-04 | Multi-negocio (cambio y validación) | ✅ | ✅ Pasó | ✅ No |
+| ADM-05 | Navegación con URL directa | ✅ | ✅ Pasó | ✅ No |
+
+### Fase 1: AdminDashboard Shell
+
+| Caso | Descripción | Probado | Resultado | Por solucionar |
+|------|-------------|---------|-----------|----------------|
+| ADM-SHELL-01 | Renderizado inicial completo | ✅ | ⚠️ Falló | 🔧 Sí |
+| ADM-SHELL-02 | useEffect #1 (URL sync) | ✅ | ✅ Pasó | ✅ No |
+| ADM-SHELL-03 | useEffect #2 (redirect onboarding) | ✅ | ✅ Pasó | 🔧 Sí (BUG-ADM-02: botón Cancelar no hace nada) |
+| ADM-SHELL-04 | useEffect #3 (fetchLocations) | ✅ | ⚠️ Falló | 🔧 Sí |
+| ADM-SHELL-05 | useEffect #4 (preferredLocationName) | ✅ | ✅ Pasó | ✅ No |
+| ADM-SHELL-06 | useEffect #5 (avatar listener) | ✅ | ✅ Pasó | ✅ No |
+| ADM-SHELL-07 | useEffect #6 (user sync) | ✅ | ⚠️ Falló | 🔧 Sí |
+| ADM-SHELL-08 | handlePageChange sin useCallback | ✅ | ⚠️ Falló | 🔧 Sí |
+| ADM-SHELL-09 | sidebarItems sin useMemo | ✅ | ⚠️ Falló | 🔧 Sí |
+| ADM-SHELL-10 | Tabs condicionales (resource_model) | ✅ | ✅ Pasó | ✅ No |
+| ADM-SHELL-11 | Integración con UnifiedLayout (chat) | ✅ | ✅ Pasó | ✅ No |
+| ADM-SHELL-12 | Lazy loading PermissionsManager | ✅ | ✅ Pasó | ✅ No |
+
+### Fase 2: Gestión de Negocios
+
+| Caso | Descripción | Probado | Resultado | Por solucionar |
+|------|-------------|---------|-----------|----------------|
+| NEG-01 | Crear primer negocio | ❌ | ⏸️ No probado | ⏸️ N/A |
+| NEG-02 | Editar negocio existente | ❌ | ⏸️ No probado | ⏸️ N/A |
+| NEG-03 | Eliminar negocio | ❌ | ⏸️ No probado | ⏸️ N/A |
+
+### Fase 2: Gestión de Sedes
+
+| Caso | Descripción | Probado | Resultado | Por solucionar |
+|------|-------------|---------|-----------|----------------|
+| LOC-01 | Crear sede completa | ✅ | ✅ Pasó | ✅ No |
+| LOC-02 | Configurar horarios de sede | ✅ | ✅ Pasó | ✅ No |
+| LOC-03 | Sede preferida | ✅ | ✅ Pasó | ✅ No |
+| LOC-04 | Eliminar sede | ✅ | ✅ Pasó | ✅ No |
+
+### Fase 2: Gestión de Servicios
+
+| Caso | Descripción | Probado | Resultado | Por solucionar |
+|------|-------------|---------|-----------|----------------|
+| SER-01 | Crear servicio | ✅ | ✅ Pasó | ✅ No |
+| SER-02 | Editar servicio (botones) | ✅ | ⚠️ Falló | 🔧 Sí |
+| SER-03 | Eliminar servicio | ✅ | ⚠️ Falló | 🔧 Sí |
+
+### Fase 2: Recursos Físicos
+
+| Caso | Descripción | Probado | Resultado | Por solucionar |
+|------|-------------|---------|-----------|----------------|
+| RES-01 | Crear recurso físico | ✅ | ⚠️ Falló (I18N) | 🔧 Sí |
+| RES-02 | Editar recurso (modal + desactivar) | ✅ | ✅ Pasó | 🔧 Sí (I18N en modal edición) |
+
+### Fase 3: Empleados
+
+| Caso | Descripción | Probado | Resultado | Por solucionar |
+|------|-------------|---------|-----------|----------------|
+| EMP-01 | Vista de empleados y métricas | ✅ | ✅ Pasó | ✅ No |
+| EMP-02 | Editar empleado (modal info + nómina) | ✅ | ✅ Pasó | ✅ No |
+| EMP-03 | Vista mapa/organigrama | ✅ | ✅ Pasó | ✅ No |
+| EMP-04 | Cambio de nivel jerárquico | ✅ | ✅ Pasó | ✅ No |
+
+### Fase 3: Reclutamiento
+
+| Caso | Descripción | Probado | Resultado | Por solucionar |
+|------|-------------|---------|-----------|----------------|
+| REC-01 | Crear vacante | ✅ | ✅ Pasó | ✅ No |
+| REC-02 | Revisar aplicación | ✅ | ✅ Pasó | ✅ No |
+
+### Sistemas Avanzados
+
+| Caso | Descripción | Probado | Resultado | Por solucionar |
+|------|-------------|---------|-----------|----------------|
+| QS-01 | Registrar venta rápida | ✅ | ✅ Pasó | ✅ No |
+| QS-02 | Sin permiso sales.create | ❌ | ⏸️ No probado | ⏸️ N/A |
+| EXP-01 | Ver egresos (3 tabs) | ✅ | ✅ Pasó | ✅ No |
+| ACC-01 | Registrar transacción fiscal | ❌ | ⏸️ No probado | ⏸️ N/A |
+| REP-01 | Dashboard financiero | ✅ | ✅ Pasó | ✅ No |
+| BILL-01 | Facturación y planes de pago | ✅ | ✅ Pasó | ✅ No |
+| ABS-01 | Aprobar/rechazar ausencia | ✅ | ⚠️ Falló | 🔧 Sí |
+| APP-01 | Calendario de citas (vista) | ✅ | ✅ Pasó | ✅ No |
+| PERM-01 | Gestión de permisos (usuarios) | ✅ | ✅ Pasó | ✅ No |
+| SET-ADM-01 | Configuraciones admin (5 tabs) | ✅ | ✅ Pasó | ✅ No |
+
+---
+
 ## 1. Objetivo y Alcance
 - Validar de extremo a extremo todos los flujos habilitados para usuarios con rol Administrador (owner o admin delegado) dentro de Gestabiz Web.
 - Cubrir módulos críticos: creación y gestión de negocios, sedes, servicios, recursos físicos, empleados, permisos, citas, ausencias, ventas rápidas, contabilidad, reportes, billing, reclutamiento y ajustes globales.
@@ -3754,7 +3852,7 @@ vi.mock('@/lib/supabase', () => ({
 
 3. **Funnel analysis**:
    - GA4 > Explore > Funnel Exploration
-   - Screenshot de 7 steps con % drop-off
+   - Screenshot de 7 steps con % drop-offmn
 
 ## 8. Seguimiento y Priorización - GESTIÓN DE BUGS
 
