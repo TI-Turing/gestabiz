@@ -25,6 +25,7 @@ interface VacancyForApplication {
   id: string;
   title: string;
   business_id?: string;
+  business_name?: string;
   salary_min?: number;
   salary_max?: number;
   currency?: string;
@@ -153,7 +154,7 @@ export const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({
       return;
     }
 
-    const availDate = new Date(availabilityDate);
+    const availDate = new Date(availabilityDate + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -172,7 +173,7 @@ export const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({
       });
 
       if (application) {
-        toast.success('Aplicación enviada exitosamente');
+        toast.success(t('jobs.toasts.applicationSent'));
         onClose();
         onSuccess?.();
       }
@@ -193,7 +194,8 @@ export const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({
     }).format(amount);
   };
 
-  const minDate = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const minDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -299,7 +301,7 @@ export const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({
                       // Validate file type
                       const fileExt = file.name.split('.').pop()?.toLowerCase();
                       if (!fileExt || !['pdf', 'docx'].includes(fileExt)) {
-                        toast.error('Solo se permiten archivos PDF o DOCX');
+                        toast.error(t('jobs.toasts.onlyPdfDocx'));
                         e.target.value = '';
                         return;
                       }
@@ -307,7 +309,7 @@ export const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({
                       // Validate file size (5MB max)
                       const maxSize = 5 * 1024 * 1024;
                       if (file.size > maxSize) {
-                        toast.error('El archivo debe ser menor a 5MB');
+                        toast.error(t('jobs.toasts.fileTooLarge'));
                         e.target.value = '';
                         return;
                       }
@@ -353,7 +355,17 @@ export const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({
             <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
               {t('common.actions.cancel')}
             </Button>
-            <Button type="submit" disabled={submitting || checkingConflicts}>
+            <Button
+              type="submit"
+              disabled={submitting || checkingConflicts}
+              onClick={(e) => {
+                const form = (e.currentTarget as HTMLElement).closest('form');
+                if (form && !submitting && !checkingConflicts) {
+                  e.preventDefault();
+                  form.requestSubmit();
+                }
+              }}
+            >
               {submitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

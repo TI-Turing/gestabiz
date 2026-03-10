@@ -24,7 +24,7 @@ export interface HierarchyFilters {
 export interface EmployeeHierarchy {
   user_id: string;
   employee_id?: string;
-  business_id?: string;  // Agregado para EmployeeSalaryConfig
+  business_id: string;  // Siempre presente - viene del RPC get_business_hierarchy
   full_name: string;
   email: string;
   role: string;
@@ -99,7 +99,7 @@ export function useBusinessHierarchy(businessId: string | null, initialFilters?:
 
       if (error) throw new Error(error.message);
 
-      const rawItems = (data || []) as Array<Partial<EmployeeHierarchy> & { employee_id?: string }>;
+      const rawItems = (data || []) as Array<Partial<EmployeeHierarchy> & { employee_id?: string; business_id?: string }>;
 
       const normalized = rawItems.reduce<EmployeeHierarchy[]>((acc, item) => {
         const normalizedId = item.user_id ?? item.employee_id;
@@ -111,6 +111,7 @@ export function useBusinessHierarchy(businessId: string | null, initialFilters?:
           ...item,
           user_id: normalizedId,
           employee_id: item.employee_id ?? item.user_id ?? normalizedId,
+          business_id: item.business_id ?? businessId,
         } as EmployeeHierarchy);
 
         return acc;

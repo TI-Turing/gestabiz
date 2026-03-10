@@ -61,7 +61,7 @@ export const CategoryPieChart: React.FC<CategoryPieChartProps> = ({
             Total: {formatCOP(data.amount)}
           </p>
           <p className="text-sm text-muted-foreground">
-            {data.count} transacciones
+            {data.count} {data.count === 1 ? 'transacción' : 'transacciones'}
           </p>
           <p className="text-sm text-muted-foreground">
             {data.percentage.toFixed(1)}% del total

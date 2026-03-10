@@ -476,7 +476,7 @@ export function EnhancedFinancialDashboard({
                       <div>
                         <p className="font-medium text-foreground">{cat.category}</p>
                         <p className="text-xs text-muted-foreground">
-                          {cat.count} transacciones
+                          {cat.count} {cat.count === 1 ? 'transacción' : 'transacciones'}
                         </p>
                       </div>
                     </div>

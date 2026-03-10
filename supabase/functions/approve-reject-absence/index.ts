@@ -32,21 +32,24 @@ serve(async (req) => {
   }
 
   try {
+    // Extraer token del header Authorization
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No autenticado');
+    }
+    const token = authHeader.replace('Bearer ', '');
+
+    // Crear cliente admin para operaciones del servidor
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Verificar autenticación
+    // Verificar autenticación con token explícito
     const {
       data: { user },
       error: authError,
-    } = await supabaseClient.auth.getUser();
+    } = await supabaseClient.auth.getUser(token);
 
     if (authError || !user) {
       throw new Error('No autenticado');

@@ -33,7 +33,7 @@ export function useTransactions(filters?: TransactionFilters) {
 
       // Apply filters
       if (filters?.business_id) query = query.eq('business_id', filters.business_id);
-      if (filters?.location_id) query = query.eq('location_id', filters.location_id);
+      if (filters?.location_id) query = query.or(`location_id.eq.${filters.location_id},location_id.is.null`);
       if (filters?.type && filters.type.length > 0) query = query.in('type', filters.type);
       if (filters?.category && filters.category.length > 0) query = query.in('category', filters.category);
       if (filters?.is_verified !== undefined) query = query.eq('is_verified', filters.is_verified);
@@ -53,20 +53,36 @@ export function useTransactions(filters?: TransactionFilters) {
 
       setTransactions(data || []);
 
+      // Fetch recurring expenses to include in summary
+      let recurringExpensesTotal = 0;
+      if (filters?.business_id) {
+        let recurringQuery = supabase
+          .from('recurring_expenses')
+          .select('amount')
+          .eq('business_id', filters.business_id)
+          .eq('is_active', true);
+        
+        const { data: recurringData } = await recurringQuery;
+        if (recurringData && recurringData.length > 0) {
+          recurringExpensesTotal = recurringData.reduce((sum, r) => sum + Number(r.amount), 0);
+        }
+      }
+
       // Calculate summary
-      if (data && data.length > 0) {
-        const income = data
+      if ((data && data.length > 0) || recurringExpensesTotal > 0) {
+        const income = (data || [])
           .filter((t) => t.type === 'income')
           .reduce((sum, t) => sum + Number(t.amount), 0);
-        const expenses = data
+        const transactionExpenses = (data || [])
           .filter((t) => t.type === 'expense')
           .reduce((sum, t) => sum + Number(t.amount), 0);
+        const expenses = transactionExpenses + recurringExpensesTotal;
 
         setSummary({
           total_income: income,
           total_expenses: expenses,
           net_profit: income - expenses,
-          transaction_count: data.length,
+          transaction_count: (data || []).length,
         });
       } else {
         setSummary({

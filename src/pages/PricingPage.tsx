@@ -331,7 +331,7 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
             Nuestro equipo está listo para ayudarte a encontrar el plan perfecto para tu negocio.
           </p>
           <Button size="lg" variant="outline" asChild>
-            <a href="mailto:soporte@appointsync.pro">Contactar Soporte</a>
+            <a href="mailto:soporte@gestabiz.com">Contactar Soporte</a>
           </Button>
         </div>
       </div>

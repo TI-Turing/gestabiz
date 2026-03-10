@@ -281,6 +281,9 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Guard contra doble-click: si ya estamos guardando, ignorar
+    if (isSaving) return
+
     if (!formData.name.trim()) {
       toast.error('El nombre del servicio es requerido')
       return

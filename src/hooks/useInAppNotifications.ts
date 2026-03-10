@@ -64,7 +64,6 @@ export function useInAppNotifications(
         .from('in_app_notifications')
         .select('*')
         .eq('user_id', userId)
-        .neq('status', 'archived')
         .order('created_at', { ascending: false })
         .limit(limit)
 

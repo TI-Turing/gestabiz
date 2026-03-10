@@ -1595,7 +1595,10 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       // ✅ Mejorado para ambos temas: mejor contraste en light mode
       return 'bg-green-100 border border-green-400 text-green-900 dark:bg-green-900/30 dark:border-green-700 dark:text-green-200';
     }
-    // ✅ Mejorado para ambos temas: mejor contraste en light mode (rechazada/cancelada)
+    if (status === 'cancelled') {
+      return 'bg-red-50 border border-red-300 text-red-400 line-through opacity-60 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400';
+    }
+    // ✅ Mejorado para ambos temas: mejor contraste en light mode (rechazada/otros)
     return 'bg-red-100 border border-red-400 text-red-900 dark:bg-red-900/30 dark:border-red-700 dark:text-red-200';
   };
 

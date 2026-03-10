@@ -29,6 +29,7 @@ import { NotificationBell } from '@/components/notifications'
 import { FloatingChatButton } from '@/components/chat/FloatingChatButton'
 import { BugReportModal } from '@/components/bug-report/BugReportModal'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 
 interface SearchResult {
@@ -76,12 +77,6 @@ interface SidebarItem {
   badge?: number
 }
 
-const roleLabels: Record<UserRole, string> = {
-  admin: 'Administrador',
-  employee: 'Empleado',
-  client: 'Cliente'
-}
-
 const getBusinessCategoryName = (category: Business['category']) =>
   typeof category === 'string' ? category : category?.name
 
@@ -122,6 +117,12 @@ export function UnifiedLayout({
     isSwiping: false,
     edge: null as null | 'left' | 'right',
   })
+  const { t } = useLanguage()
+  const roleLabels: Record<UserRole, string> = {
+    admin: t('roleSelector.admin'),
+    employee: t('roleSelector.employee'),
+    client: t('roleSelector.client')
+  }
   
   // Hook para preferencias de ciudad (solo para cliente)
   const {
@@ -291,7 +292,7 @@ export function UnifiedLayout({
             className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <Bug className="h-5 w-5" />
-            <span className="font-medium">Reportar problema</span>
+            <span className="font-medium">{t('common.actions.reportProblem')}</span>
           </button>
           {onLogout && (
             <button
@@ -299,7 +300,7 @@ export function UnifiedLayout({
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <LogOut className="h-5 w-5" />
-              <span className="font-medium">Cerrar Sesión</span>
+              <span className="font-medium">{t('common.actions.logout')}</span>
             </button>
           )}
         </div>
@@ -608,14 +609,14 @@ export function UnifiedLayout({
                     className="cursor-pointer"
                   >
                     <UserIcon className="h-4 w-4 mr-2" />
-                    Mi Perfil
+                    {t('navigation.nav.client.profile')}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => onPageChange('settings')}
                     className="cursor-pointer"
                   >
                     <Settings className="h-4 w-4 mr-2" />
-                    Configuración
+                    {t('navigation.nav.settings')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -698,7 +699,7 @@ export function UnifiedLayout({
 
                 {/* Rol y notificaciones */}
                 <div className="space-y-3 rounded-xl border border-border bg-muted/30 px-3 py-3">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cuenta</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('common.labels.account')}</p>
                   <div className="flex items-center gap-3">
                     {uniqueRoles.length > 0 && (
                       <DropdownMenu>
@@ -738,7 +739,7 @@ export function UnifiedLayout({
                 {/* Usuario */}
                 {user && (
                   <div className="space-y-3 rounded-xl border border-border bg-muted/30 px-3 py-3">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Perfil</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('common.labels.profile')}</p>
                     <DropdownMenu>
                       <DropdownMenuTrigger className="focus:outline-none min-w-[44px] min-h-[44px] flex items-center gap-3">
                         <Avatar className="w-10 h-10 border-2 border-primary/20">
@@ -763,7 +764,7 @@ export function UnifiedLayout({
                           className="cursor-pointer"
                         >
                           <UserIcon className="h-4 w-4 mr-2" />
-                          Mi Perfil
+                          {t('navigation.nav.client.profile')}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
@@ -773,7 +774,7 @@ export function UnifiedLayout({
                           className="cursor-pointer"
                         >
                           <Settings className="h-4 w-4 mr-2" />
-                          Configuración
+                          {t('navigation.nav.settings')}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

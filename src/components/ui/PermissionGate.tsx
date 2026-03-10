@@ -13,7 +13,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '@/types/types';
 import { AccessDenied } from './AccessDenied';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Lock } from 'lucide-react';
 
 export interface PermissionGateProps {
   /** Permiso requerido (ej: 'accounting.view', 'employees.edit') */
@@ -133,8 +133,9 @@ export function PermissionGate({
           {children}
         </div>
         <div className="absolute inset-0 bg-background/30 flex items-center justify-center backdrop-blur-sm">
-          <p className="text-sm text-muted-foreground px-3 py-1 bg-background/90 rounded-md border">
-            🔒 Acceso restringido
+          <p className="text-sm text-muted-foreground px-3 py-1 bg-background/90 rounded-md border flex items-center gap-1.5">
+            <Lock className="h-3.5 w-3.5" />
+            Acceso restringido
           </p>
         </div>
       </div>

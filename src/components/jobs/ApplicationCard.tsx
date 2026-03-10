@@ -9,8 +9,8 @@ import { es } from 'date-fns/locale'
 
 interface ApplicationCardProps {
   application: JobApplication
-  onAccept: (id: string) => void
-  onReject: (id: string) => void
+  onAccept?: (id: string) => void
+  onReject?: (id: string) => void
   onViewProfile: (application: JobApplication) => void
   onChat?: (userId: string, applicantName: string) => void
   onStartSelectionProcess?: (id: string) => void // ⭐ NUEVO
@@ -123,7 +123,7 @@ export function ApplicationCard({
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">Disponible desde:</span>
               <span className="font-medium">
-                {new Date(application.available_from).toLocaleDateString('es-CO')}
+                {new Date(application.available_from + 'T00:00:00').toLocaleDateString('es-CO')}
               </span>
             </div>
           )}
@@ -144,10 +144,10 @@ export function ApplicationCard({
         )}
 
         {/* Rejection Reason */}
-        {application.status === 'rejected' && application.rejection_reason && (
+        {application.status === 'rejected' && application.decision_notes && (
           <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <p className="text-sm text-red-800 dark:text-red-200">
-              <span className="font-medium">Motivo de rechazo:</span> {application.rejection_reason}
+              <span className="font-medium">Motivo de rechazo:</span> {application.decision_notes}
             </p>
           </div>
         )}
@@ -191,7 +191,7 @@ export function ApplicationCard({
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => onReject(application.id)}
+                onClick={() => onReject?.(application.id)}
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Rechazar
@@ -215,7 +215,7 @@ export function ApplicationCard({
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => onReject(application.id)}
+                onClick={() => onReject?.(application.id)}
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Rechazar

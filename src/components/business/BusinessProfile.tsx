@@ -178,7 +178,7 @@ export default function BusinessProfile({
           .order('name'),
         supabase
           .from('services')
-          .select('id, name, description, duration, price, category')
+          .select('id, name, description, duration_minutes, price, category')
           .eq('business_id', businessId)
           .eq('is_active', true)
           .order('name'),
@@ -273,6 +273,7 @@ export default function BusinessProfile({
         services: (servicesData ?? []).map(s => {
           return {
             ...s,
+            duration: s.duration_minutes,
             employee: undefined
           };
         }),

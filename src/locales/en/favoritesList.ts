@@ -5,6 +5,7 @@ export const favoritesList = {
   emptyDescription: 'Mark your preferred businesses as favorites to access them quickly and book appointments more easily.',
   tipHeader: 'Tip: Search for a business and click the heart icon to add it to favorites',
   bookButton: 'Book Appointment',
+  removeFavorite: 'Remove from favorites',
   myFavorites: 'My Favorites',
   businessMarked: 'business marked as favorite',
   businessesMarked: 'businesses marked as favorites',

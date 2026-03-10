@@ -100,20 +100,13 @@ export function EmployeeAppointmentsPage({
     return filtered
   }, [appointments, statusFilter, serviceFilter, searchTerm])
 
-  // Contar citas de hoy
+  // Contar citas de hoy (usando zona horaria de Colombia)
   const todayAppointments = useMemo(() => {
-    const today = new Date()
-    const todayYear = today.getFullYear()
-    const todayMonth = today.getMonth()
-    const todayDay = today.getDate()
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })
 
     return appointments.filter(apt => {
-      const aptDate = new Date(apt.start_time)
-      const aptYear = aptDate.getFullYear()
-      const aptMonth = aptDate.getMonth()
-      const aptDay = aptDate.getDate()
-      
-      return aptYear === todayYear && aptMonth === todayMonth && aptDay === todayDay
+      const aptStr = new Date(apt.start_time).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })
+      return aptStr === todayStr
     })
   }, [appointments])
 

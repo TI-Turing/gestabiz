@@ -253,7 +253,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
               <div>
                 <p className="text-xs text-muted-foreground">Disponible desde</p>
                 <p className="text-sm font-semibold">
-                  {new Date(application.available_from).toLocaleDateString('es-CO')}
+                  {new Date(application.available_from + 'T00:00:00').toLocaleDateString('es-CO')}
                 </p>
               </div>
             </div>
@@ -287,10 +287,10 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
         )}
 
         {/* Razón de rechazo */}
-        {application.status === 'rejected' && application.rejection_reason && (
+        {application.status === 'rejected' && application.decision_notes && (
           <div className="bg-destructive/10 border border-destructive/20 p-3 rounded-md">
             <p className="text-xs font-semibold text-destructive mb-1">Razón del rechazo</p>
-            <p className="text-sm text-destructive/90">{application.rejection_reason}</p>
+            <p className="text-sm text-destructive/90">{application.decision_notes}</p>
           </div>
         )}
 

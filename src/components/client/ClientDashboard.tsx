@@ -22,6 +22,7 @@ import { MandatoryReviewModal } from '@/components/jobs'
 import { LocationAddress } from '@/components/ui/LocationAddress'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useChat } from '@/hooks/useChat'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { useMandatoryReviews } from '@/hooks/useMandatoryReviews'
 import { usePendingNavigation } from '@/hooks/usePendingNavigation'
 import { usePreferredCity } from '@/hooks/usePreferredCity'
@@ -39,6 +40,7 @@ interface SearchResult {
   subtitle?: string
   category?: string
   location?: string
+  businessId?: string
 }
 
 interface SearchResultItem {
@@ -94,6 +96,7 @@ export function ClientDashboard({
 }: Readonly<ClientDashboardProps>) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useLanguage()
   
   // Función para extraer página de la URL
   const getPageFromUrl = () => {
@@ -239,6 +242,8 @@ export function ClientDashboard({
     // Open detailed view for this result
     if (result.type === 'businesses') {
       setSelectedBusinessId(result.id)
+    } else if (result.type === 'services' && result.businessId) {
+      setSelectedBusinessId(result.businessId)
     } else if (result.type === 'users') {
       setSelectedUserId(result.id)
     }
@@ -256,6 +261,8 @@ export function ClientDashboard({
     
     if (result.type === 'businesses') {
       setSelectedBusinessId(result.id)
+    } else if (result.type === 'services' && result.business?.id) {
+      setSelectedBusinessId(result.business.id)
     } else if (result.type === 'users') {
       setSelectedUserId(result.id)
     }
@@ -289,7 +296,7 @@ export function ClientDashboard({
   // Handle chat with professional from appointment details
   const handleStartChatWithProfessional = useCallback(async (professionalId: string, businessId?: string) => {
     if (!user?.id || !professionalId) {
-      toast.error('No se puede iniciar el chat en este momento')
+      toast.error(t('appointments.toasts.chatUnavailable'))
       return
     }
     
@@ -311,11 +318,11 @@ export function ClientDashboard({
         // ✅ FIX: No resetear chatConversationId en onChatClose para evitar perder el estado
         setChatConversationId(conversationId)
         
-        toast.success('Chat iniciado con el profesional')
+        toast.success(t('appointments.toasts.chatStarted'))
       }
     } catch (error) {
       console.error('Error al iniciar chat:', error)
-      toast.error('No se pudo iniciar el chat. Por favor, intenta de nuevo.')
+      toast.error(t('appointments.toasts.chatFailed'))
     } finally {
       setIsStartingChat(false)
     }
@@ -340,14 +347,14 @@ export function ClientDashboard({
 
       if (error) throw error
 
-      toast.success('Cita cancelada exitosamente')
+      toast.success(t('appointments.toasts.cancelSuccess'))
       setSelectedAppointment(null)
       
       // ✅ Refetch dashboard data (useClientDashboard automáticamente invalidará cache)
       refetchDashboard()
     } catch (error) {
       console.error('Error al cancelar cita:', error)
-      toast.error('No se pudo cancelar la cita. Intenta de nuevo.')
+      toast.error(t('appointments.toasts.cancelFailed'))
     }
   }, [user?.id, refetchDashboard])
 
@@ -382,7 +389,7 @@ export function ClientDashboard({
     }
     setShowAppointmentWizard(true)
     
-    toast.info('Modifica los datos de tu cita y confirma los cambios')
+    toast.info(t('appointments.toasts.editHint'))
   }, [])
 
   // Listen for avatar updates and refresh user
@@ -471,17 +478,17 @@ export function ClientDashboard({
   const sidebarItems = [
     {
       id: 'appointments',
-      label: 'Mis Citas',
+      label: t('navigation.nav.client.myAppointments'),
       icon: <Calendar className="h-5 w-5" />
     },
     {
       id: 'favorites',
-      label: 'Favoritos',
+      label: t('navigation.nav.client.favorites'),
       icon: <Heart className="h-5 w-5" />
     },
     {
       id: 'history',
-      label: 'Historial',
+      label: t('navigation.nav.client.history'),
       icon: <History className="h-5 w-5" />
     }
   ]
@@ -503,14 +510,14 @@ export function ClientDashboard({
   // Get status label
   const getStatusLabel = (status: string): string => {
     const labels: Record<string, string> = {
-      pending: 'Pendiente',
-      pending_confirmation: 'Por Confirmar',
-      scheduled: 'Agendada',
-      confirmed: 'Confirmada',
-      in_progress: 'En Proceso',
-      completed: 'Completada',
-      cancelled: 'Cancelada',
-      no_show: 'No Asistió'
+      pending: t('clientDashboard.status.pending'),
+      pending_confirmation: t('clientDashboard.status.pendingConfirmation'),
+      scheduled: t('clientDashboard.status.scheduled'),
+      confirmed: t('clientDashboard.status.confirmed'),
+      in_progress: t('clientDashboard.status.inProgress'),
+      completed: t('clientDashboard.status.completed'),
+      cancelled: t('clientDashboard.status.cancelled'),
+      no_show: t('clientDashboard.status.noShow')
     }
     return labels[status] || status
   }
@@ -567,13 +574,13 @@ export function ClientDashboard({
           <div className="p-6">
             {/* Header principal: título y botón en la misma fila (sticky en móvil) */}
             <div id="dashboard-sticky-header" className="sticky top-0 z-20 bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60 py-3 flex items-center justify-between gap-4 w-full min-w-0">
-              <h2 className="text-2xl font-bold text-foreground">Mis Citas</h2>
+              <h2 className="text-2xl font-bold text-foreground">{t('navigation.nav.client.myAppointments')}</h2>
               <Button 
                 onClick={() => handleBookAppointment()}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 <Plus className="h-5 w-5 mr-2" />
-                Nueva Cita
+                {t('clientDashboard.bookAppointment')}
               </Button>
             </div>
 
@@ -590,7 +597,7 @@ export function ClientDashboard({
                   )}
                 >
                   <List className="h-4 w-4 mr-2" />
-                  Lista
+                  {t('clientDashboard.viewList')}
                 </Button>
                 <Button
                   variant={viewMode === 'calendar' ? 'default' : 'ghost'}
@@ -602,7 +609,7 @@ export function ClientDashboard({
                   )}
                 >
                   <CalendarDays className="h-4 w-4 mr-2" />
-                  Calendario
+                  {t('clientDashboard.viewCalendar')}
                 </Button>
               </div>
             </div>
@@ -625,9 +632,9 @@ export function ClientDashboard({
                       <Card className="border-dashed">
                         <CardContent className="pt-6 text-center">
                           <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                          <p className="text-muted-foreground">No tienes citas programadas</p>
+                          <p className="text-muted-foreground">{t('clientDashboard.noUpcoming')}</p>
                           <p className="text-sm text-muted-foreground mt-2">
-                            Usa el botón "Nueva Cita" para agendar tu primera cita
+                            {t('clientDashboard.bookFirstAppointment')}
                           </p>
                         </CardContent>
                       </Card>
@@ -804,6 +811,7 @@ export function ClientDashboard({
                 user={currentUser}
                 onUserUpdate={setCurrentUser}
                 currentRole="client"
+                initialTab={activePage === 'profile' ? 'profile' : undefined}
               />
             )}
           </div>
@@ -832,8 +840,8 @@ export function ClientDashboard({
       default:
         return (
           <div className="p-6">
-            <h2 className="text-2xl font-bold text-foreground">Mis Citas</h2>
-            <p className="text-muted-foreground">Tus próximas citas aparecerán aquí</p>
+            <h2 className="text-2xl font-bold text-foreground">{t('navigation.nav.client.myAppointments')}</h2>
+            <p className="text-muted-foreground">{t('clientDashboard.upcomingDescription')}</p>
           </div>
         )
     }
@@ -873,7 +881,7 @@ export function ClientDashboard({
           {/* Ti Turing Footer */}
           <footer className="border-t border-border/50 py-3 px-6 mt-auto">
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <span>Desarrollado por</span>
+              <span>{t('landing.footer.developedBy')}</span>
               <a 
                 href="https://tituring.com" 
                 target="_blank" 
@@ -1219,8 +1227,7 @@ export function ClientDashboard({
           onClose={() => setSelectedBusinessId(null)}
           onBookAppointment={handleBookAppointment}
           onChatStarted={(conversationId) => {
-            // Cambiar a la página de chat y establecer la conversación activa
-            setActivePage('chat');
+            // Establecer la conversación activa — FloatingChatButton la abrirá automáticamente
             setChatConversationId(conversationId);
             setSelectedBusinessId(null); // Cerrar el modal de perfil
           }}
@@ -1266,7 +1273,7 @@ export function ClientDashboard({
         onReviewSubmitted={() => {
           checkPendingReviews();
           refetchDashboard(); // ✅ Recargar dashboard después de acción
-          toast.success('¡Gracias por tu reseña!');
+          toast.success(t('appointments.toasts.thankReview'));
         }}
         userId={user.id}
       />

@@ -66,7 +66,15 @@ export const appointments = {
   // Wizard UI
   wizard: {
     newAppointment: 'Nueva Cita',
+    editAppointment: 'Editar Cita',
     confirmDetails: 'Confirma los detalles a continuación para finalizar la reserva',
+    confirmDetailsEdit: 'Confirma los cambios a continuación para actualizar la cita',
+    confirmAndBook: 'Confirmar y Reservar',
+    confirm: 'Confirmar',
+    saveChanges: 'Guardar Cambios',
+    save: 'Guardar',
+    saving: 'Guardando...',
+    savingShort: 'Guardar...',
     appointmentSummary: 'Resumen de la Cita',
     notSelected: 'No seleccionado',
     minutes: 'minutos',

@@ -115,6 +115,13 @@ export const AvailableVacanciesMarketplace: React.FC<AvailableVacanciesMarketpla
     if (vacancy) {
       setSelectedVacancy(vacancy);
       setShowApplicationModal(true);
+    } else {
+      // Fallback: buscar por vacancy_id en caso de mismatch del RPC
+      const fallback = vacancies.find((v: MatchingVacancy & { vacancy_id?: string }) => v.vacancy_id === vacancyId);
+      if (fallback) {
+        setSelectedVacancy(fallback);
+        setShowApplicationModal(true);
+      }
     }
   };
 
@@ -122,6 +129,12 @@ export const AvailableVacanciesMarketplace: React.FC<AvailableVacanciesMarketpla
     const vacancy = vacancies.find((v) => v.id === vacancyId);
     if (vacancy) {
       setViewDetailsVacancy(vacancy);
+    } else {
+      // Fallback: buscar por vacancy_id en caso de mismatch del RPC
+      const fallback = vacancies.find((v: MatchingVacancy & { vacancy_id?: string }) => v.vacancy_id === vacancyId);
+      if (fallback) {
+        setViewDetailsVacancy(fallback);
+      }
     }
   };
 
@@ -428,7 +441,7 @@ export const AvailableVacanciesMarketplace: React.FC<AvailableVacanciesMarketpla
 
       {/* Application Modal */}
       <ApplicationFormModal
-        vacancy={selectedVacancy as never}
+        vacancy={selectedVacancy as (Parameters<typeof ApplicationFormModal>[0]['vacancy'])}
         userId={userId}
         isOpen={showApplicationModal}
         onClose={() => {

@@ -8,7 +8,6 @@ import {
   Briefcase,
   User,
   Tag,
-  SlidersHorizontal,
   X,
   Loader2
 } from 'lucide-react'
@@ -27,6 +26,7 @@ import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { usePreferredCity } from '@/hooks/usePreferredCity'
 import { useAuth } from '@/hooks/useAuth'
+import { useGeolocation } from '@/hooks/useGeolocation'
 import type { SearchType } from './SearchBar'
 import { LocationAddress } from '@/components/ui/LocationAddress'
 
@@ -77,9 +77,15 @@ export function SearchResults({
   const [results, setResults] = useState<SearchResultItem[]>([])
   const [loading, setLoading] = useState(false)
   const [sortBy, setSortBy] = useState<SortOption>('balanced')
-  const [showFilters, setShowFilters] = useState(false)
+  const localGeo = useGeolocation({ requestOnMount: false })
   const { preferredRegionId, preferredRegionName, preferredCityId, preferredCityName } = usePreferredCity()
   const { user } = useAuth()
+
+  // Combinar ubicación del prop con la obtenida localmente
+  const effectiveLocation = userLocation ?? (localGeo.hasLocation ? {
+    latitude: localGeo.latitude!,
+    longitude: localGeo.longitude!
+  } : undefined)
   
   const sortOptions = [
     { value: 'relevance' as SortOption, label: t('search.sorting.relevance') },
@@ -155,10 +161,10 @@ export function SearchResults({
             data = (servicesData || []).map((service: any) => {
               const business = businessesMap[service.business_id]
               const location = business?.locations?.[0]
-              const distance = userLocation && location?.latitude && location?.longitude
+              const distance = effectiveLocation && location?.latitude && location?.longitude
                 ? calculateDistance(
-                    userLocation.latitude,
-                    userLocation.longitude,
+                    effectiveLocation.latitude,
+                    effectiveLocation.longitude,
                     location.latitude,
                     location.longitude
                   )
@@ -236,10 +242,10 @@ export function SearchResults({
 
             data = businessesData.map((business: any) => {
               const location = locationsByBusiness[business.id]
-              const distance = userLocation && location?.latitude && location?.longitude
+              const distance = effectiveLocation && location?.latitude && location?.longitude
                 ? calculateDistance(
-                    userLocation.latitude,
-                    userLocation.longitude,
+                    effectiveLocation.latitude,
+                    effectiveLocation.longitude,
                     location.latitude,
                     location.longitude
                   )
@@ -332,10 +338,10 @@ export function SearchResults({
             data = (usersData || []).map((user: any) => {
               const business = businessesByEmployee[user.id]
               const businessLocation = business?.locations?.[0]
-              const distance = userLocation && businessLocation?.latitude && businessLocation?.longitude
+              const distance = effectiveLocation && businessLocation?.latitude && businessLocation?.longitude
                 ? calculateDistance(
-                    userLocation.latitude,
-                    userLocation.longitude,
+                    effectiveLocation.latitude,
+                    effectiveLocation.longitude,
                     businessLocation.latitude,
                     businessLocation.longitude
                   )
@@ -377,7 +383,8 @@ export function SearchResults({
     }
 
     fetchResults()
-  }, [searchTerm, searchType, userLocation])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, searchType, effectiveLocation?.latitude, effectiveLocation?.longitude])
 
   // Sort results
   const sortedResults = useMemo(() => {
@@ -512,7 +519,13 @@ export function SearchResults({
 
           {/* Toolbar - Mobile Optimized */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+            <Select value={sortBy} onValueChange={(v) => {
+              const val = v as SortOption
+              setSortBy(val)
+              if (val === 'distance' && !effectiveLocation) {
+                localGeo.requestLocation()
+              }
+            }}>
               <SelectTrigger className="w-full sm:w-[280px] min-h-[44px]">
                 <ArrowUpDown className="h-4 w-4 mr-2 flex-shrink-0" />
                 <SelectValue placeholder={t('common.placeholders.sortBy')} />
@@ -526,23 +539,17 @@ export function SearchResults({
               </SelectContent>
             </Select>
 
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="gap-2 min-h-[44px] w-full sm:w-auto"
-            >
-              <SlidersHorizontal className="h-4 w-4 flex-shrink-0" />
-              <span className="hidden sm:inline">{t('search.filters.filters')}</span>
-              <span className="sm:hidden">{t('search.filters.filter')}</span>
-              {showFilters && <Badge variant="secondary" className="ml-2 text-[10px]">{t('search.filters.active')}</Badge>}
-            </Button>
-
-            {!userLocation && (
-              <div className="flex-1 text-xs sm:text-sm text-muted-foreground flex items-center gap-2 p-2 sm:p-0">
+            {!effectiveLocation && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => localGeo.requestLocation()}
+                className="gap-2 min-h-[44px] text-muted-foreground"
+              >
                 <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
                 <span className="hidden sm:inline">{t('search.filters.enableLocation')}</span>
                 <span className="sm:hidden">{t('search.filters.enableLocationShort')}</span>
-              </div>
+              </Button>
             )}
           </div>
 

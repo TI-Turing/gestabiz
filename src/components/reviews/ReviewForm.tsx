@@ -105,7 +105,7 @@ export function ReviewForm({
 
         {/* Rating Stars */}
         <div className="space-y-2">
-          <Label>{t('reviews.rating')}</Label>
+          <Label>{t('reviews.form.ratingLabel')}</Label>
           <div className="flex items-center gap-4">
             {renderStars()}
             {(hoveredRating || rating) > 0 && (
@@ -121,7 +121,7 @@ export function ReviewForm({
           <Label htmlFor="comment">
             {t('reviews.comment')} {' '}
             <span className="text-muted-foreground font-normal">
-              ({t('common.optional')})
+              ({t('common.forms.optional')})
             </span>
           </Label>
           <Textarea
@@ -141,15 +141,13 @@ export function ReviewForm({
 
         {/* Actions */}
         <div className="flex gap-3 pt-2">
-          <PermissionGate permission="reviews.create" businessId={businessId} mode="disable">
-            <Button
-              type="submit"
-              disabled={rating === 0 || isSubmitting}
-              className="flex-1"
-            >
-              {isSubmitting ? t('common.submitting') : t('reviews.submitReview')}
-            </Button>
-          </PermissionGate>
+          <Button
+            type="submit"
+            disabled={rating === 0 || isSubmitting}
+            className="flex-1"
+          >
+            {isSubmitting ? t('common.submitting') : t('reviews.submitReview')}
+          </Button>
           {onCancel && (
             <Button
               type="button"

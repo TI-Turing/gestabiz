@@ -229,7 +229,7 @@ export function NotificationCenter({
   availableRoles = ['client', 'employee', 'admin']
 }: Readonly<NotificationCenterProps>) {
   const { t } = useLanguage()
-  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'system'>('unread')
+  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'system' | 'archived'>('unread')
 
   const { 
     notifications: allNotifications,
@@ -253,9 +253,12 @@ export function NotificationCenter({
       return n.status === 'unread'
     }
     if (activeTab === 'system') {
-      return n.type.startsWith('system_')
+      return n.type.startsWith('system_') && n.status !== 'archived'
     }
-    return true // 'all'
+    if (activeTab === 'archived') {
+      return n.status === 'archived'
+    }
+    return n.status !== 'archived' // 'all' excludes archived
   })
 
   const handleNavigate = async (notification: InAppNotification) => {
@@ -388,6 +391,7 @@ export function NotificationCenter({
           </TabsTrigger>
           <TabsTrigger value="all">Todas</TabsTrigger>
           <TabsTrigger value="system">Sistema</TabsTrigger>
+          <TabsTrigger value="archived">Archivadas</TabsTrigger>
         </TabsList>
 
         {/* Content */}

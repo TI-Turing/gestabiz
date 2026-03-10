@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { SimpleChatLayout } from '@/components/chat/SimpleChatLayout'
 import { useInAppNotifications } from '@/hooks/useInAppNotifications'
 import { useNotificationContext } from '@/contexts/NotificationContext'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'
 
 interface FloatingChatButtonProps {
@@ -21,6 +22,7 @@ export function FloatingChatButton({
   onOpenChange
 }: FloatingChatButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const { t } = useLanguage()
   
   // Contexto de notificaciones
   const { setChatOpen } = useNotificationContext()
@@ -84,7 +86,7 @@ export function FloatingChatButton({
             "hover:scale-110 active:scale-95",
             "group"
           )}
-          aria-label={unreadCount > 0 ? `Abrir chat (${unreadCount} mensajes nuevos)` : 'Abrir chat'}
+          aria-label={unreadCount > 0 ? t('common.chat.openChatWithUnread', { count: unreadCount }) : t('common.chat.openChat')}
         >
           <MessageSquare className="h-6 w-6 group-hover:scale-110 transition-transform" />
           {/* Badge de notificaciones de chat */}

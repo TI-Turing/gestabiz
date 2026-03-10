@@ -1,6 +1,9 @@
 export const clientDashboard = {
   upcomingTitle: 'Upcoming Appointments',
+  upcomingDescription: 'Your upcoming appointments will appear here',
   viewAll: 'View All',
+  viewList: 'List',
+  viewCalendar: 'Calendar',
   noUpcoming: 'No upcoming appointments',
   bookFirstAppointment: 'Book your first appointment to get started',
   bookAppointment: 'Book Appointment',
@@ -19,6 +22,7 @@ export const clientDashboard = {
   status: {
     confirmed: 'Confirmed',
     pending: 'Pending',
+    pendingConfirmation: 'Pending Confirmation',
     completed: 'Completed',
     cancelled: 'Cancelled',
     scheduled: 'Scheduled',

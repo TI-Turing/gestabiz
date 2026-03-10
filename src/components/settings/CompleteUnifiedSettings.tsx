@@ -60,6 +60,7 @@ interface CompleteUnifiedSettingsProps {
   currentRole: 'admin' | 'employee' | 'client'
   businessId?: string // Para admin/employee
   business?: Business // Para admin
+  initialTab?: string // Tab to show initially (e.g. 'profile' from avatar menu)
 }
 
 export default function CompleteUnifiedSettings({ 
@@ -67,7 +68,8 @@ export default function CompleteUnifiedSettings({
   onUserUpdate, 
   currentRole, 
   businessId,
-  business 
+  business,
+  initialTab 
 }: CompleteUnifiedSettingsProps) {
   const { t, language, setLanguage } = useLanguage()
   const { theme, setTheme } = useTheme()
@@ -75,9 +77,9 @@ export default function CompleteUnifiedSettings({
 
   // Helper para obtener info del tema actual
   const getThemeInfo = () => {
-    if (theme === 'light') return { label: 'Claro', classes: 'bg-yellow-100 text-yellow-600', icon: Sun }
-    if (theme === 'dark') return { label: 'Oscuro', classes: 'bg-blue-100 text-blue-600', icon: Moon }
-    return { label: 'Sistema', classes: 'bg-primary/10 text-primary', icon: Monitor }
+    if (theme === 'light') return { label: t('settings.themeSection.themes.light.label'), classes: 'bg-yellow-100 text-yellow-600', icon: Sun }
+    if (theme === 'dark') return { label: t('settings.themeSection.themes.dark.label'), classes: 'bg-blue-100 text-blue-600', icon: Moon }
+    return { label: t('settings.themeSection.themes.system.label'), classes: 'bg-primary/10 text-primary', icon: Monitor }
   }
 
   const themeInfo = getThemeInfo()
@@ -148,7 +150,7 @@ export default function CompleteUnifiedSettings({
         </div>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
+      <Tabs defaultValue={initialTab || "general"} className="space-y-6">
         <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
           {tabs.map(tab => (
             <TabsTrigger key={tab.value} value={tab.value} className="flex items-center gap-2">
@@ -296,7 +298,7 @@ export default function CompleteUnifiedSettings({
             <EmployeeRolePreferences userId={user.id} businessId={businessId} />
           )}
           {currentRole === 'client' && (
-            <ClientRolePreferences />
+            <ClientRolePreferences userId={user.id} />
           )}
         </TabsContent>
 
@@ -1419,8 +1421,26 @@ function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePreferences
 // ============================================
 // COMPONENTE: Preferencias del Cliente
 // ============================================
-function ClientRolePreferences() {
+function ClientRolePreferences({ userId }: { userId: string }) {
   const { t } = useLanguage()
+  const [completedCount, setCompletedCount] = useState(0)
+
+  useEffect(() => {
+    const fetchCompletedCount = async () => {
+      if (!userId) return
+
+      const { count, error } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .eq('client_id', userId)
+        .eq('status', 'completed')
+
+      if (!error) {
+        setCompletedCount(count ?? 0)
+      }
+    }
+    fetchCompletedCount()
+  }, [userId])
   
   return (
     <div className="space-y-6">
@@ -1520,7 +1540,7 @@ function ClientRolePreferences() {
             <Label className="text-base font-medium">{t('settings.clientPrefs.serviceHistory.title')}</Label>
             <div className="p-4 bg-muted/30 rounded-lg">
               <p className="text-sm text-muted-foreground">
-                {t('settings.clientPrefs.serviceHistory.completedServices', { count: '0' })}
+                {t('settings.clientPrefs.serviceHistory.completedServices', { count: String(completedCount) })}
               </p>
               <Button variant="outline" className="mt-3 w-full">
                 {t('settings.clientPrefs.serviceHistory.viewHistory')}

@@ -592,7 +592,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
             {/* Ti Turing Footer Signature */}
             <div className="mt-8 pt-6 border-t border-border/50 flex flex-col items-center gap-2">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>Desarrollado por</span>
+                <span>{t('landing.footer.developedBy')}</span>
                 <a 
                   href="https://tituring.com" 
                   target="_blank" 

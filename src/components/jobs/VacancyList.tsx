@@ -125,10 +125,10 @@ export function VacancyList({
 
       if (error) throw error
 
-      toast.success('Vacante cerrada exitosamente')
+      toast.success(t('jobs.toasts.vacancyClosed'))
       loadVacancies() // Recargar lista
     } catch {
-      toast.error('Error al cerrar la vacante')
+      toast.error(t('jobs.toasts.vacancyCloseError'))
     }
   }
 
@@ -175,7 +175,7 @@ export function VacancyList({
 
       setVacancies(data || [])
     } catch {
-      toast.error('No se pudieron cargar las vacantes')
+      toast.error(t('jobs.toasts.vacancyLoadError'))
     } finally {
       setLoading(false)
     }

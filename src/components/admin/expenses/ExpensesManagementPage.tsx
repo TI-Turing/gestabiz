@@ -40,7 +40,9 @@ const formatCurrency = (amount: number) => {
 
 // Utility function for date formatting
 const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString('es-CO', {
+  // Append T12:00:00 to date-only strings to avoid UTC midnight timezone offset
+  const safeDate = dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00`;
+  return new Date(safeDate).toLocaleDateString('es-CO', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -567,7 +569,7 @@ const ExpenseSummaryByCategory: React.FC<{
               <div className="flex items-center gap-2">
                 <Badge variant="outline">{getCategoryLabel(cat.category)}</Badge>
                 <span className="text-muted-foreground">
-                  {cat.transaction_count} transacciones
+                  {cat.transaction_count} {cat.transaction_count === 1 ? 'transacción' : 'transacciones'}
                 </span>
               </div>
               <span className="font-semibold">{formatCurrency(cat.total_amount)}</span>

@@ -161,12 +161,12 @@ export function ResourcesManager({ business }: Readonly<ResourcesManagerProps>) 
 
     // Validaciones
     if (!formData.name.trim()) {
-      toast.error('El nombre es requerido')
+      toast.error(t('common.messages.nameRequired'))
       return
     }
 
     if (!formData.location_id) {
-      toast.error('Debe seleccionar una sede')
+      toast.error(t('common.messages.locationRequired'))
       return
     }
 
@@ -336,6 +336,7 @@ export function ResourcesManager({ business }: Readonly<ResourcesManagerProps>) 
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label={t('common.actions.edit')}
                             onClick={() => handleEdit(resource)}
                           >
                             <Pencil className="h-4 w-4" />
@@ -345,6 +346,7 @@ export function ResourcesManager({ business }: Readonly<ResourcesManagerProps>) 
                           <Button
                             variant="ghost"
                             size="icon"
+                            aria-label={t('common.actions.delete')}
                             onClick={() => handleDelete(resource.id)}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />

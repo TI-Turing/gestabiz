@@ -312,7 +312,8 @@ export function EmployeeDashboard({
                 user={currentUser}
                 onUserUpdate={setCurrentUser}
                 currentRole="employee"
-                businessId={businessId}
+                businessId={effectiveBusinessId || businessId}
+                initialTab={activePage === 'profile' ? 'profile' : undefined}
               />
             )}
           </div>
@@ -354,7 +355,7 @@ export function EmployeeDashboard({
         {/* Ti Turing Footer */}
         <footer className="border-t border-border/50 py-3 px-6 mt-auto">
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <span>Desarrollado por</span>
+            <span>{t('landing.footer.developedBy')}</span>
             <a 
               href="https://tituring.com" 
               target="_blank" 

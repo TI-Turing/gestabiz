@@ -128,7 +128,7 @@ export function ApplicationList({ userId, onViewApplication }: Readonly<Applicat
       if (error) throw error
       setApplications(data || [])
     } catch {
-      toast.error('Error al cargar tus aplicaciones')
+      toast.error(t('jobs.toasts.applicationLoadError'))
     } finally {
       setLoading(false)
     }

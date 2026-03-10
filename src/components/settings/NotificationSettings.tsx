@@ -87,8 +87,25 @@ export function NotificationSettings({ userId }: { userId: string }) {
       } else {
         setPreferences(data as NotificationPreferences)
       }
-    } catch {
+    } catch (err) {
+      console.error('Failed to load notification preferences:', err)
       toast.error(t('notifications.errors.loadError'))
+      setPreferences({
+        email_enabled: true,
+        sms_enabled: false,
+        whatsapp_enabled: false,
+        email_verified: false,
+        phone_verified: false,
+        whatsapp_verified: false,
+        notification_preferences: {},
+        do_not_disturb_enabled: false,
+        do_not_disturb_start: '22:00:00',
+        do_not_disturb_end: '08:00:00',
+        daily_digest_enabled: false,
+        daily_digest_time: '09:00:00',
+        weekly_summary_enabled: false,
+        weekly_summary_day: 1,
+      })
     } finally {
       setLoading(false)
     }
@@ -109,7 +126,7 @@ export function NotificationSettings({ userId }: { userId: string }) {
           user_id: userId,
           ...preferences,
           updated_at: new Date().toISOString(),
-        })
+        }, { onConflict: 'user_id' })
 
       if (error) throw error
 

@@ -170,7 +170,10 @@ export function useCreateResource() {
       toast.success('Recurso creado exitosamente')
     },
     onError: (error: Error) => {
-      toast.error(`Error al crear recurso: ${error.message}`)
+      const msg = error.message?.includes('duplicate') || error.message?.includes('already exists') || error.message?.includes('409')
+        ? 'Ya existe un recurso con ese nombre en esta sede'
+        : `Error al crear recurso: ${error.message}`
+      toast.error(msg)
     },
   })
 }

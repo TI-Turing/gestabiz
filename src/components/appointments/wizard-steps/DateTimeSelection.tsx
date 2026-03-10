@@ -10,6 +10,7 @@ import { es, enUS } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useEmployeeTransferAvailability } from '@/hooks/useEmployeeTransferAvailability';
+import { usePublicHolidays } from '@/hooks/usePublicHolidays';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface DateTimeSelectionProps {
@@ -114,6 +115,7 @@ export function DateTimeSelection({
 }: DateTimeSelectionProps) {
   const { t, language } = useLanguage();
   const dateLocale = language === 'es' ? es : enUS;
+  const { isHoliday, getHolidayName, holidays } = usePublicHolidays('CO');
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [locationSchedule, setLocationSchedule] = useState<LocationSchedule | null>(null);
   const [employeeSchedule, setEmployeeSchedule] = useState<EmployeeSchedule | null>(null);
@@ -257,7 +259,7 @@ export function DateTimeSelection({
           setClientAppointments([]);
         }
       } catch {
-        toast.error('No se pudo cargar la disponibilidad');
+        toast.error(t('appointments.toasts.availabilityError'));
       } finally {
         setIsLoadingSchedule(false);
       }
@@ -478,6 +480,14 @@ export function DateTimeSelection({
           continue;
         }
 
+        // Festivo público
+        if (isHoliday(dateStr)) {
+          disabledSet.add(dateStr);
+          disabledTitle[dateStr] = getHolidayName(dateStr) || 'Festivo público';
+          dayCursor.setDate(dayCursor.getDate() + 1);
+          continue;
+        }
+
         // Regla: Día no laborable (semana del empleado)
         const dow = dayCursor.getDay();
         if (employeeWorkingDays && !employeeWorkingDays.has(dow)) {
@@ -556,7 +566,7 @@ export function DateTimeSelection({
 
     computeMonthDisabled();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [employeeId, locationId, businessId, selectedDate, locationSchedule, employeeSchedule, service]);
+  }, [employeeId, locationId, businessId, selectedDate, locationSchedule, employeeSchedule, service, holidays]);
 
   const handleTimeSelect = (slot: TimeSlot) => {
     if (!slot.available) return;

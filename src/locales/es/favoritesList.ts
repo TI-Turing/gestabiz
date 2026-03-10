@@ -5,6 +5,7 @@ export const favoritesList = {
   emptyDescription: 'Marca tus negocios preferidos como favoritos para acceder rápidamente a ellos y reservar citas más fácilmente.',
   tipHeader: 'Tip: Busca un negocio y haz clic en el ícono de corazón para agregarlo a favoritos',
   bookButton: 'Reservar cita',
+  removeFavorite: 'Quitar de favoritos',
   myFavorites: 'Mis Favoritos',
   businessMarked: 'negocio marcado',
   businessesMarked: 'negocios marcados',

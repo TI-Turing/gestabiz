@@ -1,9 +1,12 @@
 export const clientDashboard = {
   upcomingTitle: 'Próximas Citas',
+  upcomingDescription: 'Tus próximas citas aparecerán aquí',
   viewAll: 'Ver Todo',
-  noUpcoming: 'No hay citas próximas',
-  bookFirstAppointment: 'Agenda tu primera cita para comenzar',
-  bookAppointment: 'Agendar Cita',
+  viewList: 'Lista',
+  viewCalendar: 'Calendario',
+  noUpcoming: 'No tienes citas programadas',
+  bookFirstAppointment: 'Usa el botón "Nueva Cita" para agendar tu primera cita',
+  bookAppointment: 'Nueva Cita',
   pastTitle: 'Citas Pasadas',
   confirmButton: 'Confirmar',
   alreadyConfirmed: 'Ya confirmada',
@@ -19,10 +22,11 @@ export const clientDashboard = {
   status: {
     confirmed: 'Confirmada',
     pending: 'Pendiente',
+    pendingConfirmation: 'Por Confirmar',
     completed: 'Completada',
     cancelled: 'Cancelada',
     scheduled: 'Agendada',
-    inProgress: 'En Curso',
+    inProgress: 'En Proceso',
     noShow: 'No Asistió',
   },
   table: {

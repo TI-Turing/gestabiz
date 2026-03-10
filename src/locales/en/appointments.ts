@@ -66,7 +66,15 @@ export const appointments = {
   // Wizard UI
   wizard: {
     newAppointment: 'New Appointment',
+    editAppointment: 'Edit Appointment',
     confirmDetails: 'Confirm the details below to finalize the booking',
+    confirmDetailsEdit: 'Confirm the changes below to update the appointment',
+    confirmAndBook: 'Confirm & Book',
+    confirm: 'Confirm',
+    saveChanges: 'Save Changes',
+    save: 'Save',
+    saving: 'Saving...',
+    savingShort: 'Save...',
     appointmentSummary: 'Appointment Summary',
     notSelected: 'Not selected',
     minutes: 'minutes',

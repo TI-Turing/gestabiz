@@ -15,6 +15,7 @@ import {
 import { NotificationCenter } from './NotificationCenter'
 import { NotificationErrorBoundary } from './NotificationErrorBoundary'
 import { useInAppNotifications } from '@/hooks/useInAppNotifications'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { trackNotificationEvent, NotificationEvents } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
 import { animations } from '@/lib/animations'
@@ -48,6 +49,7 @@ export function NotificationBell({
 }: Readonly<NotificationBellProps>) {
   const [open, setOpen] = useState(false)
   const isMobile = useIsMobile()
+  const { t } = useLanguage()
   
   // Hook personalizado que excluye notificaciones de chat
   // Usamos limit alto y autoFetch true para sincronizar en tiempo real
@@ -100,7 +102,7 @@ export function NotificationBell({
             variant="ghost"
             size="icon"
             className={cn('relative', className, animations.hoverScale)}
-            aria-label={unreadCount > 0 ? `Notificaciones (${unreadCount} nuevas)` : 'Notificaciones'}
+            aria-label={unreadCount > 0 ? `${t('notifications.title')} (${unreadCount})` : t('notifications.title')}
           >
             <Bell className={cn("h-5 w-5", unreadCount > 0 && "animate-shake")} />
             {unreadCount > 0 && (
@@ -139,7 +141,7 @@ export function NotificationBell({
           variant="ghost"
           size="icon"
           className={cn('relative', className, animations.hoverScale)}
-          aria-label={unreadCount > 0 ? `Notificaciones (${unreadCount} nuevas)` : 'Notificaciones'}
+          aria-label={unreadCount > 0 ? `${t('notifications.title')} (${unreadCount})` : t('notifications.title')}
         >
           <Bell className={cn("h-5 w-5", unreadCount > 0 && "animate-shake")} />
           {unreadCount > 0 && (

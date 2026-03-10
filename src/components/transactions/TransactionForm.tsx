@@ -298,7 +298,7 @@ export function TransactionForm({
             <FileText className="h-4 w-4 inline mr-2" />
             {t('transactions.description')} {' '}
             <span className="text-muted-foreground font-normal">
-              ({t('common.optional')})
+              ({t('common.forms.optional')})
             </span>
           </Label>
           <Textarea

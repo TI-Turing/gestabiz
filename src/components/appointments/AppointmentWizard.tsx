@@ -820,10 +820,17 @@ export function AppointmentWizard({
 
       return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Error inesperado';
+      const rawMessage = error instanceof Error ? error.message : 'Error inesperado';
+      // Traducir mensajes comunes del backend
+      let userMessage = rawMessage;
+      if (rawMessage.toLowerCase().includes('conflicting appointment')) {
+        userMessage = 'El empleado ya tiene una cita en ese horario. Por favor selecciona otro horario.';
+      } else if (rawMessage.toLowerCase().includes('check constraint')) {
+        userMessage = 'Datos de la cita inválidos. Verifica los campos e intenta de nuevo.';
+      }
       const errorKey = appointmentToEdit ? 'errorModifying' : 'errorCreating'
       const errorMessage = t('appointments.wizard_errors.' + errorKey)
-      toast.error(`${errorMessage}: ${message}`);
+      toast.error(`${errorMessage}: ${userMessage}`, { duration: 6000 });
       return false;
     } finally {
       setIsSubmitting(false);
@@ -975,6 +982,7 @@ export function AppointmentWizard({
               }}
               preloadedServices={dataCache.services}
               isPreselected={!!preselectedServiceId}
+              preselectedServiceId={preselectedServiceId}
             />
           )}
 
@@ -1073,6 +1081,7 @@ export function AppointmentWizard({
             <ConfirmationStep
               wizardData={wizardData}
               onUpdateNotes={(notes) => updateWizardData({ notes })}
+              isEditing={!!appointmentToEdit}
               onSubmit={async () => {
                 const success = await createAppointment();
                 if (success) {
@@ -1126,15 +1135,15 @@ export function AppointmentWizard({
                   <>
                     <Hourglass size={16} weight="fill" className="animate-spin mr-2" />
                     {' '}
-                    <span className="hidden sm:inline">Guardando...</span>
-                    <span className="sm:hidden">Guardar...</span>
+                    <span className="hidden sm:inline">{t('appointments.wizard.saving')}</span>
+                    <span className="sm:hidden">{t('appointments.wizard.savingShort')}</span>
                   </>
                 ) : (
                   <>
                     <Check size={16} weight="bold" className="mr-1" />
-                    <span className="hidden sm:inline">Confirmar y Reservar</span>
+                    <span className="hidden sm:inline">{appointmentToEdit ? t('appointments.wizard.saveChanges') : t('appointments.wizard.confirmAndBook')}</span>
                     <Check size={16} weight="bold" className="mr-1 sm:hidden" />
-                    <span className="sm:hidden">Confirmar</span>
+                    <span className="sm:hidden">{appointmentToEdit ? t('appointments.wizard.save') : t('appointments.wizard.confirm')}</span>
                   </>
                 )}
               </Button>

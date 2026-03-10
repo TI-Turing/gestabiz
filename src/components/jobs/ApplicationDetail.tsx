@@ -521,7 +521,7 @@ export function ApplicationDetail({
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Disponible desde:</p>
                     <p className="text-foreground font-medium">
-                      {new Date(application.available_from).toLocaleDateString('es-CO', {
+                      {new Date(application.available_from + 'T00:00:00').toLocaleDateString('es-CO', {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric'

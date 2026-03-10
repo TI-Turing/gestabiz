@@ -24,6 +24,7 @@ interface ConfirmationStepProps {
   readonly wizardData: WizardData;
   readonly onUpdateNotes: (notes: string) => void;
   readonly onSubmit: () => void;
+  readonly isEditing?: boolean;
 }
 
 interface InfoRowProps {
@@ -47,6 +48,7 @@ function InfoRow({ icon, label, value }: InfoRowProps) {
 export function ConfirmationStep({
   wizardData,
   onUpdateNotes,
+  isEditing,
 }: ConfirmationStepProps) {
   const { service, date, startTime, endTime, notes, location, employee } = wizardData;
   const { t, language } = useLanguage();
@@ -55,8 +57,8 @@ export function ConfirmationStep({
   return (
     <div className="p-6 space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-foreground mb-2">{t('appointments.wizard.newAppointment')}</h2>
-        <p className="text-muted-foreground">{t('appointments.wizard.confirmDetails')}</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">{t(isEditing ? 'appointments.wizard.editAppointment' : 'appointments.wizard.newAppointment')}</h2>
+        <p className="text-muted-foreground">{t(isEditing ? 'appointments.wizard.confirmDetailsEdit' : 'appointments.wizard.confirmDetails')}</p>
       </div>
 
       {/* Appointment Summary Card */}

@@ -45,25 +45,19 @@ serve(async (req) => {
       xClientInfoPresent: !!xClientInfo,
     });
 
-    // Crear cliente Supabase
+    // Crear cliente Supabase con service role key para operaciones del servidor
+    const token = authHeader.replace('Bearer ', '');
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { 
-            Authorization: authHeader,
-          },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Intentar obtener el usuario autenticado
+    // Intentar obtener el usuario autenticado con token explícito
     let userId: string | undefined;
     let user: any = null;
 
-    // Primero, intentar getUser()
-    const { data: { user: authUser }, error: authError } = await supabaseClient.auth.getUser();
+    // Primero, intentar getUser() con token explícito
+    const { data: { user: authUser }, error: authError } = await supabaseClient.auth.getUser(token);
     
     if (authUser?.id) {
       userId = authUser.id;

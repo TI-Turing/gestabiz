@@ -152,9 +152,9 @@ export function EmployeeManagementHierarchy({
       await queryClient.invalidateQueries({ queryKey: ['pending-setup-employees', businessId] })
       setAssigningFor(null)
       setPendingSupervisorId('')
-      toast.success('Jefe asignado correctamente. El empleado ya puede recibir citas.')
+      toast.success(t('employees.actions.assignSuccess'))
     } catch {
-      toast.error('Error al asignar el jefe. Inténtalo de nuevo.')
+      toast.error(t('employees.actions.assignError'))
     }
   }
   

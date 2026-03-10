@@ -409,7 +409,7 @@ export function ApplicantProfileModal({
                     <Label className="text-sm text-muted-foreground">Disponible Desde</Label>
                     <p className="text-lg font-semibold mt-1 flex items-center gap-2">
                       <Calendar className="h-5 w-5 text-muted-foreground" />
-                      {new Date(application.available_from).toLocaleDateString('es-CO', {
+                      {new Date(application.available_from + 'T00:00:00').toLocaleDateString('es-CO', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'

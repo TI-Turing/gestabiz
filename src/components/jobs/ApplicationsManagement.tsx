@@ -89,12 +89,13 @@ export function ApplicationsManagement({ businessId, vacancyId, onChatStarted }:
   const inSelectionApplications = filteredApplications.filter(app => app.status === 'in_selection_process') // ⭐ NUEVO
   const acceptedApplications = filteredApplications.filter(app => app.status === 'accepted')
   const rejectedApplications = filteredApplications.filter(app => app.status === 'rejected')
+  const withdrawnApplications = filteredApplications.filter(app => app.status === 'withdrawn')
 
   const handleAccept = async (id: string) => {
     const success = await acceptApplication(id)
     if (success) {
       await fetchApplications()
-      toast.success('Aplicación aceptada')
+      toast.success(t('jobs.toasts.applicationAccepted'))
     }
   }
 
@@ -112,7 +113,7 @@ export function ApplicationsManagement({ businessId, vacancyId, onChatStarted }:
       setShowRejectDialog(false)
       setApplicationToReject(null)
       setRejectionReason('')
-      toast.success('Aplicación rechazada')
+      toast.success(t('jobs.toasts.applicationRejected'))
     }
   }
 
@@ -153,7 +154,7 @@ export function ApplicationsManagement({ businessId, vacancyId, onChatStarted }:
   // Handle starting chat with applicant
   const handleChat = useCallback(async (applicantUserId: string, applicantName: string) => {
     if (!user?.id || !applicantUserId) {
-      toast.error('No se puede iniciar el chat en este momento')
+      toast.error(t('jobs.toasts.chatStartError'))
       return
     }
 
@@ -171,7 +172,7 @@ export function ApplicationsManagement({ businessId, vacancyId, onChatStarted }:
         toast.success(`Chat abierto con ${applicantName}`)
       }
     } catch {
-      toast.error('Error al iniciar el chat')
+      toast.error(t('jobs.toasts.chatError'))
     }
   }, [user?.id, businessId, createOrGetConversation, onChatStarted])
 
@@ -179,9 +180,11 @@ export function ApplicationsManagement({ businessId, vacancyId, onChatStarted }:
   const stats = [
     { label: 'Total', value: applications.length, color: 'text-blue-600' },
     { label: 'Pendientes', value: pendingApplications.length, color: 'text-yellow-600' },
+    { label: 'En Revisión', value: reviewingApplications.length, color: 'text-orange-600' },
     { label: 'En Proceso', value: inSelectionApplications.length, color: 'text-purple-600' }, // ⭐ NUEVO
     { label: 'Aceptadas', value: acceptedApplications.length, color: 'text-green-600' },
-    { label: 'Rechazadas', value: rejectedApplications.length, color: 'text-red-600' }
+    { label: 'Rechazadas', value: rejectedApplications.length, color: 'text-red-600' },
+    { label: 'Retiradas', value: withdrawnApplications.length, color: 'text-gray-600' }
   ]
 
   return (
@@ -234,8 +237,10 @@ export function ApplicationsManagement({ businessId, vacancyId, onChatStarted }:
                   <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="pending">Pendiente</SelectItem>
                   <SelectItem value="reviewing">En Revisión</SelectItem>
+                  <SelectItem value="in_selection_process">En Proceso de Selección</SelectItem>
                   <SelectItem value="accepted">Aceptada</SelectItem>
                   <SelectItem value="rejected">Rechazada</SelectItem>
+                  <SelectItem value="withdrawn">Retirada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -285,6 +290,7 @@ export function ApplicationsManagement({ businessId, vacancyId, onChatStarted }:
           </TabsTrigger>
           <TabsTrigger value="accepted">Aceptadas ({acceptedApplications.length})</TabsTrigger>
           <TabsTrigger value="rejected">Rechazadas ({rejectedApplications.length})</TabsTrigger>
+          <TabsTrigger value="withdrawn">Retiradas ({withdrawnApplications.length})</TabsTrigger>
         </TabsList>
 
         {/* Pending Tab */}
@@ -400,6 +406,26 @@ export function ApplicationsManagement({ businessId, vacancyId, onChatStarted }:
                 application={application}
                 onAccept={handleAccept}
                 onReject={handleRejectClick}
+                onViewProfile={handleViewProfile}
+                onChat={handleChat}
+              />
+            ))
+          )}
+        </TabsContent>
+
+        {/* Withdrawn Tab */}
+        <TabsContent value="withdrawn" className="space-y-4">
+          {withdrawnApplications.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center">
+                <p className="text-muted-foreground">No hay aplicaciones retiradas</p>
+              </CardContent>
+            </Card>
+          ) : (
+            withdrawnApplications.map((application) => (
+              <ApplicationCard
+                key={application.id}
+                application={application}
                 onViewProfile={handleViewProfile}
                 onChat={handleChat}
               />

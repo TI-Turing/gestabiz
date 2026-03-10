@@ -74,7 +74,7 @@ export function CreateVacancy({ businessId, vacancyId, onClose, onSuccess }: Rea
       if (error) throw error
       setLocations(data || [])
     } catch {
-      toast.error('Error al cargar ubicaciones')
+      toast.error(t('jobs.toasts.locationsLoadError'))
     }
   }, [businessId])
 
@@ -111,7 +111,7 @@ export function CreateVacancy({ businessId, vacancyId, onClose, onSuccess }: Rea
         })
       }
     } catch {
-      toast.error('Error al cargar la vacante')
+      toast.error(t('jobs.toasts.vacancyEditLoadError'))
     } finally {
       setLoadingData(false)
     }
@@ -150,12 +150,12 @@ export function CreateVacancy({ businessId, vacancyId, onClose, onSuccess }: Rea
     e.preventDefault()
 
     if (!formData.title.trim()) {
-      toast.error('El título es requerido')
+      toast.error(t('jobs.toasts.titleRequired'))
       return
     }
 
     if (!formData.description.trim()) {
-      toast.error('La descripción es requerida')
+      toast.error(t('jobs.toasts.descriptionRequired'))
       return
     }
 
@@ -192,7 +192,7 @@ export function CreateVacancy({ businessId, vacancyId, onClose, onSuccess }: Rea
           console.error('Error actualizando vacante:', error)
           throw error
         }
-        toast.success('Vacante actualizada exitosamente')
+        toast.success(t('jobs.toasts.vacancyUpdated'))
       } else {
         // Crear
         const { error } = await supabase
@@ -203,7 +203,7 @@ export function CreateVacancy({ businessId, vacancyId, onClose, onSuccess }: Rea
           console.error('Error creando vacante:', error)
           throw error
         }
-        toast.success('Vacante creada exitosamente')
+        toast.success(t('jobs.toasts.vacancyCreated'))
       }
 
       onSuccess()

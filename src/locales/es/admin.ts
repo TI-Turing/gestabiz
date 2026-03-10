@@ -21,7 +21,11 @@ export const businessResources = {
     hourlyRatePlaceholder: 'Costo por hora',
     status: 'Estado',
     amenities: 'Comodidades',
-    amenitiesPlaceholder: 'WiFi, Proyector, Pizarra...'
+    amenitiesPlaceholder: 'WiFi, Proyector, Pizarra...',
+    selectLocation: 'Seleccionar ubicación',
+    pricePerHour: 'Precio por Hora',
+    active: 'Activo',
+    inactive: 'Inactivo'
   },
 
   // Resource Types
@@ -460,7 +464,9 @@ export const search = {
   placeholders: {
     businesses: 'Buscar por nombre de negocio, categoría...',
     services: 'Buscar por nombre de servicio, categoría...',
-    professionals: 'Buscar por nombre, especialidad...'
+    professionals: 'Buscar por nombre, especialidad...',
+    users: 'Buscar por nombre de profesional...',
+    categories: 'Buscar por categoría de servicio...'
   },
 
   // Results
@@ -471,7 +477,14 @@ export const search = {
     tryDifferent: 'Intenta con un término diferente',
     filters: 'Filtros',
     clearFilters: 'Limpiar Filtros',
-    viewAll: 'Ver todos los resultados →'
+    viewAll: 'Ver todos los resultados →',
+    independentService: 'Servicio independiente',
+    noCategory: 'Sin categoría',
+    locationNotSpecified: 'Ubicación no especificada',
+    serviceCategory: 'Categoría de servicio',
+    userNoName: 'Usuario sin nombre',
+    independentProfessional: 'Profesional independiente',
+    professionalServices: 'Servicios profesionales'
   },
 
   // Sorting

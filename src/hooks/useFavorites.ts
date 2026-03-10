@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -176,14 +176,15 @@ export function useFavorites(userId?: string) {
     fetchFavorites();
   }, [fetchFavorites]);
 
+  // Stable ref for fetchFavorites to avoid realtime subscription cycling
+  const fetchFavoritesRef = useRef(fetchFavorites);
+  fetchFavoritesRef.current = fetchFavorites;
+
   /**
    * Effect: Realtime subscription para cambios en favoritos
    */
   useEffect(() => {
     if (!userId) return;
-
-    // eslint-disable-next-line no-console
-    console.log('[useFavorites] Setting up realtime subscription');
 
     const subscription = supabase
       .channel(`favorites:${userId}`)
@@ -195,22 +196,16 @@ export function useFavorites(userId?: string) {
           table: 'business_favorites',
           filter: `user_id=eq.${userId}`,
         },
-        (payload) => {
-          // eslint-disable-next-line no-console
-          console.log('[useFavorites] Realtime event:', payload.eventType);
-          
-          // Refetch favorites cuando hay cambios
-          fetchFavorites();
+        () => {
+          fetchFavoritesRef.current();
         }
       )
       .subscribe();
 
     return () => {
-      // eslint-disable-next-line no-console
-      console.log('[useFavorites] Cleaning up realtime subscription');
       subscription.unsubscribe();
     };
-  }, [userId, fetchFavorites]);
+  }, [userId]);
 
   return {
     favorites,

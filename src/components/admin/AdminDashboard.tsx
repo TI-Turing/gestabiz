@@ -1,15 +1,15 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, MapPin, Briefcase, Users, Calculator, FileText, Shield, CreditCard, BriefcaseBusiness, ShoppingCart, Calendar, CalendarOff, Box, Wallet } from 'lucide-react'
+import { LayoutDashboard, MapPin, Briefcase, Users, FileText, Shield, CreditCard, BriefcaseBusiness, ShoppingCart, Calendar, CalendarOff, Box, Wallet } from 'lucide-react'
 import { UnifiedLayout } from '@/components/layouts/UnifiedLayout'
 import { usePreferredLocation } from '@/hooks/usePreferredLocation'
-import { useSupabaseData } from '@/hooks/useSupabaseData'
+import { useQuery } from '@tanstack/react-query'
+import { locationsService } from '@/lib/services'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { OverviewTab } from './OverviewTab'
 import { LocationsManager } from './LocationsManager'
 import { ServicesManager } from './ServicesManager'
 import { EmployeeManagementHierarchy } from './EmployeeManagementHierarchy'
-import { AccountingPage } from './AccountingPage'
 import { ReportsPage } from './ReportsPage'
 import { BillingDashboard } from '@/components/billing'
 import { RecruitmentDashboard } from '@/components/jobs/RecruitmentDashboard'
@@ -63,14 +63,18 @@ export function AdminDashboard({
   }
   
   const [activePage, setActivePage] = useState(getPageFromUrl())
-  const [currentUser, setCurrentUser] = useState(user)
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeHierarchy | null>(null)
   const [pageContext, setPageContext] = useState<Record<string, unknown>>({})
   const [chatConversationId, setChatConversationId] = useState<string | null>(null)
   
   // Hooks para sede preferida y ubicaciones
   const { preferredLocationId, setPreferredLocation, isInitialized: locationInitialized, isExplicitlySet: locationExplicitlySet } = usePreferredLocation(business.id)
-  const { locations, fetchLocations } = useSupabaseData({ user, autoFetch: false })
+  const { data: locations = [] } = useQuery({
+    queryKey: ['locations', business.id],
+    queryFn: () => locationsService.list({ businessIds: [business.id], activeOnly: true }),
+    enabled: !!business.id,
+    staleTime: 5 * 60 * 1000,
+  })
   
   // Estado para nombre de la sede
   const [preferredLocationName, setPreferredLocationName] = useState<string | null>(null)
@@ -89,13 +93,6 @@ export function AdminDashboard({
       navigate('/app/admin/overview', { replace: true })
     }
   }, [location.pathname, navigate])
-  
-  // Cargar ubicaciones y obtener nombre de la sede preferida
-  useEffect(() => {
-    if (business.id) {
-      fetchLocations(business.id)
-    }
-  }, [business.id, fetchLocations])
   
   // Resolver nombre de la sede a partir del id preferido
   useEffect(() => {
@@ -117,7 +114,7 @@ export function AdminDashboard({
   }, [locationInitialized, locationExplicitlySet, locations, setPreferredLocation])
 
   // ✅ Función para manejar cambios de página con navegación de URL
-  const handlePageChange = (page: string, context?: Record<string, unknown>) => {
+  const handlePageChange = useCallback((page: string, context?: Record<string, unknown>) => {
     setActivePage(page)
     navigate(`/app/admin/${page}`, { replace: true })
     if (context) {
@@ -125,7 +122,7 @@ export function AdminDashboard({
     } else {
       setPageContext({})
     }
-  }
+  }, [navigate])
 
   // Hook para procesar navegaciones pendientes después de cambio de rol
   usePendingNavigation(handlePageChange)
@@ -133,30 +130,17 @@ export function AdminDashboard({
   // Listen for avatar updates and refresh user
   useEffect(() => {
     const handleAvatarUpdate = () => {
-      const updatedUserStr = window.localStorage.getItem('current-user')
-      if (updatedUserStr) {
-        try {
-          const updatedUser = JSON.parse(updatedUserStr)
-          setCurrentUser(updatedUser)
-        } catch {
-          // Ignore parse errors
-        }
-      }
+      onUpdate?.()
     }
 
     window.addEventListener('avatar-updated', handleAvatarUpdate)
     return () => window.removeEventListener('avatar-updated', handleAvatarUpdate)
-  }, [])
-
-  // Update current user when prop changes
-  useEffect(() => {
-    setCurrentUser(user)
-  }, [user])
+  }, [onUpdate])
 
   // Determinar si mostrar tab de recursos
   const showResourcesTab = business.resource_model && business.resource_model !== 'professional'
 
-  const sidebarItems = [
+  const sidebarItems = useMemo(() => [
     {
       id: 'overview',
       label: t('adminDashboard.sidebar.overview'),
@@ -228,7 +212,7 @@ export function AdminDashboard({
       label: t('adminDashboard.sidebar.permissions'),
       icon: <Shield className="h-5 w-5" />
     }
-  ]
+  ], [t, showResourcesTab])
 
   const renderContent = () => {
     switch (activePage) {
@@ -275,7 +259,7 @@ export function AdminDashboard({
       // case 'accounting':
       //   return <AccountingPage businessId={business.id} onUpdate={onUpdate} />
       case 'reports':
-        return <ReportsPage businessId={business.id} user={currentUser} />
+        return <ReportsPage businessId={business.id} user={user} />
       case 'billing':
         return <BillingDashboard businessId={business.id} />
       case 'permissions':
@@ -284,7 +268,7 @@ export function AdminDashboard({
             <PermissionsManager 
               businessId={business.id}
               ownerId={business.owner_id}
-              currentUserId={currentUser.id}
+              currentUserId={user.id}
             />
           </Suspense>
         )
@@ -293,14 +277,14 @@ export function AdminDashboard({
         return (
           <div className="p-6">
             <CompleteUnifiedSettings 
-              user={currentUser} 
-              onUserUpdate={(updatedUser) => {
-                setCurrentUser(updatedUser)
+              user={user} 
+              onUserUpdate={() => {
                 onUpdate?.()
               }}
               currentRole="admin"
               businessId={business.id}
               business={business}
+              initialTab={activePage === 'profile' ? 'profile' : undefined}
             />
           </div>
         )
@@ -327,11 +311,11 @@ export function AdminDashboard({
       availableLocations={locations.map(l => ({ id: l.id, name: l.name }))}
       chatConversationId={chatConversationId}
       onChatClose={() => setChatConversationId(null)}
-      user={currentUser ? {
-        id: currentUser.id,
-        name: currentUser.name,
-        email: currentUser.email,
-        avatar: currentUser.avatar_url
+      user={user ? {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar_url
       } : undefined}
     >
       <div className="flex flex-col min-h-full">
@@ -342,7 +326,7 @@ export function AdminDashboard({
         {/* Ti Turing Footer */}
         <footer className="border-t border-border/50 py-3 px-6 mt-auto">
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <span>Desarrollado por</span>
+            <span>{t('landing.footer.developedBy')}</span>
             <a 
               href="https://tituring.com" 
               target="_blank" 

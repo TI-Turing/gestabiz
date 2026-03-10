@@ -12,7 +12,8 @@ interface ServiceSelectionProps {
   readonly selectedServiceId: string | null;
   readonly onSelectService: (service: Service) => void;
   readonly preloadedServices?: Service[]; // Datos pre-cargados
-  readonly isPreselected?: boolean; // Nueva prop para indicar si fue preseleccionado desde perfil público
+  readonly preselectedServiceId?: string | null; // ID real del servicio preseleccionado
+  readonly isPreselected?: boolean; // Compatibilidad existente
 }
 
 export function ServiceSelection({
@@ -20,6 +21,7 @@ export function ServiceSelection({
   selectedServiceId,
   onSelectService,
   preloadedServices,
+  preselectedServiceId,
   isPreselected = false,
 }: ServiceSelectionProps) {
   const [services, setServices] = useState<Service[]>([]);
@@ -81,7 +83,9 @@ export function ServiceSelection({
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {services.map((service) => {
           const isSelected = selectedServiceId === service.id;
-          const wasPreselected = isPreselected && isSelected;
+          const wasPreselected = preselectedServiceId
+            ? service.id === preselectedServiceId
+            : isPreselected && isSelected;
 
           return (
             <Card

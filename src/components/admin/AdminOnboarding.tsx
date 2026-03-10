@@ -159,9 +159,12 @@ export function AdminOnboarding({
           onBusinessCreated?.()
         }}
         onCancel={() => {
-          // Si usuario tiene negocios, puede volver
+          // Si usuario tiene negocios, puede volver al último
           if (businesses.length > 0 && onSelectBusiness) {
             onSelectBusiness(businesses[0].id)
+          } else {
+            // Sin negocios previos: cambiar al rol de Cliente
+            onRoleChange('client')
           }
         }}
       />

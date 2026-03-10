@@ -91,13 +91,12 @@ export function useEmployeeRequests(options: UseEmployeeRequestsOptions = {}) {
     }
   }, [businessId, userId, autoFetch])
 
-  // Auto-fetch on mount
+  // Auto-fetch on mount and when filters change
   useEffect(() => {
     if (autoFetch) {
       fetchRequests()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoFetch]) // ✅ fetchRequests excluido - es estable (useCallback)
+  }, [autoFetch, fetchRequests])
 
   // REALTIME SUBSCRIPTION - Fixed: removed fetchRequests from dependency array
   useEffect(() => {

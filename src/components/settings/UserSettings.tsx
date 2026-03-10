@@ -48,7 +48,7 @@ export default function UserSettingsComponent({ user, onUserUpdate }: UserSettin
       onUserUpdate(updatedUser)
       toast.success(t('settings.preferences_saved'))
     } catch (error) {
-      toast.error('Error updating language')
+      toast.error(t('common.messages.languageError'))
       throw error
     }
   }

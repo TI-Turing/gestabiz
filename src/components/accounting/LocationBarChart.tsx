@@ -44,7 +44,7 @@ export const LocationBarChart: React.FC<LocationBarChartProps> = ({
           )}
           {locationData.transactionCount !== undefined && (
             <p className="text-xs text-muted-foreground mt-1">
-              {locationData.transactionCount} transacciones
+              {locationData.transactionCount} {locationData.transactionCount === 1 ? 'transacción' : 'transacciones'}
             </p>
           )}
         </div>

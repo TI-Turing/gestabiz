@@ -96,7 +96,7 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('Por favor selecciona una imagen válida')
+      toast.error(t('profile.toasts.invalidImage'))
       return
     }
 
@@ -146,7 +146,7 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
           .eq('id', user.id)
 
         if (updateError) {
-          toast.error('Error al actualizar el avatar en la base de datos')
+          toast.error(t('profile.toasts.avatarDbError'))
           return
         }
 
@@ -166,12 +166,12 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
           detail: { userId: user.id, avatarUrl: newAvatarUrl } 
         }))
 
-        toast.success('Avatar actualizado exitosamente')
+        toast.success(t('profile.toasts.avatarUpdated'))
       } else {
         toast.error(result.error || 'Error al subir el avatar')
       }
     } catch {
-      toast.error('Error inesperado al subir el avatar')
+      toast.error(t('profile.toasts.avatarUploadError'))
     } finally {
       setIsUploadingAvatar(false)
     }
@@ -181,6 +181,21 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
     setIsUpdating(true)
     
     try {
+      // Persist to Supabase
+      const { error: dbError } = await supabase
+        .from('profiles')
+        .update({
+          full_name: formData.name,
+          phone: formData.phone || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+
+      if (dbError) {
+        toast.error(dbError.message || t('profile.error'))
+        return
+      }
+
       const updatedUser = {
         ...user,
         name: formData.name,

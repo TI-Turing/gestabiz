@@ -64,18 +64,19 @@ export function useMandatoryReviews(
         setIsValidating(false);
         return;
       }
-      
-      // Actualizar timestamp AHORA (independientemente de si hay citas o no)
-      updateLastCheckTime(userId);
     }
     
     // SEGUNDO: Validar si hay userId y appointments
+    // NO actualizar throttle timestamp si los datos aún no han cargado
     if (!userId || completedAppointments.length === 0) {
       setPendingReviewsCount(0);
       setShouldShowModal(false);
       setIsValidating(false);
       return;
     }
+
+    // Actualizar timestamp AHORA (solo cuando tenemos datos reales para verificar)
+    updateLastCheckTime(userId);
 
     // TERCERO: Check "remind later"
     const remindLater = getRemindLaterStatus(userId);

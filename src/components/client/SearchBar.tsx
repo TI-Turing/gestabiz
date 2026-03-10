@@ -22,6 +22,7 @@ interface SearchResult {
   category?: string
   location?: string
   logo_url?: string
+  businessId?: string
 }
 
 interface SearchBarProps {
@@ -100,7 +101,8 @@ export function SearchBar({ onResultSelect, onViewMore, className }: SearchBarPr
             name: service.name,
             type: 'services' as SearchType,
             subtitle: service.business?.name || t('search.results.independentService'),
-            category: service.description
+            category: service.description,
+            businessId: service.business?.id
           }))
           break
         }
@@ -129,14 +131,36 @@ export function SearchBar({ onResultSelect, onViewMore, className }: SearchBarPr
 
           if (error) throw error
 
-          data = (businessesData || []).map((business: any) => ({
-            id: business.id,
-            name: business.name,
-            type: 'businesses' as SearchType,
-            subtitle: business.category?.name || t('search.results.noCategory'),
-            location: business.locations?.[0]?.city || t('search.results.locationNotSpecified'),
-            logo_url: business.logo_url
-          }))
+          // Resolve city UUIDs to names
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+          const cityIds = [...new Set(
+            (businessesData || [])
+              .flatMap((b: any) => b.locations || [])
+              .map((l: any) => l.city)
+              .filter((c: string) => c && uuidRegex.test(c))
+          )]
+          let cityMap: Record<string, string> = {}
+          if (cityIds.length > 0) {
+            const { data: citiesData } = await supabase
+              .from('cities')
+              .select('id, name')
+              .in('id', cityIds)
+            cityMap = Object.fromEntries((citiesData || []).map((c: any) => [c.id, c.name]))
+          }
+
+          data = (businessesData || []).map((business: any) => {
+            const loc = business.locations?.[0]
+            const cityValue = loc?.city
+            const cityName = cityValue && uuidRegex.test(cityValue) ? cityMap[cityValue] : cityValue
+            return {
+              id: business.id,
+              name: business.name,
+              type: 'businesses' as SearchType,
+              subtitle: business.category?.name || t('search.results.noCategory'),
+              location: cityName || loc?.name || t('search.results.locationNotSpecified'),
+              logo_url: business.logo_url
+            }
+          })
           break
         }
 

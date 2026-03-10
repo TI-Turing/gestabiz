@@ -8,6 +8,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -42,6 +52,9 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { PermissionEditor } from '@/components/admin/PermissionEditor'
+import { RoleAssignment } from '@/components/admin/RoleAssignment'
+import { supabase } from '@/lib/supabase'
 
 // =====================================================
 // INTERFACES
@@ -91,6 +104,11 @@ export function PermissionsManager({
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'employee'>('all')
   const [activeTab, setActiveTab] = useState('users')
+  const [selectedUser, setSelectedUser] = useState<UserWithRoles | null>(null)
+  const [showPermissionEditor, setShowPermissionEditor] = useState(false)
+  const [showRoleAssignment, setShowRoleAssignment] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<UserWithRoles | null>(null)
 
   // Verificar permisos
   const canManagePermissions = checkPermission('permissions.view').hasPermission
@@ -128,10 +146,41 @@ export function PermissionsManager({
     })
   }, [users, searchQuery, roleFilter])
 
-  // Manejar selección de usuario
-  const handleSelectUser = (user: UserWithRoles) => {
-    // TODO: Abrir modal RoleAssignment o PermissionEditor
-    console.log('Selected user:', user)
+  // Abrir editor de permisos
+  const handleEditPermissions = (user: UserWithRoles) => {
+    setSelectedUser(user)
+    setShowPermissionEditor(true)
+  }
+
+  // Abrir asignación de rol
+  const handleAssignRole = (user?: UserWithRoles) => {
+    setSelectedUser(user || null)
+    setShowRoleAssignment(true)
+  }
+
+  // Confirmar eliminación de permisos
+  const handleDeleteUser = (user: UserWithRoles) => {
+    setUserToDelete(user)
+    setShowDeleteConfirm(true)
+  }
+
+  // Ejecutar eliminación (revocar todos los permisos)
+  const confirmDeletePermissions = async () => {
+    if (!userToDelete) return
+    try {
+      const { error } = await supabase
+        .from('user_permissions')
+        .update({ is_active: false })
+        .eq('user_id', userToDelete.id)
+        .eq('business_id', businessId)
+      if (error) throw error
+      toast.success(`Permisos revocados para ${userToDelete.name}`)
+    } catch {
+      toast.error('Error al revocar permisos')
+    } finally {
+      setShowDeleteConfirm(false)
+      setUserToDelete(null)
+    }
   }
 
   // Verificar si puede gestionar permisos
@@ -169,7 +218,7 @@ export function PermissionsManager({
           </p>
         </div>
         <PermissionGate permission="permissions.assign_role" businessId={businessId} mode="hide">
-          <Button className="gap-2" onClick={() => toast.info('Selecciona un usuario de la lista para asignar o modificar su rol')}>
+          <Button className="gap-2" onClick={() => handleAssignRole()}>
             <UserPlus className="h-4 w-4" />
             Asignar Rol
           </Button>
@@ -322,8 +371,9 @@ export function PermissionsManager({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleSelectUser(user)}
+                                  onClick={() => handleEditPermissions(user)}
                                   disabled={user.is_owner && user.id !== currentUserId}
+                                  title="Editar permisos"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -334,6 +384,8 @@ export function PermissionsManager({
                                     variant="ghost"
                                     size="sm"
                                     className="text-destructive hover:text-destructive"
+                                    onClick={() => handleDeleteUser(user)}
+                                    title="Revocar permisos"
                                   >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
@@ -460,6 +512,60 @@ export function PermissionsManager({
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal: Editor de Permisos */}
+      <PermissionEditor
+        businessId={businessId}
+        ownerId={ownerId}
+        currentUserId={currentUserId}
+        targetUserId={selectedUser?.id || null}
+        targetUserName={selectedUser?.name || ''}
+        targetUserEmail={selectedUser?.email || ''}
+        currentPermissions={[]}
+        isOpen={showPermissionEditor}
+        onClose={() => {
+          setShowPermissionEditor(false)
+          setSelectedUser(null)
+        }}
+      />
+
+      {/* Modal: Asignación de Rol */}
+      <RoleAssignment
+        businessId={businessId}
+        ownerId={ownerId}
+        currentUserId={currentUserId}
+        userId={selectedUser?.id || null}
+        userName={selectedUser?.name || ''}
+        userEmail={selectedUser?.email || ''}
+        currentRole={selectedUser?.role ? { role: selectedUser.role, employee_type: selectedUser.employee_type } as unknown as import('@/types/types').BusinessRole : null}
+        isOpen={showRoleAssignment}
+        onClose={() => {
+          setShowRoleAssignment(false)
+          setSelectedUser(null)
+        }}
+      />
+
+      {/* Dialog: Confirmar eliminación de permisos */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revocar todos los permisos</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se revocarán todos los permisos de <strong>{userToDelete?.name}</strong>. 
+              Esta acción se puede revertir asignando nuevos permisos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUserToDelete(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeletePermissions}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Revocar permisos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -69,6 +69,8 @@ export const common = {
     export: 'Exportar',
     import: 'Importar',
     print: 'Imprimir',
+    reportProblem: 'Reportar problema',
+    logout: 'Cerrar Sesión',
   },
 
   // General
@@ -292,5 +294,17 @@ export const common = {
     to: 'a',
     from: 'desde',
     until: 'hasta',
+  },
+
+  // Labels
+  labels: {
+    account: 'Cuenta',
+    profile: 'Perfil',
+  },
+
+  // Chat
+  chat: {
+    openChat: 'Abrir chat',
+    openChatWithUnread: 'Abrir chat ({count} mensajes nuevos)',
   },
 }
