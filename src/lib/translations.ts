@@ -1017,15 +1017,32 @@ export const translations = {
         subtitle: 'Configure your booking preferences',
         bookingPrefs: {
           title: 'Booking Preferences',
-          appointmentReminders: 'Appointment reminders',
-          emailConfirmation: 'Email confirmation',
-          promotionNotifications: 'Promotion notifications',
-          savePaymentMethods: 'Save payment methods'
+          description: 'Manage your notification and payment preferences for appointments',
+          reminders: {
+            label: 'Appointment reminders',
+            description: 'Receive push and email reminders before your appointments'
+          },
+          emailConfirmation: {
+            label: 'Email confirmation',
+            description: 'Receive a confirmation email every time you book an appointment'
+          },
+          promotions: {
+            label: 'Promotions and offers',
+            description: 'Receive notifications about exclusive discounts and promotions'
+          },
+          savePayment: {
+            label: 'Save payment methods',
+            description: 'Store your payment methods for faster checkout'
+          }
         },
         advanceTime: {
           title: 'Preferred Advance Time',
           label: 'Preferred notice time for appointments',
+          description: 'How far in advance do you prefer to book your appointments',
           options: {
+            oneHour: '1 hour',
+            twoHours: '2 hours',
+            fourHours: '4 hours',
             sameDay: 'Same day',
             oneDay: '1 day',
             twoDays: '2 days',
@@ -1041,6 +1058,12 @@ export const translations = {
         paymentMethods: {
           title: 'Payment Methods',
           noneAdded: 'No payment methods added',
+          options: {
+            card: 'Credit/Debit Card',
+            pse: 'PSE',
+            cash: 'Cash',
+            transfer: 'Bank Transfer'
+          },
           types: {
             card: 'Credit/Debit Card',
             pse: 'PSE',
@@ -3367,15 +3390,32 @@ export const translations = {
         subtitle: 'Configura tus preferencias de reserva',
         bookingPrefs: {
           title: 'Preferencias de Reserva',
-          appointmentReminders: 'Recordatorios de citas',
-          emailConfirmation: 'Confirmación por email',
-          promotionNotifications: 'Notificaciones de promociones',
-          savePaymentMethods: 'Guardar métodos de pago'
+          description: 'Gestiona tus preferencias de notificaciones y pago para citas',
+          reminders: {
+            label: 'Recordatorios de citas',
+            description: 'Recibe recordatorios por push y email antes de tus citas'
+          },
+          emailConfirmation: {
+            label: 'Confirmación por email',
+            description: 'Recibe un correo de confirmación cada vez que reserves una cita'
+          },
+          promotions: {
+            label: 'Promociones y ofertas',
+            description: 'Recibe notificaciones sobre descuentos y promociones exclusivas'
+          },
+          savePayment: {
+            label: 'Guardar métodos de pago',
+            description: 'Guarda tus métodos de pago para un checkout más rápido'
+          }
         },
         advanceTime: {
           title: 'Tiempo de Anticipación Preferido',
           label: 'Tiempo de aviso preferido para citas',
+          description: 'Con cuánta anticipación prefieres reservar tus citas',
           options: {
+            oneHour: '1 hora',
+            twoHours: '2 horas',
+            fourHours: '4 horas',
             sameDay: 'El mismo día',
             oneDay: '1 día',
             twoDays: '2 días',
@@ -3391,6 +3431,12 @@ export const translations = {
         paymentMethods: {
           title: 'Métodos de Pago',
           noneAdded: 'No se han agregado métodos de pago',
+          options: {
+            card: 'Tarjeta de Crédito/Débito',
+            pse: 'PSE',
+            cash: 'Efectivo',
+            transfer: 'Transferencia bancaria'
+          },
           types: {
             card: 'Tarjeta de Crédito/Débito',
             pse: 'PSE',
