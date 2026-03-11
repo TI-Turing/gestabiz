@@ -552,6 +552,10 @@ export function ClientDashboard({
 
   // Handler para crear cita desde el calendario
   const handleCreateAppointmentFromCalendar = (date: Date, time?: string) => {
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const selectedDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    if (selectedDay < today) return
     setPreselectedDate(date)
     setPreselectedTime(time)
     setShowAppointmentWizard(true)
