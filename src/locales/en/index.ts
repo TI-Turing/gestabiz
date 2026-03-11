@@ -66,6 +66,7 @@ export const en = {
   settings,
   // Navigation group
   nav,
+  navigation: { nav },
   ui,
   validation,
   profile: {
