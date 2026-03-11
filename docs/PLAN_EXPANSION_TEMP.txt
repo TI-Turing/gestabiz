@@ -1,3 +1,0 @@
-﻿Este archivo será expandido con contenido masivo adicional.
-Debido a limitaciones de tamaño en una sola operación, se procederá
-a agregar el contenido en bloques concatenados.
