@@ -247,6 +247,9 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
 
     // Verificar si una hora es válida para agendar (90 minutos desde ahora si es hoy)
     const isHourAvailable = (hour: number): boolean => {
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const dayStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate())
+      if (dayStart < today) return false
       if (!isToday) return true
       const hourInMinutes = hour * 60
       const nowInMinutes = currentHour * 60 + currentMinute
@@ -346,6 +349,9 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
 
     // Verificar si un día es válido para agendar
     const isDayAvailable = (day: Date): boolean => {
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate())
+      if (dayStart < today) return false
       const isToday = 
         day.getDate() === now.getDate() &&
         day.getMonth() === now.getMonth() &&
@@ -466,6 +472,9 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
 
                 // Verificar si se puede crear cita en este día
                 const canCreateAppointment = (() => {
+                  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+                  const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate())
+                  if (dayStart < today) return false
                   if (!isToday) return true
                   const currentHour = now.getHours()
                   const currentMinute = now.getMinutes()
