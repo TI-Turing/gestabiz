@@ -17,7 +17,8 @@ import { Badge } from '@/components/ui/badge'
 import type { Business } from '@/types/types'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { usePreferredLocation } from '@/hooks/usePreferredLocation'
 import PublicBusinessProfile from '@/pages/PublicBusinessProfile'
 
 interface OverviewTabProps {
@@ -41,30 +42,42 @@ export function OverviewTab({ business }: OverviewTabProps) {
   const [stats, setStats] = useState<Stats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showPublicProfile, setShowPublicProfile] = useState(false)
+  const navigate = useNavigate()
+  const { preferredLocationId } = usePreferredLocation(business.id)
 
   const fetchStats = React.useCallback(async () => {
     setIsLoading(true)
     try {
-      const now = new Date().toISOString()
+      const now = new Date()
       const today = new Date()
       today.setHours(0, 0, 0, 0)
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
       const todayStart = today.toISOString()
-      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString()
+      const tomorrowStart = tomorrow.toISOString()
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+      const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1)
+      const monthStartISO = monthStart.toISOString()
+      const nextMonthStartISO = nextMonthStart.toISOString()
+      const nowISO = now.toISOString()
 
-      // Get appointments
+      // Get appointments for current month only (includes today)
       const { data: appointments, error: apptError } = await supabase
         .from('appointments')
         .select('*')
         .eq('business_id', business.id)
+        .gte('start_time', monthStartISO)
+        .lt('start_time', nextMonthStartISO)
 
       if (apptError) throw apptError
 
       const totalAppointments = appointments?.length || 0
       const todayAppointments = appointments?.filter(
-        (a) => a.start_time >= todayStart && a.start_time < now
+        (a) => a.start_time >= todayStart && a.start_time < tomorrowStart
+          && a.status !== 'cancelled'
       ).length || 0
       const upcomingAppointments = appointments?.filter(
-        (a) => a.start_time > now && a.status !== 'cancelled'
+        (a) => a.start_time > nowISO && a.status !== 'cancelled'
       ).length || 0
       const completedAppointments = appointments?.filter(
         (a) => a.status === 'completed'
@@ -101,7 +114,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
 
       // Calculate stats
       const monthlyRevenue = appointments?.filter(
-        (a) => new Date(a.start_time).getMonth() === new Date().getMonth() && a.status === 'completed'
+        (a) => a.status === 'completed'
       ).reduce((sum, a) => sum + (a.price || 0), 0) || 0
 
       const averageAppointmentValue = totalAppointments > 0
@@ -131,6 +144,21 @@ export function OverviewTab({ business }: OverviewTabProps) {
     fetchStats()
   }, [fetchStats])
 
+  const handleTodayCardClick = () => {
+    const filters = {
+      status: ['pending', 'confirmed', 'completed'],
+      location: preferredLocationId ? [preferredLocationId] : [],
+      service: [],
+      employee: [],
+    }
+    try {
+      localStorage.setItem(`appointments-filters-${business.id}`, JSON.stringify(filters))
+    } catch (e) {
+      console.warn('Failed to set appointment filters', e)
+    }
+    navigate('/app/admin/appointments')
+  }
+
   if (isLoading || !stats) {
     return (
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
@@ -154,7 +182,10 @@ export function OverviewTab({ business }: OverviewTabProps) {
     <div className="space-y-6">
       {/* Stats Grid */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
-        <Card className="bg-card border-border">
+        <Card
+          className="bg-card border-border cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all group"
+          onClick={handleTodayCardClick}
+        >
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Calendar className="h-4 w-4 text-blue-400" />
@@ -165,6 +196,9 @@ export function OverviewTab({ business }: OverviewTabProps) {
             <div className="text-3xl font-bold text-foreground">{stats.todayAppointments}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Citas programadas para hoy
+            </p>
+            <p className="text-xs text-primary mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              Ver en calendario →
             </p>
           </CardContent>
         </Card>
@@ -179,7 +213,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
           <CardContent>
             <div className="text-3xl font-bold text-foreground">{stats.upcomingAppointments}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Citas futuras programadas
+              Citas futuras este mes
             </p>
           </CardContent>
         </Card>
@@ -194,7 +228,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
           <CardContent>
             <div className="text-3xl font-bold text-foreground">{stats.completedAppointments}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Citas marcadas como completadas
+              Completadas este mes
             </p>
           </CardContent>
         </Card>
@@ -212,7 +246,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
           <CardContent>
             <div className="text-3xl font-bold text-foreground">{stats.cancelledAppointments}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Total de citas canceladas
+              Canceladas este mes
             </p>
           </CardContent>
         </Card>
@@ -343,15 +377,42 @@ export function OverviewTab({ business }: OverviewTabProps) {
       ) : null}
 
       {/* Business Info Summary */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground">Información del Negocio</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-end">
+      <Card className="bg-card border-border overflow-hidden">
+        {/* Banner con desvanecido */}
+        {business.banner_url && (
+          <div className="relative h-44 w-full overflow-hidden">
+            <img
+              src={business.banner_url}
+              alt={`Banner de ${business.name}`}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-linear-to-t from-card via-card/20 to-transparent" />
+          </div>
+        )}
+        <CardContent className={`space-y-4 ${business.banner_url ? 'pt-0' : 'pt-6'}`}>
+          {/* Header: Logo + Nombre + Botón */}
+          <div className={`flex items-start justify-between gap-4 ${business.banner_url ? '-mt-10' : ''}`}>
+            <div className="flex items-center gap-3">
+              {business.logo_url ? (
+                <img
+                  src={business.logo_url}
+                  alt={`Logo de ${business.name}`}
+                  className="w-16 h-16 rounded-xl object-cover border-2 border-card shadow-lg bg-card shrink-0"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center shrink-0 border-2 border-card shadow-lg">
+                  <Briefcase className="h-7 w-7 text-muted-foreground" />
+                </div>
+              )}
+              <div className="pt-2">
+                <h3 className="text-xl font-bold text-foreground leading-tight">{business.name}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wide">Información del Negocio</p>
+              </div>
+            </div>
             <Button
               variant="outline"
               size="sm"
+              className="shrink-0 mt-3"
               onClick={() => setShowPublicProfile((prev) => !prev)}
             >
               {showPublicProfile ? 'Ocultar perfil' : 'Ver perfil del negocio'}
@@ -363,10 +424,6 @@ export function OverviewTab({ business }: OverviewTabProps) {
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Nombre</p>
-              <p className="text-foreground font-medium">{business.name}</p>
-            </div>
             <div>
               <p className="text-sm text-muted-foreground">Categoría</p>
               <div className="flex items-center gap-2 mt-1">

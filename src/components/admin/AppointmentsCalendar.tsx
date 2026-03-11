@@ -1711,7 +1711,11 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                   onClick={() => setOpenDropdowns(prev => ({ ...prev, status: !prev.status }))}
                   className="px-3 py-2 pr-8 text-sm border border-border rounded-md bg-background text-foreground hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all min-w-[160px] flex items-center justify-between"
                 >
-                  <span className="truncate">{filterStatus.length} {filterStatus.length === 1 ? 'seleccionado' : 'seleccionados'}</span>
+                  <span className="truncate">
+                    {filterStatus.length === 0
+                      ? 'Ninguno'
+                      : `${filterStatus.length} ${filterStatus.length === 1 ? 'seleccionado' : 'seleccionados'}`}
+                  </span>
                   <ChevronRight className={`h-4 w-4 text-muted-foreground ml-2 transition-transform ${openDropdowns.status ? 'rotate-90' : ''}`} />
                 </button>
                 <DropdownPortal anchorRef={statusBtnRef} isOpen={openDropdowns.status} onClose={() => setOpenDropdowns(prev => ({ ...prev, status: false }))}>
@@ -1758,7 +1762,9 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                   onClick={() => setOpenDropdowns(prev => ({ ...prev, location: !prev.location }))}
                   className="px-3 py-2 pr-8 text-sm border border-border rounded-md bg-background text-foreground hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all min-w-[160px] flex items-center justify-between"
                 >
-                  <span className="truncate">{filterLocation.length} seleccionadas</span>
+                  <span className="truncate">
+                    {filterLocation.length === 0 ? 'Todas' : `${filterLocation.length} seleccionadas`}
+                  </span>
                   <ChevronRight className={`h-4 w-4 text-muted-foreground ml-2 transition-transform ${openDropdowns.location ? 'rotate-90' : ''}`} />
                 </button>
                 <DropdownPortal anchorRef={locationBtnRef} isOpen={openDropdowns.location} onClose={() => setOpenDropdowns(prev => ({ ...prev, location: false }))}>
@@ -1804,7 +1810,11 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                   onClick={() => setOpenDropdowns(prev => ({ ...prev, service: !prev.service }))}
                   className="px-3 py-2 pr-8 text-sm border border-border rounded-md bg-background text-foreground hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all min-w-[160px] flex items-center justify-between"
                 >
-                  <span className="truncate">{filterService.length} {filterService.length === 1 ? 'seleccionado' : 'seleccionados'}</span>
+                  <span className="truncate">
+                    {filterService.length === 0
+                      ? 'Todos'
+                      : `${filterService.length} ${filterService.length === 1 ? 'seleccionado' : 'seleccionados'}`}
+                  </span>
                   <ChevronRight className={`h-4 w-4 text-muted-foreground ml-2 transition-transform ${openDropdowns.service ? 'rotate-90' : ''}`} />
                 </button>
                 <DropdownPortal anchorRef={serviceBtnRef} isOpen={openDropdowns.service} onClose={() => setOpenDropdowns(prev => ({ ...prev, service: false }))}>
@@ -1846,7 +1856,11 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                   onClick={() => setOpenDropdowns(prev => ({ ...prev, employee: !prev.employee }))}
                   className="px-3 py-2 pr-8 text-sm border border-border rounded-md bg-background text-foreground hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all min-w-[160px] flex items-center justify-between"
                 >
-                  <span className="truncate">{filterEmployee.length} {filterEmployee.length === 1 ? 'seleccionado' : 'seleccionados'}</span>
+                  <span className="truncate">
+                    {filterEmployee.length === 0
+                      ? 'Todos'
+                      : `${filterEmployee.length} ${filterEmployee.length === 1 ? 'seleccionado' : 'seleccionados'}`}
+                  </span>
                   <ChevronRight className={`h-4 w-4 text-muted-foreground ml-2 transition-transform ${openDropdowns.employee ? 'rotate-90' : ''}`} />
                 </button>
                 <DropdownPortal anchorRef={employeeBtnRef} isOpen={openDropdowns.employee} onClose={() => setOpenDropdowns(prev => ({ ...prev, employee: false }))}>

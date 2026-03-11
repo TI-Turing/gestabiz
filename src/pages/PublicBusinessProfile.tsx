@@ -404,13 +404,15 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
                           <Clock className="w-4 h-4" />
                           <span>{service.duration_minutes || service.duration} min</span>
                         </div>
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleBookAppointment(service.id)}
-                        >
-                          Reservar
-                          <ChevronRight className="w-4 h-4 ml-1" />
-                        </Button>
+                        {!embedded && (
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleBookAppointment(service.id)}
+                          >
+                            Reservar
+                            <ChevronRight className="w-4 h-4 ml-1" />
+                          </Button>
+                        )}
                       </div>
                     </Card>
                   ))}
@@ -461,13 +463,15 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
                           </div>
                         )}
                       </div>
-                      <Button 
-                        size="sm" 
-                        className="w-full mt-4"
-                        onClick={() => handleBookAppointment(undefined, location.id)}
-                      >
-                        Reservar aquí
-                      </Button>
+                      {!embedded && (
+                        <Button 
+                          size="sm" 
+                          className="w-full mt-4"
+                          onClick={() => handleBookAppointment(undefined, location.id)}
+                        >
+                          Reservar aquí
+                        </Button>
+                      )}
                     </Card>
                   ))}
                 </div>
@@ -528,13 +532,15 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
                           ))}
                         </div>
                       )}
-                      <Button 
-                        size="sm" 
-                        className="w-full"
-                        onClick={() => handleBookAppointment(undefined, undefined, employee.id)}
-                      >
-                        Reservar con {employee.name?.split(' ')[0]}
-                      </Button>
+                      {!embedded && (
+                        <Button 
+                          size="sm" 
+                          className="w-full"
+                          onClick={() => handleBookAppointment(undefined, undefined, employee.id)}
+                        >
+                          Reservar con {employee.name?.split(' ')[0]}
+                        </Button>
+                      )}
                     </Card>
                   ))}
                 </div>
@@ -552,7 +558,8 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
           </Tabs>
         </div>
 
-        {/* Footer CTA */}
+        {/* Footer CTA - solo visible para clientes (no en modo embebido) */}
+        {!embedded && (
         <div className="sticky bottom-0 border-t border-border bg-card/95 backdrop-blur-sm z-10">
           <div className="container mx-auto px-4 py-4 flex gap-3">
             <Button 
@@ -574,6 +581,7 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
             </Button>
           </div>
         </div>
+        )}
       </div>
 
       {/* Chat Modal */}

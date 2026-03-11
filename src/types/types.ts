@@ -420,6 +420,7 @@ export interface Business {
   legal_name?: string // Razón social or full legal name
   registration_number?: string // Registro mercantil
   logo_url?: string
+  banner_url?: string
   // Computed properties (frontend only - se cargan con joins)
   category?: BusinessCategory | string // Categoría principal poblada (retrocompatible)
   subcategories?: BusinessSubcategory[] // Máximo 3 subcategorías
