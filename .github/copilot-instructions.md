@@ -27,6 +27,7 @@
 5. **Roles dinámicos** - Calculados en tiempo real, no persistidos
 6. **TypeScript strict** - Cero `any`, tipado completo
 7. **Proteger con PermissionGate** - TODOS los botones de acción deben estar protegidos con PermissionGate ⭐ NUEVO
+8. **Incrementar versión en cada commit** - Versión actual: **0.0.1**. Patrón: `MAJOR.MINOR.PATCH`. Cada commit aumenta PATCH (0.0.1 → 0.0.2 → 0.0.3...). MINOR se incrementa en releases planificadas. MAJOR para cambios disruptivos. Actualizar versión en `package.json`
 
 ---
 
