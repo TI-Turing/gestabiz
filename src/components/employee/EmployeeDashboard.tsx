@@ -194,7 +194,7 @@ export function EmployeeDashboard({
   ]
 
   const handleJoinBusiness = () => {
-    setActivePage('join-business')
+    handlePageChange('join-business')
   }
 
   const renderContent = () => {

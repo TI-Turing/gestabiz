@@ -464,7 +464,15 @@ export async function getRegionName(regionId: string): Promise<string | null> {
 // HELPER: Obtener nombre de ciudad por ID
 // =====================================================
 
+// UUID v4 regex para validar formato antes de consultar BD
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function getCityName(cityId: string): Promise<string | null> {
+  // Si el valor no es un UUID válido, devolver el string tal-cual (ya es el nombre)
+  if (!UUID_REGEX.test(cityId)) {
+    return cityId;
+  }
+
   try {
     const { data, error } = await supabase
       .from('cities')

@@ -6,6 +6,9 @@ import { useState, useEffect } from 'react';
 import { getRegionName, getCityName } from './useCatalogs';
 import { supabase } from '@/lib/supabase';
 
+// UUID v4 validation
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 // Cache en memoria para nombres
 const nameCache: {
   regions: Record<string, string>;
@@ -39,6 +42,8 @@ export function useLocationNames(regionId?: string, cityId?: string) {
       try {
         // Obtener nombre de región y país (derivado de la región)
         if (regionId) {
+          // Si regionId es un UUID válido, consultar BD; si no, usarlo como nombre directo
+          if (UUID_REGEX.test(regionId)) {
           if (nameCache.regions[regionId]) {
             setRegionName(nameCache.regions[regionId]);
           }
@@ -98,6 +103,10 @@ export function useLocationNames(regionId?: string, cityId?: string) {
               console.error('Error resolving region/country names:', e);
             }
           }
+          } else {
+            // regionId no es UUID válido → usarlo como nombre directo
+            setRegionName(regionId);
+          } // cierra if UUID válido / else
         } else {
           setRegionName(null);
           setCountryName(null);
