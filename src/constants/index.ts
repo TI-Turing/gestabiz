@@ -6,7 +6,7 @@
 // App Configuration
 export const APP_CONFIG = {
   NAME: 'Gestabiz',
-  VERSION: '1.0.0',
+  VERSION: '0.0.1',
   DESCRIPTION: 'Sistema de Gestión de Citas',
   DEFAULT_LOCALE: 'es',
   DEFAULT_THEME: 'dark',

@@ -188,7 +188,7 @@ export const landing = {
     madeIn: 'Made with ❤️ in Colombia 🇨🇴',
     developedBy: 'Developed by',
     company: 'Ti Turing',
-    version: 'Version 1.0.0'
+    version: 'Version 0.0.1'
   }
 };
 

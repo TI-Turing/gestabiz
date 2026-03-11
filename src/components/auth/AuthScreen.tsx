@@ -607,7 +607,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
                   <span className="font-semibold text-primary">Ti Turing</span>
                 </a>
               </div>
-              <span className="text-xs text-muted-foreground/70">Versión 1.0.0</span>
+              <span className="text-xs text-muted-foreground/70">Versión 0.0.1</span>
             </div>
           </div>
         </div>        {/* Account Inactive Modal */}

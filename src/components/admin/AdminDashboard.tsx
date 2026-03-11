@@ -341,7 +341,7 @@ export function AdminDashboard({
               <span className="font-semibold text-primary">Ti Turing</span>
             </a>
             <span className="mx-2">·</span>
-            <span className="text-muted-foreground/70">v1.0.0</span>
+            <span className="text-muted-foreground/70">v0.0.1</span>
           </div>
         </footer>
       </div>
