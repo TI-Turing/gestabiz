@@ -129,7 +129,7 @@
     "globals": "^16.0.0",
     "jsdom": "^27.0.0",
     "supabase": "^2.54.11",
-    "tailwindcss": "^4.1.11",
+    "tailwindcss": "^4.2.1",
     "tsx": "^4.20.6",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.38.0",
