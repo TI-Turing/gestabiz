@@ -51,6 +51,8 @@ export function SimpleChatLayout({
   // Ref para el contenedor de mensajes (para auto-scroll)
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const autoOpenedRef = useRef(false);
+  // Retry counter to avoid infinite loops when conversation is not found
+  const fetchRetryCountRef = useRef(0);
 
   console.log('[SimpleChatLayout] userId:', userId);
   console.log('[SimpleChatLayout] initialConversationId:', initialConversationId);
@@ -76,9 +78,13 @@ export function SimpleChatLayout({
       console.log('[SimpleChatLayout] Setting active conversation:', initialConversationId);
       setActiveConversationId(initialConversationId);
       setShowChat(true);
+      // Refresh conversations to ensure the newly created conversation is in the list.
+      // This is critical when the chat panel is already open (no remount), so the
+      // fresh conversation created by createOrGetConversation is available immediately.
+      fetchConversations();
       // NO establecer autoOpenedRef aquí para permitir re-apertura
     }
-  }, [initialConversationId, setActiveConversationId]);
+  }, [initialConversationId, setActiveConversationId, fetchConversations]);
 
   // Auto abrir primera conversación para evitar estado "vacío"
   useEffect(() => {
@@ -93,6 +99,28 @@ export function SimpleChatLayout({
     setShowChat(true);
     autoOpenedRef.current = true;
   }, [conversations, initialConversationId, showChat, setActiveConversationId]);
+
+  // Retry: if initialConversationId is set but conversation not found after loading,
+  // re-fetch conversations (max 3 retries) to handle timing gaps between conversation
+  // creation and the local state being populated.
+  useEffect(() => {
+    if (!initialConversationId) return;
+    if (!showChat) return;
+    if (activeConversation) {
+      fetchRetryCountRef.current = 0; // Reset on success
+      return;
+    }
+    if (loading) return; // Still loading, wait
+    if (fetchRetryCountRef.current >= 3) return; // Stop after 3 attempts
+
+    fetchRetryCountRef.current += 1;
+    console.log('[SimpleChatLayout] Conversation not found after load, retry attempt:', fetchRetryCountRef.current);
+    // Add a delay between retries to avoid rapid consecutive API calls
+    const retryTimer = setTimeout(() => {
+      fetchConversations();
+    }, 500);
+    return () => clearTimeout(retryTimer);
+  }, [initialConversationId, showChat, activeConversation, loading, fetchConversations]);
 
   // Auto-scroll cuando llegan nuevos mensajes
   useEffect(() => {
