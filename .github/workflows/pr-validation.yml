@@ -1,0 +1,74 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    name: Validate PR
+    runs-on: ubuntu-latest
+    outputs:
+      all_passed: ${{ steps.summary.outputs.all_passed }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Uses lint:check (eslint without --fix) so CI never mutates files
+      - name: Lint check
+        id: lint
+        run: npm run lint:check
+
+      - name: Type check
+        id: typecheck
+        run: npm run type-check
+
+      # Note: some E2E tests are intentionally skipped (describe.skip) due to
+      # Supabase email rate limits. Unit tests run normally.
+      - name: Run unit tests
+        id: tests
+        run: npm run test
+
+      - name: Build
+        id: build
+        run: npm run build
+
+      # This step only executes when every previous step succeeded
+      - name: All checks passed
+        id: summary
+        if: success()
+        run: echo "all_passed=true" >> "$GITHUB_OUTPUT"
+
+  auto-approve:
+    name: Auto-approve if all checks pass
+    needs: validate
+    runs-on: ubuntu-latest
+    if: needs.validate.outputs.all_passed == 'true'
+
+    steps:
+      - name: Approve PR
+        uses: hmarr/auto-approve-action@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          review-message: |
+            ✅ Todas las validaciones pasaron correctamente:
+            - Lint: sin errores
+            - Type check: sin errores de tipos
+            - Tests: todos los tests aprobados
+            - Build: compilación exitosa
+
+            Este PR ha sido aprobado automáticamente porque no rompe nada.
