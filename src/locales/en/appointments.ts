@@ -94,5 +94,16 @@ export const appointments = {
     stepsCompleted: 'steps completed',
     complete: 'Complete',
     selectDatePrompt: 'Please select a date to see available time slots',
+    nextStep: 'Next Step',
+    stepLabels: {
+      business: 'Business Selection',
+      location: 'Location Selection',
+      service: 'Service Selection',
+      employee: 'Professional Selection',
+      employeeBusiness: "Professional's Business",
+      dateTime: 'Date & Time',
+      confirmation: 'Confirmation',
+      success: 'Completed',
+    },
   },
 }
