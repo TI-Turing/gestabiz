@@ -478,7 +478,7 @@ export function SearchResults({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[110] flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -493,7 +493,7 @@ export function SearchResults({
   }
 
   return (
-    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 overflow-y-auto">
+    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-[110] overflow-y-auto">
       <div className="min-h-screen py-4 sm:py-8 px-3 sm:px-4">
         <div className="max-w-6xl mx-auto">
           {/* Header - Mobile Responsive */}
