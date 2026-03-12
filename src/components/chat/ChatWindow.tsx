@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { isSameDay } from 'date-fns';
 import { MoreVertical, Phone, Video, Search as SearchIcon } from 'lucide-react';
 import { ChatCircle, HandWaving, MagnifyingGlass } from '@phosphor-icons/react';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
@@ -14,6 +15,7 @@ import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
 import { TypingIndicator } from './TypingIndicator';
 import { ChatComponentErrorBoundary } from './ChatErrorBoundary';
+import { formatChatDate } from '@/lib/chatUtils';
 // Import types from new architecture
 import type { ConversationPreview } from '@/hooks/useConversations';
 import type { MessageWithSender } from '@/hooks/useMessages';
@@ -309,18 +311,35 @@ export function ChatWindow({
         
         {filteredMessages.length > 0 && (
           <div className="space-y-3 sm:space-y-4">
-            {filteredMessages.map((message) => (
-              <ChatComponentErrorBoundary key={message.id} componentName="MessageBubble">
-                <MessageBubble
-                  message={message}
-                  currentUserId={currentUserId}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onReply={handleReply}
-                  searchQuery={searchQuery}
-                />
-              </ChatComponentErrorBoundary>
-            ))}
+            {filteredMessages.map((message, index) => {
+              const messageDate = new Date(message.created_at);
+              const prevDate = index > 0 ? new Date(filteredMessages[index - 1].created_at) : null;
+              const showDateSeparator = !prevDate || !isSameDay(messageDate, prevDate);
+
+              return (
+                <React.Fragment key={message.id}>
+                  {showDateSeparator && (
+                    <div className="flex items-center gap-3 my-2">
+                      <div className="flex-1 h-px bg-border" />
+                      <span className="text-xs text-muted-foreground font-medium px-2 whitespace-nowrap">
+                        {formatChatDate(messageDate)}
+                      </span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+                  )}
+                  <ChatComponentErrorBoundary componentName="MessageBubble">
+                    <MessageBubble
+                      message={message}
+                      currentUserId={currentUserId}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onReply={handleReply}
+                      searchQuery={searchQuery}
+                    />
+                  </ChatComponentErrorBoundary>
+                </React.Fragment>
+              );
+            })}
             <div ref={messagesEndRef} />
           </div>
         )}

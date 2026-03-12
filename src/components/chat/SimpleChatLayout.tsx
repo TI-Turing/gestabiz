@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { isSameDay } from 'date-fns';
 import { useChat } from '@/hooks/useChat';
 import { useEmployeeActiveBusiness } from '@/hooks/useEmployeeActiveBusiness';
 import { useNotificationContext } from '@/contexts/NotificationContext';
@@ -8,6 +9,7 @@ import { AlertCircle, ArrowLeft, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ReadReceipts } from './ReadReceipts';
+import { formatChatDate } from '@/lib/chatUtils';
 
 interface SimpleChatLayoutProps {
   userId: string;
@@ -308,44 +310,60 @@ export function SimpleChatLayout({
                   </div>
                 ) : (
                   <>
-                    {activeMessages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${
-                          message.sender_id === userId ? 'justify-end' : 'justify-start'
-                        }`}
-                      >
-                        <div
-                          className={`max-w-[85%] rounded-lg px-4 py-2 ${
-                            message.sender_id === userId
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-muted'
-                          }`}
-                        >
-                          {message.sender_id !== userId && message.sender && (
-                            <div className="text-xs font-semibold mb-1">
-                              {message.sender.full_name || message.sender.email}
+                    {activeMessages.map((message, index) => {
+                      const messageDate = new Date(message.sent_at);
+                      const prevDate = index > 0 ? new Date(activeMessages[index - 1].sent_at) : null;
+                      const showDateSeparator = !prevDate || !isSameDay(messageDate, prevDate);
+
+                      return (
+                        <React.Fragment key={message.id}>
+                          {showDateSeparator && (
+                            <div className="flex items-center gap-3 my-2">
+                              <div className="flex-1 h-px bg-border" />
+                              <span className="text-xs text-muted-foreground font-medium px-2 whitespace-nowrap">
+                                {formatChatDate(messageDate)}
+                              </span>
+                              <div className="flex-1 h-px bg-border" />
                             </div>
                           )}
-                          <div className="wrap-break-word">{message.content}</div>
-                          <div className="text-xs opacity-70 mt-1 flex items-center gap-1.5">
-                            {new Date(message.sent_at).toLocaleTimeString('es', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                            {/* Indicador de visto - Solo para mensajes propios */}
-                            <ReadReceipts
-                              senderId={message.sender_id}
-                              currentUserId={userId}
-                              readBy={message.read_by || []}
-                              deliveredAt={message.delivered_at}
-                              sentAt={message.sent_at}
-                              size="sm"
-                            />
+                          <div
+                            className={`flex ${
+                              message.sender_id === userId ? 'justify-end' : 'justify-start'
+                            }`}
+                          >
+                            <div
+                              className={`max-w-[85%] rounded-lg px-4 py-2 ${
+                                message.sender_id === userId
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted'
+                              }`}
+                            >
+                              {message.sender_id !== userId && message.sender && (
+                                <div className="text-xs font-semibold mb-1">
+                                  {message.sender.full_name || message.sender.email}
+                                </div>
+                              )}
+                              <div className="wrap-break-word">{message.content}</div>
+                              <div className="text-xs opacity-70 mt-1 flex items-center gap-1.5">
+                                {new Date(message.sent_at).toLocaleTimeString('es', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                                {/* Indicador de visto - Solo para mensajes propios */}
+                                <ReadReceipts
+                                  senderId={message.sender_id}
+                                  currentUserId={userId}
+                                  readBy={message.read_by || []}
+                                  deliveredAt={message.delivered_at}
+                                  sentAt={message.sent_at}
+                                  size="sm"
+                                />
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    ))}
+                        </React.Fragment>
+                      );
+                    })}
                     {/* Elemento invisible para auto-scroll */}
                     <div ref={messagesEndRef} />
                   </>
