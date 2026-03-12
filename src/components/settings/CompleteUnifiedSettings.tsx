@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+﻿import React, { useState, useEffect } from 'react'
 import { Check, AlertTriangle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -106,14 +106,14 @@ export default function CompleteUnifiedSettings({
     }
   }
 
-  // Tabs dinámicas según rol
+  // Tabs dinÃ¡micas segÃºn rol
   const tabs = [
     { value: 'general', label: t('settings.tabs.general'), icon: <Palette className="h-4 w-4" /> },
     { value: 'profile', label: t('settings.tabs.profile'), icon: <UserIcon className="h-4 w-4" /> },
     { value: 'notifications', label: t('settings.tabs.notifications'), icon: <Bell className="h-4 w-4" /> },
   ]
 
-  // Pestaña específica por rol
+  // PestaÃ±a especÃ­fica por rol
   const getRoleSpecificTab = () => {
     switch (currentRole) {
       case 'admin':
@@ -132,7 +132,7 @@ export default function CompleteUnifiedSettings({
     tabs.push(roleTab)
   }
 
-  // Agregar pestaña Zona Peligrosa al final
+  // Agregar pestaÃ±a Zona Peligrosa al final
   tabs.push({ 
     value: 'danger-zone', 
     label: t('settings.tabs.dangerZone'), 
@@ -140,17 +140,17 @@ export default function CompleteUnifiedSettings({
   })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">{t('settings.title')}</h2>
+          <h2 className="text-xl font-bold tracking-tight">{t('settings.title')}</h2>
           <p className="text-muted-foreground">
             {t('settings.subtitle')}
           </p>
         </div>
       </div>
 
-      <Tabs defaultValue={initialTab || "general"} className="space-y-6">
+      <Tabs defaultValue={initialTab || "general"} className="space-y-4">
         <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
           {tabs.map(tab => (
             <TabsTrigger key={tab.value} value={tab.value} className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export default function CompleteUnifiedSettings({
         </TabsList>
 
         {/* AJUSTES GENERALES - Para todos los roles */}
-        <TabsContent value="general" className="space-y-6">
+        <TabsContent value="general" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -172,7 +172,7 @@ export default function CompleteUnifiedSettings({
                 {t('settings.themeSection.subtitle')}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               {/* Theme Selection */}
               <div className="space-y-3">
                 <Label className="text-base font-medium flex items-center gap-2">
@@ -285,12 +285,12 @@ export default function CompleteUnifiedSettings({
         </TabsContent>
 
         {/* NOTIFICACIONES - Para todos los roles */}
-        <TabsContent value="notifications" className="space-y-6">
+        <TabsContent value="notifications" className="space-y-4">
           <NotificationSettings userId={user.id} />
         </TabsContent>
 
-        {/* PREFERENCIAS ESPECÍFICAS DEL ROL */}
-        <TabsContent value="role-specific" className="space-y-6">
+        {/* PREFERENCIAS ESPECÃFICAS DEL ROL */}
+        <TabsContent value="role-specific" className="space-y-4">
           {currentRole === 'admin' && business && (
             <AdminRolePreferences business={business} />
           )}
@@ -303,7 +303,7 @@ export default function CompleteUnifiedSettings({
         </TabsContent>
 
         {/* ZONA PELIGROSA - Para todos los roles */}
-        <TabsContent value="danger-zone" className="space-y-6">
+        <TabsContent value="danger-zone" className="space-y-4">
           <DangerZone user={user} />
         </TabsContent>
       </Tabs>
@@ -415,7 +415,7 @@ function AdminRolePreferences({ business }: AdminRolePreferencesProps) {
       </div>
 
       {activeSubTab === 'info' && (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Basic Information */}
           <Card>
             <CardHeader>
@@ -567,7 +567,7 @@ function AdminRolePreferences({ business }: AdminRolePreferencesProps) {
             </CardContent>
           </Card>
 
-          {/* Configuraciones de Operación */}
+          {/* Configuraciones de OperaciÃ³n */}
           <Card>
             <CardHeader>
               <CardTitle>{t('settings.businessInfo.operationSettings.title')}</CardTitle>
@@ -928,7 +928,7 @@ function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePreferences
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {validationError && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -1061,7 +1061,7 @@ function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePreferences
         </CardContent>
       </Card>
 
-      {/* Información Profesional */}
+      {/* InformaciÃ³n Profesional */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -1090,7 +1090,7 @@ function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePreferences
             )}
           </div>
 
-          {/* Años de Experiencia */}
+          {/* AÃ±os de Experiencia */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="years-experience">{t('settings.employeePrefs.professionalInfo.yearsExperienceLabel')}</Label>
@@ -1323,7 +1323,7 @@ function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePreferences
                     <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                       <span>{t('settings.employeePrefs.certifications.issuedLabel')}: {new Date(cert.issue_date).toLocaleDateString()}</span>
                       {cert.expiry_date && (
-                        <span>• {t('settings.employeePrefs.certifications.expiresLabel')}: {new Date(cert.expiry_date).toLocaleDateString()}</span>
+                        <span>â€¢ {t('settings.employeePrefs.certifications.expiresLabel')}: {new Date(cert.expiry_date).toLocaleDateString()}</span>
                       )}
                     </div>
                     {cert.credential_url && (
@@ -1333,7 +1333,7 @@ function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePreferences
                         rel="noopener noreferrer"
                         className="text-xs text-primary hover:underline mt-1 inline-block"
                       >
-                        {t('settings.employeePrefs.certifications.viewCredential')} →
+                        {t('settings.employeePrefs.certifications.viewCredential')} â†’
                       </a>
                     )}
                   </div>
@@ -1443,7 +1443,7 @@ function ClientRolePreferences({ userId }: { userId: string }) {
   }, [userId])
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -1454,7 +1454,7 @@ function ClientRolePreferences({ userId }: { userId: string }) {
             {t('settings.clientPrefs.bookingPrefs.description')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
               <div className="space-y-0.5">
@@ -1603,8 +1603,8 @@ function DangerZone({ user }: DangerZoneProps) {
     setIsDeleting(true)
 
     try {
-      // Llamar a la función RPC para desactivar la cuenta
-      // Esta función automáticamente:
+      // Llamar a la funciÃ³n RPC para desactivar la cuenta
+      // Esta funciÃ³n automÃ¡ticamente:
       // - Marca is_active = FALSE en profiles
       // - Registra deactivated_at con timestamp
       // - Cancela todas las citas futuras pendientes
@@ -1614,7 +1614,7 @@ function DangerZone({ user }: DangerZoneProps) {
 
       if (error) throw error
 
-      // Cerrar sesión
+      // Cerrar sesiÃ³n
       await supabase.auth.signOut()
 
       toast.success(t('settings.dangerZone.delete.successTitle'), {
@@ -1624,7 +1624,7 @@ function DangerZone({ user }: DangerZoneProps) {
       // Limpiar localStorage
       localStorage.clear()
       
-      // Redirigir al login después de 2 segundos
+      // Redirigir al login despuÃ©s de 2 segundos
       setTimeout(() => {
         window.location.href = '/login'
       }, 2000)
@@ -1650,7 +1650,7 @@ function DangerZone({ user }: DangerZoneProps) {
             {t('settings.dangerZone.description')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
@@ -1697,7 +1697,7 @@ function DangerZone({ user }: DangerZoneProps) {
         </CardContent>
       </Card>
 
-      {/* Dialog de confirmación multi-paso */}
+      {/* Dialog de confirmaciÃ³n multi-paso */}
       <Dialog open={showDeleteDialog} onOpenChange={handleCloseDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>

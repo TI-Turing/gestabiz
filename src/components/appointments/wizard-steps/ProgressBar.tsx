@@ -19,15 +19,7 @@ export function ProgressBar({ currentStep, totalSteps, label, completedSteps = [
 
   return (
     <div className="mb-6">
-      {/* Header con step indicator y label */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-muted-foreground">
-          {t('appointments.wizard.step')} {currentStep} {t('appointments.wizard.of')} {totalSteps}
-        </span>
-        <span className="text-sm font-semibold text-primary">
-          {label}
-        </span>
-      </div>
+      
 
       {/* Indicadores de pasos con check marks y conectores entre círculos */}
       <div className="flex items-center mb-3 px-1">
@@ -71,23 +63,6 @@ export function ProgressBar({ currentStep, totalSteps, label, completedSteps = [
         })}
       </div>
 
-      {/* Barra de progreso horizontal */}
-      <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden">
-        <div
-          className="absolute top-0 left-0 h-full transition-all duration-500 ease-out bg-primary shadow-lg shadow-primary/50"
-          style={{ width: `${percentage}%` }}
-        />
-      </div>
-
-      {/* Porcentaje y estado */}
-      <div className="flex items-center justify-between mt-2">
-        <p className="text-xs text-muted-foreground">
-          {completedSteps.length} {t('appointments.wizard.of')} {totalSteps} {t('appointments.wizard.stepsCompleted')}
-        </p>
-        <p className="text-xs font-semibold text-primary">
-          {Math.round(percentage)}% {t('appointments.wizard.complete')}
-        </p>
-      </div>
     </div>
   );
 }

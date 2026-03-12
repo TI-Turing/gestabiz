@@ -179,9 +179,9 @@ export function OverviewTab({ business }: OverviewTabProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Stats Grid */}
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+      <div className="grid gap-3 grid-cols-1 lg:grid-cols-3">
         <Card
           className="bg-card border-border cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all group"
           onClick={handleTodayCardClick}
@@ -193,7 +193,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">{stats.todayAppointments}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.todayAppointments}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Citas programadas para hoy
             </p>
@@ -211,7 +211,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">{stats.upcomingAppointments}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.upcomingAppointments}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Citas futuras este mes
             </p>
@@ -226,7 +226,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">{stats.completedAppointments}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.completedAppointments}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Completadas este mes
             </p>
@@ -235,7 +235,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
       </div>
 
       {/* Detailed Stats Grid */}
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-1 lg:grid-cols-4">
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -244,7 +244,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">{stats.cancelledAppointments}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.cancelledAppointments}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Canceladas este mes
             </p>
@@ -259,7 +259,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">{stats.totalEmployees}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.totalEmployees}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Miembros del equipo activos
             </p>
@@ -274,7 +274,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">{stats.totalLocations}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.totalLocations}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Ubicaciones del negocio
             </p>
@@ -289,7 +289,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">{stats.totalServices}</div>
+            <div className="text-2xl font-bold text-foreground">{stats.totalServices}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Servicios ofertados activos
             </p>
@@ -298,7 +298,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
       </div>
 
       {/* Revenue and Avg Value */}
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+      <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -307,7 +307,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-foreground">
               ${stats.monthlyRevenue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -324,7 +324,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">
+            <div className="text-2xl font-bold text-foreground">
               ${stats.averageAppointmentValue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -337,7 +337,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
       {/* Quick Actions or Alerts */}
       {stats.totalLocations === 0 || stats.totalServices === 0 || business.is_configured === false ? (
         <Card className="bg-amber-500/10 border-amber-500/20">
-          <CardContent className="pt-6">
+          <CardContent className="pt-3">
             <div className="flex items-start gap-3">
               <AlertCircle className="h-5 w-5 text-amber-400 mt-0.5" />
               <div>
@@ -380,7 +380,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
       <Card className="bg-card border-border overflow-hidden">
         {/* Banner con desvanecido */}
         {business.banner_url && (
-          <div className="relative h-44 w-full overflow-hidden">
+          <div className="relative h-28 w-full overflow-hidden">
             <img
               src={business.banner_url}
               alt={`Banner de ${business.name}`}
@@ -397,15 +397,15 @@ export function OverviewTab({ business }: OverviewTabProps) {
                 <img
                   src={business.logo_url}
                   alt={`Logo de ${business.name}`}
-                  className="w-16 h-16 rounded-xl object-cover border-2 border-card shadow-lg bg-card shrink-0"
+                  className="w-12 h-12 rounded-xl object-cover border-2 border-card shadow-lg bg-card shrink-0"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center shrink-0 border-2 border-card shadow-lg">
-                  <Briefcase className="h-7 w-7 text-muted-foreground" />
+                <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center shrink-0 border-2 border-card shadow-lg">
+                  <Briefcase className="h-5 w-5 text-muted-foreground" />
                 </div>
               )}
-              <div className="pt-2">
-                <h3 className="text-xl font-bold text-foreground leading-tight">{business.name}</h3>
+              <div className="pt-1">
+                <h3 className="text-lg font-bold text-foreground leading-tight">{business.name}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wide">Información del Negocio</p>
               </div>
             </div>
