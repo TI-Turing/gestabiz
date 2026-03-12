@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useNavigate } from 'react-router-dom'
+import { APP_CONFIG } from '@/constants'
 import { 
   Calendar, 
   Clock, 
@@ -695,7 +696,7 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
                 </a>
               </div>
               <Badge variant="outline" className="text-xs text-gray-500 border-gray-300">
-                {t('landing.footer.version')}
+                {t('landing.footer.version').replace('0.0.1', APP_CONFIG.VERSION)}
               </Badge>
             </div>
           </div>

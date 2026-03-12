@@ -23,6 +23,7 @@ import { LocationAddress } from '@/components/ui/LocationAddress'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useChat } from '@/hooks/useChat'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { APP_CONFIG } from '@/constants'
 import { useMandatoryReviews } from '@/hooks/useMandatoryReviews'
 import { usePendingNavigation } from '@/hooks/usePendingNavigation'
 import { usePreferredCity } from '@/hooks/usePreferredCity'
@@ -900,7 +901,7 @@ export function ClientDashboard({
                 <span className="font-semibold text-primary">Ti Turing</span>
               </a>
               <span className="mx-2">·</span>
-              <span className="text-muted-foreground/70">v0.0.1</span>
+              <span className="text-muted-foreground/70">v{APP_CONFIG.VERSION}</span>
             </div>
           </footer>
         </div>

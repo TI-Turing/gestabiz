@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { LayoutDashboard, MapPin, Briefcase, Users, FileText, Shield, CreditCard, BriefcaseBusiness, ShoppingCart, Calendar, CalendarOff, Box, Wallet } from 'lucide-react'
 import { UnifiedLayout } from '@/components/layouts/UnifiedLayout'
 import { usePreferredLocation } from '@/hooks/usePreferredLocation'
+import { APP_CONFIG } from '@/constants'
 import { useQuery } from '@tanstack/react-query'
 import { locationsService } from '@/lib/services'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -341,7 +342,7 @@ export function AdminDashboard({
               <span className="font-semibold text-primary">Ti Turing</span>
             </a>
             <span className="mx-2">·</span>
-            <span className="text-muted-foreground/70">v0.0.1</span>
+            <span className="text-muted-foreground/70">v{APP_CONFIG.VERSION}</span>
           </div>
         </footer>
       </div>

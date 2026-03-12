@@ -9,7 +9,8 @@ import "./index.css"
 
 // ===== SENTRY INITIALIZATION =====
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
-const APP_VERSION = import.meta.env.VITE_APP_VERSION || '0.0.1';
+declare const __APP_VERSION__: string;
+const APP_VERSION = __APP_VERSION__;
 const SAMPLE_RATE = Number.parseFloat(import.meta.env.VITE_SENTRY_SAMPLE_RATE || '0.3');
 const IS_PRODUCTION = import.meta.env.PROD;
 
