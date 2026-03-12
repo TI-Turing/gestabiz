@@ -73,17 +73,6 @@ interface WizardData {
   notes: string;
 }
 
-const STEP_LABELS_MAP: Record<string, string> = {
-  business: 'Selección de Negocio',
-  location: 'Selección de Sede',
-  service: 'Selección de Servicio',
-  employee: 'Selección de Profesional',
-  employeeBusiness: 'Negocio del Profesional',
-  dateTime: 'Fecha y Hora',
-  confirmation: 'Confirmación',
-  success: 'Completado',
-};
-
 export function AppointmentWizard({ 
   open, 
   onClose, 
@@ -98,6 +87,17 @@ export function AppointmentWizard({
   appointmentToEdit
 }: Readonly<AppointmentWizardProps>) {
   const { t } = useLanguage()
+
+  const STEP_LABELS_MAP: Record<string, string> = {
+    business: t('appointments.wizard.stepLabels.business'),
+    location: t('appointments.wizard.stepLabels.location'),
+    service: t('appointments.wizard.stepLabels.service'),
+    employee: t('appointments.wizard.stepLabels.employee'),
+    employeeBusiness: t('appointments.wizard.stepLabels.employeeBusiness'),
+    dateTime: t('appointments.wizard.stepLabels.dateTime'),
+    confirmation: t('appointments.wizard.stepLabels.confirmation'),
+    success: t('appointments.wizard.stepLabels.success'),
+  };
 
   // Normaliza horas preseleccionadas a formato de 12h con AM/PM y hora de 2 dígitos ("hh:mm AM/PM")
   // Ejemplos:
@@ -891,14 +891,14 @@ export function AppointmentWizard({
       >
         {/* DialogTitle para accesibilidad (screen readers) */}
         <DialogTitle className="sr-only">
-          {appointmentToEdit ? 'Editar Cita' : 'Nueva Cita'}
+          {appointmentToEdit ? t('appointments.wizard.editAppointment') : t('appointments.wizard.newAppointment')}
         </DialogTitle>
         {/* Header - Mobile Responsive */}
         {currentStep < getStepNumber('success') && (
           <div className="px-3 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
             <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
               <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">
-                {appointmentToEdit ? 'Editar Cita' : 'Nueva Cita'}
+                {appointmentToEdit ? t('appointments.wizard.editAppointment') : t('appointments.wizard.newAppointment')}
               </h2>
               <button
                 onClick={handleClose}
@@ -1109,7 +1109,7 @@ export function AppointmentWizard({
               disabled={currentStep === (businessId ? 1 : 0) || isSubmitting}
               className="bg-transparent border-border text-foreground hover:bg-muted min-h-[44px] order-2 sm:order-1"
             >
-              ← Back
+              ← {t('common.back')}
             </Button>
 
             {currentStep < getStepNumber('confirmation') ? (
@@ -1118,7 +1118,7 @@ export function AppointmentWizard({
                 disabled={!canProceed() || isSubmitting}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground min-h-[44px] order-1 sm:order-2"
               >
-                Next Step →
+                {t('appointments.wizard.nextStep')} →
               </Button>
             ) : (
               <Button

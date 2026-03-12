@@ -94,5 +94,16 @@ export const appointments = {
     stepsCompleted: 'pasos completados',
     complete: 'Completo',
     selectDatePrompt: 'Selecciona una fecha para ver los horarios disponibles',
+    nextStep: 'Siguiente Paso',
+    stepLabels: {
+      business: 'Selección de Negocio',
+      location: 'Selección de Sede',
+      service: 'Selección de Servicio',
+      employee: 'Selección de Profesional',
+      employeeBusiness: 'Negocio del Profesional',
+      dateTime: 'Fecha y Hora',
+      confirmation: 'Confirmación',
+      success: 'Completado',
+    },
   },
 }
