@@ -84,11 +84,11 @@ export function usePermissions(businessId?: string) {
    * @returns true si tiene el permiso, false en caso contrario
    */
   const hasPermission = useCallback((permission: Permission): boolean => {
-    if (!userId || !finalBusinessId || !ownerId || !user) return false
+    if (!userId || !finalBusinessId || !user) return false
     if (isOwner) return true
     const result = v2CheckPermission(permission)
     return result.hasPermission
-  }, [v2CheckPermission, isOwner, userId, finalBusinessId, ownerId, user])
+  }, [v2CheckPermission, isOwner, userId, finalBusinessId, user])
   
   // ============================================================
   // API V2 (recomendada para nuevo código)
@@ -101,7 +101,7 @@ export function usePermissions(businessId?: string) {
    * @returns Objeto con hasPermission, isOwner, reason
    */
   const checkPermission = useCallback((permission: Permission) => {
-    if (!userId || !finalBusinessId || !ownerId || !user) {
+    if (!userId || !finalBusinessId || !user) {
       return {
         hasPermission: false,
         isOwner: false,
@@ -109,10 +109,11 @@ export function usePermissions(businessId?: string) {
       }
     }
     return v2CheckPermission(permission)
-  }, [v2CheckPermission, userId, finalBusinessId, ownerId, user])
+  }, [v2CheckPermission, userId, finalBusinessId, user])
   
-  // Hook v2 base habilitado solo si tenemos los datos necesarios
-  const v2Enabled = !!(userId && finalBusinessId && ownerId && user)
+  // Hook v2 base habilitado solo si tenemos los datos necesarios (ownerId ya no es requerido
+  // aquí porque usePermissions-v2 lo obtiene directamente de la BD)
+  const v2Enabled = !!(userId && finalBusinessId && user)
   
   return {
     // ========== API Legacy (compatible) ==========

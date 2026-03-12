@@ -235,6 +235,12 @@ export type Permission =
   | 'clients.communication'
   | 'clients.history'
   
+  // Resources (4)
+  | 'resources.view'
+  | 'resources.create'
+  | 'resources.edit'
+  | 'resources.delete'
+  
   // Accounting (9)
   | 'accounting.view'
   | 'accounting.tax_config'
