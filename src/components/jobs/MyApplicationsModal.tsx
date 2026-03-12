@@ -57,6 +57,11 @@ const STATUS_CONFIG = {
     icon: XCircle,
     color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
   },
+  in_selection_process: {
+    label: 'En Proceso de Selección',
+    icon: AlertCircle,
+    color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+  },
   // 🔧 BUG-014: Agregar estado COMPLETED con formato adecuado
   completed: {
     label: 'Completada',
@@ -77,6 +82,7 @@ export const MyApplicationsModal: React.FC<MyApplicationsModalProps> = ({
     all: applications.length,
     pending: applications.filter(a => a.status === 'pending').length,
     reviewing: applications.filter(a => a.status === 'reviewing').length,
+    in_selection_process: applications.filter(a => a.status === 'in_selection_process').length,
     accepted: applications.filter(a => a.status === 'accepted').length,
     rejected: applications.filter(a => a.status === 'rejected').length,
     withdrawn: applications.filter(a => a.status === 'withdrawn').length,
@@ -126,7 +132,7 @@ export const MyApplicationsModal: React.FC<MyApplicationsModalProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="all" className="w-full" onValueChange={(v) => setActiveTab(v as JobApplication['status'] | 'all')}>
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="all">
               Todas ({statusCounts.all})
             </TabsTrigger>
@@ -135,6 +141,9 @@ export const MyApplicationsModal: React.FC<MyApplicationsModalProps> = ({
             </TabsTrigger>
             <TabsTrigger value="reviewing">
               En revisión ({statusCounts.reviewing})
+            </TabsTrigger>
+            <TabsTrigger value="in_selection_process">
+              En Selección ({statusCounts.in_selection_process})
             </TabsTrigger>
             <TabsTrigger value="accepted">
               Aceptadas ({statusCounts.accepted})
@@ -147,7 +156,7 @@ export const MyApplicationsModal: React.FC<MyApplicationsModalProps> = ({
             </TabsTrigger>
           </TabsList>
 
-          {['all', 'pending', 'reviewing', 'accepted', 'rejected', 'withdrawn'].map((tabKey) => {
+          {['all', 'pending', 'reviewing', 'in_selection_process', 'accepted', 'rejected', 'withdrawn'].map((tabKey) => {
             const tabApplications = tabKey === 'all'
               ? applications
               : applications.filter(a => a.status === tabKey);
@@ -195,7 +204,11 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
   application,
   onDownloadCV,
 }) => {
-  const statusConfig = STATUS_CONFIG[application.status];
+  const statusConfig = STATUS_CONFIG[application.status] ?? {
+    label: application.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+    icon: Clock,
+    color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+  };
   const StatusIcon = statusConfig.icon;
 
   return (

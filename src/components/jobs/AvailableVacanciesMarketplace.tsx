@@ -82,7 +82,7 @@ export const AvailableVacanciesMarketplace: React.FC<AvailableVacanciesMarketpla
   // (la RPC solo soporta p_city, no búsqueda por texto)
   const filteredVacancies = searchQuery
     ? vacancies.filter((v) =>
-        v.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         v.business_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         v.description?.toLowerCase().includes(searchQuery.toLowerCase())
       )
