@@ -150,8 +150,8 @@ const CustomDateInput = forwardRef<HTMLDivElement, CustomDateInputProps>(
           
           .react-datepicker__month {
             padding: 8px;
-            background: #18181b !important;
-            background-color: #18181b !important;
+            background: hsl(var(--background)) !important;
+            background-color: hsl(var(--background)) !important;
           }
           
           .react-datepicker__week {
