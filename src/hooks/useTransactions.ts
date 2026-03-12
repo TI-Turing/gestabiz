@@ -56,7 +56,7 @@ export function useTransactions(filters?: TransactionFilters) {
       // Fetch recurring expenses to include in summary
       let recurringExpensesTotal = 0;
       if (filters?.business_id) {
-        let recurringQuery = supabase
+        const recurringQuery = supabase
           .from('recurring_expenses')
           .select('amount')
           .eq('business_id', filters.business_id)
