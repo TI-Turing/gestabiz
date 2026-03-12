@@ -156,6 +156,28 @@ export function usePermissions({ userId, businessId, ownerId }: UsePermissionsOp
   })
 
   /**
+   * Obtiene el owner_id real del negocio específico que se está verificando.
+   * Esto es necesario porque el ownerId del contexto de auth puede apuntar a un
+   * negocio diferente al que se está visualizando (ej: al cambiar de negocio o al
+   * crear uno nuevo sin actualizar el localStorage).
+   */
+  const { data: businessOwnerData, isLoading: loadingBusinessOwner } = useQuery({
+    queryKey: ['business-owner-id', businessId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('owner_id')
+        .eq('id', businessId)
+        .single()
+      if (error) throw error
+      if (!data) throw new Error('Business not found')
+      return data as { owner_id: string }
+    },
+    enabled: !!businessId,
+    staleTime: 10 * 60 * 1000, // 10 minutos - la propiedad del negocio raramente cambia
+  })
+
+  /**
    * Obtiene plantillas de permisos
    */
   const { data: templates, isLoading: loadingTemplates } = useQuery({
@@ -210,7 +232,11 @@ export function usePermissions({ userId, businessId, ownerId }: UsePermissionsOp
   // VERIFICACIONES
   // =====================================================
 
-  const isOwner = isBusinessOwner(userId, ownerId)
+  // Usar el owner_id real del negocio (fetched de DB) como fuente de verdad.
+  // El ownerId pasado como parámetro puede ser incorrecto si el contexto de auth
+  // apunta a un negocio diferente (ej: al cambiar de negocio o al crear uno nuevo).
+  const effectiveOwnerId = businessOwnerData?.owner_id || ownerId
+  const isOwner = isBusinessOwner(userId, effectiveOwnerId)
   const isAdmin = hasBusinessRole(businessRoles || [], businessId, 'admin')
   const isEmployee = hasBusinessRole(businessRoles || [], businessId, 'employee')
   const role = getUserBusinessRole(businessRoles || [], businessId)
@@ -224,7 +250,7 @@ export function usePermissions({ userId, businessId, ownerId }: UsePermissionsOp
       return { hasPermission: true, isOwner: true, reason: 'Admin Dueño' }
     }
 
-    const result = hasPermission(userId, ownerId, userPermissions || [], permission)
+    const result = hasPermission(userId, effectiveOwnerId, userPermissions || [], permission)
     return {
       hasPermission: result,
       isOwner: false,
@@ -240,7 +266,7 @@ export function usePermissions({ userId, businessId, ownerId }: UsePermissionsOp
       return { hasPermission: true, isOwner: true, reason: 'Admin Dueño' }
     }
 
-    const result = hasAnyPermission(userId, ownerId, userPermissions || [], permissions)
+    const result = hasAnyPermission(userId, effectiveOwnerId, userPermissions || [], permissions)
     return {
       hasPermission: result,
       isOwner: false,
@@ -256,7 +282,7 @@ export function usePermissions({ userId, businessId, ownerId }: UsePermissionsOp
       return { hasPermission: true, isOwner: true, reason: 'Admin Dueño' }
     }
 
-    const result = hasAllPermissions(userId, ownerId, userPermissions || [], permissions)
+    const result = hasAllPermissions(userId, effectiveOwnerId, userPermissions || [], permissions)
     return {
       hasPermission: result,
       isOwner: false,
@@ -269,7 +295,7 @@ export function usePermissions({ userId, businessId, ownerId }: UsePermissionsOp
    */
   const activePermissions = getUserActivePermissions(
     userId,
-    ownerId,
+    effectiveOwnerId,
     userPermissions || []
   )
 
@@ -539,7 +565,7 @@ export function usePermissions({ userId, businessId, ownerId }: UsePermissionsOp
 
   return {
     // Estado
-    isLoading: loadingRoles || loadingPermissions,
+    isLoading: loadingRoles || loadingPermissions || loadingBusinessOwner,
     isOwner,
     isAdmin,
     isEmployee,

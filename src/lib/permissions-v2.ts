@@ -100,6 +100,12 @@ export const ALL_PERMISSIONS: Permission[] = [
   'services.delete',
   'services.prices',
   
+  // Resources (4)
+  'resources.view',
+  'resources.create',
+  'resources.edit',
+  'resources.delete',
+  
   // Employees (8)
   'employees.view',
   'employees.create',
@@ -186,6 +192,12 @@ export const PERMISSION_DESCRIPTIONS: Record<string, string> = {
   'services.edit': 'Editar información de servicios',
   'services.delete': 'Eliminar servicios',
   'services.prices': 'Modificar precios de servicios',
+  
+  // Resources
+  'resources.view': 'Ver lista de recursos',
+  'resources.create': 'Crear nuevos recursos',
+  'resources.edit': 'Editar información de recursos',
+  'resources.delete': 'Eliminar recursos',
   
   // Employees
   'employees.view': 'Ver lista de empleados',
@@ -281,6 +293,15 @@ export const PERMISSION_CATEGORIES = {
       'services.edit',
       'services.delete',
       'services.prices',
+    ] as Permission[],
+  },
+  resources: {
+    label: 'Recursos',
+    permissions: [
+      'resources.view',
+      'resources.create',
+      'resources.edit',
+      'resources.delete',
     ] as Permission[],
   },
   employees: {
