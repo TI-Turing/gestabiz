@@ -15,6 +15,7 @@ import { useEmployeeRequests } from '@/hooks/useEmployeeRequests'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import logoTiTuring from '@/assets/images/tt/1.png'
 import { 
   Select,
@@ -227,9 +228,11 @@ export function EmployeeDashboard({
       case 'vacancies':
         return (
           <div className="p-6">
-            <Suspense fallback={<div className="flex items-center justify-center h-96"><LoadingSpinner /></div>}>
-              <AvailableVacanciesMarketplace userId={currentUser.id} />
-            </Suspense>
+            <ErrorBoundary componentName="BuscarVacantes">
+              <Suspense fallback={<div className="flex items-center justify-center h-96"><LoadingSpinner /></div>}>
+                <AvailableVacanciesMarketplace userId={currentUser.id} />
+              </Suspense>
+            </ErrorBoundary>
           </div>
         )
       case 'absences':
