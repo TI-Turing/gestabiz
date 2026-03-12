@@ -11,6 +11,7 @@ import { PhoneRequiredModal } from '@/components/employee/PhoneRequiredModal'
 import { usePendingNavigation } from '@/hooks/usePendingNavigation'
 import { useEmployeeAbsences } from '@/hooks/useEmployeeAbsences'
 import { useEmployeeBusinesses } from '@/hooks/useEmployeeBusinesses'
+import { APP_CONFIG } from '@/constants'
 import { useEmployeeRequests } from '@/hooks/useEmployeeRequests'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Button } from '@/components/ui/button'
@@ -373,7 +374,7 @@ export function EmployeeDashboard({
               <span className="font-semibold text-primary">Ti Turing</span>
             </a>
             <span className="mx-2">·</span>
-            <span className="text-muted-foreground/70">v0.0.1</span>
+            <span className="text-muted-foreground/70">v{APP_CONFIG.VERSION}</span>
           </div>
         </footer>
       </div>

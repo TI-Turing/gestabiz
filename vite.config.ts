@@ -5,6 +5,9 @@ import { sentryVitePlugin } from "@sentry/vite-plugin";
 
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { readFileSync } from 'node:fs'
+
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8'))
 
 // import.meta.dirname no existe en Vite/TS; derivamos desde import.meta.url
 const projectRoot = dirname(fileURLToPath(import.meta.url))
@@ -26,6 +29,9 @@ export default defineConfig({
       },
     }),
   ],
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   resolve: {
     alias: {
       '@': resolve(projectRoot, 'src')
