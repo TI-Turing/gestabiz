@@ -48,7 +48,7 @@ export const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({
   onSuccess,
 }) => {
   const { t } = useLanguage();
-  const { createApplication, loading: submitting } = useJobApplications({ businessId: undefined });
+  const { createApplication, loading: submitting } = useJobApplications({ userId });
   const { checkConflict, loading: checkingConflicts } = useScheduleConflicts();
 
   const [coverLetter, setCoverLetter] = useState('');
