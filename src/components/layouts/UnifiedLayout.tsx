@@ -1,9 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { 
   Settings, 
   Menu,
   X,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
   Building2,
   LogOut,
   User as UserIcon,
@@ -22,6 +26,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { isTouchDevice } from '@/lib/animations'
 import type { Business, UserRole } from '@/types/types'
@@ -30,6 +35,14 @@ import { FloatingChatButton } from '@/components/chat/FloatingChatButton'
 import { BugReportModal } from '@/components/bug-report/BugReportModal'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { useLanguage } from '@/contexts/LanguageContext'
+
+// Sidebar width constants
+const SIDEBAR_EXPANDED_W = 'w-56' // 224px
+const SIDEBAR_COLLAPSED_W = 'w-16' // 64px
+const SIDEBAR_EXPANDED_ML = 'lg:ml-56'
+const SIDEBAR_COLLAPSED_ML = 'lg:ml-16'
+const SIDEBAR_EXPANDED_LEFT = 'lg:left-56'
+const SIDEBAR_COLLAPSED_LEFT = 'lg:left-16'
 
 
 interface SearchResult {
@@ -106,6 +119,16 @@ export function UnifiedLayout({
     if (typeof window === 'undefined') return false
     return window.innerWidth >= 1024
   })
+  // Sidebar collapsed state (icons only) - persisted in localStorage
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return true
+    try {
+      const stored = localStorage.getItem('sidebar-collapsed')
+      if (stored !== null) return stored === 'true'
+    } catch { /* ignore */ }
+    // Default: collapsed on screens < 1440px
+    return window.innerWidth < 1440
+  })
   const [bugReportOpen, setBugReportOpen] = useState(false)
   const [locationMenuOpen, setLocationMenuOpen] = useState(false)
   const [mobileHeaderOpen, setMobileHeaderOpen] = useState(false)
@@ -132,6 +155,15 @@ export function UnifiedLayout({
     preferredCityName,
     setPreferredCity
   } = usePreferredCity()
+
+  // Toggle sidebar collapsed state
+  const toggleSidebarCollapsed = useCallback(() => {
+    setSidebarCollapsed(prev => {
+      const next = !prev
+      try { localStorage.setItem('sidebar-collapsed', String(next)) } catch { /* ignore */ }
+      return next
+    })
+  }, [])
 
   // Close location menu when clicking outside
   useEffect(() => {
@@ -231,79 +263,176 @@ export function UnifiedLayout({
 
   return (
     <div ref={rootRef} className="min-h-screen bg-background flex overflow-x-hidden">
-      {/* Sidebar - Full Height & Fixed */}
+      {/* Sidebar - Full Height & Fixed - Collapsible */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen bg-card border-r border-border z-[100] transition-transform duration-300 w-64 flex flex-col",
+          "fixed left-0 top-0 h-screen bg-card border-r border-border z-[100] transition-all duration-200 flex flex-col",
+          sidebarCollapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W,
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Logo/Brand */}
-        <div className="px-4  border-b border-border flex-shrink-0">
-          <div className="flex items-center gap-4">
+        <div className={cn(
+          "border-b border-border flex-shrink-0 flex items-center",
+          sidebarCollapsed ? "px-2 py-3 justify-center" : "px-3 py-3"
+        )}>
+          {sidebarCollapsed ? (
             <img 
               src={logoGestabiz} 
-              alt="Gestabiz Logo" 
-              className="w-28 h-22 rounded-2xl object-contain"
+              alt="Gestabiz" 
+              className="w-10 h-10 rounded-xl object-contain"
             />
-            <span className="text-2xl font-bold text-foreground">
-              Gestabiz
-            </span>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <img 
+                src={logoGestabiz} 
+                alt="Gestabiz Logo" 
+                className="w-10 h-10 rounded-xl object-contain"
+              />
+              <span className="text-lg font-bold text-foreground">
+                Gestabiz
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Navigation - Scrollable */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {sidebarItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                onPageChange(item.id)
-                // Close sidebar on mobile after selection
-                if (window.innerWidth < 1024) {
-                  setSidebarOpen(false)
-                }
-              }}
-              className={cn(
-                "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left",
-                activePage === item.id
-                  ? "bg-primary text-primary-foreground font-semibold"
-                  : "text-foreground hover:bg-muted"
-              )}
-            >
-              {item.icon}
-              <span className="flex-1">{item.label}</span>
-              {item.badge !== undefined && item.badge > 0 && (
-                <Badge 
-                  variant={activePage === item.id ? "secondary" : "default"}
-                  className="ml-auto"
-                >
-                  {item.badge}
-                </Badge>
-              )}
-            </button>
-          ))}
+        <nav className={cn(
+          "flex-1 space-y-0.5 overflow-y-auto",
+          sidebarCollapsed ? "p-2" : "p-3"
+        )}>
+          {sidebarItems.map((item) => {
+            const navButton = (
+              <button
+                key={item.id}
+                onClick={() => {
+                  onPageChange(item.id)
+                  if (window.innerWidth < 1024) {
+                    setSidebarOpen(false)
+                  }
+                }}
+                className={cn(
+                  "w-full flex items-center rounded-lg transition-colors text-left",
+                  sidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
+                  activePage === item.id
+                    ? "bg-primary text-primary-foreground font-semibold"
+                    : "text-foreground hover:bg-muted"
+                )}
+              >
+                <span className="shrink-0">{item.icon}</span>
+                {!sidebarCollapsed && (
+                  <>
+                    <span className="flex-1 text-sm">{item.label}</span>
+                    {item.badge !== undefined && item.badge > 0 && (
+                      <Badge 
+                        variant={activePage === item.id ? "secondary" : "default"}
+                        className="ml-auto text-xs"
+                      >
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </>
+                )}
+                {sidebarCollapsed && item.badge !== undefined && item.badge > 0 && (
+                  <Badge 
+                    variant={activePage === item.id ? "secondary" : "default"}
+                    className="absolute -top-1 -right-1 text-[10px] h-4 min-w-4 px-1"
+                  >
+                    {item.badge}
+                  </Badge>
+                )}
+              </button>
+            )
+
+            if (sidebarCollapsed) {
+              return (
+                <Tooltip key={item.id}>
+                  <TooltipTrigger asChild>
+                    <div className="relative">
+                      {navButton}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8}>
+                    {item.label}
+                  </TooltipContent>
+                </Tooltip>
+              )
+            }
+
+            return navButton
+          })}
         </nav>
 
-        {/* Bottom Menu - Bug Report & Logout */}
-        <div className="p-4 border-t border-border flex-shrink-0 space-y-2">
-          <button
-            onClick={() => setBugReportOpen(true)}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            <Bug className="h-5 w-5" />
-            <span className="font-medium">{t('common.actions.reportProblem')}</span>
-          </button>
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <LogOut className="h-5 w-5" />
-              <span className="font-medium">{t('common.actions.logout')}</span>
-            </button>
+        {/* Bottom Menu - Bug Report, Logout & Collapse Toggle */}
+        <div className={cn(
+          "border-t border-border flex-shrink-0",
+          sidebarCollapsed ? "p-2 space-y-0.5" : "p-3 space-y-0.5"
+        )}>
+          {sidebarCollapsed ? (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setBugReportOpen(true)}
+                    className="w-full flex items-center justify-center p-2.5 rounded-lg transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <Bug className="h-5 w-5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8}>
+                  {t('common.actions.reportProblem')}
+                </TooltipContent>
+              </Tooltip>
+              {onLogout && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={onLogout}
+                      className="w-full flex items-center justify-center p-2.5 rounded-lg transition-colors text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                      <LogOut className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8}>
+                    {t('common.actions.logout')}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => setBugReportOpen(true)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <Bug className="h-5 w-5" />
+                <span className="text-sm font-medium">{t('common.actions.reportProblem')}</span>
+              </button>
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="text-sm font-medium">{t('common.actions.logout')}</span>
+                </button>
+              )}
+            </>
           )}
         </div>
+
+        {/* Collapse toggle - floating on right edge, desktop only */}
+        <button
+          onClick={toggleSidebarCollapsed}
+          className="hidden lg:flex absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-7 h-14 rounded-r-lg bg-card border border-l-0 border-border shadow-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {sidebarCollapsed ? (
+            <PanelLeftOpen className="h-4 w-4" />
+          ) : (
+            <PanelLeftClose className="h-4 w-4" />
+          )}
+        </button>
       </aside>
 
       {/* Overlay for mobile */}
@@ -315,11 +444,17 @@ export function UnifiedLayout({
       )}
 
       {/* Right Side: Header + Content */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-y-auto lg:ml-64">
-        {/* Header - Responsive height (fixed on mobile, sticky on desktop) */}
-        <header className="bg-card border-b border-border fixed inset-x-0 top-0 z-[90] sm:fixed sm:left-0 sm:right-0 sm:top-0 lg:left-64 shrink-0">
+      <div className={cn(
+        "flex-1 flex flex-col min-h-screen overflow-y-auto transition-[margin] duration-200",
+        sidebarCollapsed ? SIDEBAR_COLLAPSED_ML : SIDEBAR_EXPANDED_ML
+      )}>
+        {/* Header - Compact responsive height */}
+        <header className={cn(
+          "bg-card border-b border-border fixed inset-x-0 top-0 z-[90] sm:fixed sm:left-0 sm:right-0 sm:top-0 shrink-0 transition-[left] duration-200",
+          sidebarCollapsed ? SIDEBAR_COLLAPSED_LEFT : SIDEBAR_EXPANDED_LEFT
+        )}>
         {/* Mobile top bar: logo abre el menú izquierdo + botón menú derecho */}
-        <div className="px-3 py-3 flex items-center justify-between sm:hidden min-h-[56px]">
+        <div className="px-3 py-2 flex items-center justify-between sm:hidden min-h-[48px]">
           <div className="flex items-center gap-2">
             {/* Logo como botón para abrir el menú izquierdo */}
             <button
@@ -351,8 +486,8 @@ export function UnifiedLayout({
             </button>
           </div>
         </div>
-        <div className="hidden sm:grid px-3 sm:px-6 py-3 sm:py-4 grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-2 h-full min-h-[64px] sm:min-h-[89px]">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="hidden sm:grid px-3 sm:px-4 py-2 grid-cols-[auto_1fr_auto] items-center gap-2 h-full min-h-[48px] sm:min-h-[56px]">
+          <div className="flex items-center gap-2 min-w-0">
             {/* Mobile menu toggle - Touch optimized */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -370,22 +505,22 @@ export function UnifiedLayout({
             {business ? (
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="inline-flex items-center gap-2 sm:gap-3 hover:bg-muted/50 rounded-lg p-1.5 sm:p-2 transition-colors group focus:outline-none min-w-0 overflow-hidden">
+                  <DropdownMenuTrigger className="inline-flex items-center gap-2 hover:bg-muted/50 rounded-lg p-1.5 transition-colors group focus:outline-none min-w-0 overflow-hidden">
                     {business.logo_url ? (
                       <img
                         src={business.logo_url}
                         alt={business.name}
-                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl object-contain bg-muted p-1.5 sm:p-2 border-2 border-primary/20 flex-shrink-0"
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-contain bg-muted p-1 border border-primary/20 flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-primary/20 flex items-center justify-center border-2 border-primary/20 flex-shrink-0">
-                        <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/20 flex items-center justify-center border border-primary/20 flex-shrink-0">
+                        <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
                       </div>
                     )}
 
-                    <div className="text-left flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className="text-left flex items-center gap-1.5 min-w-0">
                       <div className="min-w-0">
-                        <h1 className="text-base sm:text-xl font-bold text-foreground truncate max-w-[120px] sm:max-w-[200px] md:max-w-[160px]">
+                        <h1 className="text-sm sm:text-base font-bold text-foreground truncate max-w-[120px] sm:max-w-[180px] md:max-w-[160px]">
                           {business.name}
                         </h1>
                       </div>
@@ -542,8 +677,8 @@ export function UnifiedLayout({
             )}
           </div>
 
-          {/* Right Side Controls - Responsive */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          {/* Right Side Controls - Compact */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             {/* Notification Bell - Show for authenticated users */}
             {user?.id && (
               <NotificationBell 
@@ -626,7 +761,7 @@ export function UnifiedLayout({
       </header>
 
       {/* Main Content - Scrollable area (mobile padding to account for fixed header) */}
-      <main className="flex-1 px-3 sm:px-6 max-w-[100vw] overflow-x-hidden pt-[56px] sm:pt-[64px] lg:pt-[89px]">
+      <main className="flex-1 px-3 sm:px-4 max-w-[100vw] overflow-x-hidden pt-[48px] sm:pt-[56px]">
           {children}
       </main>
 

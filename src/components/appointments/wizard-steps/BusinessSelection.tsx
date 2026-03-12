@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Check, Building2, Filter, Search, Star } from 'lucide-react';
-import { MapPin, Phone } from '@phosphor-icons/react';
+import { Check, Building2, Filter, Search, Star, ChevronDown } from 'lucide-react';
+import { MapPin } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { withCache } from '@/lib/cache';
 import supabase from '@/lib/supabase';
@@ -21,6 +19,7 @@ interface Business {
   name: string;
   description: string | null;
   logo_url: string | null;
+  banner_url?: string | null;
   address: string | null;
   city: string | null;
   phone: string | null;
@@ -73,6 +72,9 @@ export function BusinessSelection({
   const [ratingStatsByBusinessId, setRatingStatsByBusinessId] = useState<Record<string, { average_rating: number; review_count: number }>>({});
   const [filtersApplied, setFiltersApplied] = useState<boolean>(false);
   const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [categoriesMap, setCategoriesMap] = useState<Record<string, string>>({});
+  const [servicesByBusinessId, setServicesByBusinessId] = useState<Record<string, string[]>>({});
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   // Ratings: se consumen desde la Edge Function `search_businesses`.
   
   // Helper para detectar UUID (IDs de ciudad/región)
@@ -90,7 +92,7 @@ export function BusinessSelection({
     if (!ids || ids.length === 0) return [];
     const { data, error } = await supabase
       .from('businesses')
-      .select('id, name, description, logo_url, address, city, phone, category_id')
+      .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
       .in('id', ids)
       .eq('is_active', true)
       .eq('is_public', true);
@@ -294,29 +296,61 @@ export function BusinessSelection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderBestRated, ratingStatsByBusinessId, PAGE_SIZE]);
 
-  // Imagen placeholder para negocios
-  const getBusinessImage = (business: Business): string => {
+  // Cargar categorías y servicios para las tarjetas
+  useEffect(() => {
+    if (displayedBusinesses.length === 0) return;
+    const bizIds = displayedBusinesses.map(b => b.id);
+    const fetchExtra = async () => {
+      // Categorías
+      const catIds = [...new Set(displayedBusinesses.map(b => b.category_id).filter(Boolean) as string[])];
+      const missingCats = catIds.filter(id => !categoriesMap[id]);
+      if (missingCats.length > 0) {
+        const { data } = await supabase.from('business_categories').select('id, name').in('id', missingCats);
+        if (data) {
+          setCategoriesMap(prev => ({ ...prev, ...Object.fromEntries((data as { id: string; name: string }[]).map(c => [c.id, c.name])) }));
+        }
+      }
+      // Servicios (primeros 5 por negocio)
+      const missingBizIds = bizIds.filter(id => !(id in servicesByBusinessId));
+      if (missingBizIds.length > 0) {
+        const { data } = await supabase
+          .from('services')
+          .select('id, name, business_id')
+          .in('business_id', missingBizIds)
+          .eq('is_active', true)
+          .order('name')
+          .limit(missingBizIds.length * 6);
+        if (data) {
+          const map: Record<string, string[]> = {};
+          for (const s of (data as { id: string; name: string; business_id: string }[])) {
+            if (!map[s.business_id]) map[s.business_id] = [];
+            if (map[s.business_id].length < 5) map[s.business_id].push(s.name);
+          }
+          for (const id of missingBizIds) if (!map[id]) map[id] = [];
+          setServicesByBusinessId(prev => ({ ...prev, ...map }));
+        }
+      }
+    };
+    void fetchExtra();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayedBusinesses]);
+
+  // Banner placeholder basado en el tipo de negocio
+  const getBannerImage = (business: Business): string => {
+    if (business.banner_url) return business.banner_url;
     if (business.logo_url) return business.logo_url;
-    
-    // Placeholder basado en el tipo de negocio
     const name = business.name.toLowerCase();
-    if (name.includes('salon') || name.includes('beauty') || name.includes('belleza')) {
-      return 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=400&fit=crop';
-    }
-    if (name.includes('spa') || name.includes('relax')) {
-      return 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=400&fit=crop';
-    }
-    if (name.includes('gym') || name.includes('fitness')) {
-      return 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop';
-    }
-    if (name.includes('clinic') || name.includes('dental') || name.includes('medic')) {
-      return 'https://images.unsplash.com/photo-1629909615184-74f495363b67?w=400&h=400&fit=crop';
-    }
-    if (name.includes('barberia') || name.includes('barber')) {
-      return 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&h=400&fit=crop';
-    }
-    // Default business image
-    return 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=400&fit=crop';
+    if (name.includes('salon') || name.includes('beauty') || name.includes('belleza'))
+      return 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&h=300&fit=crop';
+    if (name.includes('spa') || name.includes('relax'))
+      return 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=300&fit=crop';
+    if (name.includes('gym') || name.includes('fitness'))
+      return 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=300&fit=crop';
+    if (name.includes('clinic') || name.includes('dental') || name.includes('medic'))
+      return 'https://images.unsplash.com/photo-1629909615184-74f495363b67?w=800&h=300&fit=crop';
+    if (name.includes('barberia') || name.includes('barber'))
+      return 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&h=300&fit=crop';
+    return 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=300&fit=crop';
   };
 
   // Handle search and filter businesses in real-time
@@ -499,6 +533,17 @@ export function BusinessSelection({
     }
   }, [hookCityData, propCityName, propRegionName, user?.id, PAGE_SIZE, minRating, minReviewCount]);
 
+  // Aplicar filtros automáticamente con debounce cuando cambian los valores
+  const debouncedApplyFilters = useDebounce(handleApplyFilters, 500);
+  
+  useEffect(() => {
+    // Solo aplicar si los filtros ya fueron usados una vez o si hay cambios significativos
+    if (filtersApplied || typeof minReviewCount === 'number' || minRating === 4.5) {
+      void debouncedApplyFilters();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minReviewCount, minRating]);
+
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center">
@@ -512,210 +557,204 @@ export function BusinessSelection({
   const isSearching = (searchTerm && searchTerm.trim().length >= 2);
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Título */}
-      <div>
-        <h3 className="text-xl font-semibold text-foreground mb-2">
-          Selecciona un Negocio
-        </h3>
-        <p className="text-muted-foreground mb-4">
-          Elige el negocio donde deseas agendar tu cita
-        </p>
-        {(preferredCityName || preferredRegionName) && (
-          <p className="text-xs text-muted-foreground mb-3">
-            Ubicación preferida: {preferredCityName || preferredRegionName}
-          </p>
-        )}
-
-        {/* Barra de búsqueda simple sin dropdown */}
-        <div className="w-full relative">
-          <div className="flex items-center border border-input rounded-lg overflow-hidden bg-input">
-            <div className="flex-1 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value, searchType)}
-                placeholder="Buscar negocios..."
-                className="w-full pl-10 pr-3 py-2 border-0 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset text-sm"
-              />
-            </div>
+    <div className="p-3 space-y-3">
+      {/* Barra de búsqueda y filtros juntos */}
+      <div className="w-full flex flex-col sm:flex-row gap-2 items-center">
+        <div className="flex-1 relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-muted-foreground" />
           </div>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value, searchType)}
+            placeholder="Buscar negocios..."
+            className="w-full pl-10 pr-3 py-2 border border-input rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset text-sm"
+          />
         </div>
-
-        {/* Toggle de filtros (colapsable) - fuera de la barra de búsqueda */}
-        <div className="mt-3 flex items-center justify-between">
+        {/* Filtros siempre visibles, no colapsables */}
+        <div className="flex flex-wrap items-center gap-2">
           <Button
-            variant={showFilters ? 'default' : 'outline'}
+            variant={minRating === 4.5 ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setShowFilters((v) => !v)}
-            className="gap-2"
+            onClick={() => setMinRating(minRating === 4.5 ? '' : 4.5)}
           >
-            <Filter className="h-4 w-4" />
-            Filtros
-            {(() => {
-              const activeCount = (typeof minRating === 'number' ? 1 : 0) + (typeof minReviewCount === 'number' ? 1 : 0) + (orderBestRated ? 1 : 0);
-              return activeCount > 0 ? (
-                <span className="ml-1 rounded-full bg-primary-foreground px-2 py-0.5 text-xs">
-                  {activeCount}
-                </span>
-              ) : null;
-            })()}
+            ⭐ 4.5 o más
+          </Button>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-muted-foreground">Reviews mínimos</label>
+            <Input
+              type="text"
+              inputMode="numeric"
+              value={minReviewCount}
+              onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, '');
+                setMinReviewCount(v === '' ? '' : Math.max(0, Number(v)));
+              }}
+              className="h-8 w-24 text-xs"
+              placeholder="e.g. 10"
+            />
+          </div>
+          <Button
+            variant={orderBestRated ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setOrderBestRated(prev => !prev)}
+          >
+            {orderBestRated ? 'Orden: mejor calificados' : 'Orden: por defecto'}
           </Button>
         </div>
-        {/* Panel de filtros colapsable (oculto por defecto) */}
-        {showFilters && (
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-muted-foreground">Calificación mínima</label>
-              <Input
-                type="number"
-                step="0.1"
-                min={0}
-                max={5}
-                value={minRating}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setMinRating(v === '' ? '' : Math.max(0, Math.min(5, Number(v))));
-                }}
-                className="h-8 w-24 text-xs"
-                placeholder="e.g. 4.5"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="text-xs text-muted-foreground">Reviews mínimos</label>
-              <Input
-                type="number"
-                step="1"
-                min={0}
-                value={minReviewCount}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setMinReviewCount(v === '' ? '' : Math.max(0, Number(v)));
-                }}
-                className="h-8 w-24 text-xs"
-                placeholder="e.g. 10"
-              />
-            </div>
-            <Button
-              variant={orderBestRated ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setOrderBestRated(prev => !prev)}
-            >
-              {orderBestRated ? 'Orden: mejor calificados' : 'Orden: por defecto'}
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => { void handleApplyFilters(); }}
-            >
-              Aplicar filtros
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Resultados */}
       {displayedBusinesses.length > 0 ? (
         <>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
         {displayedBusinesses.map((business) => {
           const isSelected = selectedBusinessId === business.id;
+          const rs = ratingStatsByBusinessId[business.id];
+          const services = servicesByBusinessId[business.id] ?? [];
+          const cityDisplay = business.city ? (cityNameMap[business.city] ?? business.city) : '';
+          const isExpanded = expandedCards.has(business.id);
+          const toggleExpand = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            setExpandedCards(prev => {
+              const next = new Set(prev);
+              if (next.has(business.id)) {
+                next.delete(business.id);
+              } else {
+                next.add(business.id);
+              }
+              return next;
+            });
+          };
 
           return (
-            <Card
+            <div
               key={business.id}
               onClick={() => onSelectBusiness(business)}
               className={cn(
-                "relative bg-card border rounded-lg overflow-hidden",
-                "cursor-pointer transition-all duration-200",
-                "hover:border-primary hover:scale-[1.02] hover:shadow-md hover:shadow-primary/15",
+                "relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200",
+                isExpanded ? "h-auto" : "h-64",
+                "border",
+                "hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/20",
                 isSelected
-                  ? "border-primary bg-primary/10"
-                  : "border-border"
+                  ? "border-primary ring-1 ring-primary"
+                  : "border-border hover:border-primary/60"
               )}
             >
-              {/* Imagen del negocio */}
-              <div className="relative w-full aspect-square">
-                <img
-                  src={getBusinessImage(business)}
-                  alt={business.name}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
+              {/* Banner de fondo - máximo 70% del card original (h-64 = 179px aprox) */}
+              <div
+                className="w-full bg-cover bg-center"
+                style={{ 
+                  height: isExpanded ? '70%' : '70%',
+                  backgroundImage: `url(${getBannerImage(business)})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }}
+              />
+              
+              {/* Degradado sobre el banner */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ 
+                  height: isExpanded ? '70%' : '70%',
+                  background: 'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0,0,0,0.50) 80%, rgba(0,0,0,0.80) 100%)' 
+                }}
+              />
 
-                {/* Checkmark cuando está seleccionado */}
-                {isSelected && (
-                  <div
-                    className={cn(
-                      "absolute top-2 right-2 w-7 h-7 bg-primary rounded-full",
-                      "flex items-center justify-center",
-                      "animate-in zoom-in duration-200"
-                    )}
-                  >
-                    <Check className="w-4 h-4 text-primary-foreground" />
-                  </div>
-                )}
-              </div>
-
-              {/* Información del negocio */}
-              <div className="p-3 bg-muted/50">
-                <h3 className="text-sm font-semibold text-foreground mb-1">
-                  {business.name}
-                </h3>
-                <div className="mb-2">
-                  <Badge variant="outline" className="text-[10px] sm:text-xs">
-                    {`Sedes en ${preferredCityName ?? hookCityData.preferredCityName ?? 'esta ciudad'}: ${locationsCountMap[business.id] ?? 0}`}
-                  </Badge>
+              {/* Check seleccionado */}
+              {isSelected && (
+                <div className="absolute top-2 right-2 z-10 w-6 h-6 bg-primary rounded-full flex items-center justify-center animate-in zoom-in duration-200">
+                  <Check className="w-3.5 h-3.5 text-primary-foreground" />
                 </div>
-                {/* Rating y reseñas */}
-                {(() => {
-                  const rs = ratingStatsByBusinessId[business.id];
-                  if (!rs) return null;
-                  return (
-                    <div className="mb-2">
-                      <Badge variant="secondary" className="text-[10px] sm:text-xs">
-                        {`${Number(rs.average_rating || 0).toFixed(1)} `}<Star className="inline h-3.5 w-3.5 fill-yellow-400 text-yellow-400 mb-0.5" />{` · ${rs.review_count || 0} reseñas`}
-                      </Badge>
-                    </div>
-                  );
-                })()}
-                
-                {business.description && (
-                  <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                    {business.description}
+              )}
+
+              {/* Info sobre el degradado con fondo translúcido - máximo 40% */}
+              <div className={cn(
+                "relative p-2.5 flex flex-col gap-1 backdrop-blur-md bg-black/70",
+                isExpanded ? "h-auto" : "h-[40%] overflow-hidden"
+              )}>
+                {/* Fila: Logo + Nombre + Categoría */}
+                <div className="flex items-start gap-2.5 mb-1">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border border-white/30 bg-black/50">
+                    {business.logo_url ? (
+                      <img src={business.logo_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Building2 className="w-5 h-5 text-white/70" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-white drop-shadow truncate leading-tight">
+                      {business.name}
+                    </p>
+                    {business.category_id && categoriesMap[business.category_id] && (
+                      <p className="text-xs text-white/75 truncate leading-tight">
+                        {categoriesMap[business.category_id]}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Rating + Sedes */}
+                <div className="flex items-center gap-2 text-[11px]">
+                  {rs && rs.average_rating ? (
+                    <span className="flex items-center gap-0.5 text-white/90">
+                      <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                      {Number(rs.average_rating).toFixed(1)}
+                      <span className="text-white/50">· {rs.review_count} reseñas</span>
+                    </span>
+                  ) : null}
+                  {!rs && (
+                    <span className="text-white/70">
+                      {locationsCountMap[business.id] ?? 0} sede{(locationsCountMap[business.id] ?? 0) !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+
+                {/* Dirección */}
+                {business.address && (
+                  <p className="flex items-center gap-1 text-xs text-white/75 truncate leading-tight">
+                    <MapPin size={10} weight="fill" className="flex-shrink-0" />
+                    {cityDisplay ? `${cityDisplay}, ` : ''}{business.address}
                   </p>
                 )}
 
-                {matchSourcesByBusinessId[business.id]?.includes('services') && (
-                  <div className="mt-1">
-                    <Badge variant="secondary" className="text-[11px]">
-                      filtro encontrado en sedes
-                    </Badge>
+                {/* Servicios (hasta 5) - solo visible cuando expandido */}
+                {isExpanded && services.length > 0 && (
+                  <div className="flex flex-col text-xs text-white/65">
+                    {services.slice(0, 5).map((svc) => (
+                      <span key={svc} className="truncate leading-tight">
+                        · {svc}
+                      </span>
+                    ))}
                   </div>
                 )}
 
-                <div className="space-y-1">
-                  {business.address && (
-                    <p className="text-xs text-[#64748b] flex items-center gap-1">
-                      <MapPin size={12} weight="fill" />
-                      {(() => {
-                        const cityDisplay = business.city
-                          ? (cityNameMap[business.city] || business.city)
-                          : '';
-                        return `${cityDisplay ? `${cityDisplay}, ` : ''}${business.address}`;
-                      })()}
-                    </p>
-                  )}
-                  {business.phone && (
-                    <p className="text-xs text-[#64748b] flex items-center gap-1">
-                      <Phone size={12} weight="fill" /> {business.phone}
-                    </p>
-                  )}
-                </div>
+                {/* Botón "Ver más" - solo cuando hay más contenido */}
+                {!isExpanded && (services.length > 0 || business.address) && (
+                  <button
+                    onClick={toggleExpand}
+                    className="absolute bottom-1 right-1 z-20 p-1 hover:bg-white/10 rounded-md transition-colors"
+                    aria-label="Ver más"
+                  >
+                    <ChevronDown className="w-4 h-4 text-white/70 hover:text-white" />
+                  </button>
+                )}
+
+                {/* Botón "Ver menos" - cuando está expandido */}
+                {isExpanded && (
+                  <button
+                    onClick={toggleExpand}
+                    className="mt-2 px-2 py-1 text-xs text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors"
+                    aria-label="Ver menos"
+                  >
+                    Ver menos
+                  </button>
+                )}
               </div>
-            </Card>
+            </div>
           );
         })}
         </div>

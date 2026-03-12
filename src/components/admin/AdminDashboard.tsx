@@ -276,7 +276,7 @@ export function AdminDashboard({
       case 'settings':
       case 'profile':
         return (
-          <div className="p-6">
+          <div className="p-4">
             <CompleteUnifiedSettings 
               user={user} 
               onUserUpdate={() => {
@@ -320,12 +320,12 @@ export function AdminDashboard({
       } : undefined}
     >
       <div className="flex flex-col min-h-full">
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-4">
           {renderContent()}
         </div>
         
         {/* Ti Turing Footer */}
-        <footer className="border-t border-border/50 py-3 px-6 mt-auto">
+        <footer className="border-t border-border/50 py-2 px-4 mt-auto">
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <span>{t('landing.footer.developedBy')}</span>
             <a 

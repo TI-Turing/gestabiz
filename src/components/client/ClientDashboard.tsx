@@ -576,10 +576,10 @@ export function ClientDashboard({
     switch (activePage) {
       case 'appointments':
         return (
-          <div className="p-6">
+          <div className="p-4">
             {/* Header principal: título y botón en la misma fila (sticky en móvil) */}
-            <div id="dashboard-sticky-header" className="sticky top-0 z-20 bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60 py-3 flex items-center justify-between gap-4 w-full min-w-0">
-              <h2 className="text-2xl font-bold text-foreground">{t('navigation.nav.client.myAppointments')}</h2>
+            <div id="dashboard-sticky-header" className="sticky top-0 z-20 bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60 py-2 flex items-center justify-between gap-4 w-full min-w-0">
+              <h2 className="text-xl font-bold text-foreground">{t('navigation.nav.client.myAppointments')}</h2>
               <Button 
                 onClick={() => handleBookAppointment()}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -590,7 +590,7 @@ export function ClientDashboard({
             </div>
 
             {/* Controles de vista: debajo del header, mejor para móviles */}
-            <div className="flex items-center gap-2 mb-6 w-full">
+            <div className="flex items-center gap-2 mb-4 w-full">
               <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
                 <Button
                   variant={viewMode === 'list' ? 'default' : 'ghost'}
@@ -620,7 +620,7 @@ export function ClientDashboard({
             </div>
 
             {/* Layout de 2 columnas: Citas (izquierda) + Sugerencias (derecha) */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 w-full min-w-0">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 w-full min-w-0">
               {/* Columna izquierda: Citas (2/3 del ancho en pantallas XL) */}
               <div className="xl:col-span-2">
                 {/* Calendar View */}
@@ -810,7 +810,7 @@ export function ClientDashboard({
       case 'profile':
       case 'settings':
         return (
-          <div className="p-6">
+          <div className="p-4">
             {currentUser && (
               <CompleteUnifiedSettings
                 user={currentUser}
@@ -831,8 +831,8 @@ export function ClientDashboard({
         )
       case 'history':
         return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-foreground mb-6">Historial de Citas</h2>
+          <div className="p-4">
+            <h2 className="text-xl font-bold text-foreground mb-4">Historial de Citas</h2>
             {currentUser && (
               <ClientHistory 
                 userId={currentUser.id} 
@@ -844,8 +844,8 @@ export function ClientDashboard({
         )
       default:
         return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-foreground">{t('navigation.nav.client.myAppointments')}</h2>
+          <div className="p-4">
+            <h2 className="text-xl font-bold text-foreground">{t('navigation.nav.client.myAppointments')}</h2>
             <p className="text-muted-foreground">{t('clientDashboard.upcomingDescription')}</p>
           </div>
         )
@@ -884,7 +884,7 @@ export function ClientDashboard({
           </div>
           
           {/* Ti Turing Footer */}
-          <footer className="border-t border-border/50 py-3 px-6 mt-auto">
+          <footer className="border-t border-border/50 py-2 px-4 mt-auto">
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <span>{t('landing.footer.developedBy')}</span>
               <a 

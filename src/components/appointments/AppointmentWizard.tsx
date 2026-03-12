@@ -878,50 +878,54 @@ export function AppointmentWizard({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent 
+      <DialogContent
+        hideClose
         className={cn(
-          "bg-card text-foreground p-0 overflow-hidden !border-0 !shadow-none !flex !flex-col",
-          "w-[98vw] sm:w-[95vw] md:w-[85vw] lg:w-[75vw]",
-          "!max-w-[1200px]",
-          "h-[95vh] sm:min-h-[600px] sm:max-h-[85vh]", // Full height mobile; stable desktop height
-          "[&>button]:hidden" // Ocultar el botón de cerrar por defecto del DialogContent
+          "bg-card text-foreground p-0 overflow-hidden !flex !flex-col",
+          "w-[95vw] max-w-[95vw] h-[90vh] max-h-[90vh]",
+          "shadow-2xl rounded-xl"
         )}
-        onInteractOutside={(e) => e.preventDefault()}
-        onPointerDownOutside={(e) => e.preventDefault()}
       >
         {/* DialogTitle para accesibilidad (screen readers) */}
         <DialogTitle className="sr-only">
           {appointmentToEdit ? t('appointments.wizard.editAppointment') : t('appointments.wizard.newAppointment')}
         </DialogTitle>
-        {/* Header - Mobile Responsive */}
+        {/* Header compacto y sticky */}
         {currentStep < getStepNumber('success') && (
-          <div className="px-3 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
-            <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
-              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">
-                {appointmentToEdit ? t('appointments.wizard.editAppointment') : t('appointments.wizard.newAppointment')}
-              </h2>
+          <div className="sticky top-0 z-30 bg-card/95 backdrop-blur-md px-2 sm:px-3 pt-2 sm:pt-2 pb-2 sm:pb-2 border-b border-border">
+            <div className="flex items-center justify-between gap-2 min-h-[40px]">
+              <div className="flex items-center gap-2">
+                <h2 className="font-bold text-foreground truncate">
+                  {appointmentToEdit ? t('appointments.wizard.editAppointment') : t('appointments.wizard.newAppointment')}
+                </h2>
+                <span className="text-xs font-normal text-primary whitespace-nowrap">
+                  · {STEP_LABELS_MAP[getStepOrder()[currentStep] as keyof typeof STEP_LABELS_MAP]}
+                </span>
+              </div>
               <button
                 onClick={handleClose}
-                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center flex-shrink-0"
                 disabled={isSubmitting}
+                className="rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                aria-label="Cerrar"
               >
-                <X className="h-5 w-5 sm:h-6 sm:w-6" />
+                <X className="h-4 w-4" />
               </button>
             </div>
-
-            {/* Progress Bar */}
-            <ProgressBar 
-              currentStep={getEffectiveCurrentStep() + 1}
-              totalSteps={getEffectiveTotalSteps()}
-              label={STEP_LABELS_MAP[getEffectiveSteps()[getEffectiveCurrentStep()] as keyof typeof STEP_LABELS_MAP]}
-              completedSteps={getCompletedSteps()}
-            />
+            {/* Progress Bar - sin label ni completados */}
+            <div className="mt-1">
+              <ProgressBar 
+                currentStep={getEffectiveCurrentStep() + 1}
+                totalSteps={getEffectiveTotalSteps()}
+                label={undefined}
+                completedSteps={[]}
+              />
+            </div>
           </div>
         )}
 
-        {/* Content Area - fills remaining space; footer stays bottom */}
+        {/* Content Area - ahora sube y aprovecha más espacio */}
         <div className={cn(
-          "flex-1 overflow-y-auto px-3 sm:px-0"
+          "flex-1 overflow-y-auto px-2 sm:px-3 pt-2"
         )}>
           {/* Paso 0: Selección de Negocio */}
           {!businessId && currentStep === getStepNumber('business') && (
@@ -1102,7 +1106,7 @@ export function AppointmentWizard({
 
         {/* Footer with navigation buttons - Mobile Responsive */}
         {currentStep < getStepNumber('success') && (
-          <div className="px-3 sm:px-6 py-3 sm:py-4 border-t border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-start sm:justify-between gap-2 sm:gap-0">
+          <div className="px-3 sm:px-4 py-2 sm:py-3 border-t border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-start sm:justify-between gap-2 sm:gap-0">
             <Button
               variant="outline"
               onClick={handleBack}

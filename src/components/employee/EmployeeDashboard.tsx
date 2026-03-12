@@ -210,7 +210,7 @@ export function EmployeeDashboard({
     switch (activePage) {
       case 'employments':
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Lista de empleos */}
             <MyEmployments 
               employeeId={currentUser.id} 
@@ -228,7 +228,7 @@ export function EmployeeDashboard({
         )
       case 'vacancies':
         return (
-          <div className="p-6">
+          <div className="p-4">
             <ErrorBoundary componentName="BuscarVacantes">
               <Suspense fallback={<div className="flex items-center justify-center h-96"><LoadingSpinner /></div>}>
                 <AvailableVacanciesMarketplace userId={currentUser.id} />
@@ -238,7 +238,7 @@ export function EmployeeDashboard({
         )
       case 'absences':
         return effectiveBusinessId ? (
-          <div className="p-6 space-y-6">
+          <div className="p-4 space-y-4">
             {/* Selector de negocio si hay múltiples */}
             {employeeBusinesses.length > 1 && (
               <div className="flex items-end gap-4">
@@ -282,8 +282,8 @@ export function EmployeeDashboard({
             <EmployeeAbsencesTab businessId={effectiveBusinessId} />
           </div>
         ) : (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-foreground mb-4">Mis Ausencias</h2>
+          <div className="p-4">
+            <h2 className="text-xl font-bold text-foreground mb-3">Mis Ausencias</h2>
             <p className="text-muted-foreground">No estás vinculado a ningún negocio</p>
           </div>
         )
@@ -294,7 +294,7 @@ export function EmployeeDashboard({
             businessId={effectiveBusinessId}
           />
         ) : (
-          <div className="p-6">
+          <div className="p-4">
             <p className="text-muted-foreground">
               {loadingBusinesses ? 'Cargando negocios...' : 'No estás vinculado a ningún negocio'}
             </p>
@@ -302,15 +302,15 @@ export function EmployeeDashboard({
         )
       case 'schedule':
         return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-foreground mb-4">Mi Horario</h2>
+          <div className="p-4">
+            <h2 className="text-xl font-bold text-foreground mb-3">Mi Horario</h2>
             <p className="text-muted-foreground">Gestiona tu disponibilidad - Próximamente</p>
           </div>
         )
       case 'profile':
       case 'settings':
         return (
-          <div className="p-6">
+          <div className="p-4">
             {currentUser && (
               <CompleteUnifiedSettings
                 user={currentUser}
@@ -357,7 +357,7 @@ export function EmployeeDashboard({
         </div>
         
         {/* Ti Turing Footer */}
-        <footer className="border-t border-border/50 py-3 px-6 mt-auto">
+        <footer className="border-t border-border/50 py-2 px-4 mt-auto">
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <span>{t('landing.footer.developedBy')}</span>
             <a 
