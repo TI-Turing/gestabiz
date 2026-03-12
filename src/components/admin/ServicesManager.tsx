@@ -965,34 +965,33 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
               </div>
             )}
 
-            {/* Employee Assignment - Read Only */}
+            {/* Employee Assignment - Editable */}
             {employees.length > 0 && (
               <div>
                 <Label className="mb-2 block">Prestado por:</Label>
-                <div className="space-y-2 max-h-40 overflow-y-auto border border-border rounded-lg p-3 bg-muted/30">
-                  {employees.filter(employee => selectedEmployees.includes(employee.employee_id)).length > 0 ? (
-                    employees
-                      .filter(employee => selectedEmployees.includes(employee.employee_id))
-                      .map((employee) => (
-                        <div key={employee.id} className="flex items-center gap-2 text-sm text-foreground">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={employee.profiles?.avatar_url || undefined} alt={employee.profiles?.full_name || 'Usuario'} />
-                            <AvatarFallback className="text-xs">
-                              {(employee.profiles?.full_name || employee.profiles?.email || 'U').charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          {employee.profiles?.full_name || employee.profiles?.email || 'Sin nombre'}
-                        </div>
-                      ))
-                  ) : (
-                    <div className="text-sm text-muted-foreground italic">
-                      No hay empleados asignados a este servicio
+                <div className="space-y-2 max-h-40 overflow-y-auto border border-border rounded-lg p-3">
+                  {employees.map((employee) => (
+                    <div key={employee.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`employee-${employee.employee_id}`}
+                        checked={selectedEmployees.includes(employee.employee_id)}
+                        onCheckedChange={() => handleToggleEmployee(employee.employee_id)}
+                      />
+                      <label
+                        htmlFor={`employee-${employee.employee_id}`}
+                        className="flex items-center gap-2 text-sm cursor-pointer"
+                      >
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={employee.profiles?.avatar_url || undefined} alt={employee.profiles?.full_name || 'Usuario'} />
+                          <AvatarFallback className="text-xs">
+                            {(employee.profiles?.full_name || employee.profiles?.email || 'U').charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {employee.profiles?.full_name || employee.profiles?.email || 'Sin nombre'}
+                      </label>
                     </div>
-                  )}
+                  ))}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Los empleados se gestionan desde la sección de empleados
-                </p>
               </div>
             )}
 
