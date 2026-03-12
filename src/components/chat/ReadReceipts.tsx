@@ -4,7 +4,7 @@
  * Muestra checkmarks para indicar el estado de un mensaje:
  * - ✓ Enviado (gris)
  * - ✓✓ Entregado (gris)
- * - ✓✓ Leído (azul)
+ * - ✓✓ Leído (blanco, para contraste con fondo morado)
  * 
  * @author Gestabiz Team
  * @version 1.0.0
@@ -55,8 +55,8 @@ export function ReadReceipts({
   return (
     <div className="flex items-center gap-0.5" title={getTooltipText(isRead, isDelivered, sentAt, deliveredAt)}>
       {isRead ? (
-        // Leído - Doble check usando el color secundario para mayor contraste
-        <CheckCheck className={cn(iconSize, 'text-[var(--color-secondary)]')} strokeWidth={2.5} />
+        // Leído - Doble check blanco para contraste con fondo morado (bg-primary)
+        <CheckCheck className={cn(iconSize, 'text-white')} strokeWidth={2.5} />
       ) : isDelivered ? (
         // Entregado - Doble check gris oscuro (bien visible)
         <CheckCheck className={cn(iconSize, 'text-gray-600 dark:text-gray-300')} strokeWidth={2.5} />
