@@ -178,7 +178,7 @@ export default function BusinessProfile({
           .order('name'),
         supabase
           .from('services')
-          .select('id, name, description, duration_minutes, price, category')
+          .select('id, name, description, duration_minutes, price, category, image_url')
           .eq('business_id', businessId)
           .eq('is_active', true)
           .order('name'),
