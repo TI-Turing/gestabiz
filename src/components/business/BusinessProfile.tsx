@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type ComponentProps } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { X, MapPin, Phone, Mail, Globe, Clock, Star, Calendar, ChevronRight, MessageCircle, Heart } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/lib/supabase';
@@ -7,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { PermissionGate } from '@/components/ui/PermissionGate';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { ReviewList } from '@/components/reviews/ReviewList';
@@ -16,6 +17,13 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { toast } from 'sonner';
 import ChatWithAdminModal from './ChatWithAdminModal';
 import { LocationAddress } from '@/components/ui/LocationAddress';
+import { LocationProfileModal } from '@/components/admin/LocationProfileModal';
+import { ServiceProfileModal } from '@/components/admin/ServiceProfileModal';
+import { ServiceCard } from '@/components/cards/ServiceCard';
+import { LocationCard } from '@/components/cards/LocationCard';
+import { EmployeeCard } from '@/components/cards/EmployeeCard';
+import UserProfile from '@/components/user/UserProfile';
+import type { Location } from '@/types/types';
 
 interface BusinessProfileProps {
   readonly businessId: string;
@@ -23,6 +31,7 @@ interface BusinessProfileProps {
   readonly onBookAppointment?: (serviceId?: string, locationId?: string, employeeId?: string) => void;
   readonly onChatStarted?: (conversationId: string) => void;
   readonly userId?: string; // NUEVO: Para resolver problema de auth context
+  readonly hideBooking?: boolean;
   readonly userLocation?: {
     latitude: number;
     longitude: number;
@@ -49,17 +58,23 @@ interface BusinessData {
   }>;
   locations: Array<{
     id: string;
+    business_id: string;
     name: string;
-    address: string;
-    city: string;
-    state: string;
-    postal_code: string;
-    country: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    country?: string;
     latitude?: number;
     longitude?: number;
     phone?: string;
     email?: string;
+    description?: string;
     hours?: Record<string, string>;
+    is_active: boolean;
+    is_primary?: boolean;
+    created_at: string;
+    updated_at: string;
   }>;
   services: Array<{
     id: string;
@@ -68,6 +83,7 @@ interface BusinessData {
     duration: number;
     price: number;
     category?: string;
+    image_url?: string;
     location_id?: string;
     employee_id?: string;
     employee?: {
@@ -92,6 +108,7 @@ export default function BusinessProfile({
   onBookAppointment,
   onChatStarted,
   userId: propUserId, // Rename prop to avoid conflict
+  hideBooking = false,
   userLocation 
 }: BusinessProfileProps) {
   // Get user AND loading state from Auth context
@@ -109,6 +126,10 @@ export default function BusinessProfile({
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [eligibleAppointmentId, setEligibleAppointmentId] = useState<string | null>(null);
   const [showChatModal, setShowChatModal] = useState(false);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<ComponentProps<typeof LocationProfileModal>['location'] | null>(null);
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
+  const [locationBanners, setLocationBanners] = useState<Record<string, string>>({});
 
   // DEBUG: Log auth state
   console.log('[BusinessProfile] RENDER - propUserId:', propUserId);
@@ -122,6 +143,43 @@ export default function BusinessProfile({
   const { isFavorite, toggleFavorite: toggleFavoriteFn } = useFavorites(effectiveUserId);
   
   const { createReview, refetch: refetchReviews } = useReviews({ business_id: businessId });
+
+  const { data: professionals = [] } = useQuery({
+    queryKey: ['business-professionals', businessId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employee_services')
+        .select(`
+          employee_id,
+          profiles (
+            id,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('business_id', businessId);
+      if (error) throw error;
+      const seen = new Set<string>();
+      return (data ?? []).reduce<Array<{
+        id: string;
+        full_name: string | null;
+        avatar_url?: string | null;
+      }>>((acc, row) => {
+        if (seen.has(row.employee_id)) return acc;
+        seen.add(row.employee_id);
+        const profile = Array.isArray(row.profiles)
+          ? row.profiles[0]
+          : row.profiles;
+        acc.push({
+          id: row.employee_id,
+          full_name: profile?.full_name ?? null,
+          avatar_url: profile?.avatar_url ?? null,
+        });
+        return acc;
+      }, []);
+    },
+    enabled: !!businessId,
+  });
 
   const handleToggleFavorite = async () => {
     console.log('[BusinessProfile] handleToggleFavorite called');
@@ -257,6 +315,34 @@ export default function BusinessProfile({
           acc[region.id] = region.name;
           return acc;
         }, {} as Record<string, string>);
+      }
+
+      // Fetch banners for all locations from location_media
+      const locationIds = (locationsData || []).map(l => l.id);
+      if (locationIds.length > 0) {
+        const { data: mediaData } = await supabase
+          .from('location_media')
+          .select('location_id, url, is_banner, type, description, created_at')
+          .in('location_id', locationIds)
+          .eq('is_banner', true)
+          .eq('type', 'image')
+          .order('created_at', { ascending: false });
+
+        if (mediaData) {
+          const banners: Record<string, string> = {};
+          // Group by location and pick best (skip test banners)
+          const byLoc = new Map<string, typeof mediaData>();
+          for (const m of mediaData) {
+            const arr = byLoc.get(m.location_id) ?? [];
+            arr.push(m);
+            byLoc.set(m.location_id, arr);
+          }
+          byLoc.forEach((arr, locId) => {
+            const chosen = arr.find(x => (x.description ?? '').trim() !== 'Banner de prueba') ?? arr[0];
+            if (chosen) banners[locId] = chosen.url.trim().replaceAll(/^[`'"]+|[`'"]+$/g, '');
+          });
+          setLocationBanners(banners);
+        }
       }
 
       const processedLocations = (locationsData || []).map(loc => ({
@@ -407,34 +493,41 @@ export default function BusinessProfile({
     return hours[today] || 'Cerrado';
   };
 
+
+
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-100">
-        <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-card shadow-2xl">
+      <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader className="sr-only"><DialogTitle>Cargando negocio</DialogTitle></DialogHeader>
           <div className="flex items-center justify-center p-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
-        </Card>
-      </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   if (!business) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-100">
-        <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-card shadow-2xl">
+      <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader className="sr-only"><DialogTitle>Error</DialogTitle></DialogHeader>
           <div className="p-8 text-center">
             <p className="text-muted-foreground">No se pudo cargar la información del negocio</p>
             <Button onClick={onClose} className="mt-4">Cerrar</Button>
           </div>
-        </Card>
-      </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-100 p-2 sm:p-4">
-      <Card className="w-full max-w-[98vw] sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden bg-card flex flex-col shadow-2xl">
+    <>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent hideClose className="max-w-[98vw] sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] p-0 overflow-hidden flex flex-col">
+        <DialogHeader className="sr-only"><DialogTitle>{business.name}</DialogTitle></DialogHeader>
+      <Card className="w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden bg-card flex flex-col shadow-2xl border-0">
         {/* Header con banner - Mobile Responsive */}
         <div className="relative">
           {business.banner_url ? (
@@ -546,7 +639,7 @@ export default function BusinessProfile({
 
           {/* Tabs - Mobile Scrollable */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="px-3 sm:px-6">
-            <TabsList className="grid w-full grid-cols-4 h-auto">
+            <TabsList className="grid w-full grid-cols-5 h-auto">
               <TabsTrigger value="services" className="text-xs sm:text-sm py-2 sm:py-2.5">
                 <span className="hidden sm:inline">Servicios</span>
                 <span className="sm:hidden">Servs.</span>
@@ -559,134 +652,82 @@ export default function BusinessProfile({
                 <span className="hidden sm:inline">Reseñas</span>
                 <span className="sm:hidden">Reviews</span>
               </TabsTrigger>
+              <TabsTrigger value="professionals" className="text-xs sm:text-sm py-2 sm:py-2.5">
+                <span className="hidden sm:inline">Profesionales</span>
+                <span className="sm:hidden">Profes.</span>
+              </TabsTrigger>
               <TabsTrigger value="about" className="text-xs sm:text-sm py-2 sm:py-2.5">
                 <span className="hidden sm:inline">Acerca de</span>
                 <span className="sm:hidden">Info</span>
               </TabsTrigger>
             </TabsList>
 
-            {/* Tab: Servicios - Mobile Optimized */}
-            <TabsContent value="services" className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
+            {/* Tab: Servicios */}
+            <TabsContent value="services" className="mt-4 sm:mt-6">
               {business.services.length === 0 ? (
                 <p className="text-center text-muted-foreground py-6 sm:py-8 text-sm">
                   No hay servicios disponibles
                 </p>
               ) : (
-                <div className="grid gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                   {business.services.map((service) => (
-                    <Card key={service.id} className="p-3 sm:p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between gap-2 sm:gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-base sm:text-lg mb-1 truncate">{service.name}</h3>
-                          {service.description && (
-                            <p className="text-xs sm:text-sm text-muted-foreground mb-2 line-clamp-2">
-                              {service.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              <span>{formatDuration(service.duration)}</span>
-                            </div>
-                            {service.employee && (
-                              <div className="flex items-center gap-2">
-                                <Avatar className="h-5 w-5">
-                                  <AvatarImage src={service.employee.avatar_url || undefined} alt={service.employee.name} />
-                                  <AvatarFallback className="text-xs">
-                                    {service.employee.name.charAt(0).toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span>{service.employee.name}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-primary mb-2">
-                            {formatCurrency(service.price, 'COP')}
-                          </p>
-                          <Button
-                            onClick={() => onBookAppointment?.(businessId, service.id)}
-                            size="sm"
-                          >
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Agendar
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
+                    <ServiceCard
+                      key={service.id}
+                      service={{
+                        id: service.id,
+                        name: service.name,
+                        description: service.description,
+                        duration: service.duration,
+                        price: service.price,
+                        category: service.category,
+                        image_url: service.image_url,
+                        business_id: businessId,
+                      }}
+                      readOnly
+                      onViewProfile={() => setSelectedServiceId(service.id)}
+                    />
                   ))}
                 </div>
               )}
             </TabsContent>
 
             {/* Tab: Ubicaciones */}
-            <TabsContent value="locations" className="space-y-4 mt-6">
+            <TabsContent value="locations" className="mt-6">
               {business.locations.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   No hay ubicaciones registradas
                 </p>
               ) : (
-                <div className="grid gap-4">
-                  {business.locations.map((location) => {
-                    const distance = location.latitude && location.longitude
-                      ? calculateDistance(location.latitude, location.longitude)
-                      : null;
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {business.locations.map((location) => (
+                    <LocationCard
+                      key={location.id}
+                      location={location as unknown as Location}
+                      bannerUrl={locationBanners?.[location.id]}
+                      readOnly
+                      onViewProfile={() => setSelectedLocation(location)}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
-                    return (
-                      <Card key={location.id} className="p-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg mb-2">{location.name}</h3>
-                            <div className="space-y-2 text-sm text-muted-foreground">
-                              <div className="flex items-start gap-2">
-                                <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-                                <LocationAddress address={location.address} cityId={location.city} stateId={location.state} postalCode={location.postal_code} />
-                              </div>
-                              {location.phone && (
-                                <div className="flex items-center gap-2">
-                                  <Phone className="h-4 w-4" />
-                                  <span>{location.phone}</span>
-                                </div>
-                              )}
-                              {location.hours && (
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4" />
-                                  <span>{formatHours(location.hours)}</span>
-                                </div>
-                              )}
-                              {distance !== null && (
-                                <div className="flex items-center gap-2 text-primary font-medium">
-                                  <MapPin className="h-4 w-4" />
-                                  <span>{distance.toFixed(1)} km de tu ubicación</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <Button
-                            onClick={() => onBookAppointment?.(businessId, undefined, location.id)}
-                            size="sm"
-                          >
-                            <Calendar className="h-4 w-4 mr-2" />
-                            Agendar aquí
-                          </Button>
-                        </div>
-                        {location.latitude && location.longitude && (
-                          <div className="mt-4">
-                            <a
-                              href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-primary hover:underline flex items-center gap-1"
-                            >
-                              Ver en Google Maps
-                              <ChevronRight className="h-4 w-4" />
-                            </a>
-                          </div>
-                        )}
-                      </Card>
-                    );
-                  })}
+            {/* Tab: Profesionales */}
+            <TabsContent value="professionals" className="mt-4 sm:mt-6">
+              {professionals.length === 0 ? (
+                <p className="text-center text-muted-foreground py-6 sm:py-8 text-sm">
+                  No hay profesionales disponibles
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                  {professionals.map((pro) => (
+                    <EmployeeCard
+                      key={pro.id}
+                      employee={pro}
+                      readOnly
+                      onViewProfile={() => setSelectedProfessionalId(pro.id)}
+                    />
+                  ))}
                 </div>
               )}
             </TabsContent>
@@ -767,6 +808,7 @@ export default function BusinessProfile({
         </div>
 
         {/* Footer sticky con botones principales */}
+        {!hideBooking && (
         <div className="border-t border-border p-4 bg-background space-y-3">
           <Button 
             onClick={() => onBookAppointment?.(businessId)}
@@ -792,9 +834,10 @@ export default function BusinessProfile({
             </Button>
           </div>
         </div>
+        )}
       </Card>
 
-      {/* Chat Modal */}
+      {/* Chat Modal - inside DialogContent to stay within Radix focus scope */}
       {showChatModal && business && (
         <ChatWithAdminModal
           businessId={businessId}
@@ -803,13 +846,38 @@ export default function BusinessProfile({
           onClose={() => setShowChatModal(false)}
           onCloseParent={onClose}
           onChatStarted={(conversationId) => {
-            // Pasar conversationId al componente padre
             if (onChatStarted) {
               onChatStarted(conversationId);
             }
           }}
         />
       )}
-    </div>
-  );
+      </DialogContent>
+    </Dialog>
+    <>
+      {/* Service Profile Modal */}
+      <ServiceProfileModal
+        serviceId={selectedServiceId}
+        onClose={() => setSelectedServiceId(null)}
+      />
+
+      {/* Location Profile Modal */}
+      {selectedLocation && (
+        <LocationProfileModal
+          open={!!selectedLocation}
+          onOpenChange={(open) => { if (!open) setSelectedLocation(null); }}
+          location={selectedLocation}
+        />
+      )}
+
+      {/* Professional Profile Modal */}
+      {selectedProfessionalId && (
+        <UserProfile
+          userId={selectedProfessionalId}
+          onClose={() => setSelectedProfessionalId(null)}
+          hideBooking
+        />
+      )}
+    </>
+    </>  )
 }

@@ -20,6 +20,9 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { LocationProfileModal } from '@/components/admin/LocationProfileModal'
+import UserProfile from '@/components/user/UserProfile'
+import BusinessProfile from '@/components/business/BusinessProfile'
 
 // =====================================================
 // TIPOS
@@ -48,6 +51,13 @@ interface EmployeeRow {
 interface LocationRow {
   id: string
   name: string
+  business_id?: string
+}
+
+interface BusinessInfo {
+  id: string
+  name: string
+  logo_url: string | null
 }
 
 export interface ServiceProfileModalProps {
@@ -85,6 +95,10 @@ export function ServiceProfileModal({
   const [employees, setEmployees] = useState<EmployeeRow[]>([])
   const [locations, setLocations] = useState<LocationRow[]>([])
   const [loading, setLoading] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState<Parameters<typeof LocationProfileModal>[0]['location'] | null>(null)
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
+  const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null)
+  const [businessProfileId, setBusinessProfileId] = useState<string | null>(null)
 
   // Cargar datos cada vez que cambia el serviceId
   useEffect(() => {
@@ -111,6 +125,16 @@ export function ServiceProfileModal({
         if (cancelled) return
         setService(svcData)
 
+        // Datos del negocio
+        if (svcData.business_id) {
+          const { data: bizData } = await supabase
+            .from('businesses')
+            .select('id, name, logo_url')
+            .eq('id', svcData.business_id)
+            .single()
+          if (!cancelled && bizData) setBusinessInfo(bizData)
+        }
+
         // 2. Sedes asignadas
         const { data: locLinks } = await supabase
           .from('location_services')
@@ -121,7 +145,7 @@ export function ServiceProfileModal({
           const ids = locLinks.map((r) => r.location_id)
           const { data: locData } = await supabase
             .from('locations')
-            .select('id, name')
+            .select('id, name, business_id')
             .in('id', ids)
           if (!cancelled) setLocations(locData ?? [])
         } else if (!cancelled) {
@@ -173,6 +197,7 @@ export function ServiceProfileModal({
   }
 
   return (
+    <>
     <Dialog open={!!serviceId} onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent hideClose className="max-w-4xl w-full max-h-[90vh] p-0 overflow-hidden flex flex-col">
         <DialogHeader className="sr-only">
@@ -201,6 +226,24 @@ export function ServiceProfileModal({
           )}
           <div className="absolute inset-0 bg-black/40" />
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+          {/* Badge negocio - top left */}
+          {businessInfo && (
+            <button
+              type="button"
+              onClick={() => setBusinessProfileId(businessInfo.id)}
+              className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white rounded-full pl-1 pr-3 py-1 transition-colors"
+            >
+              {businessInfo.logo_url ? (
+                <img src={businessInfo.logo_url} alt={businessInfo.name} className="w-6 h-6 rounded-full object-cover shrink-0" />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0 text-xs font-bold">
+                  {businessInfo.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span className="text-xs font-medium">{businessInfo.name}</span>
+            </button>
+          )}
+
           <div className="relative z-10 p-4 sm:p-6 flex items-end h-full">
             {loading ? (
               <div className="h-6 w-48 bg-white/20 rounded animate-pulse" />
@@ -239,7 +282,7 @@ export function ServiceProfileModal({
             <Tabs defaultValue="overview" className="w-full">
               <TabsList>
                 <TabsTrigger value="overview">Detalle</TabsTrigger>
-                <TabsTrigger value="employees">Empleados ({employees.length})</TabsTrigger>
+                <TabsTrigger value="employees">Profesionales ({employees.length})</TabsTrigger>
                 <TabsTrigger value="locations">Sedes ({locations.length})</TabsTrigger>
               </TabsList>
 
@@ -269,7 +312,11 @@ export function ServiceProfileModal({
                 ) : (
                   <div className="space-y-2">
                     {employees.map((e) => (
-                      <Card key={e.employee_id}>
+                      <Card
+                        key={e.employee_id}
+                        className="cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => setSelectedEmployeeId(e.employee_id)}
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
@@ -312,7 +359,18 @@ export function ServiceProfileModal({
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {locations.map((l) => (
-                      <Card key={l.id}>
+                      <Card
+                        key={l.id}
+                        className="cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => setSelectedLocation({
+                          id: l.id,
+                          business_id: l.business_id ?? service?.business_id ?? '',
+                          name: l.name,
+                          is_active: true,
+                          created_at: '',
+                          updated_at: '',
+                        })}
+                      >
                         <CardContent className="p-4">
                           <div className="flex items-center gap-2 text-sm">
                             <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -329,5 +387,29 @@ export function ServiceProfileModal({
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Location Profile Modal */}
+    {selectedLocation && (
+      <LocationProfileModal
+        open={!!selectedLocation}
+        onOpenChange={(open) => { if (!open) setSelectedLocation(null) }}
+        location={selectedLocation}
+      />
+    )}
+    {/* Professional Profile */}
+    {selectedEmployeeId && (
+      <UserProfile
+        userId={selectedEmployeeId}
+        onClose={() => setSelectedEmployeeId(null)}
+      />
+    )}
+    {/* Business Profile */}
+    {businessProfileId && (
+      <BusinessProfile
+        businessId={businessProfileId}
+        onClose={() => setBusinessProfileId(null)}
+      />
+    )}
+  </>
   )
 }

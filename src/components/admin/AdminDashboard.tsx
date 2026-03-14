@@ -320,7 +320,7 @@ export function AdminDashboard({
       } : undefined}
     >
       <div className="flex flex-col min-h-full">
-        <div className="flex-1 p-4">
+        <div key={business.id} className="flex-1 p-4">
           {renderContent()}
         </div>
         

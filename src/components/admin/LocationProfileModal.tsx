@@ -10,6 +10,9 @@ import { MapPin, Phone, Mail, Image as ImageIcon, Video as VideoIcon, Users, Sta
 import { supabase } from '@/lib/supabase'
 import { useLocationEmployees } from '@/hooks/useLocationEmployees'
 import { useLocationServices } from '@/hooks/useLocationServices'
+import { ServiceProfileModal } from '@/components/admin/ServiceProfileModal'
+import UserProfile from '@/components/user/UserProfile'
+import BusinessProfile from '@/components/business/BusinessProfile'
 
 import type { BusinessHours } from '@/components/ui/BusinessHoursPicker'
 
@@ -57,6 +60,10 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
   const [isLoadingMedia, setIsLoadingMedia] = useState(true)
   const [banner, setBanner] = useState<string | undefined>(bannerUrl)
   const [primaryVideo, setPrimaryVideo] = useState<string | undefined>(primaryVideoUrl)
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
+  const [businessInfo, setBusinessInfo] = useState<{ id: string; name: string; logo_url: string | null } | null>(null)
+  const [businessProfileId, setBusinessProfileId] = useState<string | null>(null)
   
   // Hook para obtener empleados de la sede
   const { employees, loading: loadingEmployees } = useLocationEmployees({
@@ -94,6 +101,17 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
   useEffect(() => { setBanner(bannerUrl) }, [bannerUrl])
   useEffect(() => { setPrimaryVideo(primaryVideoUrl) }, [primaryVideoUrl])
 
+  // Carga info del negocio para el badge
+  useEffect(() => {
+    if (!open || !location.business_id) return
+    supabase
+      .from('businesses')
+      .select('id, name, logo_url')
+      .eq('id', location.business_id)
+      .single()
+      .then(({ data }) => { if (data) setBusinessInfo(data) })
+  }, [open, location.business_id])
+
   useEffect(() => {
     if (!open) return
     ;(async () => {
@@ -113,6 +131,7 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
 
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent hideClose className="max-w-4xl w-full max-h-[90vh] p-0 overflow-hidden flex flex-col">
         <DialogHeader className="sr-only">
@@ -139,6 +158,24 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
           <div className="absolute inset-0 bg-black/40" />
           {/* Gradiente en la parte inferior para mejorar legibilidad */}
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+          {/* Badge negocio - top left */}
+          {businessInfo && (
+            <button
+              type="button"
+              onClick={() => setBusinessProfileId(businessInfo.id)}
+              className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-black/50 hover:bg-black/70 text-white rounded-full pl-1 pr-3 py-1 transition-colors"
+            >
+              {businessInfo.logo_url ? (
+                <img src={businessInfo.logo_url} alt={businessInfo.name} className="w-6 h-6 rounded-full object-cover shrink-0" />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0 text-xs font-bold">
+                  {businessInfo.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <span className="text-xs font-medium">{businessInfo.name}</span>
+            </button>
+          )}
+
           <div className="relative z-10 p-4 sm:p-6 flex items-end h-full">
             <div>
               <div className="flex items-center gap-2">
@@ -246,7 +283,11 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
               ) : (
                 <div className="space-y-4">
                   {employees.map((employee) => (
-                    <Card key={employee.employee_id}>
+                    <Card
+                      key={employee.employee_id}
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => setSelectedEmployeeId(employee.employee_id)}
+                    >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-4">
                           <Avatar className="h-12 w-12">
@@ -313,7 +354,20 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {locationServices.map((locationService) => (
-                    <Card key={locationService.id} className="hover:shadow-md transition-shadow">
+                    <Card
+                      key={locationService.id}
+                      className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden"
+                      onClick={() => { if (locationService.service?.id) setSelectedServiceId(locationService.service.id) }}
+                    >
+                      {locationService.service?.image_url && (
+                        <div className="h-24 w-full overflow-hidden">
+                          <img
+                            src={locationService.service.image_url}
+                            alt={locationService.service.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                       <CardContent className="p-4">
                         <div className="space-y-3">
                           <div className="flex items-start justify-between">
@@ -383,6 +437,27 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Service Profile Modal */}
+    <ServiceProfileModal
+      serviceId={selectedServiceId}
+      onClose={() => setSelectedServiceId(null)}
+    />
+    {/* Employee/Professional Profile */}
+    {selectedEmployeeId && (
+      <UserProfile
+        userId={selectedEmployeeId}
+        onClose={() => setSelectedEmployeeId(null)}
+      />
+    )}
+    {/* Business Profile */}
+    {businessProfileId && (
+      <BusinessProfile
+        businessId={businessProfileId}
+        onClose={() => setBusinessProfileId(null)}
+      />
+    )}
+  </>
   )
 }
 

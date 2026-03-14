@@ -1,12 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Phone, Mail, Globe, Star, Clock, ChevronRight, MessageCircle, Sparkles, Heart, Dumbbell, BookOpen, Briefcase, Home, Car, UtensilsCrossed, PawPrint, Laptop, Palette, HardHat, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, Calendar, Phone, Mail, Globe, Star, MessageCircle, Sparkles, Heart, Dumbbell, BookOpen, Briefcase, Home, Car, UtensilsCrossed, PawPrint, Laptop, Palette, HardHat, MoreHorizontal } from 'lucide-react';
 import { useBusinessProfileData } from '@/hooks/useBusinessProfileData';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageMeta } from '@/hooks/usePageMeta';
-import { LocationAddress } from '@/components/ui/LocationAddress';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { ServiceCard } from '@/components/cards/ServiceCard';
+import { LocationCard } from '@/components/cards/LocationCard';
+import { EmployeeCard } from '@/components/cards/EmployeeCard';
+import type { Location } from '@/types/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -387,34 +389,20 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
                   No hay servicios disponibles
                 </p>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {business.services.map(service => (
-                    <Card key={service.id} className="p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-lg">{service.name}</h3>
-                        <span className="text-primary font-bold text-lg">
-                          ${service.price.toLocaleString('es-CO')}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {service.description}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="w-4 h-4" />
-                          <span>{service.duration_minutes || service.duration} min</span>
-                        </div>
-                        {!embedded && (
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleBookAppointment(service.id)}
-                          >
-                            Reservar
-                            <ChevronRight className="w-4 h-4 ml-1" />
-                          </Button>
-                        )}
-                      </div>
-                    </Card>
+                    <ServiceCard
+                      key={service.id}
+                      service={{
+                        id: service.id,
+                        name: service.name,
+                        description: service.description,
+                        duration: service.duration_minutes ?? service.duration,
+                        price: service.price,
+                      }}
+                      readOnly={embedded}
+                      onViewProfile={embedded ? undefined : () => handleBookAppointment(service.id)}
+                    />
                   ))}
                 </div>
               )}
@@ -427,52 +415,14 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
                   No hay ubicaciones disponibles
                 </p>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {business.locations.map(location => (
-                    <Card key={location.id} className="p-4">
-                      <h3 className="font-semibold text-lg mb-2">{location.name}</h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-start gap-2 text-muted-foreground">
-                          <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
-                          <LocationAddress address={location.address} cityId={location.city} stateId={location.state} postalCode={location.postal_code} />
-                        </div>
-                        {location.phone && (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Phone className="w-4 h-4" />
-                            <a href={`tel:${location.phone}`} className="hover:text-primary">
-                              {location.phone}
-                            </a>
-                          </div>
-                        )}
-                        {location.business_hours && (
-                          <div className="mt-3 pt-3 border-t border-border">
-                            <p className="font-medium text-xs mb-2">Horario de atención:</p>
-                            <div className="space-y-1 text-xs">
-                              {Object.entries(location.business_hours).map(([day, hours]) => {
-                                const hoursData = hours as { open?: string; close?: string; closed?: boolean };
-                                return (
-                                  <div key={day} className="flex justify-between">
-                                    <span className="capitalize">{day}:</span>
-                                    <span className={hoursData.closed ? 'text-muted-foreground' : ''}>
-                                      {hoursData.closed ? 'Cerrado' : `${hoursData.open} - ${hoursData.close}`}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      {!embedded && (
-                        <Button 
-                          size="sm" 
-                          className="w-full mt-4"
-                          onClick={() => handleBookAppointment(undefined, location.id)}
-                        >
-                          Reservar aquí
-                        </Button>
-                      )}
-                    </Card>
+                    <LocationCard
+                      key={location.id}
+                      location={location as unknown as Location}
+                      readOnly={embedded}
+                      onViewProfile={embedded ? undefined : () => handleBookAppointment(undefined, location.id)}
+                    />
                   ))}
                 </div>
               )}
@@ -485,63 +435,20 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
                   No hay información del equipo disponible
                 </p>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {business.employees.map(employee => (
-                    <Card key={employee.id} className="p-4">
-                      <div className="flex items-start gap-3 mb-3">
-                        {employee.avatar_url ? (
-                          <img
-                            src={employee.avatar_url}
-                            alt={employee.name}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                            {employee.name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <h3 className="font-semibold">
-                            {employee.name}
-                          </h3>
-                          {employee.title && (
-                            <p className="text-sm text-muted-foreground">{employee.title}</p>
-                          )}
-                          {employee.review_count && employee.review_count > 0 && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <Star className="w-3 h-3 fill-primary text-primary" />
-                              <span className="text-xs font-medium">{employee.rating?.toFixed(1)}</span>
-                              <span className="text-xs text-muted-foreground">
-                                ({employee.review_count})
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      {employee.bio && (
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                          {employee.bio}
-                        </p>
-                      )}
-                      {employee.specializations && employee.specializations.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mb-3">
-                          {employee.specializations.slice(0, 3).map((spec) => (
-                            <Badge key={spec} variant="outline" className="text-xs">
-                              {spec}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                      {!embedded && (
-                        <Button 
-                          size="sm" 
-                          className="w-full"
-                          onClick={() => handleBookAppointment(undefined, undefined, employee.id)}
-                        >
-                          Reservar con {employee.name?.split(' ')[0]}
-                        </Button>
-                      )}
-                    </Card>
+                    <EmployeeCard
+                      key={employee.id}
+                      employee={{
+                        id: employee.id,
+                        full_name: employee.name,
+                        avatar_url: employee.avatar_url,
+                        average_rating: employee.rating,
+                        total_reviews: employee.review_count,
+                      }}
+                      readOnly={embedded}
+                      onViewProfile={embedded ? undefined : () => handleBookAppointment(undefined, undefined, employee.id)}
+                    />
                   ))}
                 </div>
               )}

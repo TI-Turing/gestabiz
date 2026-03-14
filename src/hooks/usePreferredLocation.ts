@@ -30,17 +30,35 @@ export function usePreferredLocation(businessId: string | undefined): PreferredL
   const [isInitialized, setIsInitialized] = useState(false)
   const [isExplicitlySet, setIsExplicitlySet] = useState(false)
 
-  // Cargar desde localStorage al montar o cuando cambia el negocio
+  // Cargar desde localStorage al montar, cuando cambia el negocio,
+  // o cuando otro componente actualiza la sede preferida del mismo negocio
   useEffect(() => {
     if (!businessId) return
 
-    const stored = localStorage.getItem(`${STORAGE_KEY_PREFIX}${businessId}`)
-    if (stored) {
-      setPreferredLocationId(stored === 'all' ? null : stored)
-      setIsExplicitlySet(true)
+    const loadFromStorage = () => {
+      const stored = localStorage.getItem(`${STORAGE_KEY_PREFIX}${businessId}`)
+      if (stored) {
+        setPreferredLocationId(stored === 'all' ? null : stored)
+        setIsExplicitlySet(true)
+      } else {
+        setPreferredLocationId(null)
+      }
+      setIsInitialized(true)
     }
-    // Marcar como inicializado independientemente de si había un valor
-    setIsInitialized(true)
+
+    // Carga inicial
+    loadFromStorage()
+
+    // Escuchar cambios emitidos desde cualquier instancia del hook en la misma pestaña
+    const handleLocationChanged = (e: Event) => {
+      const detail = (e as CustomEvent<{ businessId: string }>).detail
+      if (detail?.businessId === businessId) {
+        loadFromStorage()
+      }
+    }
+
+    globalThis.window?.addEventListener('preferred-location-changed', handleLocationChanged)
+    return () => globalThis.window?.removeEventListener('preferred-location-changed', handleLocationChanged)
   }, [businessId])
 
   // Función para actualizar la sede preferida
@@ -52,6 +70,11 @@ export function usePreferredLocation(businessId: string | undefined): PreferredL
     localStorage.setItem(`${STORAGE_KEY_PREFIX}${businessId}`, valueToStore)
     setPreferredLocationId(locationId)
     setIsExplicitlySet(true)
+
+    // Notificar a todas las instancias del hook en la misma pestaña
+    globalThis.window?.dispatchEvent(
+      new CustomEvent('preferred-location-changed', { detail: { businessId } })
+    )
   }
 
   const isAllLocations = preferredLocationId === null

@@ -199,7 +199,7 @@ serve(async (req) => {
       // Listado inicial: traer negocios por ciudad, aplicar disponibilidad y priorizar por citas del cliente en la ciudad
       const { data: businesses, error } = await supabase
         .from('businesses')
-        .select('id, name, description, logo_url, address, city, phone, category_id')
+        .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
         .in('id', cityBusinessIds)
         .eq('is_active', true)
         .eq('is_public', true)
@@ -211,7 +211,7 @@ serve(async (req) => {
     } else if (type === 'businesses') {
       const { data: businesses, error } = await supabase
         .from('businesses')
-        .select('id, name, description, logo_url, address, city, phone, category_id')
+        .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
         .ilike('name', `%${term}%`)
         .eq('is_active', true)
         .eq('is_public', true)
@@ -259,7 +259,7 @@ serve(async (req) => {
 
       const { data: businesses, error: bizErr } = await supabase
         .from('businesses')
-        .select('id, name, description, logo_url, address, city, phone, category_id')
+        .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
         .in('id', candidateBusinessIds)
         .eq('is_active', true)
         .eq('is_public', true)
@@ -286,7 +286,7 @@ serve(async (req) => {
       }
       const { data: businesses, error: bizErr } = await supabase
         .from('businesses')
-        .select('id, name, description, logo_url, address, city, phone, category_id')
+        .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
         .in('category_id', catIds)
         .eq('is_active', true)
         .eq('is_public', true)
@@ -318,7 +318,7 @@ serve(async (req) => {
       candidateBusinessIds = Array.from(new Set((emp || []).map((e: any) => e.business_id))).filter(Boolean)
       const { data: businesses, error: bizErr } = await supabase
         .from('businesses')
-        .select('id, name, description, logo_url, address, city, phone, category_id')
+        .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
         .in('id', candidateBusinessIds)
         .eq('is_active', true)
         .eq('is_public', true)
@@ -334,7 +334,7 @@ serve(async (req) => {
       // 1) Por nombre de negocio
       const { data: bizByName } = await supabase
         .from('businesses')
-        .select('id, name, description, logo_url, address, city, phone, category_id')
+        .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
         .ilike('name', `%${term}%`)
         .eq('is_active', true)
         .eq('is_public', true)
@@ -367,7 +367,7 @@ serve(async (req) => {
         if (svcBizIds.length > 0) {
           const { data: svcBizRows } = await supabase
             .from('businesses')
-            .select('id, name, description, logo_url, address, city, phone, category_id')
+            .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
             .in('id', svcBizIds)
             .eq('is_active', true)
             .eq('is_public', true)
@@ -388,7 +388,7 @@ serve(async (req) => {
       if (catIds.length > 0) {
         const { data: catBizRows } = await supabase
           .from('businesses')
-          .select('id, name, description, logo_url, address, city, phone, category_id')
+          .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
           .in('category_id', catIds)
           .eq('is_active', true)
           .eq('is_public', true)
@@ -415,7 +415,7 @@ serve(async (req) => {
         if (empBizIds.length > 0) {
           const { data: empBizRows } = await supabase
             .from('businesses')
-            .select('id, name, description, logo_url, address, city, phone, category_id')
+            .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
             .in('id', empBizIds)
             .eq('is_active', true)
             .eq('is_public', true)
@@ -443,7 +443,7 @@ serve(async (req) => {
       }
       const { data: businesses2, error: bizErr2 } = await supabase
         .from('businesses')
-        .select('id, name, description, logo_url, address, city, phone, category_id')
+        .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
         .in('category_id', catIds2)
         .eq('is_active', true)
         .eq('is_public', true)
@@ -476,7 +476,7 @@ serve(async (req) => {
       candidateBusinessIds = Array.from(new Set((emp2 || []).map((e: any) => e.business_id))).filter(Boolean)
       const { data: businesses3, error: bizErr3 } = await supabase
         .from('businesses')
-        .select('id, name, description, logo_url, address, city, phone, category_id')
+        .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
         .in('id', candidateBusinessIds)
         .eq('is_active', true)
         .eq('is_public', true)
