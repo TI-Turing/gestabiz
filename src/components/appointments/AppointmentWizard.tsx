@@ -215,7 +215,7 @@ export function AppointmentWizard({
     if (!businessId) return 'business';
     if (preselectedEmployeeId && preselectedServiceId) return 'dateTime';
     if (preselectedEmployeeId && !preselectedServiceId) return 'service';
-    if (preselectedServiceId && !preselectedEmployeeId) return 'employee';
+    if (preselectedServiceId && !preselectedEmployeeId) return 'location';
     if (preselectedLocationId) return 'service';
     return 'location';
   };
@@ -425,12 +425,17 @@ export function AppointmentWizard({
         locationId: singleLocation.id,
         location: singleLocation,
       });
-      
+
+      // Si el servicio ya está preseleccionado, saltar directo a empleado
+      if (wizardData.serviceId) {
+        setCurrentStep(getStepNumber('employee'));
+        return;
+      }
+
       // Verificar si también podemos auto-seleccionar el servicio
-      const servicesForLocation = dataCache.services.filter(service => 
+      const servicesForLocation = dataCache.services.filter(service =>
         service.location_id === singleLocation.id
       );
-      
       if (servicesForLocation.length === 1) {
         const singleService = servicesForLocation[0];
         updateWizardData({
@@ -446,6 +451,12 @@ export function AppointmentWizard({
         setCurrentStep(getStepNumber('service'));
         return;
       }
+    }
+
+    // ⭐ Si hay servicio ya seleccionado al salir de location (múltiples sedes), saltar a employee
+    if (currentStep === getStepNumber('location') && wizardData.serviceId) {
+      setCurrentStep(getStepNumber('employee'));
+      return;
     }
 
     // ⭐ OPTIMIZACIÓN: Auto-seleccionar servicio si solo hay uno disponible en la ubicación
@@ -917,7 +928,7 @@ export function AppointmentWizard({
                 currentStep={getEffectiveCurrentStep() + 1}
                 totalSteps={getEffectiveTotalSteps()}
                 label={undefined}
-                completedSteps={[]}
+                completedSteps={Array.from({ length: getEffectiveCurrentStep() }, (_, i) => i + 1)}
               />
             </div>
           </div>

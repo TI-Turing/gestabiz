@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
-import { Building2, Check, Loader2, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Check, Loader2, AlertCircle } from 'lucide-react';
 import { useEmployeeBusinesses } from '@/hooks/useEmployeeBusinesses';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BusinessCard } from '@/components/cards/BusinessCard';
+import type { BusinessCardData } from '@/components/cards/BusinessCard';
 
 interface Business {
   id: string;
@@ -112,7 +113,7 @@ export function EmployeeBusinessSelection({
     <div className="p-6">
       <div className="mb-6">
         <div className="flex items-start gap-3 mb-4 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-lg">
-          <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-200">
               Lo sentimos, esta vez debes seleccionar el negocio
@@ -125,64 +126,28 @@ export function EmployeeBusinessSelection({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {businesses.map((business) => (
-          <button
-            key={business.id}
-            onClick={() => onSelectBusiness(business)}
-            className={cn(
-              "relative group rounded-xl p-6 text-left transition-all duration-200 border-2",
-              "hover:scale-[1.02] hover:shadow-xl",
-              selectedBusinessId === business.id
-                ? "bg-primary/20 border-primary shadow-lg shadow-primary/20"
-                : "bg-muted/50 border-border hover:bg-muted hover:border-border/50"
-            )}
-          >
-            {/* Selected indicator */}
-            {selectedBusinessId === business.id && (
-              <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                <Check className="h-4 w-4 text-primary-foreground" />
-              </div>
-            )}
-
-            {/* Business Logo */}
-            <div className="flex items-start gap-4 mb-4">
-              {business.logo_url ? (
-                <img
-                  src={business.logo_url}
-                  alt={business.name}
-                  className="w-16 h-16 rounded-lg object-cover"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-8 w-8 text-primary" />
-                </div>
-              )}
-
-              <div className="flex-1 min-w-0">
-                <h4 className="text-lg font-semibold text-foreground mb-1 truncate">
-                  {business.name}
-                </h4>
-                {business.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {business.description}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Business Location */}
-            {(business.address || business.city) && (
-              <div className="mt-3 pt-3 border-t border-border/50">
-                <p className="text-xs text-muted-foreground">
-                  {business.address && `${business.address}, `}
-                  {business.city}
-                  {business.state && `, ${business.state}`}
-                </p>
-              </div>
-            )}
-          </button>
-        ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {businesses.map((business) => {
+          const cardData: BusinessCardData = {
+            id: business.id,
+            name: business.name,
+            description: business.description,
+            logo_url: business.logo_url,
+            city: (() => {
+              if (!business.city) return null;
+              return business.state ? `${business.city}, ${business.state}` : business.city;
+            })(),
+            address: business.address,
+          };
+          return (
+            <BusinessCard
+              key={business.id}
+              business={cardData}
+              isSelected={selectedBusinessId === business.id}
+              onSelect={() => onSelectBusiness(business)}
+            />
+          );
+        })}
       </div>
 
       <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">

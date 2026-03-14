@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { X, Star, Calendar, Briefcase, MapPin, Award, Clock, Building2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { X, Star, Calendar, Briefcase, MapPin, Award, Building2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -11,6 +12,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useEmployeeBusinesses } from '@/hooks/useEmployeeBusinesses';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { ReviewList } from '@/components/reviews/ReviewList';
+import { ServiceCard } from '@/components/cards/ServiceCard';
+import { ServiceProfileModal } from '@/components/admin/ServiceProfileModal';
 import { useReviews } from '@/hooks/useReviews';
 import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -20,6 +23,7 @@ interface UserProfileProps {
   userId: string;
   onClose: () => void;
   onBookAppointment?: (serviceId?: string, businessId?: string) => void;
+  hideBooking?: boolean;
   userLocation?: {
     latitude: number;
     longitude: number;
@@ -78,6 +82,7 @@ export default function UserProfile({
   userId, 
   onClose, 
   onBookAppointment,
+  hideBooking = false,
   userLocation 
 }: UserProfileProps) {
   const { user } = useAuth();
@@ -85,6 +90,7 @@ export default function UserProfile({
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('services');
+  const [profileServiceId, setProfileServiceId] = useState<string | null>(null);
   const [canReview, setCanReview] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [eligibleAppointmentId, setEligibleAppointmentId] = useState<string | null>(null);
@@ -113,7 +119,7 @@ export default function UserProfile({
       // Fetch user basic info
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, full_name, email, phone, avatar_url, bio')
+        .select('id, full_name, email, phone, avatar_url')
         .eq('id', userId)
         .single();
 
@@ -221,9 +227,7 @@ export default function UserProfile({
         expertise: [], // TODO: Implement expertise tracking
       });
     } catch (error) {
-      if (error instanceof Error) {
-        console.error('Error fetching user data:', error.message);
-      }
+      console.error('Error fetching user data:', error);
     } finally {
       setLoading(false);
     }
@@ -322,32 +326,37 @@ export default function UserProfile({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-card">
+      <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader className="sr-only"><DialogTitle>Cargando perfil</DialogTitle></DialogHeader>
           <div className="flex items-center justify-center p-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
-        </Card>
-      </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   if (!userData) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto bg-card">
+      <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader className="sr-only"><DialogTitle>Error</DialogTitle></DialogHeader>
           <div className="p-8 text-center">
             <p className="text-muted-foreground">{t('userProfile.errors.loadError')}</p>
             <Button onClick={onClose} className="mt-4">{t('userProfile.actions.close')}</Button>
           </div>
-        </Card>
-      </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-hidden bg-card flex flex-col">
+    <>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent hideClose className="max-w-4xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
+        <DialogHeader className="sr-only"><DialogTitle>{userData?.full_name ?? 'Perfil'}</DialogTitle></DialogHeader>
+      <Card className="w-full max-h-[90vh] overflow-hidden bg-card flex flex-col border-0">
         {/* Header */}
         <div className="relative bg-linear-to-r from-primary/20 to-secondary/20 p-8">
           {/* Botón cerrar */}
@@ -419,51 +428,14 @@ export default function UserProfile({
                   {t('userProfile.services.noServices')}
                 </p>
               ) : (
-                <div className="grid gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {userData.services.map((service) => (
-                    <Card key={service.id} className="p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-lg">{service.name}</h3>
-                            {service.business && (
-                              <Badge variant="outline" className="text-xs">
-                                <Building2 className="h-3 w-3 mr-1" />
-                                {service.business.name}
-                              </Badge>
-                            )}
-                          </div>
-                          {service.description && (
-                            <p className="text-sm text-muted-foreground mb-2">
-                              {service.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              <span>{formatDuration(service.duration)}</span>
-                            </div>
-                            {service.category && (
-                              <Badge variant="secondary" className="text-xs">
-                                {service.category}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-primary mb-2">
-                            {formatCurrency(service.price, 'COP')}
-                          </p>
-                          <Button
-                            onClick={() => onBookAppointment?.(service.id, service.business_id)}
-                            size="sm"
-                          >
-                            <Calendar className="h-4 w-4 mr-2" />
-                            {t('userProfile.services.schedule')}
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
+                    <ServiceCard
+                      key={service.id}
+                      service={service}
+                      readOnly
+                      onViewProfile={(id) => setProfileServiceId(id)}
+                    />
                   ))}
                 </div>
               )}
@@ -582,26 +554,37 @@ export default function UserProfile({
         </div>
 
         {/* Footer sticky con botón principal */}
-        <div className="border-t border-border p-4 bg-background">
-          <Button 
-            onClick={() => onBookAppointment?.()}
-            className="w-full"
-            size="lg"
-            disabled={!isEmployeeOfAnyBusiness}
-          >
-            <Calendar className="h-5 w-5 mr-2" />
-            {isEmployeeOfAnyBusiness 
-              ? t('userProfile.footer.scheduleWith', { name: userData.full_name })
-              : t('userProfile.footer.notAvailable')
-            }
-          </Button>
-          {!isEmployeeOfAnyBusiness && (
-            <p className="text-xs text-center text-muted-foreground mt-2">
-              {t('userProfile.footer.notLinkedMessage')}
-            </p>
-          )}
-        </div>
+        {!hideBooking && (
+          <div className="border-t border-border p-4 bg-background">
+            <Button 
+              onClick={() => onBookAppointment?.()}
+              className="w-full"
+              size="lg"
+              disabled={!isEmployeeOfAnyBusiness}
+            >
+              <Calendar className="h-5 w-5 mr-2" />
+              {isEmployeeOfAnyBusiness 
+                ? t('userProfile.footer.scheduleWith', { name: userData.full_name })
+                : t('userProfile.footer.notAvailable')
+              }
+            </Button>
+            {!isEmployeeOfAnyBusiness && (
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                {t('userProfile.footer.notLinkedMessage')}
+              </p>
+            )}
+          </div>
+        )}
       </Card>
-    </div>
+      </DialogContent>
+    </Dialog>
+
+    {profileServiceId && (
+      <ServiceProfileModal
+        serviceId={profileServiceId}
+        onClose={() => setProfileServiceId(null)}
+      />
+    )}
+    </>
   );
 }

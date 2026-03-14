@@ -1,11 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { Service } from '@/types/types';
 import supabase from '@/lib/supabase';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { ServiceProfileModal } from '@/components/admin/ServiceProfileModal';
+import { ServiceCard } from '@/components/cards/ServiceCard';
+import type { Service } from '@/types/types';
 
 interface ServiceSelectionProps {
   readonly businessId: string;
@@ -26,6 +24,7 @@ export function ServiceSelection({
 }: ServiceSelectionProps) {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(!preloadedServices);
+  const [profileServiceId, setProfileServiceId] = useState<string | null>(null);
   const { t } = useLanguage();
 
   const loadServices = useCallback(async () => {
@@ -75,6 +74,7 @@ export function ServiceSelection({
   }
 
   return (
+    <>
     <div className="p-6">
       <h3 className="text-xl font-semibold text-foreground mb-6">
         {t('appointments.wizard.selectAService')}
@@ -88,63 +88,14 @@ export function ServiceSelection({
             : isPreselected && isSelected;
 
           return (
-            <Card
+            <ServiceCard
               key={service.id}
-              onClick={() => onSelectService(service)}
-              className={cn(
-                "relative bg-card border-2 rounded-xl overflow-hidden",
-                "cursor-pointer transition-all duration-200",
-                "hover:border-primary hover:scale-105 hover:shadow-lg hover:shadow-primary/20",
-                isSelected
-                  ? "border-primary bg-primary/10"
-                  : "border-border",
-                wasPreselected && "ring-2 ring-green-500/50"
-              )}
-            >
-              {/* Badge de preselección */}
-              {wasPreselected && (
-                <div className="absolute top-2 left-2 z-10">
-                  <Badge className="bg-green-500 text-white text-xs shadow-lg">
-                    <Check className="w-3 h-3 mr-1" />
-                    Preseleccionado
-                  </Badge>
-                </div>
-              )}
-
-              {/* Imagen fotográfica real del servicio */}
-              {service.image_url && (
-                <div className="aspect-square w-full relative">
-                  <img
-                    src={service.image_url}
-                    alt={service.name}
-                    className="w-full h-full object-cover"
-                  />
-
-                {/* Checkmark cuando está seleccionado */}
-                {isSelected && (
-                  <div
-                    className={cn(
-                      "absolute top-3 right-3 w-8 h-8 bg-primary rounded-full",
-                      "flex items-center justify-center",
-                      "animate-in zoom-in duration-200"
-                    )}
-                  >
-                    <Check className="w-5 h-5 text-primary-foreground" />
-                  </div>
-                )}
-                </div>
-              )}
-
-              {/* Label debajo de la imagen */}
-              <div className="p-3 text-center bg-muted/50">
-                <h3 className="text-base font-semibold text-foreground truncate">
-                  {service.name}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {service.duration} min
-                </p>
-              </div>
-            </Card>
+              service={service}
+              isSelected={isSelected}
+              onSelect={onSelectService}
+              isPreselected={wasPreselected}
+              onViewProfile={(id) => setProfileServiceId(id)}
+            />
           );
         })}
       </div>
@@ -155,5 +106,11 @@ export function ServiceSelection({
         </div>
       )}
     </div>
+
+    <ServiceProfileModal
+      serviceId={profileServiceId}
+      onClose={() => setProfileServiceId(null)}
+    />
+  </>
   );
 }

@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Check, Building2, Filter, Search, Star, ChevronDown } from 'lucide-react';
+import { Check, Building2, Filter, Search, Star } from 'lucide-react';
 import { MapPin } from '@phosphor-icons/react';
+import BusinessProfile from '@/components/business/BusinessProfile';
 import { cn } from '@/lib/utils';
 import { withCache } from '@/lib/cache';
 import supabase from '@/lib/supabase';
@@ -74,7 +75,7 @@ export function BusinessSelection({
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [categoriesMap, setCategoriesMap] = useState<Record<string, string>>({});
   const [servicesByBusinessId, setServicesByBusinessId] = useState<Record<string, string[]>>({});
-  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [profileBusinessId, setProfileBusinessId] = useState<string | null>(null);
   // Ratings: se consumen desde la Edge Function `search_businesses`.
   
   // Helper para detectar UUID (IDs de ciudad/región)
@@ -614,27 +615,13 @@ export function BusinessSelection({
           const rs = ratingStatsByBusinessId[business.id];
           const services = servicesByBusinessId[business.id] ?? [];
           const cityDisplay = business.city ? (cityNameMap[business.city] ?? business.city) : '';
-          const isExpanded = expandedCards.has(business.id);
-          const toggleExpand = (e: React.MouseEvent) => {
-            e.stopPropagation();
-            setExpandedCards(prev => {
-              const next = new Set(prev);
-              if (next.has(business.id)) {
-                next.delete(business.id);
-              } else {
-                next.add(business.id);
-              }
-              return next;
-            });
-          };
-
           return (
             <div
               key={business.id}
               onClick={() => onSelectBusiness(business)}
               className={cn(
-                "relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200",
-                isExpanded ? "h-auto" : "h-64",
+                "group relative rounded-lg overflow-hidden cursor-pointer transition-all duration-200",
+                "h-64",
                 "border",
                 "hover:scale-[1.02] hover:shadow-lg hover:shadow-primary/20",
                 isSelected
@@ -642,40 +629,67 @@ export function BusinessSelection({
                   : "border-border hover:border-primary/60"
               )}
             >
-              {/* Banner de fondo - máximo 70% del card original (h-64 = 179px aprox) */}
+              {/* Banner de fondo */}
               <div
                 className="w-full bg-cover bg-center"
                 style={{ 
-                  height: isExpanded ? '70%' : '70%',
+                  height: '60%',
                   backgroundImage: `url(${getBannerImage(business)})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 }}
               />
-              
+
               {/* Degradado sobre el banner */}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{ 
-                  height: isExpanded ? '70%' : '70%',
+                  height: '60%',
                   background: 'linear-gradient(to bottom, transparent 0%, transparent 40%, rgba(0,0,0,0.50) 80%, rgba(0,0,0,0.80) 100%)' 
                 }}
               />
 
+              {/* Overlay de servicios al hacer hover - aparece sobre la imagen */}
+              {services.length > 0 && (
+                <div
+                  className="absolute inset-x-0 top-0 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 overflow-hidden flex flex-col justify-between"
+                  style={{
+                    height: '60%',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    background: 'rgba(0,0,0,0.68)',
+                  }}
+                >
+                  <div className="p-2 flex flex-col gap-0.5 overflow-y-auto">
+                    <p className="text-[10px] font-semibold text-white/55 uppercase tracking-wide mb-1">Servicios</p>
+                    {services.map((svc) => (
+                      <span key={svc} className="text-xs text-white/85 truncate leading-tight">
+                        · {svc}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="p-2 pt-0">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setProfileBusinessId(business.id); }}
+                      className="w-full py-1 px-2 rounded text-[11px] font-semibold bg-white/15 hover:bg-white/30 text-white border border-white/25 transition-colors"
+                    >
+                      Perfil del negocio
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Check seleccionado */}
               {isSelected && (
-                <div className="absolute top-2 right-2 z-10 w-6 h-6 bg-primary rounded-full flex items-center justify-center animate-in zoom-in duration-200">
+                <div className="absolute top-2 right-2 z-30 w-6 h-6 bg-primary rounded-full flex items-center justify-center animate-in zoom-in duration-200">
                   <Check className="w-3.5 h-3.5 text-primary-foreground" />
                 </div>
               )}
 
-              {/* Info sobre el degradado con fondo translúcido - máximo 40% */}
-              <div className={cn(
-                "relative p-2.5 flex flex-col gap-1 backdrop-blur-md bg-black/70",
-                isExpanded ? "h-auto" : "h-[40%] overflow-hidden"
-              )}>
-                {/* Fila: Logo + Nombre + Categoría */}
-                <div className="flex items-start gap-2.5 mb-1">
+              {/* Info con fondo translúcido - 40% inferior */}
+              <div className="relative p-2.5 flex flex-col gap-1 backdrop-blur-md bg-black/70 h-[40%] overflow-hidden">
+                {/* Fila: Logo + Nombre + Categoría + Rating */}
+                <div className="flex items-start gap-2.5">
                   <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border border-white/30 bg-black/50">
                     {business.logo_url ? (
                       <img src={business.logo_url} alt="" className="w-full h-full object-cover" />
@@ -694,64 +708,28 @@ export function BusinessSelection({
                         {categoriesMap[business.category_id]}
                       </p>
                     )}
-                  </div>
-                </div>
-
-                {/* Rating + Sedes */}
-                <div className="flex items-center gap-2 text-[11px]">
-                  {rs && rs.average_rating ? (
-                    <span className="flex items-center gap-0.5 text-white/90">
-                      <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                      {Number(rs.average_rating).toFixed(1)}
-                      <span className="text-white/50">· {rs.review_count} reseñas</span>
-                    </span>
-                  ) : null}
-                  {!rs && (
-                    <span className="text-white/70">
-                      {locationsCountMap[business.id] ?? 0} sede{(locationsCountMap[business.id] ?? 0) !== 1 ? 's' : ''}
-                    </span>
-                  )}
-                </div>
-
-                {/* Dirección */}
-                {business.address && (
-                  <p className="flex items-center gap-1 text-xs text-white/75 truncate leading-tight">
-                    <MapPin size={10} weight="fill" className="flex-shrink-0" />
-                    {cityDisplay ? `${cityDisplay}, ` : ''}{business.address}
-                  </p>
-                )}
-
-                {/* Servicios (hasta 5) - solo visible cuando expandido */}
-                {isExpanded && services.length > 0 && (
-                  <div className="flex flex-col text-xs text-white/65">
-                    {services.slice(0, 5).map((svc) => (
-                      <span key={svc} className="truncate leading-tight">
-                        · {svc}
+                    {/* Rating justo debajo de la categoría */}
+                    {rs && rs.average_rating ? (
+                      <span className="flex items-center gap-0.5 text-[11px] text-white/90 mt-0.5">
+                        <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                        {Number(rs.average_rating).toFixed(1)}
+                        <span className="text-white/50">· {rs.review_count} reseñas</span>
                       </span>
-                    ))}
+                    ) : (
+                      <span className="text-[11px] text-white/60 mt-0.5 block">
+                        {locationsCountMap[business.id] ?? 0} sede{(locationsCountMap[business.id] ?? 0) !== 1 ? 's' : ''}
+                      </span>
+                    )}
                   </div>
-                )}
+                </div>
 
-                {/* Botón "Ver más" - solo cuando hay más contenido */}
-                {!isExpanded && (services.length > 0 || business.address) && (
-                  <button
-                    onClick={toggleExpand}
-                    className="absolute bottom-1 right-1 z-20 p-1 hover:bg-white/10 rounded-md transition-colors"
-                    aria-label="Ver más"
-                  >
-                    <ChevronDown className="w-4 h-4 text-white/70 hover:text-white" />
-                  </button>
-                )}
-
-                {/* Botón "Ver menos" - cuando está expandido */}
-                {isExpanded && (
-                  <button
-                    onClick={toggleExpand}
-                    className="mt-2 px-2 py-1 text-xs text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors"
-                    aria-label="Ver menos"
-                  >
-                    Ver menos
-                  </button>
+                {/* Sedes en la ciudad */}
+                {(locationsCountMap[business.id] ?? 0) > 0 && (
+                  <p className="flex items-center gap-1 text-xs text-white/75 truncate leading-tight mt-0.5">
+                    <MapPin size={10} weight="fill" className="flex-shrink-0" />
+                    {locationsCountMap[business.id]} sede{(locationsCountMap[business.id]) !== 1 ? 's' : ''}
+                    {cityDisplay ? ` en ${cityDisplay}` : ''}
+                  </p>
                 )}
               </div>
             </div>
@@ -776,6 +754,15 @@ export function BusinessSelection({
               : 'There are no active businesses at the moment.'}
           </p>
         </div>
+      )}
+
+      {/* Modal de perfil del negocio */}
+      {profileBusinessId && (
+        <BusinessProfile
+          businessId={profileBusinessId}
+          onClose={() => setProfileBusinessId(null)}
+          hideBooking
+        />
       )}
     </div>
   );
