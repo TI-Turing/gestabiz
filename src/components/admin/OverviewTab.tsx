@@ -380,18 +380,18 @@ export function OverviewTab({ business }: OverviewTabProps) {
       <Card className="bg-card border-border overflow-hidden">
         {/* Banner con desvanecido */}
         {business.banner_url && (
-          <div className="relative h-28 w-full overflow-hidden">
+          <div className="relative h-16 w-full overflow-hidden">
             <img
               src={business.banner_url}
               alt={`Banner de ${business.name}`}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-linear-to-t from-card via-card/20 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-card via-card/30 to-transparent" />
           </div>
         )}
-        <CardContent className={`space-y-4 ${business.banner_url ? 'pt-0' : 'pt-6'}`}>
+        <CardContent className={`space-y-4 ${business.banner_url ? 'pt-4' : 'pt-6'}`}>
           {/* Header: Logo + Nombre + Botón */}
-          <div className={`flex items-start justify-between gap-4 ${business.banner_url ? '-mt-10' : ''}`}>
+          <div className={`flex items-start justify-between gap-4 ${business.banner_url ? '-mt-2' : ''}`}>
             <div className="flex items-center gap-3">
               {business.logo_url ? (
                 <img
