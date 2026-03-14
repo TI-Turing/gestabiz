@@ -3,7 +3,7 @@ import { useKV } from '@/lib/useKV'
 // import { Button } from '@/components/ui/button'
 import RecommendedBusinesses from './RecommendedBusinesses'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { AppointmentCard, type AppointmentCardData } from '@/components/cards/AppointmentCard'
 import { Calendar } from 'lucide-react'
 import { User as UserType, Appointment } from '@/types'
 import type { AppointmentFilter } from '@/types/types'
@@ -51,38 +51,6 @@ export default function AppointmentsView({ user }: Readonly<AppointmentsViewProp
     return grouped
   }, [filteredAndSortedAppointments])
 
-  const getStatusColor = (status: Appointment['status']) => {
-    switch (status) {
-      case 'scheduled': return 'bg-blue-500/10 text-blue-700 border-blue-200'
-      case 'in_progress': return 'bg-indigo-500/10 text-indigo-700 border-indigo-200'
-      case 'completed': return 'bg-green-500/10 text-green-700 border-green-200'
-      case 'cancelled': return 'bg-red-500/10 text-red-700 border-red-200'
-      case 'no_show': return 'bg-orange-500/10 text-orange-700 border-orange-200'
-      default: return 'bg-gray-500/10 text-gray-700 border-gray-200'
-    }
-  }
-
-  const getStatusLabel = (status: Appointment['status']) => {
-    switch (status) {
-      case 'scheduled': return 'Programada'
-      case 'in_progress': return 'En curso'
-      case 'completed': return 'Completada'
-      case 'cancelled': return 'Cancelada'
-      case 'no_show': return 'No se presentó'
-      default: return status
-    }
-  }
-
-  const formatStartTime = (apt: Appointment) => {
-    if (apt.startTime) return apt.startTime
-    try { return new Date(apt.start_time).toTimeString().slice(0,5) } catch { return '' }
-  }
-  
-  const formatEndTime = (apt: Appointment) => {
-    if (apt.endTime) return apt.endTime
-    try { return new Date(apt.end_time).toTimeString().slice(0,5) } catch { return '' }
-  }
-
   // Render principal
   return (
     <div className={user.activeRole === 'client' ? 'grid grid-cols-1 md:grid-cols-2 gap-8' : 'space-y-6'}>
@@ -109,26 +77,24 @@ export default function AppointmentsView({ user }: Readonly<AppointmentsViewProp
                   <h4 className="text-lg font-semibold mb-2">{day}</h4>
                   <div className="space-y-4">
                     {appointments.map((appointment) => (
-                      <Card key={appointment.id} className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-6">
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-lg">{appointment.title}</h3>
-                              <Badge className={getStatusColor(appointment.status)}>
-                                {getStatusLabel(appointment.status)}
-                              </Badge>
-                            </div>
-                            <div className="flex flex-wrap gap-4 text-muted-foreground text-sm">
-                              <span><b>Negocio:</b> {appointment.site_name || appointment.location || 'Sin nombre'}</span>
-                              <span><b>Hora:</b> {formatStartTime(appointment)} - {formatEndTime(appointment)}</span>
-                              <span><b>Lugar:</b> {appointment.location || 'Sin lugar'}</span>
-                            </div>
-                            {appointment.description && (
-                              <p className="text-sm text-muted-foreground mb-2">{appointment.description}</p>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <AppointmentCard
+                        key={appointment.id}
+                        appointmentId={appointment.id}
+                        initialData={{
+                          id: appointment.id,
+                          start_time: appointment.start_time,
+                          end_time: appointment.end_time,
+                          status: appointment.status as AppointmentCardData['status'],
+                          title: appointment.title,
+                          location: appointment.location,
+                          price: appointment.price,
+                        }}
+                        readOnly
+                      >
+                        {appointment.description && (
+                          <p className="text-sm text-muted-foreground">{appointment.description}</p>
+                        )}
+                      </AppointmentCard>
                     ))}
                   </div>
                 </div>

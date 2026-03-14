@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, MapPin, Mail, Phone, CheckCircle2, Clock, Briefcase, Crown, Plus } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useEmployeeBusinesses } from '@/hooks/useEmployeeBusinesses';
 import supabase from '@/lib/supabase';
+import { BusinessCard } from '@/components/cards/BusinessCard';
 
 interface MyEmploymentsProps {
   employeeId: string;
@@ -206,94 +207,79 @@ export function MyEmployments({ employeeId, onJoinBusiness }: MyEmploymentsProps
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {activeEmployments.map((business) => (
-              <Card key={business.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      {business.logo_url ? (
-                        <img
-                          src={business.logo_url}
-                          alt={business.name}
-                          className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Building2 className="h-6 w-6 text-primary" />
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <CardTitle className="text-base sm:text-lg truncate">
-                          {business.name}
-                        </CardTitle>
-                        {business.description && (
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">
-                            {business.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      {business.isOwner ? (
-                        <Badge variant="default" className="flex-shrink-0 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400">
-                          <Crown className="h-3 w-3 mr-1" />
-                          Propietario
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="flex-shrink-0">
-                          <Briefcase className="h-3 w-3 mr-1" />
-                          {business.role}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {/* Contact Info */}
-                  <div className="space-y-2 text-sm">
-                    {business.email && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Mail className="h-3.5 w-3.5 flex-shrink-0" />
-                        <span className="truncate">{business.email}</span>
-                      </div>
-                    )}
-                    {business.phone && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Phone className="h-3.5 w-3.5 flex-shrink-0" />
-                        <span>{business.phone}</span>
-                      </div>
-                    )}
-                    {(business.address || business.city || business.state) && (
-                      <div className="flex items-start gap-2 text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-                        <span className="flex-1">
-                          {[business.address, business.city, business.state]
-                            .filter(Boolean)
-                            .join(', ')}
-                        </span>
-                      </div>
+              <BusinessCard
+                key={business.id}
+                businessId={business.id}
+                initialData={{
+                  id: business.id,
+                  name: business.name,
+                  description: business.description,
+                  logo_url: business.logo_url,
+                  city: business.city,
+                }}
+                compact
+                readOnly
+                renderActions={() => (
+                  <div className="flex flex-col gap-1">
+                    {business.isOwner ? (
+                      <Badge variant="default" className="flex-shrink-0 bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400">
+                        <Crown className="h-3 w-3 mr-1" />
+                        Propietario
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="flex-shrink-0">
+                        <Briefcase className="h-3 w-3 mr-1" />
+                        {business.role}
+                      </Badge>
                     )}
                   </div>
+                )}
+              >
+                {/* Contact Info */}
+                <div className="space-y-2 text-sm mt-2">
+                  {business.email && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="truncate">{business.email}</span>
+                    </div>
+                  )}
+                  {business.phone && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>{business.phone}</span>
+                    </div>
+                  )}
+                  {(business.address || business.state) && (
+                    <div className="flex items-start gap-2 text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+                      <span className="flex-1">
+                        {[business.address, business.state]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-3 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 min-h-[44px]"
-                    >
-                      Ver Detalles
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="min-w-[44px] min-h-[44px]"
-                      title="Más opciones"
-                    >
-                      ⋮
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                {/* Actions */}
+                <div className="flex gap-2 pt-3 border-t mt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 min-h-[44px]"
+                  >
+                    Ver Detalles
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="min-w-[44px] min-h-[44px]"
+                    title="Más opciones"
+                  >
+                    ⋮
+                  </Button>
+                </div>
+              </BusinessCard>
             ))}
           </div>
         )}
@@ -315,42 +301,31 @@ export function MyEmployments({ employeeId, onJoinBusiness }: MyEmploymentsProps
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {previousEmployments.map((business) => (
-                <Card key={business.id} className="opacity-75">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {business.logo_url ? (
-                          <img
-                            src={business.logo_url}
-                            alt={business.name}
-                            className="w-12 h-12 rounded-lg object-cover flex-shrink-0 grayscale"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                            <Building2 className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <CardTitle className="text-base sm:text-lg truncate">
-                            {business.name}
-                          </CardTitle>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="flex-shrink-0">
-                        Inactivo
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full min-h-[44px]"
-                    >
-                      Ver Historial
-                    </Button>
-                  </CardContent>
-                </Card>
+                <BusinessCard
+                  key={business.id}
+                  businessId={business.id}
+                  initialData={{
+                    id: business.id,
+                    name: business.name,
+                    logo_url: business.logo_url,
+                  }}
+                  compact
+                  readOnly
+                  className="opacity-75"
+                  renderActions={() => (
+                    <Badge variant="outline" className="flex-shrink-0">
+                      Inactivo
+                    </Badge>
+                  )}
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full min-h-[44px] mt-2"
+                  >
+                    Ver Historial
+                  </Button>
+                </BusinessCard>
               ))}
             </div>
           )}

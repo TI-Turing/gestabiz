@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { Calendar, Clock, MapPin, User, DollarSign, Filter, X, Search, Building2, Briefcase, ChevronDown } from 'lucide-react'
+import { Calendar, Filter, X, Search, ChevronDown } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -8,8 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { AppointmentCard, type AppointmentCardData } from '@/components/cards/AppointmentCard'
 
 interface ClientHistoryProps {
   readonly userId: string
@@ -1004,80 +1003,25 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
         <>
           <div className="grid grid-cols-1 gap-4">
             {paginatedAppointments.map(appointment => (
-            <Card key={appointment.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                  {/* Left Section */}
-                  <div className="flex-1 space-y-3">
-                    {/* Status and Business */}
-                    <div className="flex items-center gap-3 flex-wrap">
-                      {getStatusBadgeForAppointment(appointment)}
-                      {appointment.business?.name && (
-                        <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                          <Building2 className="h-4 w-4" />
-                          {appointment.business.name}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Service */}
-                    {appointment.service?.name && (
-                      <div className="flex items-center gap-2">
-                        <Briefcase className="h-5 w-5 text-muted-foreground shrink-0" />
-                        <span className="font-semibold text-foreground text-lg">
-                          {appointment.service.name}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Date and Time */}
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>
-                          {format(new Date(appointment.start_time), "d 'de' MMMM, yyyy", { locale: es })}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        <span>
-                          {format(new Date(appointment.start_time), 'HH:mm', { locale: es })} - {format(new Date(appointment.end_time), 'HH:mm', { locale: es })}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Location */}
-                    {appointment.location?.name && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4 shrink-0" />
-                        <span>{appointment.location.name}</span>
-                      </div>
-                    )}
-
-                    {/* Employee */}
-                    {appointment.employee?.full_name && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <User className="h-4 w-4 shrink-0" />
-                        <span>{appointment.employee.full_name}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Right Section - Price */}
-                  {(appointment.service?.price || appointment.price) && (
-                    <div className="flex flex-col items-end gap-2">
-                      <div className="flex items-center gap-2 text-2xl font-bold text-foreground">
-                        <DollarSign className="h-6 w-6" />
-                        {(appointment.service?.price || appointment.price || 0).toLocaleString('es-MX')}
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        {appointment.service?.currency || appointment.currency || 'COP'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <AppointmentCard
+              key={appointment.id}
+              appointmentId={appointment.id}
+              initialData={{
+                id: appointment.id,
+                start_time: appointment.start_time,
+                end_time: appointment.end_time,
+                status: appointment.status as AppointmentCardData['status'],
+                title: appointment.service?.name || appointment.title,
+                location: appointment.location?.name,
+                price: appointment.service?.price || appointment.price,
+                currency: appointment.service?.currency || appointment.currency,
+                business: appointment.business ? { id: appointment.business.id, name: appointment.business.name } : null,
+                service: appointment.service ? { id: appointment.service.id, name: appointment.service.name, duration_minutes: appointment.service.duration_minutes, category: undefined } : null,
+                employee: appointment.employee ? { id: appointment.employee.id, full_name: appointment.employee.full_name } : null,
+                locationData: appointment.location ? { id: appointment.location.id, name: appointment.location.name, address: appointment.location.address } : null,
+              }}
+              renderActions={() => getStatusBadgeForAppointment(appointment)}
+            />
             ))}
           </div>
 

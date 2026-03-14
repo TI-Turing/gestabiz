@@ -12,6 +12,7 @@ import { Service, User } from '@/types'
 import { useLanguage } from '@/contexts'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { ServiceCard } from '@/components/cards/ServiceCard'
 
 interface ServiceFormProps {
   isOpen: boolean
@@ -506,57 +507,43 @@ export function ServicesManagement({ user, businessId }: Readonly<ServicesManage
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {services.map(service => (
-            <Card key={service.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{service.name}</CardTitle>
-                    {service.category && (
-                      <Badge variant="outline" className="mt-1">
-                        {service.category}
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex space-x-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setEditingService(service)
-                        setShowForm(true)
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => { void handleDeleteService(service.id).catch(() => {}) }}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
+          {services.map(svc => (
+            <ServiceCard
+              key={svc.id}
+              serviceId={svc.id}
+              initialData={{
+                id: svc.id,
+                name: svc.name,
+                description: svc.description,
+                duration: svc.duration,
+                duration_minutes: svc.duration,
+                price: svc.price,
+                category: svc.category,
+              }}
+              compact
+              readOnly
+              renderActions={(id) => (
+                <div className="flex space-x-1 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingService(svc)
+                      setShowForm(true)
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => { void handleDeleteService(id).catch(() => {}) }}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {service.description && (
-                  <p className="text-muted-foreground text-sm mb-3">
-                    {service.description}
-                  </p>
-                )}
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {service.duration} min
-                  </div>
-                  <div className="flex items-center font-semibold">
-                    <CurrencyDollar className="h-4 w-4 mr-1" />
-                    {service.price.toFixed(2)} {service.currency}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              )}
+            />
           ))}
         </div>
       )}

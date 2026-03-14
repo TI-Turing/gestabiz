@@ -4,15 +4,15 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { LocationAddress } from '@/components/ui/LocationAddress'
-import { MapPin, Phone, Mail, Image as ImageIcon, Video as VideoIcon, Users, Star, Briefcase, Clock, DollarSign, X } from 'lucide-react'
+import { MapPin, Phone, Mail, Image as ImageIcon, Users, Briefcase, Clock, DollarSign, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useLocationEmployees } from '@/hooks/useLocationEmployees'
 import { useLocationServices } from '@/hooks/useLocationServices'
 import { ServiceProfileModal } from '@/components/admin/ServiceProfileModal'
 import UserProfile from '@/components/user/UserProfile'
 import BusinessProfile from '@/components/business/BusinessProfile'
+import { EmployeeCard } from '@/components/cards/EmployeeCard'
 
 import type { BusinessHours } from '@/components/ui/BusinessHoursPicker'
 
@@ -281,59 +281,23 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
                   </CardContent>
                 </Card>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {employees.map((employee) => (
-                    <Card
+                    <EmployeeCard
                       key={employee.employee_id}
-                      className="cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => setSelectedEmployeeId(employee.employee_id)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-4">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={employee.avatar_url || undefined} />
-                            <AvatarFallback>
-                              {employee.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-medium">{employee.full_name}</h4>
-                                <p className="text-sm text-muted-foreground">{employee.email}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {employee.role === 'manager' && (
-                                  <Badge variant="default">Administrador</Badge>
-                                )}
-                                {employee.offers_services && (
-                                  <Badge variant="secondary">Ofrece servicios</Badge>
-                                )}
-                              </div>
-                            </div>
-                            {employee.job_title && (
-                              <p className="text-sm text-muted-foreground">{employee.job_title}</p>
-                            )}
-                            {employee.services.length > 0 && (
-                              <div className="space-y-2">
-                                <p className="text-sm font-medium">Servicios ({employee.services_count}):</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {employee.services.map((service) => (
-                                    <div key={service.service_id} className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded">
-                                      <span>{service.service_name}</span>
-                                      <div className="flex items-center gap-1">
-                                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                        <span>{service.expertise_level}/5</span>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                      employee={{
+                        id: employee.employee_id,
+                        full_name: employee.full_name,
+                        email: employee.email,
+                        role: employee.role,
+                        avatar_url: employee.avatar_url,
+                        job_title: employee.job_title,
+                        offers_services: employee.offers_services,
+                        services: employee.services,
+                      }}
+                      readOnly
+                      onViewProfile={() => setSelectedEmployeeId(employee.employee_id)}
+                    />
                   ))}
                 </div>
               )}

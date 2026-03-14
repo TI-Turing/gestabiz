@@ -8,8 +8,6 @@ import { Badge } from '@/components/ui/badge'
 import supabase from '@/lib/supabase'
 import { 
   Calendar, 
-  Clock, 
-  MapPin,
   Plus,
   CalendarCheck,
   CalendarX,
@@ -18,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Check } from '@phosphor-icons/react'
 import { AppointmentWizard } from '@/components/appointments/AppointmentWizard'
+import { AppointmentCard, type AppointmentCardData } from '@/components/cards/AppointmentCard'
 import { toast } from 'sonner'
 
 interface ClientDashboardProps {
@@ -273,84 +272,62 @@ export default function ClientDashboard({
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {upcomingAppointments.map((appointment) => (
-                <Card 
+                <AppointmentCard
                   key={appointment.id}
-                  className="bg-card border-border hover:border-primary/20 transition-all"
+                  appointmentId={appointment.id}
+                  initialData={{
+                    id: appointment.id,
+                    start_time: appointment.start_time,
+                    end_time: appointment.end_time,
+                    status: appointment.status as AppointmentCardData['status'],
+                    title: appointment.title,
+                    location: appointment.location,
+                    price: appointment.price,
+                    employee: appointment.employee_name ? { id: '', full_name: appointment.employee_name } : null,
+                  }}
+                  renderActions={() => getStatusBadge(appointment.status)}
                 >
-                  <CardContent className="p-6">
-                    {/* Title and Badge */}
-                    <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-xl font-semibold text-foreground">
-                        {appointment.title || t('clientDashboard.appointment')}
-                      </h3>
-                      {getStatusBadge(appointment.status)}
-                    </div>
-
-                    {/* Provider */}
-                    <div className="text-muted-foreground mb-4">
-                      {t('clientDashboard.with')} {appointment.employee_name || t('clientDashboard.table.provider')}
-                    </div>
-
-                    {/* Date, Time, Location */}
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-foreground/90 text-sm">
-                        <Calendar className="h-4 w-4" />
-                        <span>{formatDate(appointment.start_time)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-foreground/90 text-sm">
-                        <Clock className="h-4 w-4" />
-                        <span>{formatTime(appointment.start_time)}</span>
-                      </div>
-                      {appointment.location && (
-                        <div className="flex items-center gap-2 text-foreground/90 text-sm">
-                          <MapPin className="h-4 w-4" />
-                          <span>{appointment.location}</span>
-                        </div>
+                  {/* Action Icons */}
+                  <div className="flex gap-3 pt-4 border-t border-border">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="text-muted-foreground hover:text-green-500 hover:bg-muted"
+                      onClick={() => handleConfirmAppointment(appointment.id)}
+                      disabled={confirmingId === appointment.id || appointment.status === 'confirmed'}
+                      title={appointment.status === 'confirmed' ? t('clientDashboard.alreadyConfirmed') : t('clientDashboard.confirmButton')}
+                    >
+                      {confirmingId === appointment.id ? (
+                        <span className="animate-spin">⏳</span>
+                      ) : (
+                        <CalendarCheck className="h-5 w-5" />
                       )}
-                    </div>
-
-                    {/* Action Icons */}
-                    <div className="flex gap-3 pt-4 border-t border-border">
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="text-muted-foreground hover:text-green-500 hover:bg-muted"
-                        onClick={() => handleConfirmAppointment(appointment.id)}
-                        disabled={confirmingId === appointment.id || appointment.status === 'confirmed'}
-                        title={appointment.status === 'confirmed' ? t('clientDashboard.alreadyConfirmed') : t('clientDashboard.confirmButton')}
-                      >
-                        {confirmingId === appointment.id ? (
-                          <span className="animate-spin">⏳</span>
-                        ) : (
-                          <CalendarCheck className="h-5 w-5" />
-                        )}
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="text-muted-foreground hover:text-blue-500 hover:bg-muted"
-                        onClick={() => handleAddToGoogleCalendar(appointment)}
-                        title={t('clientDashboard.addToCalendar')}
-                      >
-                        <CalendarPlus className="h-5 w-5" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="text-muted-foreground hover:text-red-500 hover:bg-muted"
-                        onClick={() => handleDeleteAppointment(appointment.id)}
-                        disabled={deletingId === appointment.id}
-                        title={t('clientDashboard.deleteAppointment')}
-                      >
-                        {deletingId === appointment.id ? (
-                          <span className="animate-spin">⏳</span>
-                        ) : (
-                          <Trash2 className="h-5 w-5" />
-                        )}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="text-muted-foreground hover:text-blue-500 hover:bg-muted"
+                      onClick={() => handleAddToGoogleCalendar(appointment)}
+                      title={t('clientDashboard.addToCalendar')}
+                    >
+                      <CalendarPlus className="h-5 w-5" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="text-muted-foreground hover:text-red-500 hover:bg-muted"
+                      onClick={() => handleDeleteAppointment(appointment.id)}
+                      disabled={deletingId === appointment.id}
+                      title={t('clientDashboard.deleteAppointment')}
+                    >
+                      {deletingId === appointment.id ? (
+                        <span className="animate-spin">⏳</span>
+                      ) : (
+                        <Trash2 className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </div>
+                </AppointmentCard>
               ))}
             </div>
           )}
@@ -445,58 +422,45 @@ export default function ClientDashboard({
                 {/* Mobile Cards - Shown on Mobile Only */}
                 <div className="md:hidden p-3 space-y-3">
                   {pastAppointments.map((appointment) => (
-                    <Card key={appointment.id} className="p-4 bg-muted/30">
-                      <div className="space-y-3">
-                        {/* Service Title */}
-                        <div className="font-semibold text-foreground text-base">
-                          {appointment.title || t('clientDashboard.appointment')}
-                        </div>
-
-                        {/* Date & Time */}
-                        <div className="flex items-center gap-2 text-sm text-foreground/80">
-                          <Calendar className="h-4 w-4" />
-                          <span>{formatDate(appointment.start_time)}</span>
-                          <Clock className="h-4 w-4 ml-2" />
-                          <span>{formatTime(appointment.start_time)}</span>
-                        </div>
-
-                        {/* Provider */}
-                        <div className="text-sm text-foreground/70">
-                          <span className="font-medium">{t('clientDashboard.table.provider')}:</span> {appointment.employee_name || t('clientDashboard.table.provider')}
-                        </div>
-
-                        {/* Location */}
-                        <div className="flex items-center gap-2 text-sm text-foreground/70">
-                          <MapPin className="h-4 w-4" />
-                          <span>{appointment.location || t('clientDashboard.table.location')}</span>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex gap-2 pt-2 border-t border-border">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="flex-1 min-h-[44px] text-[#8B5CF6] hover:text-[#a78bfa] border-[#8B5CF6]"
-                          >
-                            {t('clientDashboard.rebook')}
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleDeleteAppointment(appointment.id)}
-                            disabled={deletingId === appointment.id}
-                            className="min-w-[44px] min-h-[44px] border-destructive/50 hover:bg-destructive/10"
-                            title={t('clientDashboard.deleteAppointment')}
-                          >
-                            {deletingId === appointment.id ? (
-                              <span className="animate-spin text-sm">⏳</span>
-                            ) : (
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            )}
-                          </Button>
-                        </div>
+                    <AppointmentCard
+                      key={appointment.id}
+                      appointmentId={appointment.id}
+                      compact
+                      initialData={{
+                        id: appointment.id,
+                        start_time: appointment.start_time,
+                        end_time: appointment.end_time,
+                        status: appointment.status as AppointmentCardData['status'],
+                        title: appointment.title,
+                        location: appointment.location,
+                        employee: appointment.employee_name ? { id: '', full_name: appointment.employee_name } : null,
+                      }}
+                    >
+                      {/* Actions */}
+                      <div className="flex gap-2 pt-2 border-t border-border">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="flex-1 min-h-[44px] text-[#8B5CF6] hover:text-[#a78bfa] border-[#8B5CF6]"
+                        >
+                          {t('clientDashboard.rebook')}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeleteAppointment(appointment.id)}
+                          disabled={deletingId === appointment.id}
+                          className="min-w-[44px] min-h-[44px] border-destructive/50 hover:bg-destructive/10"
+                          title={t('clientDashboard.deleteAppointment')}
+                        >
+                          {deletingId === appointment.id ? (
+                            <span className="animate-spin text-sm">⏳</span>
+                          ) : (
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          )}
+                        </Button>
                       </div>
-                    </Card>
+                    </AppointmentCard>
                   ))}
                 </div>
               </CardContent>

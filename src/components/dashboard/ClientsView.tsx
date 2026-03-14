@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { ClientCard } from '@/components/cards/ClientCard'
 import { Badge } from '@/components/ui/badge'
-import { Plus, User, EnvelopeSimple as Mail, Phone, Building, PencilSimple, Trash, ArrowLeft } from '@phosphor-icons/react'
+import { Plus, User, Building, PencilSimple, Trash, ArrowLeft } from '@phosphor-icons/react'
 import { User as UserType, Client, Appointment } from '@/types'
 import { toast } from 'sonner'
 
@@ -274,72 +274,43 @@ export default function ClientsView({ user }: ClientsViewProps) {
             const upcomingCount = getClientUpcomingAppointments(client.id)
 
             return (
-              <Card key={client.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                          {client.name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-lg">{client.name}</h3>
-                          {upcomingCount > 0 && (
-                            <Badge variant="secondary">
-                              {upcomingCount} upcoming
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="space-y-1">
-                          {client.email && (
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <Mail size={14} className="mr-2" />
-                              {client.email}
-                            </div>
-                          )}
-                          {client.phone && (
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <Phone size={14} className="mr-2" />
-                              {client.phone}
-                            </div>
-                          )}
-                          {client.company && (
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <Building size={14} className="mr-2" />
-                              {client.company}
-                            </div>
-                          )}
-                        </div>
-                        <div className="mt-2">
-                          <span className="text-sm text-muted-foreground">
-                            {appointmentCount} total appointment{appointmentCount !== 1 ? 's' : ''}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(client)}
-                      >
-                        <PencilSimple size={16} />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(client.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash size={16} />
-                      </Button>
-                    </div>
+              <ClientCard
+                key={client.id}
+                clientId={client.id}
+                initialData={{
+                  id: client.id,
+                  name: client.name,
+                  email: client.email,
+                  phone: client.phone,
+                  avatar_url: undefined,
+                }}
+                readOnly
+                renderActions={() => (
+                  <div className="flex items-center space-x-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(client)}>
+                      <PencilSimple size={16} />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(client.id)} className="text-destructive hover:text-destructive">
+                      <Trash size={16} />
+                    </Button>
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              >
+                {upcomingCount > 0 && (
+                  <Badge variant="secondary">{upcomingCount} upcoming</Badge>
+                )}
+                {client.company && (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Building size={14} className="mr-2" />
+                    {client.company}
+                  </div>
+                )}
+                <div className="mt-1">
+                  <span className="text-sm text-muted-foreground">
+                    {appointmentCount} total appointment{appointmentCount !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              </ClientCard>
             )
           })}
         </div>

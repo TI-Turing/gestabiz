@@ -17,12 +17,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { LocationProfileModal } from '@/components/admin/LocationProfileModal'
 import UserProfile from '@/components/user/UserProfile'
 import BusinessProfile from '@/components/business/BusinessProfile'
+import { EmployeeCard } from '@/components/cards/EmployeeCard'
 
 // =====================================================
 // TIPOS
@@ -46,6 +46,14 @@ interface EmployeeRow {
   full_name: string
   email: string
   avatar_url: string | null
+  role?: string
+  job_title?: string | null
+  offers_services?: boolean
+  services: Array<{
+    service_id: string
+    service_name: string
+    expertise_level: number
+  }>
 }
 
 interface LocationRow {
@@ -152,27 +160,93 @@ export function ServiceProfileModal({
           setLocations([])
         }
 
-        // 3. Empleados asignados
-        const { data: empLinks } = await supabase
+        // 3. Empleados asignados - traer con todos sus servicios
+        // Primero, obtener employee_ids para este servicio
+        const { data: empServiceLinks } = await supabase
           .from('employee_services')
           .select('employee_id')
           .eq('service_id', serviceId)
 
-        if (!cancelled && empLinks && empLinks.length > 0) {
-          const ids = empLinks.map((r) => r.employee_id)
-          const { data: profData } = await supabase
+        if (!cancelled && empServiceLinks && empServiceLinks.length > 0) {
+          const empIds = empServiceLinks.map((r) => r.employee_id)
+
+          // Query profiles
+          const { data: profilesData } = await supabase
             .from('profiles')
             .select('id, full_name, email, avatar_url')
-            .in('id', ids)
+            .in('id', empIds)
+
+          // Query business_employees para obtener rol, job_title, offers_services
+          const { data: beData } = await supabase
+            .from('business_employees')
+            .select('employee_id, role, job_title, offers_services, business_id')
+            .in('employee_id', empIds)
+            .eq('business_id', svcData.business_id)
+
+          // Query todos los servicios de estos empleados, filtrado por negocio
+          const { data: allEmpServices } = await supabase
+            .from('employee_services')
+            .select('employee_id, service_id, expertise_level, services(id, name)')
+            .in('employee_id', empIds)
+            .eq('business_id', svcData.business_id)
+
           if (!cancelled) {
-            setEmployees(
-              (profData ?? []).map((p) => ({
-                employee_id: p.id,
-                full_name: p.full_name ?? p.email ?? 'Sin nombre',
-                email: p.email ?? '',
-                avatar_url: p.avatar_url,
-              }))
+            // Construir mapa de profiles
+            const profileMap = new Map(
+              (profilesData ?? []).map((p) => [
+                p.id,
+                { full_name: p.full_name ?? 'Sin nombre', email: p.email ?? '', avatar_url: p.avatar_url },
+              ])
             )
+
+            // Construir mapa de business_employees
+            const beMap = new Map(
+              (beData ?? []).map((be) => [
+                be.employee_id,
+                { role: be.role, job_title: be.job_title, offers_services: be.offers_services },
+              ])
+            )
+
+            // Agrupar services por employee_id
+            const empServicesMap = new Map<
+              string,
+              Array<{ service_id: string; service_name: string; expertise_level: number }>
+            >()
+            for (const row of allEmpServices ?? []) {
+              const svcData = Array.isArray(row.services) ? row.services[0] : row.services
+              if (!empServicesMap.has(row.employee_id)) {
+                empServicesMap.set(row.employee_id, [])
+              }
+              if (svcData) {
+                empServicesMap.get(row.employee_id)!.push({
+                  service_id: svcData.id,
+                  service_name: svcData.name,
+                  expertise_level: row.expertise_level,
+                })
+              }
+            }
+
+            // Construir EmployeeRow para cada empleado
+            const result: EmployeeRow[] = empIds
+              .map((empId) => {
+                const profile = profileMap.get(empId)
+                const be = beMap.get(empId)
+                if (!profile) return null
+
+                return {
+                  employee_id: empId,
+                  full_name: profile.full_name,
+                  email: profile.email,
+                  avatar_url: profile.avatar_url,
+                  role: be?.role,
+                  job_title: be?.job_title,
+                  offers_services: be?.offers_services,
+                  services: empServicesMap.get(empId) ?? [],
+                }
+              })
+              .filter((e) => e !== null) as EmployeeRow[]
+
+            setEmployees(result)
           }
         } else if (!cancelled) {
           setEmployees([])
@@ -310,30 +384,23 @@ export function ServiceProfileModal({
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                     {employees.map((e) => (
-                      <Card
+                      <EmployeeCard
                         key={e.employee_id}
-                        className="cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => setSelectedEmployeeId(e.employee_id)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={e.avatar_url ?? undefined} alt={e.full_name} />
-                              <AvatarFallback className="text-xs">
-                                {e.full_name.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="text-sm">
-                              <div className="font-medium">{e.full_name}</div>
-                              {e.email && (
-                                <div className="text-xs text-muted-foreground">{e.email}</div>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                        employee={{
+                          id: e.employee_id,
+                          full_name: e.full_name,
+                          email: e.email ?? undefined,
+                          avatar_url: e.avatar_url,
+                          role: e.role,
+                          job_title: e.job_title,
+                          offers_services: e.offers_services,
+                          services: e.services,
+                        }}
+                        readOnly
+                        onViewProfile={() => setSelectedEmployeeId(e.employee_id)}
+                      />
                     ))}
                   </div>
                 )}

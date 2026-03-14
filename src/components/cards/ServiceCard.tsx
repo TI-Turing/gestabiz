@@ -1,7 +1,10 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Check, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { QUERY_CONFIG } from '@/lib/queryConfig';
 
 export interface ServiceCardData {
   id: string;
@@ -16,26 +19,125 @@ export interface ServiceCardData {
   business?: { id: string; name: string; logo_url?: string };
 }
 
+async function fetchService(serviceId: string): Promise<ServiceCardData> {
+  const { data, error } = await supabase
+    .from('services')
+    .select('id, name, description, duration_minutes, price, category, image_url, business_id, businesses:business_id(id, name, logo_url)')
+    .eq('id', serviceId)
+    .single();
+  if (error) throw error;
+  const biz = data.businesses
+    ? (Array.isArray(data.businesses) ? data.businesses[0] : data.businesses)
+    : undefined;
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    duration: data.duration_minutes,
+    duration_minutes: data.duration_minutes,
+    price: data.price,
+    category: data.category,
+    image_url: data.image_url,
+    business_id: data.business_id,
+    business: biz ? { id: biz.id, name: biz.name, logo_url: biz.logo_url } : undefined,
+  };
+}
+
 interface ServiceCardProps {
-  service: ServiceCardData;
+  /** ID del servicio — el card resuelve sus datos internamente */
+  serviceId?: string;
+  /** Datos pre-cargados (initialData para evitar refetch) */
+  service?: ServiceCardData;
+  initialData?: ServiceCardData;
   isSelected?: boolean;
   onSelect?: (service: ServiceCardData) => void;
   isPreselected?: boolean;
   onViewProfile?: (serviceId: string) => void;
-  /** Muestra solo la imagen/info sin interactividad de selección */
   readOnly?: boolean;
+  className?: string;
+  renderActions?: (id: string) => React.ReactNode;
+  /** Modo compacto: sin imagen, layout horizontal para listas de gestión */
+  compact?: boolean;
 }
 
 export function ServiceCard({
-  service,
+  serviceId,
+  service: serviceProp,
+  initialData,
   isSelected = false,
   onSelect,
   isPreselected = false,
   onViewProfile,
   readOnly = false,
+  className,
+  renderActions,
+  compact = false,
 }: Readonly<ServiceCardProps>) {
+  const seed = initialData ?? serviceProp;
+  const resolvedId = serviceId ?? seed?.id;
+
+  const { data: service } = useQuery({
+    queryKey: ['service-card', resolvedId],
+    queryFn: () => fetchService(resolvedId!),
+    initialData: seed,
+    enabled: !!resolvedId,
+    ...QUERY_CONFIG.STABLE,
+  });
+
+  if (!service) {
+    return (
+      <div className={cn('bg-card border-2 border-border rounded-xl overflow-hidden animate-pulse', className)}>
+        <div className="aspect-square w-full bg-muted" />
+        <div className="p-3 space-y-2"><div className="h-4 bg-muted rounded w-3/4 mx-auto" /><div className="h-3 bg-muted rounded w-1/2 mx-auto" /></div>
+      </div>
+    );
+  }
   const duration = service.duration ?? service.duration_minutes ?? 0;
 
+  // ── Compact variant (admin management lists) ──
+  if (compact) {
+    return (
+      <div
+        role={readOnly ? undefined : 'button'}
+        tabIndex={readOnly ? undefined : 0}
+        onClick={() => !readOnly && onSelect?.(service)}
+        onKeyDown={(e) => {
+          if (!readOnly && (e.key === 'Enter' || e.key === ' ')) onSelect?.(service);
+        }}
+        className={cn(
+          'relative bg-card border rounded-xl p-4 transition-all duration-200',
+          !readOnly && 'cursor-pointer hover:shadow-md hover:border-primary/50',
+          isSelected ? 'border-primary bg-primary/10' : 'border-border',
+          className,
+        )}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-semibold text-foreground truncate">{service.name}</h3>
+            {service.category && (
+              <Badge variant="outline" className="mt-1 text-xs">{service.category}</Badge>
+            )}
+          </div>
+          {renderActions?.(service.id)}
+        </div>
+        {service.description && (
+          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{service.description}</p>
+        )}
+        <div className="flex items-center justify-between text-sm mt-3">
+          {duration > 0 && (
+            <span className="text-muted-foreground">{duration} min</span>
+          )}
+          {service.price != null && (
+            <span className="font-semibold text-primary">
+              ${service.price.toLocaleString('es-CO')}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Default variant (wizard / grid selection) ──
   return (
     <div
       role={readOnly ? undefined : 'button'}
@@ -49,6 +151,7 @@ export function ServiceCard({
         !readOnly && 'cursor-pointer hover:border-primary hover:scale-105 hover:shadow-lg hover:shadow-primary/20',
         isSelected ? 'border-primary bg-primary/10' : 'border-border',
         isPreselected && 'ring-2 ring-green-500/50',
+        className,
       )}
     >
       {/* Badge preseleccionado */}
@@ -110,6 +213,7 @@ export function ServiceCard({
             Ver perfil
           </button>
         )}
+        {renderActions?.(service.id)}
       </div>
     </div>
   );

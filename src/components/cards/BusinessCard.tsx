@@ -1,7 +1,10 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Building2, MapPin, Star, Check, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { QUERY_CONFIG } from '@/lib/queryConfig';
 
 export interface BusinessCardData {
   id: string;
@@ -9,7 +12,6 @@ export interface BusinessCardData {
   description?: string | null;
   logo_url?: string | null;
   banner_url?: string | null;
-  /** Nombre resuelto de la categoría */
   category?: string | null;
   city?: string | null;
   address?: string | null;
@@ -18,27 +20,240 @@ export interface BusinessCardData {
   locations_count?: number;
 }
 
+async function fetchBusiness(businessId: string): Promise<BusinessCardData> {
+  const { data, error } = await supabase
+    .from('businesses')
+    .select('id, name, description, logo_url, banner_url, city, address, average_rating, total_reviews, business_categories:category_id(name)')
+    .eq('id', businessId)
+    .single();
+  if (error) throw error;
+  const cat = data.business_categories
+    ? (Array.isArray(data.business_categories) ? data.business_categories[0] : data.business_categories)
+    : null;
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    logo_url: data.logo_url,
+    banner_url: data.banner_url,
+    city: data.city,
+    address: data.address,
+    average_rating: data.average_rating,
+    total_reviews: data.total_reviews,
+    category: cat?.name ?? null,
+  };
+}
+
 interface BusinessCardProps {
-  business: BusinessCardData;
+  /** ID del negocio — el card resuelve sus datos internamente */
+  businessId?: string;
+  /** Datos pre-cargados (initialData para evitar refetch) */
+  business?: BusinessCardData;
+  initialData?: BusinessCardData;
   isSelected?: boolean;
   onSelect?: (business: BusinessCardData) => void;
   isPreselected?: boolean;
   onViewProfile?: (businessId: string) => void;
-  /** Muestra solo info sin interactividad de selección */
   readOnly?: boolean;
-  /** Lista de servicios para mostrar en hover (solo modo no-readOnly) */
   services?: string[];
+  className?: string;
+  renderActions?: (id: string) => React.ReactNode;
+  /** Modo compacto: layout horizontal tipo lista, sin banner grande */
+  compact?: boolean;
+  /** Modo panorámico: banner full-bleed con info superpuesta (favoritos, hero) */
+  panoramic?: boolean;
+  /** Contenido extra inyectado dentro del card */
+  children?: React.ReactNode;
 }
 
 export function BusinessCard({
-  business,
+  businessId,
+  business: businessProp,
+  initialData,
   isSelected = false,
   onSelect,
   isPreselected = false,
   onViewProfile,
   readOnly = false,
   services,
+  className,
+  renderActions,
+  compact = false,
+  panoramic = false,
+  children,
 }: Readonly<BusinessCardProps>) {
+  const seed = initialData ?? businessProp;
+  const resolvedId = businessId ?? seed?.id;
+
+  const { data: business } = useQuery({
+    queryKey: ['business-card', resolvedId],
+    queryFn: () => fetchBusiness(resolvedId!),
+    initialData: seed,
+    enabled: !!resolvedId,
+    ...QUERY_CONFIG.STABLE,
+  });
+
+  if (!business) {
+    return (
+      <div className={cn('rounded-xl overflow-hidden border-2 border-border animate-pulse', className)}>
+        <div className="h-36 bg-muted" />
+        <div className="p-3 space-y-2"><div className="h-4 bg-muted rounded w-3/4" /><div className="h-3 bg-muted rounded w-1/2" /></div>
+      </div>
+    );
+  }
+
+  // ── Compact variant (lists, management views, suggestions) ──
+  if (compact) {
+    return (
+      <div
+        role={readOnly ? undefined : 'button'}
+        tabIndex={readOnly ? undefined : 0}
+        onClick={() => !readOnly && onSelect?.(business)}
+        onKeyDown={(e) => {
+          if (!readOnly && (e.key === 'Enter' || e.key === ' ')) onSelect?.(business);
+        }}
+        className={cn(
+          'relative group rounded-xl border bg-card p-4 transition-all duration-200',
+          !readOnly && 'cursor-pointer hover:shadow-lg hover:border-primary/50',
+          isSelected ? 'border-primary bg-primary/10' : 'border-border',
+          className,
+        )}
+      >
+        <div className="flex items-start gap-3">
+          {/* Logo */}
+          <div className="w-12 h-12 rounded-lg bg-muted shrink-0 overflow-hidden border border-border/50">
+            {business.logo_url ? (
+              <img src={business.logo_url} alt={business.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Building2 className="h-6 w-6 text-muted-foreground" />
+              </div>
+            )}
+          </div>
+
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <h4 className="font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+              {business.name}
+            </h4>
+            {business.category && (
+              <span className="text-xs text-muted-foreground">{business.category}</span>
+            )}
+            {(business.average_rating ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5 mt-1">
+                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                <span className="text-xs font-medium">{(business.average_rating ?? 0).toFixed(1)}</span>
+                {Boolean(business.total_reviews) && (
+                  <span className="text-xs text-muted-foreground">({business.total_reviews})</span>
+                )}
+              </div>
+            )}
+            {business.city && (
+              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3 shrink-0" />
+                <span className="line-clamp-1">{business.city}</span>
+              </div>
+            )}
+          </div>
+
+          {renderActions?.(business.id)}
+        </div>
+        {business.description && (
+          <p className="text-xs text-muted-foreground line-clamp-2 mt-2">{business.description}</p>
+        )}
+        {children}
+      </div>
+    );
+  }
+
+  // ── Panoramic variant (full-bleed banner with overlaid info) ──
+  if (panoramic) {
+    return (
+      <div
+        role={readOnly ? undefined : 'button'}
+        tabIndex={readOnly ? undefined : 0}
+        onClick={() => !readOnly && onSelect?.(business)}
+        onKeyDown={(e) => {
+          if (!readOnly && (e.key === 'Enter' || e.key === ' ')) onSelect?.(business);
+        }}
+        className={cn(
+          'group relative rounded-xl overflow-hidden border transition-all duration-200',
+          !readOnly && 'cursor-pointer hover:shadow-lg hover:border-primary/50',
+          isSelected ? 'border-primary bg-primary/10' : 'border-border',
+          className,
+        )}
+      >
+        {/* Full-bleed banner */}
+        <div
+          className="relative w-full h-56"
+          style={{
+            backgroundImage: business.banner_url ? `url(${business.banner_url})` : undefined,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          {!business.banner_url && <div className="absolute inset-0 bg-linear-to-br from-primary/20 to-primary/5" />}
+          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/40 to-transparent" />
+
+          {/* Logo top-left */}
+          {business.logo_url && (
+            <div className="absolute top-3 left-3 z-10">
+              <img
+                src={business.logo_url}
+                alt={business.name}
+                className="w-16 h-16 rounded-lg object-cover border-2 border-white/80 shadow-lg"
+              />
+            </div>
+          )}
+
+          {/* renderActions top-right (heart, etc.) */}
+          {renderActions && (
+            <div className="absolute top-3 right-3 z-10">
+              {renderActions(business.id)}
+            </div>
+          )}
+
+          {/* Info overlaid on banner */}
+          <div className="absolute bottom-0 left-0 right-0 z-10 p-4 space-y-2">
+            <h4 className="font-bold text-white text-xl truncate drop-shadow-md">
+              {business.name}
+            </h4>
+            {business.description && (
+              <p className="text-sm text-white/90 line-clamp-2 drop-shadow-md">
+                {business.description}
+              </p>
+            )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {(business.average_rating ?? 0) > 0 && (
+                  <div className="flex items-center gap-1 bg-black/30 rounded-full px-2 py-0.5">
+                    <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                    <span className="text-sm font-semibold text-white">
+                      {(business.average_rating ?? 0).toFixed(1)}
+                    </span>
+                  </div>
+                )}
+                {Boolean(business.total_reviews) && (
+                  <span className="text-xs text-white/90 bg-black/30 rounded-full px-2 py-0.5">
+                    ({business.total_reviews})
+                  </span>
+                )}
+              </div>
+              {business.city && (
+                <div className="flex items-center gap-1 bg-black/30 rounded-full px-2 py-0.5">
+                  <MapPin className="h-3.5 w-3.5 text-white/90" />
+                  <span className="text-xs text-white/90 truncate max-w-[120px]">{business.city}</span>
+                </div>
+              )}
+            </div>
+            {children}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Default variant (grid with banner) ──
   const hasBanner = !!business.banner_url;
   const hasServices = services && services.length > 0;
 
@@ -56,6 +271,7 @@ export function BusinessCard({
         isSelected ? 'border-primary ring-1 ring-primary' : 'border-border',
         !readOnly && !isSelected && 'hover:border-primary/60',
         isPreselected && 'ring-2 ring-green-500/50',
+        className,
       )}
     >
       {/* Badge preseleccionado */}
@@ -195,6 +411,7 @@ export function BusinessCard({
             Ver perfil
           </button>
         )}
+        {renderActions?.(business.id)}
       </div>
 
       {/* Hover gradient */}

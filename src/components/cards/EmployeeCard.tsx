@@ -1,8 +1,11 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Star, Check, Info, Ban } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { QUERY_CONFIG } from '@/lib/queryConfig';
 
 export interface EmployeeCardData {
   id: string;
@@ -13,27 +16,117 @@ export interface EmployeeCardData {
   expertise_level?: number;
   average_rating?: number;
   total_reviews?: number;
+  job_title?: string | null;
+  offers_services?: boolean;
+  services?: Array<{
+    service_id: string;
+    service_name: string;
+    expertise_level: number;
+  }>;
+}
+
+async function fetchEmployee(employeeId: string, businessId?: string): Promise<EmployeeCardData> {
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, avatar_url')
+    .eq('id', employeeId)
+    .single();
+  if (error) throw error;
+
+  let role: string | undefined;
+  let job_title: string | null = null;
+  let offers_services = false;
+
+  if (businessId) {
+    const { data: empData } = await supabase
+      .from('business_employees')
+      .select('role, job_title, offers_services')
+      .eq('employee_id', employeeId)
+      .eq('business_id', businessId)
+      .maybeSingle();
+    if (empData) {
+      role = empData.role ?? undefined;
+      job_title = empData.job_title ?? null;
+      offers_services = empData.offers_services ?? false;
+    }
+  }
+
+  const { data: reviewStats } = await supabase
+    .from('reviews')
+    .select('rating')
+    .eq('employee_id', employeeId);
+
+  const ratings = reviewStats ?? [];
+  const average_rating = ratings.length > 0
+    ? ratings.reduce((acc, r) => acc + r.rating, 0) / ratings.length
+    : undefined;
+
+  return {
+    id: profile.id,
+    full_name: profile.full_name,
+    email: profile.email ?? undefined,
+    avatar_url: profile.avatar_url,
+    role,
+    job_title,
+    offers_services,
+    average_rating,
+    total_reviews: ratings.length || undefined,
+  };
 }
 
 interface EmployeeCardProps {
-  employee: EmployeeCardData;
+  /** ID del empleado — el card resuelve sus datos internamente */
+  employeeId?: string;
+  /** businessId para resolver rol y datos de empleo */
+  businessId?: string;
+  /** Datos pre-cargados (initialData para evitar refetch) */
+  employee?: EmployeeCardData;
+  initialData?: EmployeeCardData;
   isSelected?: boolean;
   onSelect?: (employee: EmployeeCardData) => void;
   isPreselected?: boolean;
   isSelf?: boolean;
   onViewProfile?: (employeeId: string) => void;
   readOnly?: boolean;
+  className?: string;
+  renderActions?: (id: string) => React.ReactNode;
 }
 
 export function EmployeeCard({
-  employee,
+  employeeId,
+  businessId,
+  employee: employeeProp,
+  initialData,
   isSelected = false,
   onSelect,
   isPreselected = false,
   isSelf = false,
   onViewProfile,
   readOnly = false,
+  className,
+  renderActions,
 }: Readonly<EmployeeCardProps>) {
+  const seed = initialData ?? employeeProp;
+  const resolvedId = employeeId ?? seed?.id;
+
+  const { data: employee } = useQuery({
+    queryKey: ['employee-card', resolvedId, businessId],
+    queryFn: () => fetchEmployee(resolvedId!, businessId),
+    initialData: seed,
+    enabled: !!resolvedId,
+    ...QUERY_CONFIG.STABLE,
+  });
+
+  if (!employee) {
+    return (
+      <div className={cn('rounded-xl p-6 border-2 border-border animate-pulse', className)}>
+        <div className="flex flex-col items-center mb-3">
+          <div className="w-20 h-20 rounded-full bg-muted mb-3" />
+          <div className="h-5 bg-muted rounded w-24" />
+        </div>
+      </div>
+    );
+  }
   const initials = (employee.full_name || 'U')
     .split(' ')
     .map((n) => n[0])
@@ -41,7 +134,7 @@ export function EmployeeCard({
     .toUpperCase()
     .slice(0, 2);
 
-  const rating = employee.average_rating ?? 5.0;
+  const rating = employee.average_rating ?? 5;
   const reviewCount = employee.total_reviews ?? 0;
 
   return (
@@ -63,9 +156,9 @@ export function EmployeeCard({
           ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20'
           : !isSelf && !readOnly && 'bg-muted/50 border-border hover:bg-muted hover:border-border/50',
         isPreselected && 'ring-2 ring-green-500/50',
+        className,
       )}
     >
-      {/* Badge preseleccionado */}
       {isPreselected && (
         <div className="absolute top-3 left-3 z-10">
           <Badge className="bg-green-500 text-white text-xs shadow-lg">
@@ -83,7 +176,7 @@ export function EmployeeCard({
       )}
 
       {/* Avatar y nombre */}
-      <div className="flex flex-col items-center mb-4">
+      <div className="flex flex-col items-center mb-3">
         <Avatar className={cn('w-20 h-20 mb-3 border-2', isSelected ? 'border-primary' : 'border-border')}>
           <AvatarImage src={employee.avatar_url || undefined} alt={employee.full_name || 'Profesional'} />
           <AvatarFallback>{initials}</AvatarFallback>
@@ -91,7 +184,45 @@ export function EmployeeCard({
         <h4 className="text-lg font-semibold text-foreground text-center">
           {employee.full_name || 'Profesional'}
         </h4>
+        {employee.email && (
+          <p className="text-xs text-muted-foreground text-center mt-0.5 truncate max-w-full">{employee.email}</p>
+        )}
       </div>
+
+      {/* Badges de rol */}
+      {(employee.role === 'manager' || employee.offers_services) && (
+        <div className="flex flex-wrap justify-center gap-1 mb-3">
+          {employee.role === 'manager' && (
+            <Badge variant="default" className="text-xs">Administrador</Badge>
+          )}
+          {employee.offers_services && (
+            <Badge variant="secondary" className="text-xs">Ofrece servicios</Badge>
+          )}
+        </div>
+      )}
+
+      {/* Job title */}
+      {employee.job_title && (
+        <p className="text-xs text-muted-foreground text-center mb-3">{employee.job_title}</p>
+      )}
+
+      {/* Servicios que ofrece */}
+      {employee.services && employee.services.length > 0 && (
+        <div className="mb-3 w-full">
+          <p className="text-xs font-medium mb-1.5 text-center">
+            Servicios ({employee.services.length}):
+          </p>
+          <div className="flex flex-wrap justify-center gap-1">
+            {employee.services.map((s) => (
+              <div key={s.service_id} className="flex items-center gap-1 text-xs bg-muted px-2 py-0.5 rounded-full">
+                <span>{s.service_name}</span>
+                <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+                <span>{s.expertise_level}/5</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Rating */}
       <div className="flex justify-center items-center gap-1 text-yellow-500">
@@ -116,6 +247,8 @@ export function EmployeeCard({
           </button>
         </div>
       )}
+
+      {renderActions?.(employee.id)}
 
       {/* Overlay: no puedes agendarte a ti mismo */}
       {isSelf && (

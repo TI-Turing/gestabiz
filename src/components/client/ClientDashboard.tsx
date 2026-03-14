@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PermissionGate } from '@/components/ui/PermissionGate'
 import { AppointmentWizard } from '@/components/appointments/AppointmentWizard'
+import { AppointmentCard, type AppointmentCardData } from '@/components/cards/AppointmentCard'
 import CompleteUnifiedSettings from '@/components/settings/CompleteUnifiedSettings'
 import { ClientCalendarView } from '@/components/client/ClientCalendarView'
 import logoTiTuring from '@/assets/images/tt/1.png'
@@ -542,15 +543,6 @@ export function ClientDashboard({
     }
   }
 
-  // Formato de hora 12h con AM/PM
-  const formatTime12h = (iso: string) => {
-    try {
-      return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
-    } catch {
-      return ''
-    }
-  }
-
   // Handler para crear cita desde el calendario
   const handleCreateAppointmentFromCalendar = (date: Date, time?: string) => {
     const now = new Date()
@@ -645,147 +637,59 @@ export function ClientDashboard({
                       </Card>
                     ) : (
                       <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))' }}>
-                        {upcomingAppointments.map((appointment) => (
-                          <Card
-                            key={appointment.id}
-                            className="relative overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                            onClick={() => setSelectedAppointment(appointment)}
-                          >
-                            {/* Background image: service image priority, fallback to location banner */}
-                            {(() => {
-                              const svcImg = appointment.service?.id ? serviceImages[appointment.service.id] : undefined
-                              const locImg = appointment.location?.id ? locationBanners[appointment.location.id] : undefined
-                              const bgImage = svcImg || locImg
-                              
-                              return bgImage ? (
-                                <>
-                                  <div
-                                    aria-hidden
-                                    className="absolute inset-0 bg-cover bg-center"
-                                    style={{ backgroundImage: `url(${bgImage})` }}
-                                  />
-                                  <div
-                                    className="absolute inset-0 bg-linear-to-b from-black/50 via-black/40 to-black/60"
-                                    aria-hidden
-                                  />
-                                </>
-                              ) : null
-                            })()}
-
-                            <CardContent className="relative z-10 p-4">
-                              <div className="space-y-3">
-                                {/* Fila superior: solo badge de estado */}
-                                <div className="flex items-start justify-between gap-2 pb-2 border-b border-border/60">
-                                  <div />
-                                  <Badge
-                                    variant={getStatusVariant(appointment.status)}
-                                    className="shrink-0 whitespace-nowrap"
-                                  >
-                                    {getStatusLabel(appointment.status)}
-                                  </Badge>
-                                </div>
-
-                                {/* Títulos: Servicio (principal), Negocio (secundario), Sede (terciario) */}
-                                {(() => {
-                                  const svcImg = appointment.service?.id ? serviceImages[appointment.service.id] : undefined
-                                  const locImg = appointment.location?.id ? locationBanners[appointment.location.id] : undefined
-                                  const hasBg = !!(svcImg || locImg)
-                                  return (
-                                    <div className="space-y-1">
-                                      <h3 className={`font-semibold text-lg line-clamp-2 ${hasBg ? 'text-white' : 'text-foreground'}`}>
-                                        {appointment.service?.name || 'Cita'}
-                                      </h3>
-                                      {appointment.business?.name && (
-                                        <p className={`text-sm font-medium ${hasBg ? 'text-white/90' : 'text-muted-foreground'}`}>{appointment.business.name}</p>
-                                      )}
-                                      {appointment.location?.name && (
-                                        <p className={`text-xs ${hasBg ? 'text-white/80' : 'text-muted-foreground'}`}>{appointment.location.name}</p>
-                                      )}
-                                    </div>
-                                  )
-                                })()}
-
-                                {/* Profesional: avatar + nombre */}
-                                {appointment.employee?.full_name && (
-                                  (() => {
-                                    const svcImg = appointment.service?.id ? serviceImages[appointment.service.id] : undefined
-                                    const locImg = appointment.location?.id ? locationBanners[appointment.location.id] : undefined
-                                    const hasBg = !!(svcImg || locImg)
-                                    return (
-                                      <div className={`flex items-center gap-3 p-2 rounded-lg border ${hasBg ? 'bg-black/30 backdrop-blur-sm border-white/10' : 'bg-card/50 border-border/50'}`}>
-                                      <ProfileAvatar
-                                        src={appointment.employee?.avatar_url}
-                                        alt={appointment.employee?.full_name || 'Profesional'}
-                                        fallbackText={appointment.employee?.full_name || 'U'}
-                                        size="sm"
-                                        className="shrink-0"
-                                        maxRetries={5}
-                                        retryDelay={800}
-                                      />
-                                        <div className="min-w-0 flex-1">
-                                          <p className={`text-sm font-medium line-clamp-1 ${hasBg ? 'text-white' : 'text-foreground'}`}>
-                                            {appointment.employee.full_name}
-                                          </p>
-                                          <p className={`text-xs ${hasBg ? 'text-white/80' : 'text-muted-foreground'}`}>Profesional</p>
-                                        </div>
-                                      </div>
-                                    )
-                                  })()
-                                )}
-
-                                {/* Fecha y Hora (12h) con hora de finalización */}
-                                {(() => {
-                                  const svcImg = appointment.service?.id ? serviceImages[appointment.service.id] : undefined
-                                  const locImg = appointment.location?.id ? locationBanners[appointment.location.id] : undefined
-                                  const hasBg = !!(svcImg || locImg)
-                                  
-                                  // Calcular hora de finalización
-                                  const endTime = appointment.end_time || (() => {
-                                    const duration = appointment.service?.duration_minutes || 60
-                                    const startDate = new Date(appointment.start_time)
-                                    startDate.setMinutes(startDate.getMinutes() + duration)
-                                    return startDate.toISOString()
-                                  })()
-                                  
-                                  return (
-                                    <div className={`flex items-center gap-2 text-sm pt-1 ${hasBg ? 'text-white/90' : 'text-foreground/90'}`}>
-                                      <Clock className="h-4 w-4 shrink-0" />
-                                      <span className="line-clamp-1">
-                                        {new Date(appointment.start_time).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
-                                        {' • '}
-                                        {formatTime12h(appointment.start_time)}
-                                        {' - '}
-                                        {formatTime12h(endTime)}
-                                      </span>
-                                    </div>
-                                  )
-                                })()}
-
-                                {/* Dirección y precio */}
-                                {(() => {
-                                  const svcImg = appointment.service?.id ? serviceImages[appointment.service.id] : undefined
-                                  const locImg = appointment.location?.id ? locationBanners[appointment.location.id] : undefined
-                                  const hasBg = !!(svcImg || locImg)
-                                  return (
-                                    <div className="flex items-center justify-between gap-3 pt-1">
-                                      <div className={`flex items-center gap-2 text-sm min-w-0 ${hasBg ? 'text-white/90' : 'text-muted-foreground'}`}>
-                                        <MapPin className="h-4 w-4 shrink-0" />
-                                        <span className="truncate">
-                                          {appointment.location?.address || appointment.location?.name || '—'}
-                                        </span>
-                                      </div>
-                                      {(appointment.service?.price || appointment.price) && (
-                                        <span className={`text-base font-bold ${hasBg ? 'text-white' : 'text-primary'}`}>
-                                          ${(appointment.service?.price ?? appointment.price ?? 0).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} COP
-                                        </span>
-                                      )}
-                                    </div>
-                                  )
-                                })()}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                        {upcomingAppointments.map((appointment) => {
+                          const svcImg = appointment.service?.id ? serviceImages[appointment.service.id] : undefined
+                          const locImg = appointment.location?.id ? locationBanners[appointment.location.id] : undefined
+                          return (
+                            <AppointmentCard
+                              key={appointment.id}
+                              appointmentId={appointment.id}
+                              featured
+                              onClick={() => setSelectedAppointment(appointment)}
+                              initialData={{
+                                id: appointment.id,
+                                start_time: appointment.start_time,
+                                end_time: appointment.end_time,
+                                status: appointment.status as AppointmentCardData['status'],
+                                price: appointment.price,
+                                currency: appointment.currency,
+                                backgroundImageUrl: svcImg || locImg,
+                                business: appointment.business ? {
+                                  id: appointment.business.id,
+                                  name: appointment.business.name,
+                                  logo_url: appointment.business.logo_url,
+                                  banner_url: appointment.business.banner_url,
+                                } : null,
+                                service: appointment.service ? {
+                                  id: appointment.service.id,
+                                  name: appointment.service.name,
+                                  duration_minutes: appointment.service.duration_minutes,
+                                  price: appointment.service.price,
+                                  currency: appointment.service.currency,
+                                  image_url: appointment.service.image_url,
+                                } : null,
+                                employee: appointment.employee ? {
+                                  id: appointment.employee.id,
+                                  full_name: appointment.employee.full_name,
+                                  avatar_url: appointment.employee.avatar_url,
+                                } : null,
+                                locationData: appointment.location ? {
+                                  id: appointment.location.id,
+                                  name: appointment.location.name,
+                                  address: appointment.location.address,
+                                } : null,
+                              }}
+                              renderActions={() => (
+                                <Badge
+                                  variant={getStatusVariant(appointment.status)}
+                                  className="shrink-0 whitespace-nowrap"
+                                >
+                                  {getStatusLabel(appointment.status)}
+                                </Badge>
+                              )}
+                            />
+                          )
+                        })}
                       </div>
                     )}
                   </>
