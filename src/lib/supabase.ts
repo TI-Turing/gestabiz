@@ -1,8 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
+import { createEnhancedMockClient } from './mockData/mockClient'
 
 // ✨ FIX: Validación más robusta de variables de entorno
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || 'https://demo.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || 'demo-key'
+
+// Mock data mode for marketing screenshots
+const isMockDataMode = import.meta.env.VITE_MOCK_DATA === 'true'
 
 // Permite activar demo mode también vía process.env (útil en tests)
 type GlobalWithProcess = typeof globalThis & { process?: { env?: Record<string, string | undefined> } }
@@ -36,15 +40,17 @@ if (typeof window !== 'undefined') {
 }
 
 // For development purposes, we'll create a mock client if real credentials aren't available
-export const supabase = isDemoMode 
-  ? createMockClient()
-  : createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
-      }
-    })
+export const supabase = isMockDataMode
+  ? createEnhancedMockClient()
+  : isDemoMode 
+    ? createMockClient()
+    : createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true
+        }
+      })
 
 // Mock client for development when Supabase isn't configured
 type SupabaseLike = ReturnType<typeof createClient>
