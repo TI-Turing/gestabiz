@@ -7,11 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea'
 // Removed unused Select imports
 import { Badge } from '@/components/ui/badge'
-import { Building, MagnifyingGlass as Search, MapPin, Clock } from '@phosphor-icons/react'
+import { Building, MagnifyingGlass as Search, Clock } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { Business, User, EmployeeRequest } from '@/types'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { v4 as uuidv4 } from 'uuid'
+import { BusinessCard } from '@/components/cards/BusinessCard'
 
 interface JoinBusinessProps {
   user: User
@@ -160,56 +161,47 @@ export default function JoinBusiness({ user, onRequestSent }: Readonly<JoinBusin
               const requestStatus = getRequestStatus(business.id)
               
               return (
-                <Card key={business.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold text-lg">{business.name}</h3>
-                          <Badge variant="secondary" className="text-xs">
-                            {getBusinessCategoryLabel(business)}
-                          </Badge>
-                        </div>
-                        {requestStatus && (() => {
-                          let variant: 'outline' | 'default' | 'destructive'
-                          if (requestStatus === 'pending') variant = 'outline'
-                          else if (requestStatus === 'approved') variant = 'default'
-                          else variant = 'destructive'
-                          return <Badge variant={variant} className="text-xs">{t(`employee.requests.status.${requestStatus}`)}</Badge>
-                        })()}
-                      </div>
-
-                      {business.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {business.description}
-                        </p>
-                      )}
-
-                      <div className="space-y-2 text-sm text-muted-foreground">
-                        {business.city && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4" />
-                            <span>{business.city}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          <span>{getBusinessHours(business)}</span>
-                        </div>
-                      </div>
-
-                      {!requestStatus && (
-                        <Button 
-                          onClick={() => handleSelectBusiness(business)}
-                          className="w-full mt-4"
-                          size="sm"
-                        >
-                          {t('employee.join.request_to_join')}
-                        </Button>
-                      )}
+                <BusinessCard
+                  key={business.id}
+                  businessId={business.id}
+                  initialData={{
+                    id: business.id,
+                    name: business.name,
+                    description: business.description,
+                    logo_url: business.logo_url,
+                    city: business.city,
+                    category: getBusinessCategoryLabel(business),
+                  }}
+                  compact
+                  readOnly
+                  renderActions={(id) => (
+                    <>
+                      {requestStatus && (() => {
+                        let variant: 'outline' | 'default' | 'destructive'
+                        if (requestStatus === 'pending') variant = 'outline'
+                        else if (requestStatus === 'approved') variant = 'default'
+                        else variant = 'destructive'
+                        return <Badge variant={variant} className="text-xs">{t(`employee.requests.status.${requestStatus}`)}</Badge>
+                      })()}
+                    </>
+                  )}
+                >
+                  <div className="space-y-2 text-sm text-muted-foreground mt-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{getBusinessHours(business)}</span>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  {!requestStatus && (
+                    <Button 
+                      onClick={() => handleSelectBusiness(business)}
+                      className="w-full mt-3"
+                      size="sm"
+                    >
+                      {t('employee.join.request_to_join')}
+                    </Button>
+                  )}
+                </BusinessCard>
               )
             })}
           </div>

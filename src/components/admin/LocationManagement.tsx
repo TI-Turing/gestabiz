@@ -25,6 +25,8 @@ import {
   Building,
   Star
 } from '@phosphor-icons/react'
+import { LocationCard } from '@/components/cards/LocationCard'
+import { ServiceCard } from '@/components/cards/ServiceCard'
 
 interface LocationManagementProps {
   user: User
@@ -604,101 +606,70 @@ export default function LocationManagement(props: Readonly<LocationManagementPro
       {/* Locations Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {locations.map((location) => (
-          <Card key={location.id} className="relative">
-            {location.is_primary && (
-              <div className="absolute -top-2 -right-2">
-                <Badge variant="default" className="bg-yellow-500 hover:bg-yellow-600 flex items-center gap-1">
-                  <Star className="h-3 w-3 fill-current" />
-                  Principal
-                </Badge>
+          <LocationCard
+            key={location.id}
+            locationId={location.id}
+            initialData={location}
+            compact
+            readOnly
+            renderActions={(id) => (
+              <div className="flex gap-1 shrink-0">
+                <Button size="sm" variant="ghost" onClick={() => editLocation(location)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => deleteLocation(id)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
               </div>
             )}
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-primary" />
-                    {location.name}
-                  </CardTitle>
-                  <CardDescription>
-                    <LocationAddress address={location.address || ''} cityId={location.city} stateId={location.state} postalCode={location.postal_code || ''} />
-                  </CardDescription>
-                </div>
-                <div className="flex gap-1">
-                  <Button size="sm" variant="ghost" onClick={() => editLocation(location)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    onClick={() => deleteLocation(location.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
+          >
+            {/* Business Hours */}
+            <div className="mt-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium text-sm">Horarios</span>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Contact Info */}
-              <div className="flex flex-col gap-2 text-sm">
-                {location.phone && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Phone className="h-4 w-4" />
-                    {location.phone}
-                  </div>
+              <div className="grid grid-cols-2 gap-1 text-xs">
+                {Object.entries(location.business_hours).map(([day, hours]) => {
+                  const isOpen = 'is_open' in hours ? hours.is_open : !hours.closed
+                  return (
+                    <div key={day} className="flex justify-between">
+                      <span className="capitalize">{t(`day.${day}`)}</span>
+                      <span className={isOpen ? '' : 'text-muted-foreground'}>
+                        {isOpen ? `${hours.open} - ${hours.close}` : 'Cerrado'}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            
+            {/* Services for this location */}
+            <div className="mt-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Star className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium text-sm">Servicios Específicos</span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {getLocationServices(location.id).length > 0 ? (
+                  getLocationServices(location.id).map((service) => (
+                    <Badge key={service.id} variant="secondary" className="text-xs">
+                      {service.name}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Todos los servicios generales disponibles
+                  </span>
                 )}
-                {location.email && (
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Mail className="h-4 w-4" />
-                    {location.email}
-                  </div>
-                )}
               </div>
-              
-              {/* Business Hours */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium text-sm">Horarios</span>
-                </div>
-                <div className="grid grid-cols-2 gap-1 text-xs">
-                  {Object.entries(location.business_hours).map(([day, hours]) => {
-                    const isOpen = 'is_open' in hours ? hours.is_open : !hours.closed
-                    return (
-                      <div key={day} className="flex justify-between">
-                        <span className="capitalize">{t(`day.${day}`)}</span>
-                        <span className={isOpen ? '' : 'text-muted-foreground'}>
-                          {isOpen ? `${hours.open} - ${hours.close}` : 'Cerrado'}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-              
-              {/* Services for this location */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Star className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium text-sm">Servicios Específicos</span>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {getLocationServices(location.id).length > 0 ? (
-                    getLocationServices(location.id).map((service) => (
-                      <Badge key={service.id} variant="secondary" className="text-xs">
-                        {service.name}
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      Todos los servicios generales disponibles
-                    </span>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </LocationCard>
         ))}
       </div>
 
@@ -722,45 +693,36 @@ export default function LocationManagement(props: Readonly<LocationManagementPro
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {getGeneralServices().map((service) => (
-                <div key={service.id} className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-medium">{service.name}</h4>
-                      {service.description && (
-                        <p className="text-sm text-muted-foreground">{service.description}</p>
-                      )}
-                    </div>
-                    <div className="flex gap-1">
+                <ServiceCard
+                  key={service.id}
+                  serviceId={service.id}
+                  initialData={{
+                    id: service.id,
+                    name: service.name,
+                    description: service.description,
+                    duration: service.duration,
+                    duration_minutes: service.duration,
+                    price: service.price,
+                    category: service.category,
+                  }}
+                  compact
+                  readOnly
+                  renderActions={(id) => (
+                    <div className="flex gap-1 shrink-0">
                       <Button size="sm" variant="ghost" onClick={() => editService(service)}>
                         <Edit className="h-3 w-3" />
                       </Button>
                       <Button 
                         size="sm" 
                         variant="ghost" 
-                        onClick={() => deleteService(service.id)}
+                        onClick={() => deleteService(id)}
                         className="text-destructive hover:text-destructive"
                       >
                         <Trash className="h-3 w-3" />
                       </Button>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {service.duration}min
-                    </div>
-                    <div className="font-medium">
-                      €{service.price.toFixed(2)}
-                    </div>
-                  </div>
-                  
-                  {service.category && (
-                    <Badge variant="outline" className="text-xs">
-                      {service.category}
-                    </Badge>
                   )}
-                </div>
+                />
               ))}
             </div>
           </CardContent>
@@ -785,45 +747,36 @@ export default function LocationManagement(props: Readonly<LocationManagementPro
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {locationServices.map((service) => (
-                    <div key={service.id} className="border rounded-lg p-4 space-y-2">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="font-medium">{service.name}</h4>
-                          {service.description && (
-                            <p className="text-sm text-muted-foreground">{service.description}</p>
-                          )}
-                        </div>
-                        <div className="flex gap-1">
+                    <ServiceCard
+                      key={service.id}
+                      serviceId={service.id}
+                      initialData={{
+                        id: service.id,
+                        name: service.name,
+                        description: service.description,
+                        duration: service.duration,
+                        duration_minutes: service.duration,
+                        price: service.price,
+                        category: service.category,
+                      }}
+                      compact
+                      readOnly
+                      renderActions={(id) => (
+                        <div className="flex gap-1 shrink-0">
                           <Button size="sm" variant="ghost" onClick={() => editService(service)}>
                             <Edit className="h-3 w-3" />
                           </Button>
                           <Button 
                             size="sm" 
                             variant="ghost" 
-                            onClick={() => deleteService(service.id)}
+                            onClick={() => deleteService(id)}
                             className="text-destructive hover:text-destructive"
                           >
                             <Trash className="h-3 w-3" />
                           </Button>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {service.duration}min
-                        </div>
-                        <div className="font-medium">
-                          €{service.price.toFixed(2)}
-                        </div>
-                      </div>
-                      
-                      {service.category && (
-                        <Badge variant="outline" className="text-xs">
-                          {service.category}
-                        </Badge>
                       )}
-                    </div>
+                    />
                   ))}
                 </div>
               </CardContent>

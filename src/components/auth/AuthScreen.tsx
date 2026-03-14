@@ -9,7 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { AccountInactiveModal } from './AccountInactiveModal'
 import { User } from '@/types'
 import { APP_CONFIG } from '@/constants'
-import logoGestabiz from '@/assets/images/logo_gestabiz.png'
+import logoGestabiz from '@/assets/images/gestabiz/gestabiz_logo.svg'
 import { toast } from 'sonner'
 import { useAnalytics } from '@/hooks/useAnalytics'
 import { AlertCircle } from 'lucide-react'
@@ -361,7 +361,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
             <img 
               src={logoGestabiz} 
               alt="Gestabiz Logo" 
-              className="w-20 h-20 rounded-2xl object-contain"
+              className="h-28 w-auto max-w-[320px] object-contain"
             />
           </div>
           <h1 className="text-4xl font-bold text-foreground mb-2">

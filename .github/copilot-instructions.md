@@ -28,6 +28,7 @@
 6. **TypeScript strict** - Cero `any`, tipado completo
 7. **Proteger con PermissionGate** - TODOS los botones de acción deben estar protegidos con PermissionGate ⭐ NUEVO
 8. **Incrementar versión en cada commit** - Versión actual: **0.0.1**. Patrón: `MAJOR.MINOR.PATCH`. Cada commit aumenta PATCH (0.0.1 → 0.0.2 → 0.0.3...). MINOR se incrementa en releases planificadas. MAJOR para cambios disruptivos. Actualizar versión en `package.json`
+9. **Reutilización obligatoria de Card Components** ⭐ CRÍTICO - Ver sección "Sistema de Cards Reutilizables" más abajo
 
 ---
 
@@ -504,7 +505,100 @@
 - **Ver**: `docs/FASE_5_RESUMEN_FINAL_SESION_16NOV.md`, `docs/PLAN_DE_ACCION_POST_TESTING_COMPLETADO.md`
 
 
-## 🏗️ ARQUITECTURA Y PATRONES
+## � SISTEMA DE CARDS REUTILIZABLES ⭐ CRÍTICO
+
+### Regla Fundamental
+**TODOS los cards de entidades DEBEN ser componentes independientes ubicados en `src/components/cards/`.**
+**NUNCA renderizar cards inline usando `<Card>` de Radix UI directamente para mostrar entidades.**
+
+### Arquitectura de Cards — Self-Fetching por ID
+Cada card component recibe **únicamente el ID de la entidad** y se encarga internamente de:
+1. **Consultar los datos** necesarios desde Supabase (usando `useQuery` de React Query)
+2. **Renderizar** toda la información de la entidad
+3. **Manejar estados** de loading y error internamente
+
+```tsx
+// ✅ CORRECTO: Card recibe solo el ID y hace self-fetch
+<ServiceCard serviceId="abc-123" readOnly />
+
+// ❌ INCORRECTO: Pasar data props desde el padre
+<ServiceCard service={{ id: 'abc-123', name: 'Corte', price: 50000 }} />
+
+// ❌ PROHIBIDO: Renderizar cards inline con <Card> genérico
+<Card><CardContent><h3>{service.name}</h3><p>{service.price}</p></CardContent></Card>
+```
+
+### Cards Registrados (src/components/cards/)
+
+| Componente | Entidad | Prop principal | Tabla Supabase |
+|------------|---------|---------------|----------------|
+| `ServiceCard` | Servicio | `serviceId: string` | `services` |
+| `EmployeeCard` | Empleado/Profesional | `employeeId: string` | `profiles` + `business_employees` |
+| `LocationCard` | Sede/Ubicación | `locationId: string` | `locations` |
+| `BusinessCard` | Negocio | `businessId: string` | `businesses` |
+| `ResourceCard` | Recurso físico | `resourceId: string` | `business_resources` |
+| `AppointmentCard` | Cita | `appointmentId: string` | `appointments` |
+| `ClientCard` | Cliente | `clientId: string` | `profiles` + analytics |
+
+### Props Comunes de Cards
+Todos los cards soportan estas props opcionales para personalización contextual:
+- `readOnly?: boolean` — Solo lectura (sin interactividad de selección)
+- `isSelected?: boolean` — Estado de selección visual
+- `onSelect?: (id: string) => void` — Callback de selección
+- `onViewProfile?: (id: string) => void` — Callback para abrir perfil/modal
+- `isPreselected?: boolean` — Badge/ring visual "Preseleccionado"
+- `className?: string` — Clases CSS adicionales
+- `renderActions?: (id: string) => ReactNode` — Slot para inyectar botones de acción personalizados (edit, delete, etc.)
+
+### Reglas de Implementación
+1. **Antes de crear un card**: SIEMPRE verificar si ya existe en `src/components/cards/`. Si existe, USARLO.
+2. **Self-fetch obligatorio**: El card recibe el ID y consulta sus datos internamente con `useQuery`.
+3. **Cache inteligente**: Usar React Query con `staleTime: 5 * 60 * 1000` para datos estables.
+4. **Loading state**: Mostrar skeleton/shimmer mientras carga (NO spinners).
+5. **Error state**: Mostrar fallback discreto si falla la consulta.
+6. **Acciones personalizadas**: Usar prop `renderActions` para inyectar botones de contexto (edit/delete) sin modificar el card.
+7. **No duplicar queries**: Si el padre ya tiene los datos, puede pasar un objeto `initialData` para hidratar el cache de React Query y evitar re-fetch.
+
+### Patrón initialData (Optimización)
+Cuando el componente padre ya tiene los datos (ej: de una query de lista), puede evitar el re-fetch:
+```tsx
+// El padre ya tiene la lista de servicios
+{services.map(svc => (
+  <ServiceCard
+    key={svc.id}
+    serviceId={svc.id}
+    initialData={svc}  // Hidrata cache, evita request adicional
+    readOnly
+  />
+))}
+```
+
+### Ejemplo de Implementación Interna de un Card
+```tsx
+export function ServiceCard({ serviceId, initialData, readOnly, onSelect, renderActions }: ServiceCardProps) {
+  const { data: service, isLoading } = useQuery({
+    queryKey: ['service', serviceId],
+    queryFn: () => fetchService(serviceId),
+    initialData,
+    staleTime: 5 * 60 * 1000,
+    enabled: !!serviceId,
+  });
+
+  if (isLoading) return <ServiceCardSkeleton />;
+  if (!service) return null;
+
+  return (
+    <div className="...">
+      {/* Render del card */}
+      {renderActions?.(serviceId)}
+    </div>
+  );
+}
+```
+
+---
+
+## �🏗️ ARQUITECTURA Y PATRONES
 
 ### Arquitectura de Autenticación ⭐ CRÍTICO
 **Sistema centralizado con Context API para evitar múltiples instancias**

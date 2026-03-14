@@ -29,6 +29,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import type { SearchType } from './SearchBar'
 import { LocationAddress } from '@/components/ui/LocationAddress'
+import { SearchResultCard } from '@/components/cards/SearchResultCard'
 
 interface SearchResultsProps {
   searchTerm: string
@@ -575,105 +576,15 @@ export function SearchResults({
               {sortedResults.map((result) => {
                 const TypeIcon = getTypeIcon(result.type)
                 return (
-                  <Card 
+                  <SearchResultCard
                     key={result.id}
-                    className="hover:shadow-lg transition-all cursor-pointer group"
+                    result={result}
+                    typeLabel={getTypeLabel(result.type)}
+                    typeIcon={TypeIcon}
+                    reviewLabel={t('reviews.review')}
+                    reviewsLabel={t('reviews.reviewsPlural')}
                     onClick={() => onResultClick(result)}
-                  >
-                    <CardContent className="p-3 sm:p-5">
-                      {/* Image or Icon - Mobile Optimized */}
-                      {result.imageUrl ? (
-                        <div className="w-full h-32 sm:h-40 rounded-lg overflow-hidden mb-3 sm:mb-4 bg-muted">
-                          <img 
-                            src={result.imageUrl} 
-                            alt={result.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-full h-32 sm:h-40 rounded-lg bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center mb-3 sm:mb-4">
-                          <TypeIcon className="h-12 w-12 sm:h-16 sm:w-16 text-primary/40" />
-                        </div>
-                      )}
-
-                      {/* Content - Mobile Compact */}
-                      <div className="space-y-2 sm:space-y-3">
-                        {/* Type Badge */}
-                        <Badge variant="secondary" className="text-[10px] sm:text-xs">
-                          {getTypeLabel(result.type)}
-                        </Badge>
-
-                        {/* Name */}
-                        <h3 className="font-bold text-base sm:text-lg text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                          {result.name}
-                        </h3>
-
-                        {/* Description */}
-                        {result.description && (
-                          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                            {result.description}
-                          </p>
-                        )}
-
-                        {/* Business (for services/users) */}
-                        {result.business && (
-                          <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-                            <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                            <span className="truncate">{result.business.name}</span>
-                          </div>
-                        )}
-
-                        {/* Rating */}
-                        {result.rating !== undefined && (
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1">
-                              <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400 flex-shrink-0" />
-                              <span className="font-semibold text-foreground text-sm sm:text-base">
-                                {result.rating.toFixed(1)}
-                              </span>
-                            </div>
-                            {result.reviewCount !== undefined && result.reviewCount > 0 && (
-                              <span className="text-xs sm:text-sm text-muted-foreground">
-                                ({result.reviewCount} {t(result.reviewCount === 1 ? 'reviews.review' : 'reviews.reviewsPlural')})
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Distance */}
-                        {result.distance !== undefined && (
-                          <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
-                            <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                            <span>{result.distance.toFixed(1)} km</span>
-                          </div>
-                        )}
-
-                        {/* Location */}
-                        {result.location?.city && (
-                          <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
-                            <MapPin size={12} /> <LocationAddress cityId={result.location.city} showFullAddress={false} showCountry={false} />
-                          </div>
-                        )}
-
-                        {/* Price (for services) */}
-                        {result.price !== undefined && (
-                          <div className="pt-2 border-t border-border">
-                            <span className="text-base sm:text-lg font-bold text-primary">
-                              ${result.price.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} COP
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Category */}
-                        {result.category && (
-                          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
-                            <Tag className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{result.category}</span>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  />
                 )
               })}
             </div>

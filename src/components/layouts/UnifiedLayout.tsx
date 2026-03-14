@@ -15,7 +15,11 @@ import {
   Bug,
   MapPin
 } from 'lucide-react'
-import logoGestabiz from '@/assets/images/logo_gestabiz.png'
+import logoGestabizIcon from '@/assets/images/gestabiz/gestabiz_icon_clean.svg'
+import logoGestabizDark from '@/assets/images/gestabiz/gestabiz_logo_dark.svg'
+import logoGestabizLight from '@/assets/images/gestabiz/gestabiz_logo_light.svg'
+import logoGestabizDarkEn from '@/assets/images/gestabiz/gestabiz_logo_dark_en.svg'
+import logoGestabizLightEn from '@/assets/images/gestabiz/gestabiz_logo_light_en.svg'
 import { Badge } from '@/components/ui/badge'
 import { SearchBar, type SearchType } from '@/components/client/SearchBar'
 import { CitySelector } from '@/components/client/CitySelector'
@@ -35,6 +39,7 @@ import { FloatingChatButton } from '@/components/chat/FloatingChatButton'
 import { BugReportModal } from '@/components/bug-report/BugReportModal'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useTheme } from '@/contexts/useTheme'
 
 // Sidebar width constants
 const SIDEBAR_EXPANDED_W = 'w-56' // 224px
@@ -140,7 +145,11 @@ export function UnifiedLayout({
     isSwiping: false,
     edge: null as null | 'left' | 'right',
   })
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const { isDark } = useTheme()
+  const logoGestabizFull = isDark
+    ? (language === 'en' ? logoGestabizDarkEn : logoGestabizDark)
+    : (language === 'en' ? logoGestabizLightEn : logoGestabizLight)
   const roleLabels: Record<UserRole, string> = {
     admin: t('roleSelector.admin'),
     employee: t('roleSelector.employee'),
@@ -274,25 +283,20 @@ export function UnifiedLayout({
         {/* Logo/Brand */}
         <div className={cn(
           "border-b border-border flex-shrink-0 flex items-center",
-          sidebarCollapsed ? "px-2 py-3 justify-center" : "px-3 py-3"
+          sidebarCollapsed ? "justify-center" : ""
         )}>
           {sidebarCollapsed ? (
             <img 
-              src={logoGestabiz} 
+              src={logoGestabizIcon} 
               alt="Gestabiz" 
-              className="w-10 h-10 rounded-xl object-contain"
+              className="w-full h-auto"
             />
           ) : (
-            <div className="flex items-center gap-3">
-              <img 
-                src={logoGestabiz} 
-                alt="Gestabiz Logo" 
-                className="w-10 h-10 rounded-xl object-contain"
-              />
-              <span className="text-lg font-bold text-foreground">
-                Gestabiz
-              </span>
-            </div>
+            <img 
+              src={logoGestabizFull} 
+              alt="Gestabiz" 
+              className="w-full h-auto"
+            />
           )}
         </div>
 
@@ -462,7 +466,7 @@ export function UnifiedLayout({
               className="p-1 hover:bg-muted rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               aria-label="Abrir menú izquierdo"
             >
-              <img src={logoGestabiz} alt="Gestabiz" className="w-8 h-8 rounded-lg object-contain" />
+              <img src={logoGestabizIcon} alt="Gestabiz" className="w-12 h-12 rounded-lg object-contain" />
             </button>
             <span className="text-sm font-semibold text-foreground">Gestabiz</span>
           </div>

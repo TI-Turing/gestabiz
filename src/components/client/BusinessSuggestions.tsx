@@ -2,10 +2,11 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Star, MapPin, Building2, TrendingUp } from 'lucide-react';
+import { Building2, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { BusinessSuggestion } from '@/hooks/useClientDashboard';
+import { BusinessCard } from '@/components/cards/BusinessCard';
 
 // Type alias for backward compatibility
 type SimpleBusiness = BusinessSuggestion;
@@ -56,97 +57,51 @@ export function BusinessSuggestions({
 
   // ✅ OPTIMIZACIÓN: Memoizar renderBusinessCard para evitar recrear función en cada render
   const renderBusinessCard = useCallback((business: SimpleBusiness, options?: { highlight?: boolean }) => (
-    <Card
+    <BusinessCard
       key={business.id}
-      className={cn(
-        "group cursor-pointer hover:shadow-lg transition-all duration-200 hover:border-primary/50",
-        options?.highlight && "border-primary/60"
+      businessId={business.id}
+      initialData={{
+        id: business.id,
+        name: business.name,
+        description: options?.highlight ? undefined : business.description,
+        logo_url: business.logo_url,
+        city: business.city,
+        average_rating: business.average_rating,
+        total_reviews: business.total_reviews,
+      }}
+      compact
+      className={cn(options?.highlight && 'border-primary/60')}
+      onSelect={() => onBusinessSelect?.(business.id)}
+      renderActions={() => (
+        <Button
+          size="sm"
+          variant={options?.highlight ? 'default' : 'outline'}
+          onClick={(event) => handleRebookClick(event, business.id)}
+        >
+          {options?.highlight
+            ? t('businessSuggestions.bookAgain')
+            : t('businessSuggestions.bookNow')}
+        </Button>
       )}
-      onClick={() => onBusinessSelect?.(business.id)}
     >
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          {/* Logo */}
-          <div className="w-12 h-12 rounded-lg bg-muted shrink-0 overflow-hidden border border-border/50">
-            {business.logo_url ? (
-              <img
-                src={business.logo_url}
-                alt={business.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Building2 className="h-6 w-6 text-muted-foreground" />
-              </div>
-            )}
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-              {business.name}
-            </h4>
-
-            {options?.highlight && business.visitsCount ? (
-              <Badge variant="secondary" className="mt-1">
-                {business.visitsCount === 1
-                  ? t('businessSuggestions.singleVisit')
-                  : t('businessSuggestions.multiVisit', { count: business.visitsCount })}
-              </Badge>
-            ) : null}
-            
-            {/* Rating */}
-            {(business.average_rating ?? 0) > 0 && (
-              <div className="flex items-center gap-1.5 mt-1">
-                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                <span className="text-xs font-medium text-foreground">
-                  {(business.average_rating ?? 0).toFixed(1)}
-                </span>
-                {business.total_reviews !== undefined && business.total_reviews > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    ({business.total_reviews})
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Location */}
-            {business.city && (
-              <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                <MapPin className="h-3 w-3 shrink-0" />
-                <span className="line-clamp-1">{business.city}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-3 mt-4">
-          {options?.highlight && business.lastAppointmentDate ? (
-            <p className="text-xs text-muted-foreground line-clamp-1">
-              {t('businessSuggestions.lastVisit', {
-                date: new Date(business.lastAppointmentDate).toLocaleDateString('es-CO', {
-                  day: 'numeric',
-                  month: 'short'
-                })
-              })}
-            </p>
-          ) : (
-            <span className="text-xs text-muted-foreground line-clamp-1">
-              {business.description || t('businessSuggestions.genericDescription')}
-            </span>
-          )}
-          <Button
-            size="sm"
-            variant={options?.highlight ? 'default' : 'outline'}
-            onClick={(event) => handleRebookClick(event, business.id)}
-          >
-            {options?.highlight
-              ? t('businessSuggestions.bookAgain')
-              : t('businessSuggestions.bookNow')}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      {options?.highlight && business.visitsCount ? (
+        <Badge variant="secondary" className="mt-1 w-fit">
+          {business.visitsCount === 1
+            ? t('businessSuggestions.singleVisit')
+            : t('businessSuggestions.multiVisit', { count: business.visitsCount })}
+        </Badge>
+      ) : null}
+      {options?.highlight && business.lastAppointmentDate && (
+        <p className="text-xs text-muted-foreground mt-1">
+          {t('businessSuggestions.lastVisit', {
+            date: new Date(business.lastAppointmentDate).toLocaleDateString('es-CO', {
+              day: 'numeric',
+              month: 'short'
+            })
+          })}
+        </p>
+      )}
+    </BusinessCard>
   ), [handleRebookClick, t, onBusinessSelect])
 
   // ✅ OPTIMIZACIÓN: Memoizar filtros para evitar recalcular en cada render

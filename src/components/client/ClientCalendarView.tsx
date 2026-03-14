@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus, AlertCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks'
+import { AppointmentCard, type AppointmentCardData } from '@/components/cards/AppointmentCard'
 
 interface AppointmentWithRelations {
   id: string
@@ -189,48 +189,28 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
     return labels[status] || status
   }
 
-  // Render appointment card
-  const renderAppointmentCard = (appointment: AppointmentWithRelations, compact = false) => (
-    <Card
+  // Render appointment card using reusable AppointmentCard
+  const renderAppointmentCard = (appointment: AppointmentWithRelations) => (
+    <AppointmentCard
       key={appointment.id}
-      className={cn(
-        "cursor-pointer hover:shadow-md transition-all hover:border-primary/50 hover:bg-accent/50",
-        compact && "mb-2"
+      appointmentId={appointment.id}
+      compact
+      className="cursor-pointer hover:shadow-md hover:border-primary/50 hover:bg-accent/50 mb-2"
+      onClick={onAppointmentClick ? () => onAppointmentClick(appointment) : undefined}
+      initialData={{
+        id: appointment.id,
+        start_time: appointment.start_time,
+        end_time: appointment.end_time,
+        status: appointment.status as AppointmentCardData['status'],
+        business: appointment.business ? { id: appointment.business.id, name: appointment.business.name } : null,
+        service: appointment.service ? { id: appointment.service.id, name: appointment.service.name, duration_minutes: appointment.service.duration } : null,
+      }}
+      renderActions={() => (
+        <Badge variant={getStatusVariant(appointment.status)} className="flex-shrink-0 text-xs">
+          {getStatusLabel(appointment.status)}
+        </Badge>
       )}
-      onClick={() => onAppointmentClick?.(appointment)}
-    >
-      <CardContent className={cn("p-3", compact && "p-2")}>
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground truncate hover:text-foreground">
-              {appointment.service?.name || 'Cita'}
-            </p>
-            {appointment.business?.name && (
-              <p className="text-xs text-muted-foreground truncate hover:text-muted-foreground">
-                {appointment.business.name}
-              </p>
-            )}
-          </div>
-          <Badge variant={getStatusVariant(appointment.status)} className="flex-shrink-0 text-xs">
-            {getStatusLabel(appointment.status)}
-          </Badge>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground hover:text-muted-foreground">
-          <CalendarIcon className="h-3 w-3" />
-          <span>
-            {new Date(appointment.start_time).toLocaleTimeString('es-MX', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </span>
-          {appointment.service?.duration && (
-            <span className="text-muted-foreground hover:text-muted-foreground">
-              • {appointment.service.duration} min
-            </span>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    />
   )
 
   // Render Day View with hourly slots
@@ -303,7 +283,7 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
                     <div className="flex-1 space-y-2">
                       {hourAppointments.map(apt => (
                         <div key={apt.id} className="w-full">
-                          {renderAppointmentCard(apt, true)}
+                          {renderAppointmentCard(apt)}
                         </div>
                       ))}
                     </div>
@@ -395,7 +375,7 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
                 ) : (
                   dayAppointments
                     .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-                    .map(apt => renderAppointmentCard(apt, true))
+                    .map(apt => renderAppointmentCard(apt))
                 )}
               </div>
               {/* Botón para agregar cita */}

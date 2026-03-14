@@ -1,14 +1,12 @@
 import React, { useState } from 'react'
-import { Clock, MapPin, User, Phone, FileText, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Clock, User, Phone, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
+import { AppointmentCard, type AppointmentCardData } from '@/components/cards/AppointmentCard'
 
 interface AppointmentWithRelations {
   id: string
@@ -158,89 +156,49 @@ export function EmployeeAppointmentsList({ appointments, onRefresh }: EmployeeAp
               {dateAppointments
                 .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
                 .map(appointment => (
-                  <Card
+                  <AppointmentCard
                     key={appointment.id}
+                    appointmentId={appointment.id}
                     className={cn(
-                      "cursor-pointer hover:shadow-md transition-all hover:border-primary/50",
                       appointment.status === 'cancelled' && "opacity-60"
                     )}
                     onClick={() => setSelectedAppointment(appointment)}
+                    initialData={{
+                      id: appointment.id,
+                      start_time: appointment.start_time,
+                      end_time: appointment.end_time,
+                      status: appointment.status as AppointmentCardData['status'],
+                      notes: appointment.notes,
+                      price: appointment.price,
+                      currency: appointment.currency,
+                      client_name: appointment.client_name,
+                      service: appointment.service_name ? { id: appointment.service_id || '', name: appointment.service_name } : null,
+                      locationData: appointment.location_name ? { id: appointment.location_id || '', name: appointment.location_name, address: appointment.location_address } : null,
+                    }}
+                    renderActions={() => (
+                      <Badge variant={getStatusVariant(appointment.status)} className="shrink-0">
+                        <span className="mr-1">{getStatusIcon(appointment.status)}</span>
+                        {getStatusLabel(appointment.status)}
+                      </Badge>
+                    )}
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        {/* Time */}
-                        <div className="flex flex-col items-center justify-center min-w-[80px] text-center">
-                          <Clock className="h-5 w-5 text-muted-foreground mb-1" />
-                          <div className="font-semibold text-sm">
-                            {formatTime(appointment.start_time)}
+                    {/* Extra employee-view info: phone + notes */}
+                    {(appointment.client_phone || appointment.notes) && (
+                      <div className="space-y-1 mt-1">
+                        {appointment.client_phone && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Phone className="h-4 w-4" />
+                            <span>{appointment.client_phone}</span>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatTime(appointment.end_time)}
+                        )}
+                        {appointment.notes && (
+                          <div className="text-xs text-muted-foreground italic truncate">
+                            {appointment.notes}
                           </div>
-                        </div>
-
-                        {/* Divider */}
-                        <div className="h-auto w-px bg-border" />
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0 space-y-2">
-                          {/* Header */}
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                              <span className="font-semibold truncate">
-                                {appointment.client_name || 'Cliente sin nombre'}
-                              </span>
-                            </div>
-                            <Badge variant={getStatusVariant(appointment.status)} className="flex-shrink-0">
-                              <span className="mr-1">{getStatusIcon(appointment.status)}</span>
-                              {getStatusLabel(appointment.status)}
-                            </Badge>
-                          </div>
-
-                          {/* Service */}
-                          {appointment.service_name && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <FileText className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-muted-foreground">{appointment.service_name}</span>
-                              {appointment.price && (
-                                <span className="font-semibold text-primary">
-                                  {new Intl.NumberFormat('es-CO', {
-                                    style: 'currency',
-                                    currency: appointment.currency || 'COP',
-                                    minimumFractionDigits: 0
-                                  }).format(appointment.price)}
-                                </span>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Location */}
-                          {appointment.location_name && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <MapPin className="h-4 w-4" />
-                              <span className="truncate">{appointment.location_name}</span>
-                            </div>
-                          )}
-
-                          {/* Contact */}
-                          {appointment.client_phone && (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Phone className="h-4 w-4" />
-                              <span>{appointment.client_phone}</span>
-                            </div>
-                          )}
-
-                          {/* Notes preview */}
-                          {appointment.notes && (
-                            <div className="text-xs text-muted-foreground italic truncate">
-                              {appointment.notes}
-                            </div>
-                          )}
-                        </div>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
+                    )}
+                  </AppointmentCard>
                 ))}
             </div>
           </div>

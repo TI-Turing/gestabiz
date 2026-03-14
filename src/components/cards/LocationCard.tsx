@@ -1,29 +1,137 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { MapPin, Building2, Phone, Check, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { Location } from '@/types/types';
 import { LocationAddress } from '@/components/ui/LocationAddress';
+import { supabase } from '@/lib/supabase';
+import { QUERY_CONFIG } from '@/lib/queryConfig';
+
+async function fetchLocation(locationId: string): Promise<Location> {
+  const { data, error } = await supabase
+    .from('locations')
+    .select('*')
+    .eq('id', locationId)
+    .single();
+  if (error) throw error;
+  return data as Location;
+}
 
 interface LocationCardProps {
-  location: Location;
+  /** ID de la ubicación — el card resuelve sus datos internamente */
+  locationId?: string;
+  /** Datos pre-cargados (initialData para evitar refetch) */
+  location?: Location;
+  initialData?: Location;
   bannerUrl?: string;
   isSelected?: boolean;
   onSelect?: (location: Location) => void;
   isPreselected?: boolean;
   onViewProfile?: (location: Location) => void;
   readOnly?: boolean;
+  className?: string;
+  renderActions?: (id: string) => React.ReactNode;
+  /** Modo compacto: layout estructurado para vistas de gestión admin */
+  compact?: boolean;
+  /** Contenido adicional inyectado dentro del card (ej: horarios, servicios) */
+  children?: React.ReactNode;
 }
 
 export function LocationCard({
-  location,
+  locationId,
+  location: locationProp,
+  initialData,
   bannerUrl,
   isSelected = false,
   onSelect,
   isPreselected = false,
   onViewProfile,
   readOnly = false,
+  className,
+  renderActions,
+  compact = false,
+  children,
 }: Readonly<LocationCardProps>) {
+  const seed = initialData ?? locationProp;
+  const resolvedId = locationId ?? seed?.id;
+
+  const { data: location } = useQuery({
+    queryKey: ['location-card', resolvedId],
+    queryFn: () => fetchLocation(resolvedId!),
+    initialData: seed,
+    enabled: !!resolvedId,
+    ...QUERY_CONFIG.STABLE,
+  });
+
+  if (!location) {
+    return (
+      <div className={cn('rounded-xl p-5 border-2 border-border animate-pulse', className)}>
+        <div className="w-12 h-12 rounded-lg bg-muted mb-4" />
+        <div className="h-5 bg-muted rounded w-3/4 mb-3" />
+        <div className="h-4 bg-muted rounded w-1/2" />
+      </div>
+    );
+  }
+
+  // ── Compact variant (admin management lists) ──
+  if (compact) {
+    return (
+      <div
+        className={cn(
+          'relative rounded-xl border bg-card p-4 transition-all duration-200',
+          !readOnly && 'hover:shadow-md',
+          isSelected ? 'border-primary bg-primary/10' : 'border-border',
+          className,
+        )}
+      >
+        {location.is_primary && (
+          <div className="absolute -top-2 -right-2">
+            <Badge className="bg-yellow-500 text-yellow-950 text-xs shadow-lg">
+              <Check className="w-3 h-3 mr-1" />
+              Principal
+            </Badge>
+          </div>
+        )}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-lg flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary shrink-0" />
+              {location.name}
+            </h3>
+            {location.address && (
+              <div className="mt-1 text-sm text-muted-foreground">
+                <LocationAddress
+                  address={location.address}
+                  cityId={location.city}
+                  stateId={location.state}
+                  postalCode={location.postal_code}
+                />
+              </div>
+            )}
+          </div>
+          {renderActions?.(location.id)}
+        </div>
+        <div className="flex flex-wrap gap-4 mt-3 text-sm text-muted-foreground">
+          {location.phone && (
+            <div className="flex items-center gap-1.5">
+              <Phone className="h-4 w-4 shrink-0" />
+              <span>{location.phone}</span>
+            </div>
+          )}
+          {location.email && (
+            <div className="flex items-center gap-1.5">
+              <Building2 className="h-4 w-4 shrink-0" />
+              <span>{location.email}</span>
+            </div>
+          )}
+        </div>
+        {children}
+      </div>
+    );
+  }
+
+  // ── Default variant (wizard / selection) ──
   const hasBanner = !!bannerUrl;
 
   return (
@@ -41,6 +149,7 @@ export function LocationCard({
           ? 'bg-primary/20 border-primary shadow-lg shadow-primary/20'
           : 'bg-muted/50 border-border hover:bg-muted hover:border-border/50',
         isPreselected && 'ring-2 ring-green-500/50',
+        className,
       )}
     >
       {/* Banner de fondo */}
@@ -133,6 +242,9 @@ export function LocationCard({
       {!readOnly && (
         <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-linear-to-br from-purple-500/10 to-transparent" />
       )}
+
+      {/* Custom actions slot */}
+      {renderActions?.(location.id)}
     </div>
   );
 }

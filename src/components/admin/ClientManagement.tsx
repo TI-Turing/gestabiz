@@ -1,15 +1,15 @@
 import React, { useMemo, useState, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ClientCard } from '@/components/cards/ClientCard'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Client, ClientAnalytics, User } from '@/types'
 import { useKV } from '@/lib/useKV'
 import { toast } from 'sonner'
-import { Users, Phone, Mail, MessageSquare, Calendar, Clock, Search, MoreVertical, AlertCircle } from 'lucide-react'
+import { Users, MessageSquare, Calendar, Clock, Search, MoreVertical, AlertCircle } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es as esLocale, enUS } from 'date-fns/locale'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -78,8 +78,6 @@ export default function ClientManagement(props: Readonly<ClientManagementProps>)
       return matchesSearch && matchesStatus
     })
   }, [clients, searchTerm, statusFilter, activeTab, generateClientAnalytics])
-
-  const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
   const getStatusBadge = (status: Client['status']) => {
     switch (status) {
@@ -151,57 +149,60 @@ export default function ClientManagement(props: Readonly<ClientManagementProps>)
               {filteredClients.map((client) => {
                 const analytics = generateClientAnalytics(client)
                 return (
-                  <Card key={client.id} className="hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={client.avatar_url} alt={client.name} />
-                            <AvatarFallback>{getInitials(client.name)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <CardTitle className="text-lg">{client.name}</CardTitle>
-                            <div className="flex items-center gap-2 mt-1">
-                              {getStatusBadge(client.status)}
-                              <Badge variant="secondary">{analytics.frequency}</Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button>
+                  <ClientCard
+                    key={client.id}
+                    clientId={client.id}
+                    initialData={{
+                      id: client.id,
+                      name: client.name,
+                      email: client.email,
+                      phone: client.phone,
+                      avatar_url: client.avatar_url,
+                      whatsapp: client.whatsapp,
+                      status: client.status,
+                      total_appointments: client.total_appointments,
+                      last_appointment: client.last_appointment,
+                    }}
+                    readOnly
+                    renderActions={() => (
+                      <Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button>
+                    )}
+                  >
+                    <div className="flex items-center gap-2 mt-1">
+                      {getStatusBadge(client.status)}
+                      <Badge variant="secondary">{analytics.frequency}</Badge>
+                    </div>
+                    {client.whatsapp && (
+                      <div className="flex items-center gap-2 text-sm mt-1">
+                        <MessageSquare className="h-4 w-4 text-green-500" />
+                        <span>{client.whatsapp}</span>
                       </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        {client.email && (<div className="flex items-center gap-2 text-sm"><Mail className="h-4 w-4 text-muted-foreground" /><span>{client.email}</span></div>)}
-                        {client.phone && (<div className="flex items-center gap-2 text-sm"><Phone className="h-4 w-4 text-muted-foreground" /><span>{client.phone}</span></div>)}
-                        {client.whatsapp && (<div className="flex items-center gap-2 text-sm"><MessageSquare className="h-4 w-4 text-green-500" /><span>{client.whatsapp}</span></div>)}
+                    )}
+                    <div className="grid grid-cols-2 gap-4 pt-3 border-t mt-3">
+                      <div className="text-center"><div className="text-2xl font-bold text-primary">{client.total_appointments}</div><div className="text-xs text-muted-foreground">{t('admin.clientManagement.badges.total_appointments')}</div></div>
+                      <div className="text-center"><div className="text-2xl font-bold text-green-600">${analytics.lifetime_value}</div><div className="text-xs text-muted-foreground">{t('admin.clientManagement.badges.total_value')}</div></div>
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-2">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>{t('admin.clientManagement.last_appointment_prefix')}: {client.last_appointment ? formatDistanceToNow(new Date(client.last_appointment), { addSuffix: true, locale: dfLocale }) : t('admin.clientManagement.never')}</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-4 pt-3 border-t">
-                        <div className="text-center"><div className="text-2xl font-bold text-primary">{client.total_appointments}</div><div className="text-xs text-muted-foreground">{t('admin.clientManagement.badges.total_appointments')}</div></div>
-                        <div className="text-center"><div className="text-2xl font-bold text-green-600">${analytics.lifetime_value}</div><div className="text-xs text-muted-foreground">{t('admin.clientManagement.badges.total_value')}</div></div>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          <span>{t('admin.clientManagement.last_appointment_prefix')}: {client.last_appointment ? formatDistanceToNow(new Date(client.last_appointment), { addSuffix: true, locale: dfLocale }) : t('admin.clientManagement.never')}</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 pt-3 border-t">
-                        <Button size="sm" className="flex-1"><Calendar className="h-4 w-4 mr-1" />{t('admin.clientManagement.actions.schedule')}</Button>
-                        {analytics.days_since_last_appointment > 30 && client.whatsapp && (
-                          <Button size="sm" variant="outline" onClick={() => handleSendFollowUp(client)} className="flex-1"><MessageSquare className="h-4 w-4 mr-1" />{t('admin.clientManagement.actions.contact')}</Button>
-                        )}
-                      </div>
-                      {analytics.days_since_last_appointment > 60 && (
-                        <div className={`text-xs p-2 rounded-md ${analytics.days_since_last_appointment > 120 ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-yellow-50 text-yellow-700 border border-yellow-200'}`}>
-                          <AlertCircle className="h-3 w-3 inline mr-1" />
-                          {analytics.days_since_last_appointment > 120 
-                            ? t('admin.clientManagement.risk.lost', { days: String(analytics.days_since_last_appointment) }) 
-                            : t('admin.clientManagement.risk.at_risk', { days: String(analytics.days_since_last_appointment) })}
-                        </div>
+                    </div>
+                    <div className="flex gap-2 pt-3 border-t mt-2">
+                      <Button size="sm" className="flex-1"><Calendar className="h-4 w-4 mr-1" />{t('admin.clientManagement.actions.schedule')}</Button>
+                      {analytics.days_since_last_appointment > 30 && client.whatsapp && (
+                        <Button size="sm" variant="outline" onClick={() => handleSendFollowUp(client)} className="flex-1"><MessageSquare className="h-4 w-4 mr-1" />{t('admin.clientManagement.actions.contact')}</Button>
                       )}
-                    </CardContent>
-                  </Card>
+                    </div>
+                    {analytics.days_since_last_appointment > 60 && (
+                      <div className={`text-xs p-2 rounded-md mt-2 ${analytics.days_since_last_appointment > 120 ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-yellow-50 text-yellow-700 border border-yellow-200'}`}>
+                        <AlertCircle className="h-3 w-3 inline mr-1" />
+                        {analytics.days_since_last_appointment > 120 
+                          ? t('admin.clientManagement.risk.lost', { days: String(analytics.days_since_last_appointment) }) 
+                          : t('admin.clientManagement.risk.at_risk', { days: String(analytics.days_since_last_appointment) })}
+                      </div>
+                    )}
+                  </ClientCard>
                 )
               })}
             </div>

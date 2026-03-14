@@ -3,16 +3,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ClientCard as SharedClientCard } from '@/components/cards/ClientCard'
 import { 
   WhatsappLogo, 
   Users, 
   TrendUp, 
   TrendDown, 
   CalendarX,
-  Phone,
-  EnvelopeSimple,
   CurrencyDollar
 } from '@phosphor-icons/react'
 import { toast } from 'sonner'
@@ -217,7 +215,7 @@ export default function RecurringClientsManagement({ user }: RecurringClientsMan
         <TabsContent value="active" className="space-y-4">
           <div className="grid gap-4">
             {filteredClients.map((analytics) => (
-              <ClientCard 
+              <RecurringClientItem 
                 key={analytics.id} 
                 analytics={analytics} 
                 onSendWhatsApp={sendWhatsAppMessage}
@@ -240,7 +238,7 @@ export default function RecurringClientsManagement({ user }: RecurringClientsMan
         <TabsContent value="at_risk" className="space-y-4">
           <div className="grid gap-4">
             {filteredClients.map((analytics) => (
-              <ClientCard 
+              <RecurringClientItem 
                 key={analytics.id} 
                 analytics={analytics} 
                 onSendWhatsApp={sendWhatsAppMessage}
@@ -264,7 +262,7 @@ export default function RecurringClientsManagement({ user }: RecurringClientsMan
         <TabsContent value="inactive" className="space-y-4">
           <div className="grid gap-4">
             {filteredClients.map((analytics) => (
-              <ClientCard 
+              <RecurringClientItem 
                 key={analytics.id} 
                 analytics={analytics} 
                 onSendWhatsApp={sendWhatsAppMessage}
@@ -291,7 +289,7 @@ export default function RecurringClientsManagement({ user }: RecurringClientsMan
 
 type Lang = 'es' | 'en'
 
-interface ClientCardProps {
+interface RecurringClientItemProps {
   analytics: ClientAnalytics
   onSendWhatsApp: (client: Client, type: 'follow_up' | 'welcome') => Promise<void>
   sendingMessage: string | null
@@ -300,114 +298,84 @@ interface ClientCardProps {
   showFollowUpAction?: boolean
 }
 
-function ClientCard({ 
+function RecurringClientItem({ 
   analytics, 
   onSendWhatsApp, 
   sendingMessage, 
   language, 
   t, 
   showFollowUpAction = false 
-}: Readonly<ClientCardProps>) {
+}: Readonly<RecurringClientItemProps>) {
   const { client } = analytics
-  
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-  }
 
-  const renderClientStatusBadge = (status: string) => {
+  const renderStatusBadge = (status: string) => {
     if (status === 'active') return <Badge variant="default" className="bg-green-500">{t('recurring.active')}</Badge>
     if (status === 'at_risk') return <Badge variant="secondary" className="bg-yellow-500 text-black">En Riesgo</Badge>
     if (status === 'inactive') return <Badge variant="destructive">{t('recurring.inactive')}</Badge>
     return null
   }
 
-  // Reuse top-level getStatusBadge
-
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-4">
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={client.avatar_url} alt={client.name} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {getInitials(client.name)}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="space-y-2">
-              <div>
-                <h3 className="font-semibold text-foreground">{client.name}</h3>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {client.email && (
-                    <div className="flex items-center gap-1">
-                      <EnvelopeSimple size={14} />
-                      {client.email}
-                    </div>
-                  )}
-                  {client.phone && (
-                    <div className="flex items-center gap-1">
-                      <Phone size={14} />
-                      {client.phone}
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">{t('recurring.total_visits')}: </span>
-                  <span className="font-medium">{analytics.totalAppointments}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t('recurring.average_spend')}: </span>
-                  <span className="font-medium">{formatCurrency(analytics.averageSpend, 'EUR', language)}</span>
-                </div>
-                {analytics.lastAppointment && (
-                  <div>
-                    <span className="text-muted-foreground">{t('recurring.last_visit')}: </span>
-                    <span className="font-medium">
-                      {formatDate(analytics.lastAppointment, 'short', language)}
-                    </span>
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {renderClientStatusBadge(analytics.status)}
-                {analytics.daysSinceLastVisit > 30 && analytics.daysSinceLastVisit < Infinity && (
-                  <Badge variant="outline">
-                    {analytics.daysSinceLastVisit} días sin visitar
-                  </Badge>
-                )}
-              </div>
+    <SharedClientCard
+      clientId={client.id}
+      initialData={{
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+        avatar_url: client.avatar_url,
+      }}
+      readOnly
+      renderActions={() => (
+        <div className="flex items-center gap-2">
+          <div className="text-right text-sm">
+            <div className="font-medium flex items-center gap-1">
+              <CurrencyDollar size={14} />
+              {formatCurrency(analytics.totalSpent, 'EUR', language)}
             </div>
+            <div className="text-muted-foreground">Total gastado</div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            <div className="text-right text-sm">
-              <div className="font-medium flex items-center gap-1">
-                <CurrencyDollar size={14} />
-                {formatCurrency(analytics.totalSpent, 'EUR', language)}
-              </div>
-              <div className="text-muted-foreground">Total gastado</div>
-            </div>
-            
-            {(showFollowUpAction || analytics.status === 'at_risk') && client.whatsapp && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onSendWhatsApp(client, 'follow_up')}
-                disabled={sendingMessage === client.id}
-                className="flex items-center gap-2"
-              >
-                <WhatsappLogo size={16} className="text-green-600" />
-                {sendingMessage === client.id ? t('loading.saving') : t('recurring.send_whatsapp')}
-              </Button>
-            )}
-          </div>
+          {(showFollowUpAction || analytics.status === 'at_risk') && client.whatsapp && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onSendWhatsApp(client, 'follow_up')}
+              disabled={sendingMessage === client.id}
+              className="flex items-center gap-2"
+            >
+              <WhatsappLogo size={16} className="text-green-600" />
+              {sendingMessage === client.id ? t('loading.saving') : t('recurring.send_whatsapp')}
+            </Button>
+          )}
         </div>
-      </CardContent>
-    </Card>
+      )}
+    >
+      <div className="flex items-center gap-4 text-sm">
+        <div>
+          <span className="text-muted-foreground">{t('recurring.total_visits')}: </span>
+          <span className="font-medium">{analytics.totalAppointments}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">{t('recurring.average_spend')}: </span>
+          <span className="font-medium">{formatCurrency(analytics.averageSpend, 'EUR', language)}</span>
+        </div>
+        {analytics.lastAppointment && (
+          <div>
+            <span className="text-muted-foreground">{t('recurring.last_visit')}: </span>
+            <span className="font-medium">
+              {formatDate(analytics.lastAppointment, 'short', language)}
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        {renderStatusBadge(analytics.status)}
+        {analytics.daysSinceLastVisit > 30 && analytics.daysSinceLastVisit < Infinity && (
+          <Badge variant="outline">
+            {analytics.daysSinceLastVisit} días sin visitar
+          </Badge>
+        )}
+      </div>
+    </SharedClientCard>
   )
 }

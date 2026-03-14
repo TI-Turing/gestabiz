@@ -1,8 +1,22 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Check, MapPin, Users, DollarSign, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { BusinessResource } from '@/types/types';
+import { supabase } from '@/lib/supabase';
+import { QUERY_CONFIG } from '@/lib/queryConfig';
+
+async function fetchResource(resourceId: string): Promise<BusinessResource> {
+  const { data, error } = await supabase
+    .from('business_resources')
+    .select('*, locations:location_id(id, name)')
+    .eq('id', resourceId)
+    .single();
+  if (error) throw error;
+  const loc = (data as any).locations;
+  return { ...data, location: loc ?? undefined } as unknown as BusinessResource;
+}
 
 const RESOURCE_TYPE_LABELS: Record<string, string> = {
   room: 'Habitación',
@@ -23,22 +37,54 @@ const RESOURCE_TYPE_LABELS: Record<string, string> = {
 };
 
 interface ResourceCardProps {
-  resource: BusinessResource;
+  /** ID del recurso — el card resuelve sus datos internamente */
+  resourceId?: string;
+  /** Datos pre-cargados (backward compat / initialData) */
+  resource?: BusinessResource;
+  initialData?: BusinessResource;
   isSelected?: boolean;
   onSelect?: (resource: BusinessResource) => void;
   isPreselected?: boolean;
   onViewProfile?: (resourceId: string) => void;
   readOnly?: boolean;
+  className?: string;
+  renderActions?: (id: string) => React.ReactNode;
 }
 
 export function ResourceCard({
-  resource,
+  resourceId,
+  resource: resourceProp,
+  initialData,
   isSelected = false,
   onSelect,
   isPreselected = false,
   onViewProfile,
   readOnly = false,
+  className,
+  renderActions,
 }: Readonly<ResourceCardProps>) {
+  const seed = initialData ?? resourceProp;
+  const resolvedId = resourceId ?? seed?.id;
+
+  const { data: resource } = useQuery({
+    queryKey: ['resource-card', resolvedId],
+    queryFn: () => fetchResource(resolvedId!),
+    initialData: seed,
+    enabled: !!resolvedId,
+    ...QUERY_CONFIG.STABLE,
+  });
+
+  if (!resource) {
+    return (
+      <div className={cn('rounded-xl border-2 border-border overflow-hidden animate-pulse', className)}>
+        <div className="aspect-square w-full bg-muted" />
+        <div className="p-3 space-y-2">
+          <div className="h-5 bg-muted rounded w-3/4" />
+          <div className="h-4 bg-muted rounded w-1/2" />
+        </div>
+      </div>
+    );
+  }
   const formattedPrice = resource.price_per_hour
     ? new Intl.NumberFormat('es-CO', {
         style: 'currency',
@@ -61,6 +107,7 @@ export function ResourceCard({
         isSelected ? 'border-primary bg-primary/10' : 'border-border',
         isPreselected && 'ring-2 ring-green-500/50',
         !resource.is_active && 'opacity-60',
+        className,
       )}
     >
       {/* Badge preseleccionado */}
@@ -152,6 +199,9 @@ export function ResourceCard({
             Ver perfil
           </button>
         )}
+
+        {/* Custom actions slot */}
+        {renderActions?.(resource.id)}
       </div>
     </div>
   );
