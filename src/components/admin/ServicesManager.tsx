@@ -199,6 +199,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
         .from('employee_services')
         .select('employee_id')
         .eq('service_id', serviceId)
+        .eq('business_id', businessId)
 
       setSelectedLocations(locationAssignments?.map((a) => a.location_id) || [])
       setSelectedEmployees(employeeAssignments?.map((a) => a.employee_id) || [])
