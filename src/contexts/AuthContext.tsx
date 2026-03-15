@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useAuthSimple } from '@/hooks/useAuthSimple'
 
 // Create Auth Context
@@ -29,19 +29,24 @@ const defaultAuthState = {
 // Auth Context Provider Component
 export function AuthProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const authState = useAuthSimple()
-  return <AuthContext.Provider value={authState}>{children}</AuthContext.Provider>
+  // useMemo evita que todos los consumidores re-rendericen cuando el provider renderiza
+  // pero el estado no ha cambiado (referencia estable)
+  const memoValue = useMemo(() => authState, [authState])
+  return <AuthContext.Provider value={memoValue}>{children}</AuthContext.Provider>
 }
 
 // Hook to use Auth Context - with safe fallback
 export function useAuth() {
   const context = React.useContext(AuthContext)
-  
+
   // Return default auth state if context is not available (instead of throwing)
   // This can happen during initial render before AuthProvider is ready
   if (!context) {
-    console.warn('[useAuth] AuthContext is not available, returning default auth state')
+    if (import.meta.env.DEV) {
+      console.warn('[useAuth] AuthContext is not available, returning default auth state')
+    }
     return defaultAuthState as ReturnType<typeof useAuthSimple>
   }
-  
+
   return context
 }

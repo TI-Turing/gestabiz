@@ -1,16 +1,16 @@
-/* eslint-disable no-console */
 /**
  * NotificationContext - Sistema global de notificaciones
- * 
+ *
  * Este contexto mantiene una suscripción realtime SIEMPRE ACTIVA
  * para recibir notificaciones incluso cuando el chat/componentes están cerrados.
- * 
+ *
  * @author Gestabiz Team
  * @date 2025-10-17
  */
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 import { toast } from 'sonner'
 import { playNotificationFeedback, playActiveChatMessageSound } from '@/lib/notificationSound'
 import type { InAppNotification } from '@/types/types'
@@ -49,14 +49,14 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const [isChatOpen, setChatOpen] = useState(false)
   
-  // Debug: Log cuando el provider se monta (solo en dev)
+  // Log cuando el provider se monta (solo en dev)
   const mountedRef = useRef(false)
   useEffect(() => {
-    if (!mountedRef.current && import.meta.env.DEV) {
-      console.log('[NotificationProvider] Mounted with userId:', userId)
+    if (!mountedRef.current) {
+      logger.debug('[NotificationProvider] Mounted with userId:', userId)
       mountedRef.current = true
     }
-  }, [userId]) // Incluir userId para actualizar en cambio de usuario
+  }, [userId])
   
   // Ref para acceder al estado actual en callbacks
   const stateRef = useRef({ activeConversationId, isChatOpen })
@@ -70,12 +70,10 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
 
   // Suscripción realtime GLOBAL (siempre activa)
   useEffect(() => {
-    if (import.meta.env.DEV) {
-      console.log('🔥🔥🔥 [NotificationContext] useEffect EJECUTÁNDOSE. UserId:', userId, 'Type:', typeof userId)
-    }
-    
+    logger.debug('[NotificationContext] useEffect. UserId:', userId)
+
     if (!userId) {
-      if (import.meta.env.DEV) console.log('[NotificationContext] ⚠️ No userId, skipping subscription')
+      logger.debug('[NotificationContext] No userId, skipping subscription')
       hasSubscribedRef.current = false
       lastUserIdRef.current = null
       return
@@ -83,7 +81,7 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
 
     // ⭐ Guard: Solo suscribir una vez por usuario
     if (hasSubscribedRef.current && lastUserIdRef.current === userId) {
-      if (import.meta.env.DEV) console.log('[NotificationContext] ⏭️ Already subscribed for this user, skipping')
+      logger.debug('[NotificationContext] Already subscribed for this user, skipping')
       return
     }
 
@@ -92,10 +90,7 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
     lastUserIdRef.current = userId
 
     const channelName = `global_notifications_${userId}`
-    
-    if (import.meta.env.DEV) {
-      console.log('🔥🔥🔥 [NotificationContext] 📡 INICIANDO suscripción realtime para:', userId)
-    }
+    logger.debug('[NotificationContext] Iniciando suscripción realtime para:', userId)
     
     const channel = supabase
       .channel(channelName)
@@ -112,7 +107,7 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
           const notification = payload.new as InAppNotification
           const { activeConversationId, isChatOpen } = stateRef.current
           
-          if (import.meta.env.DEV) console.log('[NotificationContext] 📨 New notification:', {
+          logger.debug('[NotificationContext] New notification:', {
             type: notification.type,
             title: notification.title,
             activeConversationId,
@@ -126,7 +121,7 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
             isChatOpen &&
             notification.data?.conversation_id === activeConversationId
           ) {
-            if (import.meta.env.DEV) console.log('❌ [SUPPRESSED] Toast will NOT show - chat is open for this conversation')
+            logger.debug('[NotificationContext] Toast suprimido - chat activo para esta conversación')
             playActiveChatMessageSound()
             return // No mostrar toast, solo sonido
           }
@@ -157,7 +152,7 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
             } : undefined
           })
           
-          if (import.meta.env.DEV) console.log('[NotificationContext] ✅ Notification displayed:', notification.title)
+          logger.debug('[NotificationContext] Notificación mostrada:', notification.title)
         }
       )
       // NOTE: Do NOT subscribe to `chat_messages` here using a subselect filter.
@@ -168,12 +163,12 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
       // react to chat_messages globally, subscribe to `chat_participants` or
       // create explicit filters with conversation ids.
       .subscribe((status) => {
-        if (import.meta.env.DEV) console.log('[NotificationContext] 📡 Global channel status:', status)
+        logger.debug('[NotificationContext] Canal global status:', status)
       })
 
     // Cleanup
     return () => {
-      if (import.meta.env.DEV) console.log('[NotificationContext] 🔌 Unsubscribing global channel')
+      logger.debug('[NotificationContext] Desuscribiendo canal global')
       supabase.removeChannel(channel)
       // ⭐ Reset guard al desmontar
       hasSubscribedRef.current = false
@@ -182,9 +177,7 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
   }, [userId])
 
   const setActiveConversation = useCallback((conversationId: string | null) => {
-    if (import.meta.env.DEV) {
-      console.log('[NotificationContext] 💬 Active conversation changed:', conversationId)
-    }
+    logger.debug('[NotificationContext] Active conversation changed:', conversationId)
     setActiveConversationId(conversationId)
   }, [])
 

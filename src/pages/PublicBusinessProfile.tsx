@@ -54,8 +54,8 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
   });
 
   // Build SEO meta tags early to keep hook order stable
-  const pageTitle = business?.meta_title || `${business?.name ?? 'Perfil del Negocio'} - AppointSync Pro`;
-  const pageDescription = business?.meta_description || business?.description || (business ? `Reserva citas en ${business.name}` : 'Explora y reserva servicios.');
+  const pageTitle = business?.meta_title || `${business?.name ?? 'Perfil del Negocio'} - Gestabiz`;
+  const pageDescription = business?.meta_description || business?.description || (business ? `Reserva citas en ${business.name}` : 'Explora y reserva servicios en Gestabiz.');
   const ogImage = business?.og_image_url || business?.banner_url || business?.logo_url;
   const canonicalUrl = `${globalThis.location.origin}/negocio/${business?.slug ?? slug}`;
 
@@ -63,6 +63,8 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
     title: pageTitle,
     description: pageDescription,
     keywords: business?.meta_keywords?.join(', '),
+    ogType: 'business.business',
+    ogUrl: canonicalUrl,
     ogImage: ogImage || undefined,
     ogTitle: pageTitle,
     ogDescription: pageDescription,
@@ -81,39 +83,86 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
     }
   }, [business, analytics]);
 
-  // Handle JSON-LD structured data (always call the hook, guard inside)
+  // Inject JSON-LD structured data for Google rich results
   useEffect(() => {
     if (!business) return;
 
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.textContent = JSON.stringify({
+    const primaryLocation = business.locations[0];
+    const structuredData: Record<string, unknown> = {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
       "name": business.name,
       "description": business.description,
       "image": ogImage,
       "url": canonicalUrl,
-      "telephone": business.phone,
-      "email": business.email,
-      "address": business.locations[0] ? {
-        "@type": "PostalAddress",
-        "streetAddress": business.locations[0].address,
-        "addressLocality": business.locations[0].city,
-        "addressRegion": business.locations[0].state,
-        "postalCode": business.locations[0].postal_code,
-        "addressCountry": business.locations[0].country
-      } : undefined,
-      "aggregateRating": business.reviewCount > 0 ? {
-        "@type": "AggregateRating",
-        "ratingValue": business.rating.toFixed(1),
-        "reviewCount": business.reviewCount
-      } : undefined
-    });
+      ...(business.phone && { "telephone": business.phone }),
+      ...(business.email && { "email": business.email }),
+      ...(business.website && { "sameAs": [business.website] }),
+      ...(primaryLocation && {
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": primaryLocation.address,
+          "addressLocality": primaryLocation.city,
+          "addressRegion": primaryLocation.state,
+          "postalCode": primaryLocation.postal_code,
+          "addressCountry": primaryLocation.country ?? "CO",
+        },
+        ...(primaryLocation.latitude && primaryLocation.longitude && {
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": primaryLocation.latitude,
+            "longitude": primaryLocation.longitude,
+          }
+        }),
+      }),
+      ...(business.reviewCount > 0 && {
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": business.rating.toFixed(1),
+          "bestRating": "5",
+          "worstRating": "1",
+          "reviewCount": business.reviewCount,
+        }
+      }),
+      ...(business.services.length > 0 && {
+        "hasOfferCatalog": {
+          "@type": "OfferCatalog",
+          "name": `Servicios de ${business.name}`,
+          "itemListElement": business.services.slice(0, 10).map(s => ({
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": s.name,
+              ...(s.description && { "description": s.description }),
+            },
+            ...(s.price && { "price": s.price, "priceCurrency": "COP" }),
+          })),
+        }
+      }),
+      "potentialAction": {
+        "@type": "ReserveAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": canonicalUrl,
+          "actionPlatform": ["http://schema.org/DesktopWebPlatform", "http://schema.org/MobileWebPlatform"],
+        },
+        "result": {
+          "@type": "Reservation",
+          "name": `Cita en ${business.name}`,
+        }
+      }
+    };
+
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'business-jsonld';
+    script.textContent = JSON.stringify(structuredData);
+    // Replace if already exists (avoids duplicates on re-render)
+    document.getElementById('business-jsonld')?.remove();
     document.head.appendChild(script);
-    
+
     return () => {
-      script.remove();
+      document.getElementById('business-jsonld')?.remove();
     };
   }, [business, ogImage, canonicalUrl]);
 
@@ -127,20 +176,27 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
     });
 
     if (!user) {
-      // Save intended action and redirect to login
-      const redirect = `/negocio/${slug}`;
+      // Redirect to login; after login AuthScreen will navigate to /app
+      // with booking params so MainApp opens the wizard directly in client view
       const params = new URLSearchParams();
-      params.set('redirect', redirect);
+      params.set('redirect', '/app');
+      if (business?.id) params.set('businessId', business.id);
       if (serviceId) params.set('serviceId', serviceId);
       if (locationId) params.set('locationId', locationId);
       if (employeeId) params.set('employeeId', employeeId);
-      
+
       navigate(`/login?${params.toString()}`);
       return;
     }
 
-    // User is authenticated, navigate to app with preselection
-    navigate(`/app?businessId=${business?.id}&serviceId=${serviceId || ''}&locationId=${locationId || ''}&employeeId=${employeeId || ''}`);
+    // User is authenticated: navigate to /app with preselection params.
+    // MainApp reads these params and ClientDashboard opens the wizard at step 2.
+    const params = new URLSearchParams();
+    if (business?.id) params.set('businessId', business.id);
+    if (serviceId) params.set('serviceId', serviceId);
+    if (locationId) params.set('locationId', locationId);
+    if (employeeId) params.set('employeeId', employeeId);
+    navigate(`/app?${params.toString()}`);
   };
 
   if (isLoading) {
@@ -170,58 +226,6 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
       </div>
     );
   }
-
-  // Build SEO meta tags
-  // const pageTitle = business.meta_title || `${business.name} - AppointSync Pro`;
-  // const pageDescription = business.meta_description || business.description || `Reserva citas en ${business.name}`;
-  // const ogImage = business.og_image_url || business.banner_url || business.logo_url;
-  // const canonicalUrl = `${globalThis.location.origin}/negocio/${business.slug}`;
-
-  // // Use the custom meta tag hook
-  // usePageMeta({
-  //   title: pageTitle,
-  //   description: pageDescription,
-  //   keywords: business.meta_keywords?.join(', '),
-  //   ogImage: ogImage || undefined,
-  //   ogTitle: pageTitle,
-  //   ogDescription: pageDescription,
-  //   canonical: canonicalUrl,
-  // });
-  // Meta tags managed earlier to keep hook calls stable
-
-  // Handle JSON-LD structured data
-  // useEffect(() => {
-  //   const script = document.createElement('script');
-  //   script.type = 'application/ld+json';
-  //   script.textContent = JSON.stringify({
-  //     "@context": "https://schema.org",
-  //     "@type": "LocalBusiness",
-  //     "name": business.name,
-  //     "description": business.description,
-  //     "image": ogImage,
-  //     "url": canonicalUrl,
-  //     "telephone": business.phone,
-  //     "email": business.email,
-  //     "address": business.locations[0] ? {
-  //       "@type": "PostalAddress",
-  //       "streetAddress": business.locations[0].address,
-  //       "addressLocality": business.locations[0].city,
-  //       "addressRegion": business.locations[0].state,
-  //       "postalCode": business.locations[0].postal_code,
-  //       "addressCountry": business.locations[0].country
-  //     } : undefined,
-  //     "aggregateRating": business.reviewCount > 0 ? {
-  //       "@type": "AggregateRating",
-  //       "ratingValue": business.rating.toFixed(1),
-  //       "reviewCount": business.reviewCount
-  //     } : undefined
-  //   });
-  //   document.head.appendChild(script);
-  //   
-  //   return () => {
-  //     if (script.parentNode) script.parentNode.removeChild(script);
-  //   };
-  // }, [business, ogImage, canonicalUrl]);
 
   return (
     <>
@@ -348,7 +352,7 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
                       target="_blank"
                       onClick={() => analytics.trackContactClick({
                         businessId: business.id,
-                        contactType: 'email', // Use 'email' as closest match for website
+                        contactType: 'maps',
                       })}
  
                       rel="noopener noreferrer"

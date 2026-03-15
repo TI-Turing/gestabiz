@@ -449,9 +449,9 @@ export function useAuth() {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }))
 
-      // DEV MODE: Si la contraseña está vacía, usa la contraseña de prueba
-      const password = import.meta.env.DEV && !data.password 
-        ? 'TestPassword123!' 
+      // DEV: Si la contraseña está vacía usa la de prueba desde env var (conveniente para testing)
+      const password = import.meta.env.DEV && !data.password
+        ? (import.meta.env.VITE_DEV_TEST_PASSWORD ?? '')
         : data.password
 
       const { data: authData, error } = await supabase.auth.signInWithPassword({
@@ -543,15 +543,15 @@ export function useAuth() {
     }
   }, [convertToUser])
 
-  // Sign in with Google
-  const signInWithGoogle = useCallback(async () => {
+  // Sign in with Google — redirectTo allows passing booking context via URL params
+  const signInWithGoogle = useCallback(async (redirectTo?: string) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }))
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${globalThis.location.origin}/app`
+          redirectTo: redirectTo ?? `${globalThis.location.origin}/app`
         }
       })
 
@@ -662,8 +662,8 @@ export function useAuth() {
     }
   }, [])
 
-  // TODO: REMOVE MAGIC LINK BEFORE PRODUCTION - This is ONLY for development testing
-  // Sign in with Magic Link (OTP via email) - DEV ONLY
+  // Sign in with Magic Link (OTP via email)
+  // La UI en AuthScreen.tsx solo se muestra en DEV; esta función es usable en producción
   const signInWithMagicLink = useCallback(async (email: string) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }))
@@ -756,7 +756,7 @@ export function useAuth() {
     signInWithGoogle,
     signOut,
     resetPassword,
-    signInWithMagicLink, // TODO: REMOVE BEFORE PRODUCTION
+    signInWithMagicLink,
     updateProfile
   }
 }

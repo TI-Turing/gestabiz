@@ -2,8 +2,27 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { User, Appointment, UserSettings, DashboardStats, UpcomingAppointment, isValidLanguage, isValidUserRole } from '@/types'
 import supabase from '@/lib/supabase'
 import { toast } from 'sonner'
-import { getRolePermissions } from '@/lib/permissions'
 import { withCache } from '@/lib/cache'
+import type { Permission, UserRole } from '@/types'
+import type { PostgrestError } from '@supabase/supabase-js'
+
+// Tabla de permisos por rol (sistema legacy usado solo en este hook)
+// Para permisos granulares de negocio ver src/lib/permissions-v2.ts
+const LEGACY_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  admin: [
+    'read_appointments', 'write_appointments', 'delete_appointments',
+    'read_clients', 'write_clients', 'delete_clients',
+    'read_employees', 'write_employees', 'delete_employees',
+    'read_business', 'write_business', 'delete_business',
+    'read_reports', 'write_reports',
+    'read_locations', 'write_locations', 'delete_locations',
+    'read_services', 'write_services', 'delete_services',
+    'manage_settings', 'send_notifications',
+  ],
+  employee: ['read_appointments', 'write_appointments', 'read_clients', 'write_clients', 'read_business', 'read_services', 'send_notifications'],
+  client: ['read_appointments'],
+  owner: ['read_appointments', 'write_appointments', 'delete_appointments', 'read_clients', 'write_clients', 'delete_clients', 'read_employees', 'write_employees', 'delete_employees', 'read_business', 'write_business', 'delete_business', 'read_reports', 'write_reports', 'read_locations', 'write_locations', 'delete_locations', 'read_services', 'write_services', 'delete_services', 'manage_settings', 'send_notifications'],
+}
 
 // Internal helpers
 type AnyRecord = Record<string, unknown>
@@ -124,7 +143,7 @@ const buildDomainUser = (
     }],
     activeRole: role,
     notification_preferences,
-    permissions: getRolePermissions(role),
+    permissions: LEGACY_ROLE_PERMISSIONS[role] ?? [],
   created_at: asString(profileRow?.created_at, new Date().toISOString()),
     updated_at: (profileRow?.updated_at as string) || undefined,
     is_active: (profileRow?.is_active as boolean) ?? true,
@@ -345,11 +364,12 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
         .single()
       if (error) {
         // Log detallado para diagnosticar 400 Bad Request
+        const pgError = error as PostgrestError
         console.error('❌ [APPOINTMENTS INSERT] Error:', {
-          message: error.message,
-          details: (error as any).details,
-          hint: (error as any).hint,
-          code: (error as any).code,
+          message: pgError.message,
+          details: pgError.details,
+          hint: pgError.hint,
+          code: pgError.code,
           payload: insert
         })
         throw new Error(error.message)

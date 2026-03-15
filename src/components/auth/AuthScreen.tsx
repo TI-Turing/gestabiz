@@ -22,7 +22,7 @@ interface AuthScreenProps {
 }
 
 export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScreenProps>) {
-  const { signIn, signUp, signInWithGoogle, signInWithMagicLink } = useAuth() // TODO: REMOVE signInWithMagicLink BEFORE PRODUCTION
+  const { signIn, signUp, signInWithGoogle, signInWithMagicLink } = useAuth()
   const { t } = useLanguage()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -38,8 +38,8 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
   const [showInactiveModal, setShowInactiveModal] = useState(false)
   const [inactiveEmail, setInactiveEmail] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
-  // TODO: REMOVE magicLinkEmail state BEFORE PRODUCTION
-  const [magicLinkEmail, setMagicLinkEmail] = useState('') // DEV ONLY
+  // Estado para el formulario de magic link (UI solo visible en DEV)
+  const [magicLinkEmail, setMagicLinkEmail] = useState('')
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -48,25 +48,27 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
 
   // Extract redirect params from URL
   const redirectUrl = searchParams.get('redirect')
+  const businessId = searchParams.get('businessId')
   const serviceId = searchParams.get('serviceId')
   const locationId = searchParams.get('locationId')
   const employeeId = searchParams.get('employeeId')
 
   // Show toast if user was redirected from booking attempt
   useEffect(() => {
-    if (redirectUrl && (serviceId || locationId || employeeId)) {
+    if (redirectUrl && (businessId || serviceId || locationId || employeeId)) {
       toast.info(t('auth.continueBooking'), {
         duration: 5000
       })
     }
   }, [redirectUrl, serviceId, locationId, employeeId, t])
 
-  // DEV MODE: Auto-fill password when email is entered
+  // DEV: Auto-fill contraseña de prueba desde variable de entorno
   useEffect(() => {
     if (import.meta.env.DEV && formData.email && !formData.password) {
-      // Auto-fill password after a short delay
+      const devPassword = import.meta.env.VITE_DEV_TEST_PASSWORD
+      if (!devPassword) return
       const timer = setTimeout(() => {
-        setFormData(prev => ({ ...prev, password: 'TestPassword123!' }))
+        setFormData(prev => ({ ...prev, password: devPassword }))
       }, 300)
       return () => clearTimeout(timer)
     }
@@ -130,13 +132,14 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
     } else if (redirectUrl) {
       // Build query params for preselection if available
       const params = new URLSearchParams()
+      if (businessId) params.set('businessId', businessId)
       if (serviceId) params.set('serviceId', serviceId)
       if (locationId) params.set('locationId', locationId)
       if (employeeId) params.set('employeeId', employeeId)
-      
+
       const queryString = params.toString()
       const targetUrl = queryString ? `${redirectUrl}?${queryString}` : redirectUrl
-      
+
       // Small delay to ensure session is fully established
       setTimeout(() => {
         navigate(targetUrl, { replace: true })
@@ -219,10 +222,11 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
             onLoginSuccess()
           } else if (redirectUrl) {
             const params = new URLSearchParams()
+            if (businessId) params.set('businessId', businessId)
             if (serviceId) params.set('serviceId', serviceId)
             if (locationId) params.set('locationId', locationId)
             if (employeeId) params.set('employeeId', employeeId)
-            
+
             const queryString = params.toString()
             const targetUrl = queryString ? `${redirectUrl}?${queryString}` : redirectUrl
             navigate(targetUrl, { replace: true })
@@ -248,9 +252,23 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
   const handleGoogleSignIn = async () => {
     setIsGoogleAuth(true)
     try {
-      const result = await signInWithGoogle()
+      // Build the post-OAuth redirect URL preserving booking context if present.
+      // After Google authenticates, Supabase redirects to this URL and MainApp
+      // reads the params to open the booking wizard.
+      let oauthRedirect = `${window.location.origin}/app`
+      if (redirectUrl === '/app') {
+        const bookingParams = new URLSearchParams()
+        const bId = searchParams.get('businessId')
+        if (bId) bookingParams.set('businessId', bId)
+        if (serviceId) bookingParams.set('serviceId', serviceId)
+        if (locationId) bookingParams.set('locationId', locationId)
+        if (employeeId) bookingParams.set('employeeId', employeeId)
+        const qs = bookingParams.toString()
+        if (qs) oauthRedirect += `?${qs}`
+      }
+
+      const result = await signInWithGoogle(oauthRedirect)
       if (result?.success) {
-        // Track Google auth (could be login or signup)
         analytics.trackLogin('google')
       }
     } finally {
@@ -258,7 +276,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
     }
   }
 
-  // TODO: REMOVE handleMagicLink BEFORE PRODUCTION - DEV ONLY for testing in DevTools browser
+  // Magic link handler — UI visible solo en DEV (ver JSX debajo)
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!magicLinkEmail) {
@@ -533,7 +551,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
             </Button>
             </form>
 
-            {/* TODO: REMOVE Magic Link section BEFORE PRODUCTION - DEV ONLY */}
+            {/* Sección Magic Link — solo visible en DEV */}
             {import.meta.env.DEV && (
               <>
                 {/* Magic Link Divider */}

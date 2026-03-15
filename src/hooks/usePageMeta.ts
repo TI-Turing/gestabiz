@@ -4,6 +4,8 @@ interface PageMetaProps {
   title?: string
   description?: string
   keywords?: string
+  ogType?: string
+  ogUrl?: string
   ogImage?: string
   ogTitle?: string
   ogDescription?: string
@@ -18,6 +20,8 @@ export function usePageMeta({
   title,
   description,
   keywords,
+  ogType = 'website',
+  ogUrl,
   ogImage,
   ogTitle,
   ogDescription,
@@ -28,41 +32,45 @@ export function usePageMeta({
   canonical,
 }: PageMetaProps) {
   useEffect(() => {
-    // Set title
+    // Title
     if (title) {
       document.title = title
       setMetaTag('og:title', ogTitle || title)
       setMetaTag('twitter:title', twitterTitle || title)
     }
 
-    // Set description
+    // Description
     if (description) {
       setMetaTag('description', description)
       setMetaTag('og:description', ogDescription || description)
       setMetaTag('twitter:description', twitterDescription || description)
     }
 
-    // Set keywords
+    // Keywords
     if (keywords) {
       setMetaTag('keywords', keywords)
     }
 
-    // Set OG image
+    // OG type (website | article | local.business…)
+    setMetaTag('og:type', ogType)
+
+    // OG URL (canonical for social)
+    if (ogUrl) {
+      setMetaTag('og:url', ogUrl)
+    }
+
+    // OG image
     if (ogImage) {
       setMetaTag('og:image', ogImage)
     }
 
-    // Set Twitter image
-    if (twitterImage) {
-      setMetaTag('twitter:image', twitterImage)
-    } else if (ogImage) {
-      setMetaTag('twitter:image', ogImage)
-    }
+    // Twitter image (falls back to OG image)
+    setMetaTag('twitter:image', twitterImage || ogImage || '')
 
-    // Set Twitter card
+    // Twitter card
     setMetaTag('twitter:card', twitterCard)
 
-    // Set canonical
+    // Canonical link tag
     if (canonical) {
       let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null
       if (!canonicalLink) {
@@ -72,22 +80,27 @@ export function usePageMeta({
       }
       canonicalLink.href = canonical
     }
-  }, [title, description, keywords, ogImage, ogTitle, ogDescription, twitterCard, twitterTitle, twitterDescription, twitterImage, canonical])
+  }, [title, description, keywords, ogType, ogUrl, ogImage, ogTitle, ogDescription, twitterCard, twitterTitle, twitterDescription, twitterImage, canonical])
 }
 
-function setMetaTag(name: string, content: string) {
-  let tag = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null
-  if (!tag) {
-    tag = document.querySelector(`meta[property="${name}"]`) as HTMLMetaElement | null
-  }
+function setMetaTag(nameOrProperty: string, content: string) {
+  if (!content) return
+
+  // og:* uses property="", twitter:* uses name="", everything else uses name=""
+  const isOgProperty = nameOrProperty.startsWith('og:') || nameOrProperty.startsWith('fb:')
+
+  const selector = isOgProperty
+    ? `meta[property="${nameOrProperty}"]`
+    : `meta[name="${nameOrProperty}"]`
+
+  let tag = document.querySelector(selector) as HTMLMetaElement | null
 
   if (!tag) {
     tag = document.createElement('meta')
-    const isProperty = name.startsWith('og:') || name.startsWith('twitter:')
-    if (isProperty) {
-      tag.setAttribute('property', name)
+    if (isOgProperty) {
+      tag.setAttribute('property', nameOrProperty)
     } else {
-      tag.setAttribute('name', name)
+      tag.setAttribute('name', nameOrProperty)
     }
     document.head.appendChild(tag)
   }

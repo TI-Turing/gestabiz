@@ -605,7 +605,7 @@ export function DateTimeSelection({
           <p className="text-foreground font-semibold">
             {service.name}{' '}
             {(() => {
-              const d = service?.duration ?? (service as any)?.duration_minutes;
+              const d = service?.duration ?? service?.duration_minutes;
               return typeof d === 'number' && d > 0 ? (
                 <span className="text-muted-foreground font-normal">({d} min)</span>
               ) : null;
