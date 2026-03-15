@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import React, { useState, useEffect, useMemo, useRef, useLayoutEffect, useCallback } from 'react';
-import { Calendar, Clock, ChevronLeft, ChevronRight, User, X, Check, AlertCircle, Eye, EyeOff, DollarSign } from 'lucide-react';
+import { Calendar, Clock, ChevronLeft, ChevronRight, User, X, Check, AlertCircle, Eye, EyeOff, DollarSign, Mail } from 'lucide-react';
 import { Money } from '@phosphor-icons/react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +11,8 @@ import { es } from 'date-fns/locale';
 import { usePreferredLocation } from '@/hooks/usePreferredLocation';
 import { useTaxCalculation } from '@/hooks/useTaxCalculation';
 import type { TaxType } from '@/types/accounting.types';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 const DEFAULT_TIME_ZONE = 'America/Bogota';
 const COLOMBIA_UTC_OFFSET = -5; // GMT-5
@@ -263,20 +265,27 @@ const AppointmentModal = React.memo<AppointmentModalProps>(({
   const isPendingConfirmation = appointment.status === 'pending';
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-card border border-border rounded-lg shadow-lg max-w-lg w-full my-auto max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <h3 className="text-lg font-semibold text-foreground">Detalles de la Cita</h3>
-          <button
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto animate-in fade-in duration-200">
+      <div className="bg-card/95 backdrop-blur-md border border-border/50 rounded-xl shadow-2xl max-w-lg w-full my-auto max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-4 duration-300">
+        <div className="flex items-center justify-between p-6 border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Calendar className="h-5 w-5 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">Detalles de la Cita</h3>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 rounded-full"
           >
-            <X className="h-5 w-5" />
-          </button>
+            <X className="h-4 w-4" />
+          </Button>
         </div>
 
-        <div className="p-4 space-y-4">
-          <div className="space-y-2">
+        <div className="p-6 space-y-5">
+          <div className="space-y-3">
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm font-medium text-foreground">Cliente:</span>
@@ -355,8 +364,9 @@ const AppointmentModal = React.memo<AppointmentModalProps>(({
           </div>
 
           {!isCompleted && !isCancelled && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
+            <div className="space-y-2 p-4 rounded-lg border border-border/50 bg-muted/30">
+              <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Money size={16} weight="duotone" className="text-primary" />
                 Propina (opcional)
               </label>
               <div className="relative">
@@ -365,7 +375,7 @@ const AppointmentModal = React.memo<AppointmentModalProps>(({
                   type="number"
                   value={tip}
                   onChange={(e) => setTip(Math.max(0, parseFloat(e.target.value) || 0))}
-                  className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-md text-foreground"
+                  className="w-full pl-9 pr-4 py-2.5 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   placeholder="0"
                   min="0"
                   step="1000"
@@ -374,91 +384,90 @@ const AppointmentModal = React.memo<AppointmentModalProps>(({
             </div>
           )}
 
-          {isCompleted && (
-            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-md">
-              <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
-                <Check className="h-4 w-4" />
-                Cita completada
-              </p>
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {isCompleted && (
+              <Badge variant="outline" className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+                <Check className="h-3 w-3 mr-1.5" />
+                Completada
+              </Badge>
+            )}
 
-          {isCancelled && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md">
-              <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
-                <X className="h-4 w-4" />
-                Cita cancelada
-              </p>
-            </div>
-          )}
+            {isCancelled && (
+              <Badge variant="outline" className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20">
+                <X className="h-3 w-3 mr-1.5" />
+                Cancelada
+              </Badge>
+            )}
 
-          {isPendingConfirmation && (
-            <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-md">
-              <p className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
-                <Clock className="h-4 w-4" />
+            {isPendingConfirmation && (
+              <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20">
+                <Clock className="h-3 w-3 mr-1.5" />
                 Pendiente de confirmación
-              </p>
-            </div>
-          )}
+              </Badge>
+            )}
 
-          {isPendingConfirmation && appointment.confirmed && (
-            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-md">
-              <p className="text-sm text-green-600 dark:text-green-400 flex items-center gap-2">
-                <Check className="h-4 w-4" />
+            {isPendingConfirmation && appointment.confirmed && (
+              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20">
+                <Check className="h-3 w-3 mr-1.5" />
                 Cliente confirmó
-              </p>
-            </div>
-          )}
+              </Badge>
+            )}
+          </div>
         </div>
 
         {!isCompleted && !isCancelled && (
-          <div className="p-4 border-t border-border space-y-3">
+          <div className="p-6 border-t border-border/50 space-y-3 bg-muted/20">
             {isPendingConfirmation && (
               <div className="flex gap-2">
-                <button
+                <Button
                   onClick={handleConfirm}
                   disabled={isProcessing}
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1"
+                  size="default"
                 >
-                  <Check className="h-4 w-4 inline mr-2" />
+                  <Check className="h-4 w-4 mr-2" />
                   Confirmar Cita
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={handleResendConfirmation}
                   disabled={isProcessing}
-                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  variant="outline"
+                  size="default"
                 >
-                  <Clock className="h-4 w-4 inline mr-2" />
+                  <Mail className="h-4 w-4 mr-2" />
                   Reenviar Email
-                </button>
+                </Button>
               </div>
             )}
-            
-            <div className="flex gap-3">
-              <button
+
+            <div className="flex gap-2">
+              <Button
                 onClick={handleComplete}
                 disabled={isProcessing}
-                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="outline"
+                className="flex-1 border-green-500/20 bg-green-500/10 text-green-700 hover:bg-green-500/20 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
               >
-                <Check className="h-4 w-4 inline mr-2" />
-                Marcar Completada
-              </button>
-              <button
+                <Check className="h-4 w-4 mr-2" />
+                Completar
+              </Button>
+              <Button
                 onClick={handleNoShow}
                 disabled={isProcessing}
-                className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="outline"
+                className="flex-1 border-amber-500/20 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300"
               >
-                <AlertCircle className="h-4 w-4 inline mr-2" />
-                Sin Asistencia
-              </button>
-              <button
+                <AlertCircle className="h-4 w-4 mr-2" />
+                No Show
+              </Button>
+              <Button
                 onClick={handleCancel}
                 disabled={isProcessing}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="outline"
+                className="border-red-500/20 bg-red-500/10 text-red-700 hover:bg-red-500/20 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
               >
-                <X className="h-4 w-4 inline mr-2" />
+                <X className="h-4 w-4 mr-2" />
                 Cancelar
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -816,20 +825,24 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           return acc;
         }, {} as Record<string, { full_name: string; avatar_url: string | null }>);
 
-        // Get employee services - FILTERED BY LOCATION if selected
+        // Get employee services - FILTERED BY BUSINESS_ID AND LOCATION if selected
         let employeeServicesQuery = supabase
           .from('employee_services')
-          .select('employee_id, service_id, services(name)');
+          .select('employee_id, service_id, services(name)')
+          .eq('business_id', resolvedBusinessId); // ✅ FIX: Filtrar por negocio actual
 
         if (employeeIds.length > 0) {
           employeeServicesQuery = employeeServicesQuery.in('employee_id', employeeIds);
-          
+
           // Add location filter if a location is selected
           const selectedLocationId = filterLocation.length > 0 ? filterLocation[0] : null;
           if (selectedLocationId) {
             employeeServicesQuery = employeeServicesQuery.eq('location_id', selectedLocationId);
             if (DEBUG_MODE) {
-              console.log('🔍 [AppointmentsCalendar] Filtrando employee_services por location:', selectedLocationId);
+              console.log('🔍 [AppointmentsCalendar] Filtrando employee_services por business + location:', {
+                business: resolvedBusinessId,
+                location: selectedLocationId
+              });
             }
           }
         }
@@ -910,6 +923,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           const { data: empServData, error: empServError } = await supabase
             .from('employee_services')
             .select('service_id, services(id, name)')
+            .eq('business_id', resolvedBusinessId) // ✅ FIX: Filtrar por negocio actual
             .in('employee_id', employeeIds)
             .eq('location_id', selectedLocationId);
 

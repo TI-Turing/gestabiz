@@ -67,4 +67,5 @@ supabase/.branches/
 .env.production
 .env.development
 
-
+# Claude
+.claude/
