@@ -20,6 +20,7 @@ import { AbsencesTab } from './AbsencesTab'
 import { ResourcesManager } from './ResourcesManager'
 import { ExpensesManagementPage } from './expenses/ExpensesManagementPage'
 import CompleteUnifiedSettings from '@/components/settings/CompleteUnifiedSettings'
+import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary'
 import { usePendingNavigation } from '@/hooks/usePendingNavigation'
 import type { Business, UserRole, User, EmployeeHierarchy } from '@/types/types'
 import logoTiTuring from '@/assets/images/tt/1.png'
@@ -216,81 +217,79 @@ export function AdminDashboard({
   ], [t, showResourcesTab])
 
   const renderContent = () => {
+    const wrap = (node: React.ReactNode, errorMsg?: string) => (
+      <SectionErrorBoundary resetKey={activePage} errorMessage={errorMsg}>
+        {node}
+      </SectionErrorBoundary>
+    )
+
     switch (activePage) {
       case 'overview':
-        return <OverviewTab business={business} />
+        return wrap(<OverviewTab business={business} />)
       case 'appointments':
-        return <AppointmentsCalendar businessId={business.id} />
+        return wrap(<AppointmentsCalendar businessId={business.id} />)
       case 'absences':
-        return <AbsencesTab businessId={business.id} />
+        return wrap(<AbsencesTab businessId={business.id} />)
       case 'locations':
-        return <LocationsManager businessId={business.id} />
+        return wrap(<LocationsManager businessId={business.id} />)
       case 'services':
-        return <ServicesManager businessId={business.id} />
+        return wrap(<ServicesManager businessId={business.id} />)
       case 'resources':
-        return <ResourcesManager business={business} />
+        return wrap(<ResourcesManager business={business} />)
       case 'employees':
-        return (
+        return wrap(
           <>
-            <EmployeeManagementHierarchy 
+            <EmployeeManagementHierarchy
               businessId={business.id}
               onEmployeeSelect={(employee: EmployeeHierarchy) => {
                 setSelectedEmployee(employee)
-                // Future: Abrir modal de detalle del empleado
               }}
             />
-            {selectedEmployee && (
-              // Future: Modal de detalle del empleado
-              <></>
-            )}
-          </>
+            {selectedEmployee && <></>}
+          </>,
         )
       case 'recruitment':
-        return (
-          <RecruitmentDashboard 
-            businessId={business.id} 
+        return wrap(
+          <RecruitmentDashboard
+            businessId={business.id}
             highlightedVacancyId={pageContext.vacancyId as string | undefined}
             onChatStarted={setChatConversationId}
-          />
+          />,
         )
       case 'quick-sales':
-        return <QuickSalesPage businessId={business.id} />
+        return wrap(<QuickSalesPage businessId={business.id} />)
       case 'expenses':
-        return <ExpensesManagementPage businessId={business.id} />
-      // case 'accounting':
-      //   return <AccountingPage businessId={business.id} onUpdate={onUpdate} />
+        return wrap(<ExpensesManagementPage businessId={business.id} />)
       case 'reports':
-        return <ReportsPage businessId={business.id} user={user} />
+        return wrap(<ReportsPage businessId={business.id} user={user} />)
       case 'billing':
-        return <BillingDashboard businessId={business.id} />
+        return wrap(<BillingDashboard businessId={business.id} />)
       case 'permissions':
-        return (
-          <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
-            <PermissionsManager 
+        return wrap(
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
+            <PermissionsManager
               businessId={business.id}
               ownerId={business.owner_id}
               currentUserId={user.id}
             />
-          </Suspense>
+          </Suspense>,
         )
       case 'settings':
       case 'profile':
-        return (
+        return wrap(
           <div className="p-4">
-            <CompleteUnifiedSettings 
-              user={user} 
-              onUserUpdate={() => {
-                onUpdate?.()
-              }}
+            <CompleteUnifiedSettings
+              user={user}
+              onUserUpdate={() => { onUpdate?.() }}
               currentRole="admin"
               businessId={business.id}
               business={business}
               initialTab={activePage === 'profile' ? 'profile' : undefined}
             />
-          </div>
+          </div>,
         )
       default:
-        return <OverviewTab business={business} />
+        return wrap(<OverviewTab business={business} />)
     }
   }
 

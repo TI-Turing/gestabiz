@@ -1,47 +1,38 @@
-# Robots.txt for AppointSync Pro
-# Generado: 2025-10-17
+# robots.txt — Gestabiz
+# Actualizado: Marzo 2026
 
 User-agent: *
 
-# Permitir crawling de páginas públicas
+# Permitir páginas públicas
 Allow: /
-Allow: /negocio/*
-
-# Bloquear rutas privadas y autenticadas
-Disallow: /app/*
-Disallow: /admin/*
-Disallow: /login
-Disallow: /signup
-Disallow: /reset-password
-
-# Bloquear assets y archivos técnicos
-Disallow: /assets/*
-Disallow: /*.json$
-Disallow: /*.xml$ 
-
-# Permitir explícitamente el sitemap
+Allow: /negocio/
 Allow: /sitemap.xml
 
-# Sitemap location
-Sitemap: https://appointsync.pro/sitemap.xml
+# Bloquear rutas privadas
+Disallow: /app/
+Disallow: /login
+Disallow: /register
+Disallow: /reset-password
 
-# Crawl delay (opcional - 1 segundo entre requests)
+# Sitemap
+Sitemap: https://gestabiz.com/sitemap.xml
+
+# Crawl delay sugerido (1 segundo entre requests)
 Crawl-delay: 1
 
-# User-agents específicos
+# Reglas específicas para Google
 User-agent: Googlebot
 Allow: /
-Allow: /negocio/*
-Disallow: /app/*
-Disallow: /admin/*
+Allow: /negocio/
+Disallow: /app/
 
+# Reglas específicas para Bing
 User-agent: Bingbot
 Allow: /
-Allow: /negocio/*
-Disallow: /app/*
-Disallow: /admin/*
+Allow: /negocio/
+Disallow: /app/
 
-# Bloquear bots maliciosos
+# Bloquear scrapers agresivos
 User-agent: AhrefsBot
 Disallow: /
 
@@ -49,4 +40,7 @@ User-agent: SemrushBot
 Disallow: /
 
 User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
 Disallow: /

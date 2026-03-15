@@ -4,8 +4,8 @@ export * from './utils'
 // Supabase client and utilities
 export * from './supabase'
 
-// Permissions system
-export * from './permissions'
+// Error types centralizados
+export * from './errors'
 
 // Demo data utilities
 export * from './demoData'

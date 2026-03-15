@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PermissionGate } from '@/components/ui/PermissionGate'
 import { AppointmentWizard } from '@/components/appointments/AppointmentWizard'
+import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary'
 import { AppointmentCard, type AppointmentCardData } from '@/components/cards/AppointmentCard'
 import CompleteUnifiedSettings from '@/components/settings/CompleteUnifiedSettings'
 import { ClientCalendarView } from '@/components/client/ClientCalendarView'
@@ -813,6 +814,7 @@ export function ClientDashboard({
 
       {/* Appointment Wizard Modal */}
       {showAppointmentWizard && user && (
+        <SectionErrorBoundary resetKey={showAppointmentWizard ? 'open' : 'closed'} errorMessage="Error al abrir el formulario de citas">
         <AppointmentWizard
           open={showAppointmentWizard}
           onClose={handleCloseWizard}
@@ -829,6 +831,7 @@ export function ClientDashboard({
             refetchDashboard() // ✅ Recargar dashboard después de crear cita
           }}
         />
+        </SectionErrorBoundary>
       )}
 
       {/* Search Results Modal */}

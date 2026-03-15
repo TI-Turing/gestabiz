@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { ChartDataPoint } from '@/types/accounting.types';
 import { formatCOP } from '@/lib/accounting/colombiaTaxes';
+import { COLOR_INCOME, COLOR_EXPENSE } from '@/constants/chartColors';
 
 interface MonthlyTrendChartProps {
   data: ChartDataPoint[];
@@ -56,12 +57,12 @@ export const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
         >
           <defs>
             <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+              <stop offset="5%" stopColor={COLOR_INCOME} stopOpacity={0.8} />
+              <stop offset="95%" stopColor={COLOR_INCOME} stopOpacity={0} />
             </linearGradient>
             <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+              <stop offset="5%" stopColor={COLOR_EXPENSE} stopOpacity={0.8} />
+              <stop offset="95%" stopColor={COLOR_EXPENSE} stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -81,7 +82,7 @@ export const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
             type="monotone"
             dataKey="income"
             name="Ingresos"
-            stroke="#10b981"
+            stroke={COLOR_INCOME}
             fillOpacity={1}
             fill="url(#colorIncome)"
           />
@@ -89,7 +90,7 @@ export const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
             type="monotone"
             dataKey="expense"
             name="Egresos"
-            stroke="#ef4444"
+            stroke={COLOR_EXPENSE}
             fillOpacity={1}
             fill="url(#colorExpense)"
           />

@@ -144,8 +144,7 @@ class HierarchyService {
       if (newSupervisorId) {
         await supabase
           .from('business_employees')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .update({ setup_completed: true } as any)
+          .update({ setup_completed: true } satisfies Partial<{ setup_completed: boolean }>)
           .eq('employee_id', employeeId)
           .eq('business_id', businessId);
       }

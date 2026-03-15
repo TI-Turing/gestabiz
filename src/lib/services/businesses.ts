@@ -3,6 +3,7 @@ import type { Business } from '@/types'
 import { normalizeBusiness } from '@/lib/normalizers'
 import type { Insert, Row, Update } from '@/lib/supabaseTyped'
 import type { Json } from '@/types/database'
+import { throwIfError } from '@/lib/errors'
 
 export interface BusinessQuery {
   ownerId?: string
@@ -37,7 +38,7 @@ export const businessesService = {
     else if (q.ownerId) query = query.eq('owner_id', q.ownerId)
     if (q.activeOnly !== false) query = query.eq('is_active', true)
     const { data, error } = await query.order('created_at', { ascending: false })
-    if (error) throw error
+    throwIfError(error, 'LIST_BUSINESSES', 'No se pudieron cargar los negocios')
     return ((data as Row<'businesses'>[] | null) || []).map(normalizeBusiness)
   },
 
@@ -47,7 +48,7 @@ export const businessesService = {
       .select('businesses:business_id(*)')
       .eq('employee_id', employeeId)
       .eq('status', 'approved')
-    if (error) throw error
+    throwIfError(error, 'LIST_EMPLOYEE_BUSINESSES', 'No se pudieron cargar los negocios del empleado')
     const rows = (data as unknown as Array<{ businesses: Row<'businesses'> | null }> | null) || []
     const businesses = rows.map(r => r.businesses).filter((b): b is Row<'businesses'> => !!b)
     return businesses.map(normalizeBusiness)
@@ -55,7 +56,7 @@ export const businessesService = {
 
   async get(id: string): Promise<Business | null> {
     const { data, error } = await supabase.from('businesses').select('*').eq('id', id).single()
-    if (error) throw error
+    throwIfError(error, 'GET_BUSINESS', 'No se pudo cargar el negocio')
     return normalizeBusiness(data as Row<'businesses'>)
   },
 
@@ -94,19 +95,19 @@ export const businessesService = {
       is_active: payload.is_active ?? true,
     }
     const { data, error } = await supabase.from('businesses').insert(insertRow).select().single()
-    if (error) throw error
+    throwIfError(error, 'CREATE_BUSINESS', 'No se pudo crear el negocio')
     return normalizeBusiness(data as Row<'businesses'>)
   },
 
   async update(id: string, updates: Partial<Business>): Promise<Business> {
     const dbUpdates = this._buildDbUpdates(updates)
     const { data, error } = await supabase.from('businesses').update(dbUpdates).eq('id', id).select().single()
-    if (error) throw error
+    throwIfError(error, 'UPDATE_BUSINESS', 'No se pudo actualizar el negocio')
     return normalizeBusiness(data as Row<'businesses'>)
   },
 
   async remove(id: string): Promise<void> {
     const { error } = await supabase.from('businesses').delete().eq('id', id)
-    if (error) throw error
+    throwIfError(error, 'DELETE_BUSINESS', 'No se pudo eliminar el negocio')
   }
 }

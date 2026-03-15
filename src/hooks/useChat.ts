@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-console */
- 
 /**
  * useChat Hook - Sistema de Chat en Tiempo Real
  * 
@@ -149,7 +147,10 @@ export function useChat(userId: string | null) {
   // ============================================================================
   
   /**
-   * Fetch all conversations for current user
+   * Fetch all conversations for current user.
+   * Uses RPC get_conversations_with_participants to eliminate N+1 queries:
+   *   Before: 1 base query + N queries per direct conversation + 1 last-senders query
+   *   After:  1 single RPC call with LATERAL JOINs
    */
   const fetchConversations = useCallback(async () => {
     if (!userId) {
@@ -157,110 +158,74 @@ export function useChat(userId: string | null) {
       setLoading(false);
       return;
     }
-    
+
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('[useChat] fetchConversations for userId:', userId);
-      
-      // Fetch conversations with participant info
-      const { data: participantsData, error: participantsError } = await supabase
-        .from('chat_participants')
-        .select(`
-          *,
-          conversation:chat_conversations(*)
-        `)
-        .eq('user_id', userId)
-        .is('left_at', null);
-      
-      console.log('[useChat] participantsData:', participantsData);
-      console.log('[useChat] participantsError:', participantsError);
-      
-      if (participantsError) throw participantsError;
-      
-      if (!participantsData || participantsData.length === 0) {
-        console.log('[useChat] No participants found, setting empty conversations');
+
+      logger.debug('fetchConversations', { component: 'useChat', userId });
+
+      const { data, error: rpcError } = await supabase
+        .rpc('get_conversations_with_participants', { p_user_id: userId });
+
+      if (rpcError) throw rpcError;
+
+      if (!data || data.length === 0) {
         setConversations([]);
         return;
       }
-      
-      // For each direct conversation, fetch the other user
-      const conversationsWithUsers = await Promise.all(
-        participantsData.map(async (participant: { conversation: ChatConversation; unread_count: number; is_pinned: boolean; is_muted: boolean }) => {
-          const conv = participant.conversation;
-          
-          if (conv.type === 'direct') {
-            // Fetch other participant
-            const { data: otherParticipants } = await supabase
-              .from('chat_participants')
-              .select(`
-                user_id,
-                user:profiles(id, full_name, email, avatar_url)
-              `)
-              .eq('conversation_id', conv.id)
-              .neq('user_id', userId)
-              .is('left_at', null)
-              .single();
-            
-            return {
-              ...conv,
-              unread_count: participant.unread_count,
-              is_pinned: participant.is_pinned,
-              is_muted: participant.is_muted,
-              other_user: otherParticipants?.user || undefined,
-            };
-          }
-          
-          return {
-            ...conv,
-            unread_count: participant.unread_count,
-            is_pinned: participant.is_pinned,
-            is_muted: participant.is_muted,
-          };
-        })
-      );
-      const conversationIds = conversationsWithUsers.map(conv => conv.id);
 
-      const lastSenderMap = new Map<string, string>();
-      if (conversationIds.length > 0) {
-        const { data: lastMessagesData, error: lastMessagesError } = await supabase
-          .from('chat_messages')
-          .select('conversation_id, sender_id')
-          .in('conversation_id', conversationIds)
-          .is('deleted_at', null)
-          .order('created_at', { ascending: false });
-
-        if (lastMessagesError) {
-          console.error('[useChat] Error fetching last message senders:', lastMessagesError);
-        } else if (lastMessagesData) {
-          (lastMessagesData as Array<{ conversation_id: string; sender_id: string }>).forEach((message) => {
-            if (!lastSenderMap.has(message.conversation_id)) {
-              lastSenderMap.set(message.conversation_id, message.sender_id);
+      // Map flat RPC rows → ChatConversation objects
+      const conversations: ChatConversation[] = (data as Array<{
+        id: string;
+        type: 'direct' | 'group';
+        title: string | null;
+        created_by: string | null;
+        business_id: string | null;
+        last_message_at: string;
+        last_message_preview: string | null;
+        created_at: string;
+        updated_at: string;
+        is_archived: boolean;
+        metadata: Record<string, unknown>;
+        unread_count: number;
+        is_pinned: boolean;
+        is_muted: boolean;
+        other_user_id: string | null;
+        other_user_full_name: string | null;
+        other_user_email: string | null;
+        other_user_avatar_url: string | null;
+        last_message_sender_id: string | null;
+      }>).map(row => ({
+        id: row.id,
+        type: row.type,
+        title: row.title,
+        created_by: row.created_by,
+        business_id: row.business_id,
+        last_message_at: row.last_message_at,
+        last_message_preview: row.last_message_preview,
+        last_message_sender_id: row.last_message_sender_id,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        is_archived: row.is_archived,
+        metadata: row.metadata ?? {},
+        unread_count: row.unread_count ?? 0,
+        is_pinned: row.is_pinned ?? false,
+        is_muted: row.is_muted ?? false,
+        other_user: row.other_user_id
+          ? {
+              id: row.other_user_id,
+              full_name: row.other_user_full_name,
+              email: row.other_user_email ?? '',
+              avatar_url: row.other_user_avatar_url,
             }
-          });
-        }
-      }
-
-      const conversationsWithLastSender = conversationsWithUsers.map(conv => ({
-        ...conv,
-        last_message_sender_id: lastSenderMap.get(conv.id) ?? conv.last_message_sender_id ?? null,
+          : undefined,
       }));
-      
-      // Sort by last_message_at (most recent first)
-      conversationsWithLastSender.sort((a, b) => {
-        const dateA = new Date(a.last_message_at).getTime();
-        const dateB = new Date(b.last_message_at).getTime();
-        return dateB - dateA;
-      });
-      
-      console.log('[useChat] Final conversationsWithUsers:', conversationsWithLastSender);
-      console.log('[useChat] Setting', conversationsWithLastSender.length, 'conversations');
-      
-      setConversations(conversationsWithLastSender as ChatConversation[]);
+
+      logger.debug('fetchConversations result', { component: 'useChat', count: conversations.length });
+      setConversations(conversations);
     } catch (err) {
       const error = err as Error;
-      console.error('[useChat] Error in fetchConversations:', err);
       logger.error('Failed to fetch chat conversations', error, {
         component: 'useChat',
         operation: 'fetchConversations',

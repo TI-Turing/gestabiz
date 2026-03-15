@@ -139,6 +139,17 @@ class Logger {
   }
 
   /**
+   * Log de debug — SOLO en desarrollo, nunca va a Supabase ni Sentry
+   * Reemplaza console.log para depuración temporal
+   */
+  debug(message: string, ...args: unknown[]): void {
+    if (!CONFIG.IS_PRODUCTION) {
+      // eslint-disable-next-line no-console
+      console.log(`[DEBUG] ${message}`, ...args);
+    }
+  }
+
+  /**
    * Log de info (nivel INFO)
    * Solo va a Supabase
    */

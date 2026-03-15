@@ -1,104 +1,335 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+          http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   <url>
-    <loc>https://appointsync.pro/</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/</loc>
+    <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/al-n-elleza-otal-14-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/compadre-compreme-un-coco</loc>
+    <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/entro-dico-ida-2-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/antojitos-mexicanos</loc>
+    <lastmod>2026-03-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/arber-a-l-aballero-15-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/spa-zen-wellness-s-a-s</loc>
+    <lastmod>2026-03-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/onsultorio-ur-dico-3-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/fitness-y-deportes-premium-bogota-6</loc>
+    <lastmod>2026-03-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/os-arcos-ogota</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/belleza-total-e2e</loc>
+    <lastmod>2026-03-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/st-tica-lamour-7-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/sonrisa-perfecta-e2e</loc>
+    <lastmod>2026-03-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/eluquer-a-stilo-1-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/deportemax-e2e</loc>
+    <lastmod>2026-03-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/l-nica-isioterapia-6-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/workhub-e2e</loc>
+    <lastmod>2026-03-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/arber-a-l-aballero-5-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/spa-zen-relax-test</loc>
+    <lastmod>2025-12-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/al-n-elleza-otal-8-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/salon-belleza-elegante</loc>
+    <lastmod>2025-11-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/imnasio-it-one-9-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/hotel-boutique-plaza</loc>
+    <lastmod>2025-11-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/arber-a-l-aballero-10-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/consultoria-studio-bogota-2</loc>
+    <lastmod>2025-11-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/imnasio-it-one-11-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/12345678</loc>
+    <lastmod>2025-11-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/pa-en-elax-12-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/english-academy-pro-test</loc>
+    <lastmod>2025-11-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/eluquer-a-stilo-4-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/test-qa-salon-pruebas-funcionales</loc>
+    <lastmod>2025-11-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://appointsync.pro/negocio/aller-ec-nico-xpress-13-ucaramanga</loc>
-    <lastmod>2025-10-18</lastmod>
+    <loc>https://gestabiz.com/negocio/fitzone-gym</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/la-mesa-don-carlos</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/yoga-shanti</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/sonrisas-dental-test</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/centro-deportivo-arena</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/servicios-profesionales-express-bogota-7</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/servicios-profesionales-express-medellin-17</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/fitness-y-deportes-vip-medellin-24</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/servicios-profesionales-deluxe-medellin-26</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/salud-y-bienestar-exclusive-medellin-23</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/servicios-profesionales-exclusive-medellin-28</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/mantenimiento-studio-medellin-19</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/belleza-y-estetica-pro-girardot-8</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/educacion-center-medellin-11</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/fitness-y-deportes-vip-medellin-21</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/alimentacion-premium-medellin-10</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/alimentacion-premium-bogota-3</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/educacion-premium-medellin-25</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/alimentacion-premium-bogota-4</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/alimentacion-studio-medellin-27</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/estilismo-maria-gonzalez</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/test-business-direct-sql</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/spa-relax-total</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/bolera-la-45</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/ti-turing</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/mantenimiento-premium-medellin-30</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/alimentacion-express-medellin-18</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/alimentacion-express-medellin-12</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/educacion-deluxe-medellin-29</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/educacion-premium-bogota-5</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/educacion-elite-medellin-15</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/alimentacion-vip-medellin-22</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/fitness-y-deportes-studio-medellin-16</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/salud-y-bienestar-pro-girardot-9</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/educacion-vip-medellin-20</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/mantenimiento-center-medellin-14</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/consultoria-elite-medellin-13</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/consultoria-vip-bogota-1</loc>
+    <lastmod>2025-11-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://gestabiz.com/negocio/los-narcos</loc>
+    <lastmod>2025-11-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

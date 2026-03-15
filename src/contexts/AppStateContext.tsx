@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useReducer, useMemo } from 'react'
+import React, { createContext, useContext, useReducer, useMemo, useCallback } from 'react'
 import { toast } from 'sonner'
 
 interface AppState {
@@ -68,26 +68,42 @@ const AppStateContext = createContext<AppContextType | undefined>(undefined)
 export function AppStateProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [state, dispatch] = useReducer(appReducer, initialState)
 
+  // Funciones que solo dependen de dispatch (estable desde useReducer → nunca se recrean)
+  const setLoading = useCallback((loading: boolean) => dispatch({ type: 'SET_LOADING', payload: loading }), [])
+  const setError = useCallback((error: string | null) => dispatch({ type: 'SET_ERROR', payload: error }), [])
+  const clearError = useCallback(() => dispatch({ type: 'CLEAR_ERROR' }), [])
+  const setLoadingState = useCallback((key: string, loading: boolean) =>
+    dispatch({ type: 'SET_LOADING_STATE', payload: { key, loading } }), [])
+  const clearLoadingState = useCallback((key: string) =>
+    dispatch({ type: 'CLEAR_LOADING_STATE', payload: key }), [])
+  const clearAllLoading = useCallback(() => dispatch({ type: 'CLEAR_ALL_LOADING' }), [])
+  const showErrorToast = useCallback((error: string) => toast.error(error), [])
+  const showSuccessToast = useCallback((message: string) => toast.success(message), [])
+  const showInfoToast = useCallback((message: string) => toast.info(message), [])
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    if (type === 'success') toast.success(message)
+    else if (type === 'error') toast.error(message)
+    else toast.info(message)
+  }, [])
+
+  // isLoadingState depende del state, pero no causa re-render en consumidores que no usen loadingStates
+  const isLoadingState = useCallback((key: string) => state.loadingStates[key] || false, [state.loadingStates])
+
   const contextValue = useMemo(() => ({
     ...state,
-    setLoading: (loading: boolean) => dispatch({ type: 'SET_LOADING', payload: loading }),
-    setError: (error: string | null) => dispatch({ type: 'SET_ERROR', payload: error }),
-    clearError: () => dispatch({ type: 'CLEAR_ERROR' }),
-    setLoadingState: (key: string, loading: boolean) => 
-      dispatch({ type: 'SET_LOADING_STATE', payload: { key, loading } }),
-    clearLoadingState: (key: string) => 
-      dispatch({ type: 'CLEAR_LOADING_STATE', payload: key }),
-    clearAllLoading: () => dispatch({ type: 'CLEAR_ALL_LOADING' }),
-    isLoadingState: (key: string) => state.loadingStates[key] || false,
-    showErrorToast: (error: string) => toast.error(error),
-    showSuccessToast: (message: string) => toast.success(message),
-    showInfoToast: (message: string) => toast.info(message),
-    showToast: (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-      if (type === 'success') toast.success(message)
-      else if (type === 'error') toast.error(message)
-      else toast.info(message)
-    }
-  }), [state])
+    setLoading,
+    setError,
+    clearError,
+    setLoadingState,
+    clearLoadingState,
+    clearAllLoading,
+    isLoadingState,
+    showErrorToast,
+    showSuccessToast,
+    showInfoToast,
+    showToast,
+  }), [state, setLoading, setError, clearError, setLoadingState, clearLoadingState,
+      clearAllLoading, isLoadingState, showErrorToast, showSuccessToast, showInfoToast, showToast])
 
   return (
     <AppStateContext.Provider value={contextValue}>

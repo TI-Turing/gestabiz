@@ -100,8 +100,8 @@ function AppRoutes() {
     <Routes>
       {/* Rutas públicas */}
       <Route path="/" element={<LandingPage onNavigateToAuth={() => navigate('/login')} onNavigateToRegister={() => navigate('/register')} />} />
-      <Route path="/login" element={<AuthScreen onLoginSuccess={() => navigate('/app', { replace: true })} />} />
-      <Route path="/register" element={<AuthScreen onLoginSuccess={() => navigate('/app', { replace: true })} />} />
+      <Route path="/login" element={<AuthScreen />} />
+      <Route path="/register" element={<AuthScreen />} />
       
       {/* Perfil público de negocio - accesible sin autenticación */}
       <Route path="/negocio/:slug" element={<PublicBusinessProfile />} />

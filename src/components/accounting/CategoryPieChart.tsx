@@ -9,6 +9,7 @@ import {
 } from 'recharts';
 import { CategoryDistribution } from '@/types/accounting.types';
 import { formatCOP } from '@/lib/accounting/colombiaTaxes';
+import { COLOR_DEFAULT } from '@/constants/chartColors';
 
 interface CategoryPieChartProps {
   data: CategoryDistribution[];
@@ -82,7 +83,7 @@ export const CategoryPieChart: React.FC<CategoryPieChartProps> = ({
           labelLine={false}
           label={renderCustomizedLabel}
           outerRadius={height * 0.35}
-          fill="#8884d8"
+          fill={COLOR_DEFAULT}
           dataKey="amount"
         >
           {data.map((entry, index) => (

@@ -12,24 +12,12 @@ import {
 } from 'recharts';
 import { EmployeeRevenue } from '@/types/accounting.types';
 import { formatCOP } from '@/lib/accounting/colombiaTaxes';
+import { CHART_COLORS_SERIES } from '@/constants/chartColors';
 
 interface EmployeeRevenueChartProps {
   data: EmployeeRevenue[];
   height?: number;
 }
-
-const COLORS = [
-  '#10b981', // Verde - Ingresos
-  '#3b82f6', // Azul
-  '#06b6d4', // Cyan
-  '#8b5cf6', // Púrpura
-  '#14b8a6', // Turquesa
-  '#6366f1', // Índigo
-  '#f59e0b', // Ámbar
-  '#f97316', // Naranja
-  '#ec4899', // Rosa
-  '#ef4444', // Rojo
-];
 
 export const EmployeeRevenueChart: React.FC<EmployeeRevenueChartProps> = ({
   data,
@@ -93,7 +81,7 @@ export const EmployeeRevenueChart: React.FC<EmployeeRevenueChartProps> = ({
           radius={[8, 8, 0, 0]}
         >
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            <Cell key={`cell-${index}`} fill={CHART_COLORS_SERIES[index % CHART_COLORS_SERIES.length]} />
           ))}
         </Bar>
       </BarChart>
