@@ -1,7 +1,7 @@
 # Auditoría de Seguridad — Gestabiz
-**Fecha**: 16 de Marzo, 2026
+**Fechas**: 16 de Marzo, 2026 (Ronda 1 + Ronda 2)
 **Auditor**: Claude Code (Análisis automatizado + revisión profunda)
-**Scope**: Frontend React/TypeScript, Edge Functions Deno, configuración Vercel, Supabase RLS
+**Scope**: Frontend React/TypeScript, Edge Functions Deno (~44 funciones), configuración Vercel, Supabase RLS
 
 ---
 
@@ -9,6 +9,7 @@
 
 Se identificaron **17 vulnerabilidades** distribuidas en 4 niveles de severidad. Las más críticas involucran ausencia total de autenticación en una Edge Function que modifica citas (IDOR), exposición de credenciales en `vercel.json`, y una función de creación de usuarios de prueba sin restricciones en producción. Se corrigieron **10 vulnerabilidades** en esta sesión.
 
+## Ronda 1 (primera auditoría)
 | Severidad | Total | Corregido | Pendiente |
 |-----------|-------|-----------|-----------|
 | CRÍTICO   | 3     | 2         | 1         |
@@ -16,6 +17,17 @@ Se identificaron **17 vulnerabilidades** distribuidas en 4 niveles de severidad.
 | MEDIO     | 5     | 3         | 2         |
 | BAJO      | 3     | 1         | 2         |
 | **Total** | **17**| **10**    | **7**     |
+
+## Ronda 2 (segunda auditoría — hallazgos adicionales)
+| Severidad | Total | Corregido | Pendiente |
+|-----------|-------|-----------|-----------|
+| CRÍTICO   | 3     | 3         | 0         |
+| ALTO      | 4     | 3         | 1         |
+| MEDIO     | 4     | 1         | 3         |
+| BAJO      | 2     | 1         | 1         |
+| **Total** | **13**| **8**     | **5**     |
+
+**Total acumulado**: 30 vulnerabilidades identificadas, 18 corregidas
 
 ---
 
@@ -274,4 +286,204 @@ throw new Error(`Appointment not found: ${fetchError?.message}`)
 
 ---
 
-*Audit completado: 16 de Marzo 2026 | Gestabiz v0.0.4*
+---
+
+## RONDA 2 — Vulnerabilidades adicionales
+
+### CRÍTICOS
+
+#### VULN-18 — Bypass de autenticación via header `x-user-id` en `request-absence`
+**Severidad**: CRÍTICO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/request-absence/index.ts` (líneas 66-69)
+
+**Código vulnerable**:
+```typescript
+} else if (xUserId) {
+  // Fallback: si x-user-id viene en headers, usarlo
+  userId = xUserId;  // ← CUALQUIERA puede impersonar a otro usuario
+}
+```
+**Impacto**: Cualquier atacante podía enviar `x-user-id: <uuid-victima>` como header y solicitar ausencias a nombre de cualquier empleado sin autenticación real.
+
+**Corrección**: Eliminado el fallback de `x-user-id`. Solo se acepta JWT Bearer token válido como mecanismo de autenticación.
+
+---
+
+#### VULN-19 — `update-hierarchy` no verifica identidad del llamador
+**Severidad**: CRÍTICO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/update-hierarchy/index.ts` (líneas 55-75)
+
+**Código vulnerable**:
+```typescript
+const authHeader = req.headers.get('Authorization')
+if (!authHeader) { return 401 }  // Solo verifica que existe el header
+// Nunca llama a getUser() — cualquier string pasa el check
+const supabase = createClient(url, SERVICE_ROLE_KEY)  // Sin verificar quién llama
+// Directamente actualiza el nivel jerárquico de cualquier empleado
+```
+**Impacto**: Cualquier usuario autenticado (o con cualquier string como Bearer) podía escalar su nivel jerárquico de 0 a 4 (manager), dándose acceso a funcionalidades de gestión.
+
+**Corrección**: Se agregó `getUser(token)`, verificación de que el llamador es owner o admin del negocio, y validación de UUID en todos los inputs.
+
+---
+
+#### VULN-20 — IDOR en `get-client-dashboard-data`
+**Severidad**: CRÍTICO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/get-client-dashboard-data/index.ts` (líneas 42-50)
+
+**Código vulnerable**:
+```typescript
+const { client_id, ... } = await req.json();
+// Nunca verifica que el usuario autenticado == client_id
+const data = await supabase.rpc('get_client_dashboard_data', { p_client_id: client_id })
+```
+**Impacto**: Cualquier usuario autenticado podía ver el dashboard completo de otro usuario: citas, favoritos, reseñas, estadísticas.
+
+**Corrección**: Agregada verificación `user.id !== client_id → 403 Forbidden`.
+
+---
+
+### ALTOS
+
+#### VULN-21 — `cancel-future-appointments-on-transfer` sin autenticación
+**Severidad**: ALTO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/cancel-future-appointments-on-transfer/index.ts`
+
+**Descripción**: Función sin ningún check de autenticación. Cualquiera podía cancelar masivamente citas de cualquier empleado conociendo su ID.
+
+**Corrección**: Agregada verificación JWT + check de owner/admin del negocio + validación de UUIDs.
+
+---
+
+#### VULN-22 — `approve-reject-absence` solo permite owner (no admins)
+**Severidad**: ALTO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/approve-reject-absence/index.ts` (línea 77)
+
+**Descripción**: La verificación de permisos solo aceptaba al `owner_id`, bloqueando a los admins del negocio de aprobar/rechazar ausencias, en violación del modelo de roles documentado.
+
+**Corrección**: Agregado check de `business_roles` para roles `admin` y `manager`.
+
+---
+
+#### VULN-23 — Timing attack en verificación de firma PayU webhook
+**Severidad**: ALTO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/payu-webhook/index.ts` (línea 60)
+
+**Descripción**: La comparación `receivedSign !== expectedSign` es vulnerable a timing attacks. Un atacante puede medir diferencias en tiempo de respuesta para deducir caracteres correctos de la firma MD5.
+
+**Corrección**: Implementada comparación byte-a-byte con XOR acumulado (tiempo constante), eliminando el canal lateral de temporización.
+
+---
+
+#### VULN-24 — Webhook sin deduplicación (procesamiento duplicado)
+**Severidad**: ALTO | **Estado**: ❌ PENDIENTE
+**Archivos**: `stripe-webhook`, `payu-webhook`, `mercadopago-webhook`
+
+**Descripción**: Sin idempotency keys ni deduplicación, el mismo webhook puede procesarse múltiples veces si el gateway reintenta, creando registros duplicados de pagos.
+
+**Recomendación**: Almacenar IDs de webhooks procesados en tabla `webhook_events` con unique constraint.
+
+---
+
+### MEDIOS
+
+#### VULN-25 — Source maps públicos en producción
+**Severidad**: MEDIO | **Estado**: ✅ CORREGIDO
+**Archivo**: `vite.config.ts`
+
+**Código vulnerable**: `sourcemap: true` — expone el código fuente completo en producción.
+
+**Corrección**: `sourcemap: 'hidden'` — genera source maps para Sentry pero no los sirve públicamente.
+
+---
+
+#### VULN-26 — Validación de email ausente antes de envío en `request-absence`
+**Severidad**: MEDIO | **Estado**: ❌ PENDIENTE
+**Archivo**: `supabase/functions/request-absence/index.ts` (líneas 305-322)
+
+**Descripción**: Emails de admins obtenidos de la BD se pasan directamente al servicio de email sin validar formato. Si un perfil tiene un email malformado, puede causar errores o injection en headers SMTP.
+
+**Recomendación**: Agregar validación `email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)` antes de invocar `send-notification`.
+
+---
+
+#### VULN-27 — Mensajes de error internos expuestos al cliente
+**Severidad**: MEDIO | **Estado**: ✅ PARCIALMENTE CORREGIDO
+**Archivo**: `supabase/functions/get-client-dashboard-data/index.ts`, varios
+
+**Código vulnerable**:
+```typescript
+return new Response(JSON.stringify({
+  error: error.message,
+  details: error.toString(),  // ← stack trace / detalles internos al cliente
+}))
+```
+**Corrección**: `get-client-dashboard-data` ya no expone `error.toString()`. `request-absence` sanitiza mensajes en el catch.
+
+---
+
+#### VULN-28 — `manage-subscription` solo acepta owner (no admins)
+**Severidad**: MEDIO | **Estado**: ❌ PENDIENTE
+**Archivo**: `supabase/functions/manage-subscription/index.ts`
+
+**Descripción**: Solo el owner puede gestionar suscripciones; admins delegados no pueden. Igual al problema de `approve-reject-absence`.
+
+**Recomendación**: Agregar check de rol admin similar al fix de VULN-22.
+
+---
+
+### BAJOS
+
+#### VULN-29 — `update-hierarchy` exponía parámetros de request en logs
+**Severidad**: BAJO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/update-hierarchy/index.ts`
+
+**Código vulnerable**:
+```typescript
+console.log('Raw request body:', JSON.stringify(body))  // ← IDs y datos en logs
+console.log('Parsed parameters:', { user_id, business_id, new_level })
+```
+**Corrección**: Logs eliminados o generalizados en la versión corregida.
+
+---
+
+#### VULN-30 — Modo `warn` de PermissionGate accesible en staging
+**Severidad**: BAJO | **Estado**: ❌ PENDIENTE
+**Archivo**: `src/components/ui/PermissionGate.tsx`
+
+**Descripción**: El modo `warn` usa `process.env.NODE_ENV === 'development'`, que puede ser `'development'` en entornos de staging si no se configura correctamente.
+
+**Recomendación**: Agregar `import.meta.env.DEV` como condición adicional: `mode === 'warn' && import.meta.env.DEV`.
+
+---
+
+## Archivos modificados en Ronda 2
+1. `supabase/functions/update-hierarchy/index.ts` — Auth real + autorización + validación UUIDs
+2. `supabase/functions/cancel-future-appointments-on-transfer/index.ts` — Auth + autorización + UUID validation
+3. `supabase/functions/get-client-dashboard-data/index.ts` — Fix IDOR + auth + sanitización inputs
+4. `supabase/functions/approve-reject-absence/index.ts` — Agrega check de admin además de owner
+5. `supabase/functions/request-absence/index.ts` — Elimina bypass `x-user-id` + sanitiza errores
+6. `supabase/functions/payu-webhook/index.ts` — Comparación timing-safe
+7. `vite.config.ts` — sourcemap: 'hidden'
+
+---
+
+## Acciones pendientes acumuladas
+
+1. **Deduplicación de webhooks** — Crear tabla `webhook_events(id, source, event_id, processed_at)` con unique constraint en `(source, event_id)`
+2. **Validación de email** — Agregar regex validation en `request-absence` antes de `send-notification`
+3. **`manage-subscription`** — Agregar check de admin igual que VULN-22
+4. **`PermissionGate` modo warn** — Cambiar a `import.meta.env.DEV`
+5. **Deploy funciones** — Desplegar todas las funciones corregidas en Ronda 2:
+   ```bash
+   npx supabase functions deploy update-hierarchy
+   npx supabase functions deploy cancel-future-appointments-on-transfer
+   npx supabase functions deploy get-client-dashboard-data
+   npx supabase functions deploy approve-reject-absence
+   npx supabase functions deploy request-absence
+   npx supabase functions deploy payu-webhook
+   ```
+
+---
+
+*Ronda 1: 16 de Marzo 2026 | Ronda 2: 16 de Marzo 2026 | Gestabiz v0.0.10*

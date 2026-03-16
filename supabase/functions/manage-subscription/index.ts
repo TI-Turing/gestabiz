@@ -88,8 +88,24 @@ serve(async (req) => {
       return new Response('Business not found', { status: 404 })
     }
 
-    if (business.owner_id !== user.id) {
-      return new Response('Forbidden: You are not the owner of this business', { status: 403 })
+    // Verificar que el usuario es owner O admin del negocio
+    const isOwner = business.owner_id === user.id
+    let isAuthorized = isOwner
+
+    if (!isAuthorized) {
+      const adminSupabase = createClient(supabaseUrl, supabaseServiceKey)
+      const { data: adminRole } = await adminSupabase
+        .from('business_roles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('business_id', businessId)
+        .eq('role', 'admin')
+        .single()
+      isAuthorized = !!adminRole
+    }
+
+    if (!isAuthorized) {
+      return new Response('Forbidden: insufficient permissions for this business', { status: 403 })
     }
 
     // Obtener plan actual
