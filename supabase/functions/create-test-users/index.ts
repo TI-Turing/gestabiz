@@ -1,30 +1,38 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
 
-  console.log('🚀 Create test users function called')
-  
-  // Para testing, permitir llamadas sin autenticación estricta
-  // En producción, aquí validarías el JWT y permisos de admin
+  const corsHeaders = getCorsHeaders(req)
+
+  console.log('[create-test-users] Function called')
 
   try {
+    // ─── AUTENTICACIÓN: requiere clave de administrador ──────────────────────
+    const adminSecret = req.headers.get('x-admin-secret')
+    const expectedSecret = Deno.env.get('CREATE_TEST_USERS_SECRET')
+
+    if (!expectedSecret) {
+      // Si no hay secret configurado, la función está deshabilitada
+      return new Response(
+        JSON.stringify({ error: 'This endpoint is disabled in this environment' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      )
+    }
+
+    if (!adminSecret || adminSecret !== expectedSecret) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: invalid admin secret' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
+    }
+
     // Verificar variables de entorno
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    
-    console.log('📊 Environment check:', {
-      hasUrl: !!supabaseUrl,
-      hasServiceKey: !!serviceRoleKey
-    })
 
     if (!supabaseUrl || !serviceRoleKey) {
       return new Response(
@@ -87,7 +95,7 @@ serve(async (req) => {
         // Crear usuario en auth.users
         const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
           email: userData.email,
-          password: 'TestPassword123!', // Contraseña temporal
+          password: Deno.env.get('TEST_USERS_PASSWORD') ?? 'TestPassword123!', // Contraseña configurable via secret
           email_confirm: true, // Auto-confirmar email
           user_metadata: {
             full_name: userData.name,
@@ -131,25 +139,25 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         created_users: results.length,
         users: results,
-        errors: errors
+        errors: errors.length > 0 ? errors : undefined
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: 200
       }
     )
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[create-test-users] Unexpected error:', error instanceof Error ? error.message : 'unknown')
     return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { 
+      JSON.stringify({ error: 'Internal server error' }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400 
+        status: 500
       }
     )
   }

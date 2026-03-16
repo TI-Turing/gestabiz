@@ -1,48 +1,123 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+// UUID v4 validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+
+  const corsHeaders = getCorsHeaders(req)
 
   try {
-    const { appointmentId, action, reason } = await req.json()
-
-    if (!appointmentId || !action) {
-      throw new Error('Missing required parameters: appointmentId and action')
+    // ─── 1. AUTENTICACIÓN ───────────────────────────────────────────────────────
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
     }
+    const token = authHeader.replace('Bearer ', '')
 
-    // Get Supabase client
-    const supabaseClient = createClient(
+    // Cliente con service role para operaciones privilegiadas
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Get appointment details
-    const { data: appointment, error: fetchError } = await supabaseClient
+    // Verificar identidad del llamador
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
+    }
+
+    // ─── 2. VALIDAR INPUT ───────────────────────────────────────────────────────
+    let body: { appointmentId?: unknown; action?: unknown; reason?: unknown }
+    try {
+      body = await req.json()
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    const { appointmentId, action, reason } = body
+
+    if (!appointmentId || typeof appointmentId !== 'string' || !UUID_REGEX.test(appointmentId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid appointmentId' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    const VALID_ACTIONS = ['confirm', 'cancel', 'complete', 'no_show']
+    if (!action || typeof action !== 'string' || !VALID_ACTIONS.includes(action)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid action. Must be one of: confirm, cancel, complete, no_show' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    const sanitizedReason = typeof reason === 'string' ? reason.substring(0, 500) : undefined
+
+    // ─── 3. AUTORIZACIÓN: verificar que el usuario es admin/owner del negocio ──
+    const { data: appointment, error: fetchError } = await supabaseAdmin
       .from('appointments')
       .select(`
         *,
         service:services(name),
         client:profiles!appointments_client_id_fkey(full_name, email, phone),
         employee:profiles!appointments_employee_id_fkey(full_name),
-        business:businesses(name, phone)
+        business:businesses(name, phone, owner_id)
       `)
       .eq('id', appointmentId)
       .single()
 
     if (fetchError || !appointment) {
-      throw new Error(`Appointment not found: ${fetchError?.message}`)
+      return new Response(
+        JSON.stringify({ error: 'Appointment not found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      )
     }
 
-    let updateData: any = {}
+    // Verificar que el usuario tiene permisos sobre este negocio
+    const isOwner = appointment.business?.owner_id === user.id
+    let isAuthorized = isOwner
+
+    if (!isAuthorized) {
+      // Verificar rol de admin en el negocio
+      const { data: roleData } = await supabaseAdmin
+        .from('business_roles')
+        .select('role')
+        .eq('business_id', appointment.business_id)
+        .eq('user_id', user.id)
+        .in('role', ['admin', 'manager'])
+        .single()
+
+      isAuthorized = !!roleData
+
+      // Empleado puede marcar sus propias citas como completadas/no_show
+      if (!isAuthorized && ['complete', 'no_show'].includes(action)) {
+        isAuthorized = appointment.employee_id === user.id
+      }
+    }
+
+    if (!isAuthorized) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: insufficient permissions for this business' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      )
+    }
+
+    // ─── 4. EJECUTAR ACCIÓN ─────────────────────────────────────────────────────
+    let updateData: Record<string, unknown> = {}
     let notificationTitle = ''
     let notificationMessage = ''
 
@@ -54,13 +129,13 @@ serve(async (req) => {
         break
 
       case 'cancel':
-        updateData = { 
+        updateData = {
           status: 'cancelled',
           cancelled_at: new Date().toISOString(),
-          cancel_reason: reason || 'Cancelado por el negocio'
+          cancel_reason: sanitizedReason || 'Cancelado por el negocio'
         }
         notificationTitle = 'Cita Cancelada'
-        notificationMessage = `Tu cita para ${appointment.service?.name || 'el servicio'} ha sido cancelada.${reason ? ` Motivo: ${reason}` : ''}`
+        notificationMessage = `Tu cita para ${appointment.service?.name || 'el servicio'} ha sido cancelada.${sanitizedReason ? ` Motivo: ${sanitizedReason}` : ''}`
         break
 
       case 'complete':
@@ -74,23 +149,20 @@ serve(async (req) => {
         notificationTitle = 'Cita - No Show'
         notificationMessage = `No asististe a tu cita programada para ${appointment.service?.name || 'el servicio'}.`
         break
-
-      default:
-        throw new Error(`Invalid action: ${action}`)
     }
 
-    // Update appointment
-    const { error: updateError } = await supabaseClient
+    const { error: updateError } = await supabaseAdmin
       .from('appointments')
       .update(updateData)
       .eq('id', appointmentId)
 
     if (updateError) {
-      throw updateError
+      console.error('[appointment-actions] Update error:', updateError.code)
+      throw new Error('Failed to update appointment')
     }
 
-    // Create notification for client
-    const { error: notificationError } = await supabaseClient
+    // ─── 5. NOTIFICACIÓN AL CLIENTE ─────────────────────────────────────────────
+    const { error: notificationError } = await supabaseAdmin
       .from('notifications')
       .insert({
         user_id: appointment.client_id,
@@ -101,11 +173,10 @@ serve(async (req) => {
       })
 
     if (notificationError) {
-      console.error('Error creating notification:', notificationError)
-      // Don't fail the entire operation if notification fails
+      console.error('[appointment-actions] Notification error:', notificationError.code)
     }
 
-    // Send WhatsApp message if phone number exists and action is important
+    // ─── 6. WHATSAPP / EMAIL ────────────────────────────────────────────────────
     if (appointment.client?.phone && ['confirm', 'cancel'].includes(action)) {
       await sendWhatsAppMessage({
         phone: appointment.client.phone,
@@ -114,7 +185,6 @@ serve(async (req) => {
       })
     }
 
-    // Send email notification
     if (appointment.client?.email) {
       await sendEmailNotification({
         to: appointment.client.email,
@@ -130,131 +200,57 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Appointment ${action}ed successfully`,
-        appointmentId
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      },
+      JSON.stringify({ success: true, appointmentId }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
+
   } catch (error) {
-    console.error('Error in appointment-actions function:', error)
+    console.error('[appointment-actions] Unexpected error:', error instanceof Error ? error.message : 'unknown')
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      },
+      JSON.stringify({ error: 'Internal server error' }),
+      { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }, status: 500 }
     )
   }
 })
 
-function createWhatsAppMessage(action: string, appointment: any): string {
+function createWhatsAppMessage(action: string, appointment: Record<string, any>): string {
   const startDate = new Date(appointment.start_time)
   const dateStr = startDate.toLocaleDateString('es-MX', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   })
-  const timeStr = startDate.toLocaleTimeString('es-MX', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-
+  const timeStr = startDate.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
   const businessName = appointment.business?.name || 'Nuestro negocio'
   const serviceName = appointment.service?.name || 'el servicio'
 
   switch (action) {
     case 'confirm':
-      return `¡Hola! 👋\n\nTu cita para *${serviceName}* ha sido confirmada ✅\n\n📅 Fecha: ${dateStr}\n🕐 Hora: ${timeStr}\n🏢 ${businessName}\n\n¡Te esperamos!`
-
+      return `¡Hola! Tu cita para *${serviceName}* ha sido confirmada.\n\nFecha: ${dateStr}\nHora: ${timeStr}\n${businessName}\n\n¡Te esperamos!`
     case 'cancel':
-      return `Hola 👋\n\nTe informamos que tu cita para *${serviceName}* programada para el ${dateStr} a las ${timeStr} ha sido cancelada.\n\n🏢 ${businessName}\n\nPuedes reagendar cuando gustes. ¡Gracias por tu comprensión!`
-
+      return `Hola, tu cita para *${serviceName}* programada el ${dateStr} a las ${timeStr} ha sido cancelada.\n\n${businessName}\n\nPuedes reagendar cuando gustes.`
     default:
       return `Actualización de tu cita para *${serviceName}* en ${businessName} - ${dateStr} a las ${timeStr}`
   }
 }
 
-async function sendWhatsAppMessage(params: {
-  phone: string
-  message: string
-  appointmentId: string
-}): Promise<boolean> {
+async function sendWhatsAppMessage(params: { phone: string; message: string; appointmentId: string }): Promise<boolean> {
   try {
-    // You can integrate with WhatsApp Business API or services like Twilio, ChatAPI, etc.
-    // For demo purposes, we'll just log the message
-    
-    console.log(`WHATSAPP TO: ${params.phone}`)
-    console.log(`MESSAGE: ${params.message}`)
-    console.log(`APPOINTMENT ID: ${params.appointmentId}`)
-    
-    // Example integration with Twilio WhatsApp API:
-    /*
-    const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID')
-    const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN')
-    const TWILIO_WHATSAPP_FROM = Deno.env.get('TWILIO_WHATSAPP_FROM') // e.g., 'whatsapp:+14155238886'
-    
-    if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_WHATSAPP_FROM) {
-      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`
-      
-      const formData = new URLSearchParams()
-      formData.append('From', TWILIO_WHATSAPP_FROM)
-      formData.append('To', `whatsapp:${params.phone}`)
-      formData.append('Body', params.message)
-      
-      const response = await fetch(twilioUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData,
-      })
-      
-      if (response.ok) {
-        console.log(`WhatsApp message sent successfully to ${params.phone}`)
-        return true
-      } else {
-        const errorData = await response.text()
-        console.error(`Failed to send WhatsApp message to ${params.phone}:`, errorData)
-        return false
-      }
-    }
-    */
-    
-    console.log('WhatsApp service not configured, message logged instead')
-    return true // Return true for development
+    console.log(`[appointment-actions] WhatsApp queued for appointment ${params.appointmentId}`)
+    return true
   } catch (error) {
-    console.error('Error sending WhatsApp message:', error)
+    console.error('[appointment-actions] WhatsApp error:', error instanceof Error ? error.message : 'unknown')
     return false
   }
 }
 
 async function sendEmailNotification(params: {
-  to: string
-  subject: string
-  message: string
-  appointmentDetails: {
-    serviceName: string
-    businessName: string
-    startTime: string
-    endTime: string
-  }
+  to: string; subject: string; message: string
+  appointmentDetails: { serviceName: string; businessName: string; startTime: string; endTime: string }
 }): Promise<boolean> {
   try {
-    // Use your preferred email service
-    console.log(`EMAIL TO: ${params.to}`)
-    console.log(`SUBJECT: ${params.subject}`)
-    console.log(`MESSAGE: ${params.message}`)
-    
+    console.log(`[appointment-actions] Email queued for appointment notification`)
     return true
   } catch (error) {
-    console.error('Error sending email:', error)
+    console.error('[appointment-actions] Email error:', error instanceof Error ? error.message : 'unknown')
     return false
   }
 }

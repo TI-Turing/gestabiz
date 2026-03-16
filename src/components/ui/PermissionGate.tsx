@@ -89,9 +89,21 @@ export function PermissionGate({
 }: PermissionGateProps) {
   const { checkPermission, isOwner, isLoading } = usePermissions(businessId);
   
-  // Mientras cargan los permisos, mostrar children para evitar flash de "Sin permisos"
+  // Mientras cargan los permisos, usar estado seguro según el modo
   if (isLoading) {
-    return <>{children}</>;
+    // 'disable' es seguro: muestra el contenido bloqueado sin interacción
+    if (mode === 'disable') {
+      return (
+        <div className="relative">
+          <div className="pointer-events-none opacity-50">
+            {children}
+          </div>
+          <div className="absolute inset-0 bg-background/30 backdrop-blur-sm" />
+        </div>
+      );
+    }
+    // 'hide' y 'block': no revelar contenido hasta confirmar permisos
+    return null;
   }
   
   // Verificar permiso
