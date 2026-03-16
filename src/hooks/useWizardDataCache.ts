@@ -3,8 +3,8 @@ import supabase from '@/lib/supabase';
 import type { Location, Service } from '@/types/types';
 
 interface WizardDataCache {
-  locations: Location[];
-  services: Service[];
+  locations: Location[] | null;
+  services: Service[] | null;
   loading: boolean;
   error: string | null;
 }
@@ -15,8 +15,8 @@ interface WizardDataCache {
  */
 export function useWizardDataCache(businessId: string | null) {
   const [cache, setCache] = useState<WizardDataCache>({
-    locations: [],
-    services: [],
+    locations: null,
+    services: null,
     loading: false,
     error: null,
   });
@@ -24,8 +24,8 @@ export function useWizardDataCache(businessId: string | null) {
   useEffect(() => {
     if (!businessId) {
       setCache({
-        locations: [],
-        services: [],
+        locations: null,
+        services: null,
         loading: false,
         error: null,
       });
@@ -94,8 +94,8 @@ export function useWizardDataCache(businessId: string | null) {
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Error al cargar datos';
         setCache({
-          locations: [],
-          services: [],
+          locations: null,
+          services: null,
           loading: false,
           error: message,
         });
