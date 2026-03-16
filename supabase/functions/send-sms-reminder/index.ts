@@ -3,16 +3,20 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Valida formato E.164: + seguido de código de país y número (7-15 dígitos totales)
+const E164_REGEX = /^\+[1-9]\d{6,14}$/
+
+function validatePhone(phone: string): boolean {
+  const cleaned = phone.replace(/[\s\-(). ]/g, '')
+  return E164_REGEX.test(cleaned) && cleaned.length <= 16
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+  const corsHeaders = getCorsHeaders(req)
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
@@ -63,9 +67,20 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: false, error: 'SMS disabled by business settings' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
     }
 
-    const phoneRaw = appointment.client?.phone ?? ''
-    const phoneDigits = String(phoneRaw).replace(/\D/g, '')
-    if (!phoneDigits) throw new Error('Client phone not available')
+    const phoneRaw = String(appointment.client?.phone ?? '').trim()
+    if (!phoneRaw) throw new Error('Client phone not available')
+
+    // Validar formato E.164 antes de enviar a Twilio
+    if (!validatePhone(phoneRaw)) {
+      await supabase
+        .from('notifications')
+        .update({ status: 'failed', error_message: 'Invalid phone number format (E.164 required)' })
+        .eq('id', notificationId)
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid phone number format' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
 
     const start = new Date(appointment.start_time)
     const timeStr = start.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
@@ -85,7 +100,7 @@ serve(async (req) => {
       throw new Error('SMS provider not configured')
     }
 
-    const to = `+${phoneDigits}`
+    const to = phoneRaw.startsWith('+') ? phoneRaw : `+${phoneRaw.replace(/\D/g, '')}`
     const from = TWILIO_SMS_NUMBER
 
     // Twilio API call
@@ -123,6 +138,7 @@ serve(async (req) => {
       }
     } catch (_) {}
 
-    return new Response(JSON.stringify({ success: false, error: String(error) }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 })
+    console.error('Error sending SMS reminder:', error)
+    return new Response(JSON.stringify({ success: false, error: 'Internal server error' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 })
   }
 })
