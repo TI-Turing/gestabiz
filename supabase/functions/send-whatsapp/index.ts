@@ -1,9 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Valida formato E.164: + seguido de 7-15 dígitos
+const E164_REGEX = /^\+[1-9]\d{6,14}$/
+
+function validatePhone(phone: string): boolean {
+  const cleaned = phone.replace(/[\s\-().]/g, '')
+  return E164_REGEX.test(cleaned) && cleaned.length <= 16
 }
 
 interface WhatsAppRequest {
@@ -13,13 +17,36 @@ interface WhatsAppRequest {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+
+  const corsHeaders = getCorsHeaders(req)
 
   try {
     const { to, message, appointmentData }: WhatsAppRequest = await req.json()
+
+    // ─── VALIDAR NÚMERO DE TELÉFONO ────────────────────────────────────────────
+    if (!to || typeof to !== 'string') {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Phone number is required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    if (!validatePhone(to)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid phone number format (E.164 required, e.g. +573001234567)' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    // Limitar longitud del mensaje
+    if (message && message.length > 4096) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Message too long (max 4096 characters)' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
 
     // Supabase client para resolver ciudad/ubicación
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
@@ -36,8 +63,8 @@ serve(async (req) => {
       throw new Error('WhatsApp API not configured')
     }
 
-    // Clean phone number (remove any non-digits except +)
-    const cleanedPhone = to.replace(/[^\d+]/g, '')
+    // Normalizar número (ya validado en E.164)
+    const cleanedPhone = to.replace(/[\s\-().]/g, '')
     
     // Build WhatsApp message
     let whatsappMessage = message

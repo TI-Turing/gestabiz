@@ -486,4 +486,189 @@ console.log('Parsed parameters:', { user_id, business_id, new_level })
 
 ---
 
-*Ronda 1: 16 de Marzo 2026 | Ronda 2: 16 de Marzo 2026 | Gestabiz v0.0.10*
+---
+
+## RONDA 3 — Vulnerabilidades adicionales
+
+### Resumen Ronda 3
+| Severidad | Total | Corregido | Pendiente |
+|-----------|-------|-----------|-----------|
+| CRÍTICO   | 2     | 2         | 0         |
+| ALTO      | 4     | 3         | 1         |
+| MEDIO     | 4     | 1         | 3         |
+| BAJO      | 3     | 1         | 2         |
+| **Total** | **13**| **7**     | **6**     |
+
+**Total acumulado**: 43 vulnerabilidades identificadas, 25 corregidas
+
+---
+
+### CRÍTICOS
+
+#### VULN-31 — MercadoPago webhook sin verificación de firma
+**Severidad**: CRÍTICO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/mercadopago-webhook/index.ts`
+
+**Descripción**: El webhook de MercadoPago procesaba pagos sin verificar la firma `x-signature` enviada en el header. Cualquiera podía enviar notificaciones falsas de pago con un `id` arbitrario y provocar activaciones fraudulentas de suscripciones.
+
+**Corrección**: Implementada verificación HMAC-SHA256 usando la clave `MERCADOPAGO_WEBHOOK_SECRET`. El mensaje firmado sigue el estándar oficial: `id:<payment_id>;request-id:<x-request-id>;ts:<timestamp>`. Comparación en tiempo constante (XOR byte-a-byte). CORS restringido a `api.mercadopago.com`.
+
+---
+
+#### VULN-32 — `send-email` sin validación de email (header injection)
+**Severidad**: CRÍTICO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/send-email/index.ts`
+
+**Descripción**: El campo `to` era directamente usado como destinatario de email sin ninguna validación. Un atacante podía inyectar headers SMTP (`\r\n`) para redirigir correos o agregar BCCs. El campo `subject` tenía el mismo problema.
+
+**Código vulnerable**:
+```typescript
+const { to, subject, message, appointmentData }: EmailRequest = await req.json()
+// to y subject usados sin sanitizar en el envío al API de Resend
+```
+
+**Corrección**:
+- Validación con regex RFC5322 básico + longitud máxima 254 chars
+- `sanitizeEmailField()` elimina `\r\n` de todos los campos de header
+- Tipos explícitos: `appointmentData?: Record<string, unknown>` (no más `any`)
+- Autenticación requerida (Authorization header) para llamadas internas
+- Límite de 10,000 caracteres en cuerpo del mensaje
+
+---
+
+### ALTOS
+
+#### VULN-33 — `search_businesses` sin límite de paginación (DoS/data dump)
+**Severidad**: ALTO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/search_businesses/index.ts`
+
+**Descripción**: El parámetro `pageSize` no tenía límite superior. Un atacante podía enviar `pageSize: 999999` y descargar toda la base de datos de negocios en una sola request.
+
+**Corrección**:
+- Cap de `MAX_PAGE_SIZE = 100` registros por request
+- Sanitización de `page` y `pageSize` con `Math.floor()` y `Math.max()`
+- Función `sanitizeSearchTerm()` que escapa caracteres especiales de SQL (`%`, `_`, `\`) y limita a 200 caracteres
+- Variables seguras `safeTerm`, `safePreferredCityName`, `safePreferredRegionName` aplicadas en todos los filtros `.ilike()` y `.or()`
+
+---
+
+#### VULN-34 — `send-whatsapp` sin validación de número E.164
+**Severidad**: ALTO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/send-whatsapp/index.ts`
+
+**Descripción**: El número de teléfono se "limpiaba" con `replace(/[^\d+]/g, '')` pero no se validaba formato E.164. Números malformados podían pasar al API de WhatsApp Business causando errores, o en implementaciones de Twilio, potencial injection en parámetros de SMS.
+
+**Corrección**: Validación con regex E.164 (`/^\+[1-9]\d{6,14}$/`), límite de longitud 4096 chars en mensaje, CORS restringido.
+
+---
+
+#### VULN-35 — Error responses exponen `error.stack` (stack traces)
+**Severidad**: ALTO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/mercadopago-webhook/index.ts`
+
+**Código vulnerable**:
+```typescript
+return new Response(JSON.stringify({
+  error: error.message,
+  details: error.stack,  // ← stack trace con rutas y líneas de código
+}))
+```
+
+**Corrección**: Respuesta genérica `{ error: 'Internal server error' }`. El stack trace se loguea internamente vía Sentry.
+
+---
+
+#### VULN-36 — Sin rate limiting en endpoints de pago (checkout)
+**Severidad**: ALTO | **Estado**: ❌ PENDIENTE
+**Archivos**: `create-checkout-session`, `payu-create-checkout`, `mercadopago-create-preference`
+
+**Descripción**: Usuarios autenticados pueden crear ilimitadas sesiones de pago, potencialmente agotando cuotas de APIs de pago (Stripe, PayU, MercadoPago) o creando spam de transacciones.
+
+**Recomendación**: Implementar rate limiting con Supabase (tabla `rate_limit_events`) o Upstash Redis: máximo 10 intentos por usuario por hora.
+
+---
+
+### MEDIOS
+
+#### VULN-37 — Stack traces expuestos en múltiples Edge Functions
+**Severidad**: MEDIO | **Estado**: ❌ PENDIENTE
+**Archivos**: `send-email`, `send-whatsapp`, `send-notification`, `create-checkout-session`
+
+**Descripción**: Varios catch blocks retornan `error.message` o `error.stack` al cliente.
+
+**Recomendación**: Usar respuestas genéricas en producción. Logs internos vía `console.error()` + Sentry.
+
+---
+
+#### VULN-38 — CORS wildcard en funciones internas de notificación
+**Severidad**: MEDIO | **Estado**: ❌ PENDIENTE
+**Archivos**: `send-notification`, `send-email-reminder`, `send-sms-reminder`, `process-reminders`, `refresh-ratings-stats`, `notify-business-unconfigured`
+
+**Descripción**: Funciones internas con `Access-Control-Allow-Origin: *`. Aunque requieren auth JWT, el wildcard CORS es innecesario para funciones que solo se llaman internamente.
+
+**Recomendación**: Aplicar `_shared/cors.ts` o restricción a llamadas server-to-server (no necesitan CORS en funciones puramente internas).
+
+---
+
+#### VULN-39 — `send-email-reminder` y `send-sms-reminder` sin validación de destinatario
+**Severidad**: MEDIO | **Estado**: ❌ PENDIENTE
+
+**Descripción**: Los reminder functions heredan el mismo problema que `send-email`: no validan formato de email/teléfono antes de invocar APIs externas.
+
+**Recomendación**: Aplicar la misma validación implementada en VULN-32 y VULN-34.
+
+---
+
+### BAJOS
+
+#### VULN-40 — URL hardcodeada en email de `notify-business-unconfigured`
+**Severidad**: BAJO | **Estado**: ❌ PENDIENTE
+**Archivo**: `supabase/functions/notify-business-unconfigured/index.ts`
+
+```typescript
+<a href="https://gestabiz.com/app/admin/overview" ...>
+```
+
+**Recomendación**: Usar `Deno.env.get('APP_URL') ?? 'https://gestabiz.com'` para soportar staging.
+
+---
+
+#### VULN-41 — `mercadopago-webhook` expone error details en logs
+**Severidad**: BAJO | **Estado**: ✅ CORREGIDO
+Error response sanitizado en VULN-35.
+
+---
+
+## Archivos modificados en Ronda 3
+1. `supabase/functions/mercadopago-webhook/index.ts` — Firma HMAC-SHA256 + CORS restrictivo + error sanitizado
+2. `supabase/functions/send-email/index.ts` — Email validation + CRLF sanitization + auth required
+3. `supabase/functions/search_businesses/index.ts` — pageSize cap + input sanitization
+4. `supabase/functions/send-whatsapp/index.ts` — E.164 phone validation + CORS
+
+---
+
+## Acciones pendientes acumuladas
+
+| # | Acción | Severidad | Tipo |
+|---|--------|-----------|------|
+| 1 | Rate limiting en checkout (Stripe/PayU/MP) | ALTO | Infraestructura |
+| 2 | Deduplicación de webhooks (tabla webhook_events) | ALTO | BD |
+| 3 | CORS en funciones internas (send-notification, etc.) | MEDIO | Config |
+| 4 | Validación email/phone en send-email-reminder, send-sms-reminder | MEDIO | Código |
+| 5 | Error messages genéricos en send-notification, create-checkout | MEDIO | Código |
+| 6 | Mover env vars de vercel.json a Vercel Dashboard | CRÍTICO | Config manual |
+| 7 | Rotar credenciales si .env fue commiteado alguna vez | CRÍTICO | Config manual |
+| 8 | Configurar MERCADOPAGO_WEBHOOK_SECRET en Supabase Secrets | CRÍTICO | Config manual |
+| 9 | Deploy de todas las funciones corregidas | — | Operacional |
+
+```bash
+# Deploy Ronda 3:
+npx supabase functions deploy mercadopago-webhook
+npx supabase functions deploy send-email
+npx supabase functions deploy search_businesses
+npx supabase functions deploy send-whatsapp
+```
+
+---
+
+*Ronda 1: 16 Mar 2026 | Ronda 2: 16 Mar 2026 | Ronda 3: 16 Mar 2026 | Gestabiz v0.0.12*

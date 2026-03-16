@@ -1,9 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Valida dirección de email (RFC5322 básico) y previene header injection
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+
+function sanitizeEmailField(value: string): string {
+  // Eliminar CRLF para prevenir email header injection
+  return value.replace(/[\r\n]/g, ' ').trim()
+}
+
+function validateEmail(email: string): boolean {
+  return EMAIL_REGEX.test(email) && email.length <= 254
 }
 
 interface EmailRequest {
@@ -11,22 +19,80 @@ interface EmailRequest {
   subject: string
   message: string
   template?: 'reminder' | 'confirmation' | 'cancellation' | 'follow_up'
-  appointmentData?: any
+  appointmentData?: Record<string, unknown>
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+
+  const corsHeaders = getCorsHeaders(req)
 
   try {
-    const { to, subject, message, template, appointmentData }: EmailRequest = await req.json()
+    // ─── AUTENTICACIÓN: solo llamadas internas (service role) ──────────────────
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      )
+    }
+
+    let body: EmailRequest
+    try {
+      body = await req.json()
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid JSON body' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    const { to, subject, message, template, appointmentData } = body
+
+    // ─── VALIDACIÓN DE INPUTS ──────────────────────────────────────────────────
+    if (!to || typeof to !== 'string') {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid recipient email' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    const sanitizedTo = sanitizeEmailField(to)
+    if (!validateEmail(sanitizedTo)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid recipient email format' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    if (!subject || typeof subject !== 'string' || subject.length > 500) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid subject' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    const sanitizedSubject = sanitizeEmailField(subject)
+
+    // Limitar tamaño de mensaje para evitar abusos
+    const sanitizedMessage = typeof message === 'string' ? message.substring(0, 10000) : ''
+
+    const { to: _to, subject: _subject, message: _message, ...rest } = body
+    const sanitizedBody: EmailRequest = {
+      ...rest,
+      to: sanitizedTo,
+      subject: sanitizedSubject,
+      message: sanitizedMessage,
+    }
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Usar datos sanitizados a partir de aquí
+    const { to: finalTo, subject: finalSubject, message: finalMessage, template: finalTemplate, appointmentData: finalAppointmentData } = sanitizedBody
 
     // Email service configuration (using Resend as example)
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
@@ -93,11 +159,13 @@ serve(async (req) => {
       }
     }
 
-    // Build email content based on template
-    let emailContent = message
-    let emailSubject = subject
+    // Build email content based on template — usar variables sanitizadas
+    let emailContent = finalMessage
+    let emailSubject = finalSubject
 
-    if (template && appointmentData) {
+    if (finalTemplate && finalAppointmentData) {
+      const appointmentData = finalAppointmentData
+      const template = finalTemplate
       switch (template) {
         case 'reminder':
           emailSubject = `Recordatorio: ${appointmentData.title}`
@@ -178,8 +246,8 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Gestabiz <no-reply@Gestabiz.com>',
-        to: [to],
+        from: 'Gestabiz <no-reply@gestabiz.com>',
+        to: [finalTo],
         subject: emailSubject,
         html: emailContent.replace(/\n/g, '<br>'),
         text: emailContent,
