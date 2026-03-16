@@ -466,7 +466,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
               {import.meta.env.DEV && !formData.password && (
                 <p className="text-xs text-yellow-500 flex items-center gap-1">
                   <Warning size={12} />
-                  Modo DEV: Contraseña opcional (usa TestPassword123!)
+                  Modo DEV: Contraseña opcional
                 </p>
               )}
             </div>
