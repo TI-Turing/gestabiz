@@ -5,6 +5,10 @@
   "installCommand": "npm install --ignore-scripts",
   "rewrites": [
     {
+      "source": "/negocio/:slug",
+      "destination": "/api/negocio/:slug"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -33,13 +37,6 @@
       "source": "/robots.txt",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400" }
-      ]
-    },
-    {
-      "source": "/negocio/(.*)",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "index, follow" },
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]
     },
     {
