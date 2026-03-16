@@ -38,6 +38,8 @@ export default defineConfig({
     }
   },
   build: {
-    sourcemap: true, // Generar source maps para Sentry
+    // 'hidden': genera source maps para Sentry pero NO los expone públicamente
+    // Evita que atacantes puedan ver el código fuente de producción
+    sourcemap: 'hidden',
   },
 });

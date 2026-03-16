@@ -115,8 +115,8 @@ export function PermissionGate({
     return <>{children}</>;
   }
   
-  // Modo warn - Solo en desarrollo, muestra alert pero permite acceso
-  if ((showWarning || mode === 'warn') && process.env.NODE_ENV === 'development') {
+  // Modo warn - Solo en desarrollo local, muestra alert pero permite acceso
+  if ((showWarning || mode === 'warn') && import.meta.env.DEV) {
     return (
       <>
         <Alert variant="destructive" className="mb-4">

@@ -14,10 +14,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts';
+
+// corsHeaders se obtiene dinámicamente por request — ver uso abajo
 
 interface AbsenceRequest {
   businessId: string;
@@ -29,49 +28,37 @@ interface AbsenceRequest {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+
+  const corsHeaders = getCorsHeaders(req)
 
   try {
-    // Obtener todos los headers disponibles
+    // ─── AUTENTICACIÓN: solo JWT válido, sin fallbacks de headers ───────────────
     const authHeader = req.headers.get('Authorization') || '';
-    const xClientInfo = req.headers.get('x-client-info') || '';
-    const xUserId = req.headers.get('x-user-id') || '';
-    
-    console.log('[request-absence] Headers:', {
-      authLength: authHeader.length,
-      xUserIdPresent: !!xUserId,
-      xClientInfoPresent: !!xClientInfo,
-    });
+    if (!authHeader.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'No autenticado' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Crear cliente Supabase con service role key para operaciones del servidor
     const token = authHeader.replace('Bearer ', '');
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    // Intentar obtener el usuario autenticado con token explícito
-    let userId: string | undefined;
-    let user: any = null;
-
-    // Primero, intentar getUser() con token explícito
     const { data: { user: authUser }, error: authError } = await supabaseClient.auth.getUser(token);
-    
-    if (authUser?.id) {
-      userId = authUser.id;
-      user = authUser;
-      console.log('[request-absence] User from getUser:', { userId });
-    } else if (xUserId) {
-      // Fallback: si x-user-id viene en headers, usarlo
-      userId = xUserId;
-      console.log('[request-absence] User from x-user-id header:', { userId });
+
+    if (!authUser?.id || authError) {
+      return new Response(
+        JSON.stringify({ error: 'No autenticado' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    if (!userId) {
-      throw new Error(`No autenticado - authError: ${authError?.message}`);
-    }
+    const userId = authUser.id;
 
     const requestData: AbsenceRequest = await req.json();
     const { businessId, absenceType, startDate, endDate, reason, employeeNotes } = requestData;
@@ -356,18 +343,30 @@ serve(async (req) => {
     );
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Error in request-absence:', errorMessage);
-    
-    // ⚠️ IMPORTANTE: Retornar 200 incluso para errores
-    // Si retornamos 400, el cliente de Supabase no parsea el body
+    console.error('[request-absence] Error:', errorMessage);
+
+    // Algunos errores son de negocio y pueden mostrarse al usuario (sin detalles internos)
+    const isSafeMessage = typeof errorMessage === 'string' && (
+      errorMessage.includes('días de vacaciones') ||
+      errorMessage.includes('No se permiten ausencias') ||
+      errorMessage.includes('Vacaciones') ||
+      errorMessage.includes('ausencias') ||
+      errorMessage.includes('fechas') ||
+      errorMessage.includes('solicitó') ||
+      errorMessage.includes('periodo') ||
+      errorMessage.includes('no encontrado') ||
+      errorMessage.includes('no configurada')
+    );
+
+    // ⚠️ Retornar 200 para errores de negocio (el SDK de Supabase parsea el body solo con 200)
     return new Response(
       JSON.stringify({
         success: false,
-        error: errorMessage,
+        error: isSafeMessage ? errorMessage : 'Error al procesar la solicitud',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200, // ← Cambiar de 400 a 200 para que se parsee el body
+        status: 200,
       }
     );
   }

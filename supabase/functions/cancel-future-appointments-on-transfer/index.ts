@@ -1,26 +1,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
-/**
- * Edge Function: cancel-future-appointments-on-transfer
- * 
- * Propósito: Cancelar automáticamente citas futuras cuando un empleado
- *            programa un traslado de sede, y notificar a los clientes.
- * 
- * Input:
- *   - businessEmployeeId: UUID del registro en business_employees
- *   - effectiveDate: Fecha en que el traslado se hace efectivo
- *   - employeeId: UUID del empleado (para notificaciones)
- * 
- * Output:
- *   - cancelledCount: Número de citas canceladas
- *   - notificationsSent: Número de notificaciones enviadas
- */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 interface RequestBody {
   businessEmployeeId: string
@@ -29,37 +11,120 @@ interface RequestBody {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+
+  const corsHeaders = getCorsHeaders(req)
 
   try {
-    // Parsear body
-    const { businessEmployeeId, effectiveDate, employeeId }: RequestBody = await req.json()
-
-    if (!businessEmployeeId || !effectiveDate || !employeeId) {
+    // ─── 1. AUTENTICACIÓN ───────────────────────────────────────────────────────
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+    const token = authHeader.replace('Bearer ', '')
 
-    // Crear cliente Supabase con service_role key (permisos completos)
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    console.log('🔄 Iniciando cancelación de citas futuras', {
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ─── 2. VALIDAR INPUT ───────────────────────────────────────────────────────
+    let body: RequestBody
+    try {
+      body = await req.json()
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const { businessEmployeeId, effectiveDate, employeeId } = body
+
+    if (!businessEmployeeId || !effectiveDate || !employeeId) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (!UUID_REGEX.test(businessEmployeeId) || !UUID_REGEX.test(employeeId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid UUID format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Validar fecha
+    const effectiveDateObj = new Date(effectiveDate)
+    if (isNaN(effectiveDateObj.getTime())) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid effectiveDate format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ─── 3. OBTENER DATOS DEL EMPLOYEE PARA VERIFICAR NEGOCIO ──────────────────
+    const { data: employeeRecord } = await supabase
+      .from('business_employees')
+      .select('business_id')
+      .eq('id', businessEmployeeId)
+      .single()
+
+    if (!employeeRecord) {
+      return new Response(
+        JSON.stringify({ error: 'Employee record not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const businessId = employeeRecord.business_id
+
+    // ─── 4. AUTORIZACIÓN: verificar owner o admin del negocio ──────────────────
+    const { data: business } = await supabase
+      .from('businesses')
+      .select('owner_id')
+      .eq('id', businessId)
+      .single()
+
+    const isOwner = business?.owner_id === user.id
+    let isAuthorized = isOwner
+
+    if (!isAuthorized) {
+      const { data: adminRole } = await supabase
+        .from('business_roles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('business_id', businessId)
+        .in('role', ['admin', 'manager'])
+        .single()
+      isAuthorized = !!adminRole
+    }
+
+    if (!isAuthorized) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: insufficient permissions for this business' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ─── 5. CANCELAR CITAS FUTURAS ──────────────────────────────────────────────
+    console.log('[cancel-future-appointments-on-transfer] Starting cancellation', {
       businessEmployeeId,
-      effectiveDate,
-      employeeId,
+      effectiveDate: effectiveDateObj.toISOString(),
     })
 
-    // 1. Buscar citas a cancelar (posteriores a fecha efectiva)
     const { data: appointmentsToCancel, error: fetchError } = await supabase
       .from('appointments')
       .select(`
@@ -78,28 +143,17 @@ serve(async (req) => {
       .in('status', ['pending', 'confirmed'])
 
     if (fetchError) {
-      console.error('❌ Error al buscar citas:', fetchError)
-      throw fetchError
+      console.error('[cancel-future-appointments-on-transfer] Fetch error:', fetchError.code)
+      throw new Error('Failed to fetch appointments')
     }
 
     if (!appointmentsToCancel || appointmentsToCancel.length === 0) {
-      console.log('✅ No hay citas para cancelar')
       return new Response(
-        JSON.stringify({
-          success: true,
-          cancelledCount: 0,
-          notificationsSent: 0,
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        JSON.stringify({ success: true, cancelledCount: 0, notificationsSent: 0 }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log(`📋 ${appointmentsToCancel.length} citas encontradas para cancelar`)
-
-    // 2. Cancelar citas
     const appointmentIds = appointmentsToCancel.map(apt => apt.id)
     const { error: updateError } = await supabase
       .from('appointments')
@@ -112,33 +166,27 @@ serve(async (req) => {
       .in('id', appointmentIds)
 
     if (updateError) {
-      console.error('❌ Error al cancelar citas:', updateError)
-      throw updateError
+      console.error('[cancel-future-appointments-on-transfer] Update error:', updateError.code)
+      throw new Error('Failed to cancel appointments')
     }
 
-    console.log('✅ Citas canceladas exitosamente')
-
-    // 3. Enviar notificaciones in-app a cada cliente
+    // ─── 6. NOTIFICACIONES ──────────────────────────────────────────────────────
     let notificationsSent = 0
 
     for (const appointment of appointmentsToCancel) {
       try {
         const appointmentDate = new Date(appointment.start_time).toLocaleDateString('es', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
+          day: '2-digit', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit',
         })
 
-        // Notificación in-app
         const { error: notifError } = await supabase
           .from('in_app_notifications')
           .insert({
             user_id: appointment.client_id,
             type: 'appointment_cancelled_transfer',
             title: 'Cita cancelada por traslado',
-            message: `Tu cita del ${appointmentDate} ha sido cancelada debido a un traslado del profesional a otra sede. Disculpa las molestias.`,
+            message: `Tu cita del ${appointmentDate} ha sido cancelada debido a un traslado del profesional a otra sede.`,
             data: {
               appointment_id: appointment.id,
               reason: 'employee_transfer',
@@ -149,74 +197,46 @@ serve(async (req) => {
             read: false,
           })
 
-        if (notifError) {
-          console.error('❌ Error al crear notificación in-app:', notifError)
-        } else {
-          notificationsSent++
-        }
+        if (!notifError) notificationsSent++
 
-        // 4. Enviar email via send-notification function
+        // Email vía send-notification
         try {
-          const emailPayload = {
-            user_id: appointment.client_id,
-            channel: 'email',
-            type: 'appointment_cancelled',
-            data: {
-              client_name: appointment.profiles?.name,
-              client_email: appointment.profiles?.email,
-              appointment_date: appointmentDate,
-              service_name: appointment.services?.name,
-              location_name: appointment.locations?.name,
-              cancel_reason: 'Traslado de empleado a otra sede',
+          await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${supabaseServiceKey}`,
             },
-          }
-
-          const emailResponse = await fetch(
-            `${supabaseUrl}/functions/v1/send-notification`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${supabaseServiceKey}`,
+            body: JSON.stringify({
+              user_id: appointment.client_id,
+              channel: 'email',
+              type: 'appointment_cancelled',
+              data: {
+                client_name: appointment.profiles?.name,
+                appointment_date: appointmentDate,
+                service_name: appointment.services?.name,
+                location_name: appointment.locations?.name,
+                cancel_reason: 'Traslado de empleado a otra sede',
               },
-              body: JSON.stringify(emailPayload),
-            }
-          )
-
-          if (!emailResponse.ok) {
-            console.error('⚠️ Error al enviar email:', await emailResponse.text())
-          } else {
-            console.log(`📧 Email enviado a ${appointment.profiles?.email}`)
-          }
+            }),
+          })
         } catch (emailError) {
-          console.error('⚠️ Error al enviar email:', emailError)
+          console.error('[cancel-future-appointments-on-transfer] Email error:', emailError instanceof Error ? emailError.message : 'unknown')
         }
       } catch (error) {
-        console.error('⚠️ Error al procesar notificación:', error)
+        console.error('[cancel-future-appointments-on-transfer] Notification error:', error instanceof Error ? error.message : 'unknown')
       }
     }
 
-    console.log(`✅ Proceso completado: ${appointmentIds.length} citas canceladas, ${notificationsSent} notificaciones enviadas`)
-
     return new Response(
-      JSON.stringify({
-        success: true,
-        cancelledCount: appointmentIds.length,
-        notificationsSent,
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ success: true, cancelledCount: appointmentIds.length, notificationsSent }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('❌ Error en cancel-future-appointments-on-transfer:', error)
+    console.error('[cancel-future-appointments-on-transfer] Unexpected error:', error instanceof Error ? error.message : 'unknown')
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })

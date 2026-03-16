@@ -73,8 +73,22 @@ serve(async (req) => {
       throw new Error('Ausencia no encontrada');
     }
 
-    // 2. Verificar que usuario es admin del negocio
-    if (absence.business.owner_id !== user.id) {
+    // 2. Verificar que usuario es owner O admin del negocio
+    const isOwner = absence.business.owner_id === user.id;
+    let isAuthorized = isOwner;
+
+    if (!isAuthorized) {
+      const { data: adminRole } = await supabaseClient
+        .from('business_roles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('business_id', absence.business_id)
+        .in('role', ['admin', 'manager'])
+        .single();
+      isAuthorized = !!adminRole;
+    }
+
+    if (!isAuthorized) {
       throw new Error('No tiene permisos para aprobar/rechazar esta ausencia');
     }
 

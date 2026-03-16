@@ -52,13 +52,27 @@ serve(async (req) => {
       billingCycle,
     })
 
-    // Validar firma MD5
+    // Validar firma MD5 con comparación en tiempo constante (evita timing attacks)
     // Formato: ApiKey~merchantId~referenceCode~value~currency~transactionState
     const signatureString = `${payuApiKey}~${merchantId}~${referenceCode}~${value}~${currency}~${transactionState}`
     const expectedSign = createHash('md5').update(signatureString).digest('hex')
 
-    if (receivedSign !== expectedSign) {
-      console.error('Invalid signature:', { receivedSign, expectedSign })
+    // Usar timingSafeEqual para prevenir timing attacks en la comparación
+    const receivedBytes = new TextEncoder().encode(String(receivedSign ?? '').padEnd(expectedSign.length, '\0'))
+    const expectedBytes = new TextEncoder().encode(expectedSign)
+    const signaturesMatch = receivedBytes.length === expectedBytes.length &&
+      crypto.subtle && await (async () => {
+        // Importar clave para comparación HMAC dummy — workaround para timingSafeEqual en Deno
+        // Alternativa: comparación char-a-char con branch constante
+        let result = 0
+        for (let i = 0; i < expectedBytes.length; i++) {
+          result |= receivedBytes[i] ^ expectedBytes[i]
+        }
+        return result === 0
+      })()
+
+    if (!signaturesMatch) {
+      console.error('[payu-webhook] Invalid signature')
       return new Response('Invalid signature', { status: 400 })
     }
 
