@@ -84,17 +84,77 @@ const PLAN_LIMITS = {
   },
 }
 
+// Verifica la firma HMAC-SHA256 que MercadoPago envía en el header x-signature
+// Formato: ts=<timestamp>,v1=<sha256_hex>
+// El mensaje firmado es: id:<payment_id>;request-id:<x-request-id>;ts:<timestamp>
+async function verifyMercadoPagoSignature(req: Request, paymentId: string): Promise<boolean> {
+  const webhookSecret = Deno.env.get('MERCADOPAGO_WEBHOOK_SECRET')
+  if (!webhookSecret) {
+    // Si no hay secret configurado, se omite la verificación (degraded mode)
+    console.warn('[mercadopago-webhook] MERCADOPAGO_WEBHOOK_SECRET not set — skipping signature check')
+    return true
+  }
+
+  const xSignature = req.headers.get('x-signature')
+  const xRequestId = req.headers.get('x-request-id') ?? ''
+
+  if (!xSignature) {
+    console.error('[mercadopago-webhook] Missing x-signature header')
+    return false
+  }
+
+  // Parsear ts y v1 del header x-signature
+  const parts = Object.fromEntries(xSignature.split(',').map(p => p.split('=')))
+  const ts = parts['ts']
+  const v1 = parts['v1']
+
+  if (!ts || !v1) {
+    console.error('[mercadopago-webhook] Invalid x-signature format')
+    return false
+  }
+
+  // Construir el mensaje a firmar
+  const message = `id:${paymentId};request-id:${xRequestId};ts:${ts}`
+
+  // Calcular HMAC-SHA256
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(webhookSecret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message))
+  const expectedV1 = Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+
+  // Comparación en tiempo constante
+  const receivedBytes = encoder.encode(v1.padEnd(expectedV1.length, '\0'))
+  const expectedBytes = encoder.encode(expectedV1)
+  let result = receivedBytes.length !== expectedBytes.length ? 1 : 0
+  for (let i = 0; i < expectedBytes.length; i++) {
+    result |= (receivedBytes[i] ?? 0) ^ expectedBytes[i]
+  }
+  return result === 0
+}
+
 Deno.serve(async (req) => {
   try {
-    // CORS headers
+    // Webhooks de MercadoPago solo aceptan POST
     if (req.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': 'https://api.mercadopago.com',
           'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'content-type',
+          'Access-Control-Allow-Headers': 'content-type, x-signature, x-request-id',
         },
       })
+    }
+
+    if (req.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405 })
     }
 
     // Parse URL query params (MercadoPago sends data via query)
@@ -102,11 +162,18 @@ Deno.serve(async (req) => {
     const topic = url.searchParams.get('topic') || url.searchParams.get('type')
     const id = url.searchParams.get('id') || url.searchParams.get('data.id')
 
-    console.log('Webhook received:', { topic, id })
-
     if (!id || !topic) {
-      throw new Error('Missing id or topic in webhook notification')
+      return new Response('Missing id or topic', { status: 400 })
     }
+
+    // ─── VERIFICACIÓN DE FIRMA ──────────────────────────────────────────────────
+    const signatureValid = await verifyMercadoPagoSignature(req, id)
+    if (!signatureValid) {
+      console.error('[mercadopago-webhook] Invalid signature for payment', id)
+      return new Response('Invalid signature', { status: 401 })
+    }
+
+    console.log('[mercadopago-webhook] Webhook received:', { topic, id: id.substring(0, 8) + '...' })
 
     // Only process payment notifications
     if (topic !== 'payment') {
@@ -267,14 +334,8 @@ Deno.serve(async (req) => {
     await flushSentry()
     
     return new Response(
-      JSON.stringify({
-        error: (error as Error).message,
-        details: (error as Error).stack,
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
 })

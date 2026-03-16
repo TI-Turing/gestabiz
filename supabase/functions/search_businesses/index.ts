@@ -47,6 +47,12 @@ serve(async (req) => {
     const supabase = createClient(url, key)
 
     const body = (await req.json()) as SearchRequest
+
+    // Limitar pageSize para prevenir consultas sin restricción (DoS / data dump)
+    const MAX_PAGE_SIZE = 100
+    const rawPageSize = typeof body.pageSize === 'number' ? body.pageSize : 12
+    const rawPage = typeof body.page === 'number' ? body.page : 1
+
     const {
       type,
       term,
@@ -55,25 +61,35 @@ serve(async (req) => {
       preferredCityId,
       preferredCityName,
       clientId,
-      page = 1,
-      pageSize = 12,
       excludeBusinessIds = [],
       minRating,
       minReviewCount
     } = body
 
+    // Sanitizar paginación
+    const page = Math.max(1, Math.floor(rawPage))
+    const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Math.floor(rawPageSize)))
+
+    // Sanitizar strings de búsqueda para prevenir injection en filtros .or()
+    const sanitizeSearchTerm = (s: string | null | undefined): string =>
+      typeof s === 'string' ? s.replace(/[%_\\]/g, '\\$&').substring(0, 200) : ''
+
+    const safeTerm = sanitizeSearchTerm(term)
+    const safePreferredCityName = sanitizeSearchTerm(preferredCityName)
+    const safePreferredRegionName = sanitizeSearchTerm(preferredRegionName)
+
     const normalize = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
     const isBogotaRegionById = preferredRegionId === BOGOTA_REGION_ID
     const isBogotaCityById = preferredCityId === BOGOTA_CITY_ID
-    const isBogotaRegionByName = preferredRegionName ? normalize(preferredRegionName).includes('bogota') : false
-    const isBogotaCityByName = preferredCityName ? normalize(preferredCityName).includes('bogota') : false
+    const isBogotaRegionByName = safePreferredRegionName ? normalize(safePreferredRegionName).includes('bogota') : false
+    const isBogotaCityByName = safePreferredCityName ? normalize(safePreferredCityName).includes('bogota') : false
 
     // Resolver IDs por nombre cuando solo tenemos nombres (compatibilidad con datos mixtos UUID/texto)
     let resolvedCityIds: string[] = []
     let resolvedRegionIds: string[] = []
     try {
-      if (!preferredCityId && (preferredCityName || isBogotaCityByName)) {
-        const cityFilter = (isBogotaCityByName ? BOGOTA_CITY_NAME : (preferredCityName || ''))
+      if (!preferredCityId && (safePreferredCityName || isBogotaCityByName)) {
+        const cityFilter = (isBogotaCityByName ? BOGOTA_CITY_NAME : safePreferredCityName)
         const cityNoAccent = cityFilter.replaceAll('á','a').replaceAll('é','e').replaceAll('í','i').replaceAll('ó','o').replaceAll('ú','u')
         const cityOr = `name.ilike.%${cityFilter}%,name.ilike.%${cityNoAccent}%${normalize(cityFilter).includes('bogota') ? ',name.ilike.%Bogot%' : ''}`
         const { data: cityRows } = await supabase
@@ -83,8 +99,8 @@ serve(async (req) => {
           .or(cityOr as any)
         resolvedCityIds = (cityRows || []).map((r: any) => r.id).filter(Boolean)
       }
-      if (!preferredRegionId && (preferredRegionName || isBogotaRegionByName)) {
-        const regionFilter = (isBogotaRegionByName ? 'Bogotá D.C.' : (preferredRegionName || ''))
+      if (!preferredRegionId && (safePreferredRegionName || isBogotaRegionByName)) {
+        const regionFilter = (isBogotaRegionByName ? 'Bogotá D.C.' : safePreferredRegionName)
         const regionNoAccent = regionFilter.replaceAll('á','a').replaceAll('é','e').replaceAll('í','i').replaceAll('ó','o').replaceAll('ú','u')
         const regionOr = `name.ilike.%${regionFilter}%,name.ilike.%${regionNoAccent}%${normalize(regionFilter).includes('bogota') ? ',name.ilike.%Bogot%' : ''}`
         const { data: regionRows } = await supabase
@@ -119,7 +135,7 @@ serve(async (req) => {
         // Incluir nombre si viene o si es Bogotá por heurística
         const cityNameFilter = (isBogotaCityById || isBogotaCityByName)
           ? BOGOTA_CITY_NAME
-          : (preferredCityName ?? '')
+          : safePreferredCityName
         if (cityNameFilter) {
           // Coincidencia con y sin acento (Bogotá/Bogota)
           clauses.push(`city.ilike.%${cityNameFilter}%`)
@@ -141,7 +157,7 @@ serve(async (req) => {
         }
         const regionNameFilter = (isBogotaRegionById || isBogotaRegionByName)
           ? 'Bogotá D.C.'
-          : (preferredRegionName ?? '')
+          : safePreferredRegionName
         if (regionNameFilter) {
           // Coincidencia con y sin acento
           clauses.push(`state.ilike.%${regionNameFilter}%`)
@@ -160,17 +176,17 @@ serve(async (req) => {
       }
       // deno-lint-ignore no-explicit-any
       ;(locQuery as any) = (locQuery as any).or(clauses.join(','))
-    } else if (preferredCityName || isBogotaCityByName) {
+    } else if (safePreferredCityName || isBogotaCityByName) {
       // Respaldo por nombre de ciudad (para compatibilidad retro)
-      const cityFilter = isBogotaCityByName ? BOGOTA_CITY_NAME : (preferredCityName as string)
+      const cityFilter = isBogotaCityByName ? BOGOTA_CITY_NAME : safePreferredCityName
       // Coincidencia con y sin acento
       // deno-lint-ignore no-explicit-any
       ;(locQuery as any) = (locQuery as any).or(
         `city.ilike.%${cityFilter}%,city.ilike.%${cityFilter.replaceAll('á','a').replaceAll('é','e').replaceAll('í','i').replaceAll('ó','o').replaceAll('ú','u')}%${normalize(cityFilter).includes('bogota') ? ',city.ilike.%Bogot%,name.ilike.%Bogot%' : ''},name.ilike.%${cityFilter}%`
       )
-    } else if (preferredRegionName || isBogotaRegionByName) {
+    } else if (safePreferredRegionName || isBogotaRegionByName) {
       // Respaldo por nombre de región/departamento
-      const regionFilter = isBogotaRegionByName ? 'Bogotá D.C.' : (preferredRegionName as string)
+      const regionFilter = isBogotaRegionByName ? 'Bogotá D.C.' : safePreferredRegionName
       // Considerar coincidencias tanto en state como en city para regiones tipo Bogotá
       const noAccent = regionFilter.replaceAll('á','a').replaceAll('é','e').replaceAll('í','i').replaceAll('ó','o').replaceAll('ú','u')
       const orFilter = `state.ilike.%${regionFilter}%,state.ilike.%${noAccent}%,city.ilike.%${regionFilter}%,city.ilike.%${noAccent}%${normalize(regionFilter).includes('bogota') ? ',city.ilike.%Bogot%,name.ilike.%Bogot%' : ''},name.ilike.%${regionFilter}%`
@@ -212,7 +228,7 @@ serve(async (req) => {
       const { data: businesses, error } = await supabase
         .from('businesses')
         .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
-        .ilike('name', `%${term}%`)
+        .ilike('name', `%${safeTerm}%`)
         .eq('is_active', true)
         .eq('is_public', true)
         .eq('is_configured', true)
@@ -229,7 +245,7 @@ serve(async (req) => {
       const { data: svcRows, error: svcErr } = await supabase
         .from('services')
         .select('id')
-        .ilike('name', `%${term}%`)
+        .ilike('name', `%${safeTerm}%`)
         .eq('is_active', true)
       if (svcErr) throw svcErr
       const svcIds = (svcRows || []).map((s: any) => s.id)
@@ -277,7 +293,7 @@ serve(async (req) => {
       const { data: cats, error: catErr } = await supabase
         .from('business_categories')
         .select('id')
-        .ilike('name', `%${term}%`)
+        .ilike('name', `%${safeTerm}%`)
         .eq('is_active', true)
       if (catErr) throw catErr
       const catIds = (cats || []).map((c: any) => c.id)
@@ -302,7 +318,7 @@ serve(async (req) => {
       const { data: profiles, error: profErr } = await supabase
         .from('profiles')
         .select('id')
-        .ilike('full_name', `%${term}%`)
+        .ilike('full_name', `%${safeTerm}%`)
       if (profErr) throw profErr
       const employeeIds = (profiles || []).map((p: any) => p.id)
       if (employeeIds.length === 0) {
@@ -335,7 +351,7 @@ serve(async (req) => {
       const { data: bizByName } = await supabase
         .from('businesses')
         .select('id, name, description, logo_url, banner_url, address, city, phone, category_id')
-        .ilike('name', `%${term}%`)
+        .ilike('name', `%${safeTerm}%`)
         .eq('is_active', true)
         .eq('is_public', true)
         .eq('is_configured', true)
@@ -349,7 +365,7 @@ serve(async (req) => {
       const { data: svcRows } = await supabase
         .from('services')
         .select('id')
-        .ilike('name', `%${term}%`)
+        .ilike('name', `%${safeTerm}%`)
         .eq('is_active', true)
       const svcIds = (svcRows || []).map((s: any) => s.id)
       if (svcIds.length > 0) {
@@ -382,7 +398,7 @@ serve(async (req) => {
       const { data: cats } = await supabase
         .from('business_categories')
         .select('id')
-        .ilike('name', `%${term}%`)
+        .ilike('name', `%${safeTerm}%`)
         .eq('is_active', true)
       const catIds = (cats || []).map((c: any) => c.id)
       if (catIds.length > 0) {
@@ -402,7 +418,7 @@ serve(async (req) => {
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id')
-        .ilike('full_name', `%${term}%`)
+        .ilike('full_name', `%${safeTerm}%`)
       const employeeIds = (profiles || []).map((p: any) => p.id)
       if (employeeIds.length > 0) {
         const { data: emp } = await supabase
@@ -434,7 +450,7 @@ serve(async (req) => {
       const { data: cats2, error: catErr2 } = await supabase
         .from('business_categories')
         .select('id')
-        .ilike('name', `%${term}%`)
+        .ilike('name', `%${safeTerm}%`)
         .eq('is_active', true)
       if (catErr2) throw catErr2
       const catIds2 = (cats2 || []).map((c: any) => c.id)
@@ -460,7 +476,7 @@ serve(async (req) => {
       const { data: profiles2, error: profErr2 } = await supabase
         .from('profiles')
         .select('id')
-        .ilike('full_name', `%${term}%`)
+        .ilike('full_name', `%${safeTerm}%`)
       if (profErr2) throw profErr2
       const employeeIds2 = (profiles2 || []).map((p: any) => p.id)
       if (employeeIds2.length === 0) {
