@@ -145,7 +145,8 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
             action: notification.action_url ? {
               label: 'Ver',
               onClick: () => {
-                if (notification.action_url) {
+                // Solo permitir rutas internas (previene open redirect)
+                if (notification.action_url && notification.action_url.startsWith('/')) {
                   window.location.href = notification.action_url
                 }
               }

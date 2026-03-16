@@ -90,9 +90,9 @@ const PLAN_LIMITS = {
 async function verifyMercadoPagoSignature(req: Request, paymentId: string): Promise<boolean> {
   const webhookSecret = Deno.env.get('MERCADOPAGO_WEBHOOK_SECRET')
   if (!webhookSecret) {
-    // Si no hay secret configurado, se omite la verificación (degraded mode)
-    console.warn('[mercadopago-webhook] MERCADOPAGO_WEBHOOK_SECRET not set — skipping signature check')
-    return true
+    // Fail-closed: rechazar TODOS los webhooks si el secret no está configurado
+    console.error('[mercadopago-webhook] MERCADOPAGO_WEBHOOK_SECRET not set — rejecting webhook (fail-closed)')
+    return false
   }
 
   const xSignature = req.headers.get('x-signature')

@@ -1,19 +1,40 @@
 # Vulnerabilidades Pendientes — Gestabiz Security Audit
 **Generado**: 16 de Marzo, 2026
 **Fuente**: Rondas 1, 2 y 3 de SECURITY_AUDIT.md
-**Total pendiente**: 18 ítems (5 config manual + 13 código/infraestructura)
+**Total pendiente**: 9 ítems (2 config manual + 7 código/infraestructura)
+**Actualizado en Ronda 5**: 9 ítems corregidos (VULN-41 a VULN-51)
 
 ---
 
 ## Resumen por Severidad
 
-| Severidad | Pendientes |
-|-----------|-----------|
-| CRÍTICO   | 3 (config manual) |
-| ALTO      | 4 |
-| MEDIO     | 7 |
-| BAJO      | 4 |
-| **Total** | **18** |
+| Severidad | Pendientes | Resueltos en R5 |
+|-----------|-----------|-----------------|
+| CRÍTICO   | 2 (config manual) | 1 (VULN-41 a 45) |
+| ALTO      | 3 | 4 |
+| MEDIO     | 3 | 4 |
+| BAJO      | 1 | 1 |
+| **Total** | **9** | **9** |
+
+---
+
+## RESUELTOS EN RONDA 5
+
+Los siguientes ítems del backlog fueron corregidos y desplegados el 16/03/2026:
+
+| ID | Descripción | Fix |
+|----|-------------|-----|
+| VULN-41 | Escalada de privilegios en RPCs de permisos | Migración SQL `20260316000001` aplicada |
+| VULN-42 | `payu-create-checkout` sin auth | JWT + ownership check |
+| VULN-43 | `mercadopago-manage-subscription` sin auth | JWT + owner/admin check |
+| VULN-44 | `mercadopago-create-preference` sin auth | JWT + ownership check |
+| VULN-45 | `mercadopago-webhook` fail-open | Fail-closed implementado |
+| VULN-46 | `check-business-inactivity` sin auth | CRON_SECRET requerido |
+| VULN-47 | IDOR en `calendar-integration` | userId desde JWT |
+| VULN-48 | Open redirect en NotificationContext | Allowlist rutas `/` |
+| VULN-49 | HTML injection en `send-selection-notifications` | escapeHtml() aplicado |
+| VULN-50 | `send-employee-request-notification` sin auth | JWT requerido |
+| VULN-51 | Open redirect en `create-checkout-session` | Allowlist de hosts |
 
 ---
 
@@ -354,4 +375,4 @@ npx supabase functions deploy send-whatsapp
 
 ---
 
-*Generado: 16 Mar 2026 | Gestabiz v0.0.12 | Fuente: SECURITY_AUDIT.md Rondas 1-3*
+*Generado: 16 Mar 2026 | Actualizado Ronda 5: 16 Mar 2026 | Gestabiz v0.0.14 | Fuente: SECURITY_AUDIT.md Rondas 1-5*

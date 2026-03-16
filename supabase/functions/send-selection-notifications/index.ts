@@ -5,11 +5,18 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Escapa caracteres HTML para prevenir inyección en templates de email
+function escapeHtml(text: string | null | undefined): string {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 interface SelectionNotificationPayload {
   type: 'started' | 'selected' | 'not_selected';
@@ -33,20 +40,34 @@ interface SelectionNotificationPayload {
 }
 
 serve(async (req) => {
-  // Handle CORS
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
+  const corsPreFlight = handleCorsPreFlight(req);
+  if (corsPreFlight) return corsPreFlight;
+  const corsHeaders = getCorsHeaders(req);
 
   try {
+    // ─── AUTENTICACIÓN: JWT obligatorio ────────────────────────────────────
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseAnon = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
+      supabaseUrl,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          persistSession: false,
-        },
-      }
+      { auth: { persistSession: false } }
     );
 
     const payload: SelectionNotificationPayload = await req.json();
@@ -94,11 +115,8 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error en send-selection-notifications:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      }
+      JSON.stringify({ error: 'Internal server error' }),
+      { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
@@ -112,12 +130,17 @@ async function sendSelectionStartedNotification(
 ) {
   const { user_id, user_email, user_name, vacancy_title, business_name, application_id, vacancy_id, business_id } = payload;
 
+  // Escapar datos de usuario para HTML
+  const safeUserName = escapeHtml(user_name);
+  const safeVacancyTitle = escapeHtml(vacancy_title);
+  const safeBusinessName = escapeHtml(business_name);
+
   // 1. Crear notificación in-app
   await supabase.from('in_app_notifications').insert({
     user_id,
     type: 'job_selection_process_started',
-    title: 'Proceso de Selección Iniciado',
-    message: `Has sido seleccionado para participar en el proceso de selección de "${vacancy_title}" en ${business_name}`,
+    title: 'Proceso de Seleccion Iniciado',
+    message: `Has sido seleccionado para participar en el proceso de seleccion de "${vacancy_title}" en ${business_name}`,
     data: {
       application_id,
       vacancy_id,
@@ -165,12 +188,12 @@ async function sendSelectionStartedNotification(
       <h1>🎉 ¡Felicidades!</h1>
     </div>
     <div class="content">
-      <p>Hola <strong>${user_name}</strong>,</p>
-      
-      <p>Nos complace informarte que has sido seleccionado para participar en el proceso de selección de:</p>
-      
-      <h2 style="color: #667eea; margin: 20px 0;">${vacancy_title}</h2>
-      <p style="font-size: 16px;">en <strong>${business_name}</strong></p>
+      <p>Hola <strong>${safeUserName}</strong>,</p>
+
+      <p>Nos complace informarte que has sido seleccionado para participar en el proceso de seleccion de:</p>
+
+      <h2 style="color: #667eea; margin: 20px 0;">${safeVacancyTitle}</h2>
+      <p style="font-size: 16px;">en <strong>${safeBusinessName}</strong></p>
       
       <div class="alert">
         <p style="margin: 0;"><strong>📞 Próximo paso:</strong></p>

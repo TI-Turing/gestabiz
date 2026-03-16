@@ -75,6 +75,20 @@ serve(async (req) => {
       return new Response('Missing required fields', { status: 400 })
     }
 
+    // ─── VALIDAR URLs de redirect (previene open redirect) ─────────────────
+    const APP_URL = Deno.env.get('APP_URL') ?? 'https://gestabiz.com'
+    const allowedHosts = ['gestabiz.com', 'www.gestabiz.com', 'gestabiz.vercel.app', 'localhost']
+    const isAllowedUrl = (url?: string): boolean => {
+      if (!url) return true
+      try {
+        const parsed = new URL(url)
+        return allowedHosts.some(h => parsed.hostname === h || parsed.hostname.endsWith(`.${h}`))
+      } catch { return false }
+    }
+    if (!isAllowedUrl(successUrl) || !isAllowedUrl(cancelUrl)) {
+      return new Response('Invalid redirect URL', { status: 400 })
+    }
+
     // Verificar que el usuario es dueño del negocio
     const { data: business, error: businessError } = await supabase
       .from('businesses')

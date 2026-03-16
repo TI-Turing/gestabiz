@@ -4,6 +4,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createHash } from 'node:crypto'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -25,9 +26,32 @@ interface CheckoutRequest {
 }
 
 serve(async (req) => {
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+  const corsHeaders = getCorsHeaders(req)
+
   try {
     if (req.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405 })
+      return new Response('Method not allowed', { status: 405, headers: corsHeaders })
+    }
+
+    // ─── AUTENTICACIÓN: JWT obligatorio ───────────────────────────────────────
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Verificar token con cliente anon
+    const supabaseAnon = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: authHeader } },
+    })
+    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser()
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     const { businessId, planType, billingCycle, discountCode }: CheckoutRequest = await req.json()
@@ -35,15 +59,14 @@ serve(async (req) => {
     // Validar entrada
     if (!businessId || !planType || !billingCycle) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     // Crear cliente Supabase con service role
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // 1. Obtener datos del negocio
+    // 1. Obtener datos del negocio y verificar ownership
     const { data: business, error: businessError } = await supabase
       .from('businesses')
       .select('name, owner_id')
@@ -52,8 +75,14 @@ serve(async (req) => {
 
     if (businessError || !business) {
       return new Response(JSON.stringify({ error: 'Business not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // ─── AUTORIZACIÓN: solo el owner puede crear checkout ────────────────────
+    if (business.owner_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
@@ -142,11 +171,8 @@ serve(async (req) => {
   } catch (error) {
     console.error('PayU Checkout Error:', error)
     return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     )
   }
 })

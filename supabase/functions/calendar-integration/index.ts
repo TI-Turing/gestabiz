@@ -1,36 +1,50 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
 interface CalendarSyncRequest {
   provider: 'google' | 'outlook' | 'apple'
   calendarId: string
-  userId?: string
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+  const corsHeaders = getCorsHeaders(req)
 
   try {
-    const { provider, calendarId, userId }: CalendarSyncRequest = await req.json()
+    // ─── AUTENTICACIÓN: JWT obligatorio ────────────────────────────────────
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+    // Obtener userId desde JWT (nunca del body — previene IDOR)
+    const supabaseAnon = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: authHeader } },
+    })
+    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser()
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const { provider, calendarId }: CalendarSyncRequest = await req.json()
+
+    // Initialize Supabase client
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get user's calendar sync settings
+    // Get user's calendar sync settings (userId from JWT, not from body)
     const { data: syncSettings, error: settingsError } = await supabase
       .from('calendar_sync_settings')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .eq('provider', provider)
       .single()
 

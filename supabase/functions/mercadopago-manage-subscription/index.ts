@@ -1,31 +1,73 @@
 /**
  * MercadoPago Manage Subscription Edge Function
- * 
  * Maneja operaciones de suscripción: update, cancel, pause, resume, reactivate
- * 
- * @author GitHub Copilot
- * @date 2025-10-17
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
 Deno.serve(async (req) => {
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+  const corsHeaders = getCorsHeaders(req)
+
   try {
-    if (req.method === 'OPTIONS') {
-      return new Response(null, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-        },
+    // ─── AUTENTICACIÓN: JWT obligatorio ────────────────────────────────────
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+    // Verificar token con cliente anon
+    const supabaseAnon = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: authHeader } },
+    })
+    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser()
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     const { action, businessId, ...params } = await req.json()
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    if (!businessId || !action) {
+      return new Response(JSON.stringify({ error: 'businessId and action are required' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // ─── AUTORIZACIÓN: verificar ownership o admin del negocio ─────────────
+    const { data: business } = await supabase
+      .from('businesses')
+      .select('owner_id')
+      .eq('id', businessId)
+      .single()
+
+    let isAuthorized = business?.owner_id === user.id
+    if (!isAuthorized) {
+      const { data: adminRole } = await supabase
+        .from('business_roles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('business_id', businessId)
+        .in('role', ['admin', 'manager'])
+        .single()
+      isAuthorized = !!adminRole
+    }
+
+    if (!isAuthorized) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     let result
 
@@ -34,7 +76,7 @@ Deno.serve(async (req) => {
       case 'cancel':
       case 'pause':
       case 'resume':
-      case 'reactivate':
+      case 'reactivate': {
         const { data, error } = await supabase
           .from('business_plan')
           .update({
@@ -48,27 +90,21 @@ Deno.serve(async (req) => {
         if (error) throw error
         result = { subscription: data }
         break
-
+      }
       default:
-        throw new Error(`Unknown action: ${action}`)
+        return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
     }
 
     return new Response(JSON.stringify(result), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
+    console.error('mercadopago-manage-subscription error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     )
   }
 })
