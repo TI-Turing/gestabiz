@@ -19,12 +19,27 @@ interface BusinessInactivityStats {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    // ─── PROTECCIÓN: solo llamadas internas/cron autorizadas ──────────────
+    // Aceptar CRON_SECRET (pg_cron) o el Service Role Key como Bearer
+    const authHeader = req.headers.get('Authorization') ?? ''
+    const cronSecret = Deno.env.get('CRON_SECRET') ?? ''
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+
+    const isCronCall = cronSecret && authHeader === `Bearer ${cronSecret}`
+    const isServiceCall = serviceRoleKey && authHeader === `Bearer ${serviceRoleKey}`
+
+    if (!isCronCall && !isServiceCall) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!

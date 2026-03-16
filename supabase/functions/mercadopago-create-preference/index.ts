@@ -22,6 +22,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
 // Prices por plan (COP - Pesos Colombianos)
 const PLAN_PRICES = {
@@ -33,15 +34,30 @@ const PLAN_PRICES = {
 }
 
 Deno.serve(async (req) => {
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+  const corsHeaders = getCorsHeaders(req)
+
   try {
-    // CORS headers
-    if (req.method === 'OPTIONS') {
-      return new Response(null, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-        },
+    // ─── AUTENTICACIÓN: JWT obligatorio ────────────────────────────────────
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+
+    // Verificar token
+    const supabaseAnon = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: authHeader } },
+    })
+    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser()
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
@@ -49,23 +65,32 @@ Deno.serve(async (req) => {
     const { businessId, planType, billingCycle, discountCode } = await req.json()
 
     if (!businessId || !planType || !billingCycle) {
-      throw new Error('Missing required parameters: businessId, planType, billingCycle')
+      return new Response(JSON.stringify({ error: 'Missing required parameters: businessId, planType, billingCycle' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     // Initialize Supabase client (service role)
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get business data
+    // Get business data and verify ownership
     const { data: business, error: businessError } = await supabase
       .from('businesses')
-      .select('id, name, email')
+      .select('id, name, email, owner_id')
       .eq('id', businessId)
       .single()
 
     if (businessError || !business) {
-      throw new Error(`Business not found: ${businessError?.message}`)
+      return new Response(JSON.stringify({ error: 'Business not found' }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // ─── AUTORIZACIÓN: solo el owner puede crear checkout ─────────────────
+    if (business.owner_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     // Calculate price
@@ -179,27 +204,13 @@ Deno.serve(async (req) => {
         init_point: preferenceData.init_point,
         sandbox_init_point: preferenceData.sandbox_init_point,
       }),
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Edge Function Error:', error)
+    console.error('mercadopago-create-preference error:', error)
     return new Response(
-      JSON.stringify({
-        error: error.message,
-        details: error.stack,
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     )
   }
 })
