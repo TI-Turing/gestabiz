@@ -672,3 +672,173 @@ npx supabase functions deploy send-whatsapp
 ---
 
 *Ronda 1: 16 Mar 2026 | Ronda 2: 16 Mar 2026 | Ronda 3: 16 Mar 2026 | Gestabiz v0.0.12*
+
+---
+
+---
+
+## RONDA 4 — Vulnerabilidades adicionales
+
+### Resumen Ronda 4
+| Severidad | Total | Corregido | Pendiente |
+|-----------|-------|-----------|-----------|
+| CRÍTICO   | 1     | 1         | 0         |
+| ALTO      | 3     | 3         | 0         |
+| MEDIO     | 3     | 2         | 1         |
+| BAJO      | 1     | 1         | 0         |
+| **Total** | **8** | **7**     | **1**     |
+
+**Total acumulado**: 51 vulnerabilidades identificadas, 32 corregidas
+
+---
+
+### CRÍTICOS
+
+#### VULN-42 — HTML injection en `send-email-reminder` (XSS en email cliente)
+**Severidad**: CRÍTICO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/send-email-reminder/index.ts` (líneas 99-109)
+
+**Descripción**: Los campos `appointment.title`, `appointment.description`, `appointment.notes` y `appointment.location.name` se insertaban directamente en el HTML del email sin ningún escape. Un atacante podía crear una cita con datos maliciosos y cuando el cliente recibiera el recordatorio, el email contendría HTML/JS arbitrario.
+
+**Código vulnerable**:
+```typescript
+<p><strong>Título:</strong> ${appointment.title ?? ''}</p>
+// appointment.title podía contener: </p><img src=x onerror="fetch('/steal')"><p>
+```
+
+**Corrección aplicada**:
+- Implementada función `escapeHtml()` que escapa `&`, `<`, `>`, `"`, `'`
+- Todos los campos de usuario escapados antes de insertar en template HTML
+- Variables seguras: `safeTitle`, `safeLocationName`, `safeDescription`, `safeNotes`
+
+---
+
+### ALTOS
+
+#### VULN-43 — HTML injection en `send-bug-report-email` (XSS en email de soporte)
+**Severidad**: ALTO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/send-bug-report-email/index.ts` (líneas 133-256)
+
+**Descripción**: Los campos `title`, `description`, `stepsToReproduce`, `userName`, `userEmail`, `affectedPage`, `browserVersion`, `deviceType`, `screenResolution`, `bugReportId` se insertaban directamente en el HTML del email sin escape. Un usuario malicioso podía inyectar HTML/JS que se ejecutaría en el cliente de email del equipo de soporte.
+
+**Corrección aplicada**:
+- Implementada función `escapeHtml()` (misma que en VULN-42)
+- 10 variables safe creadas para todos los campos de usuario
+- Subject del email también usa `safeTitle`
+
+---
+
+#### VULN-44 — `send-sms-reminder` sin validación E.164 del número telefónico
+**Severidad**: ALTO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/send-sms-reminder/index.ts` (líneas 66-88)
+
+**Descripción**: El número de teléfono del cliente se procesaba extrayendo solo dígitos y agregando `+` al inicio (`+${digits}`). Esto aceptaba:
+- Números incompletos: `3001234567` → `+3001234567` (INVÁLIDO en E.164, debería ser `+573001234567`)
+- Números cortos: `123` → `+123` (podría rutear a servicios de emergencia)
+- Sin validación de código de país
+
+**Corrección aplicada**:
+- Validación con regex E.164 (`/^\+[1-9]\d{6,14}$/`) antes de enviar a Twilio
+- Si el número no cumple formato, se marca la notificación como `failed` y retorna 400
+- Error genérico al cliente, detalles en logs
+
+---
+
+#### VULN-45 — CORS wildcard en `send-email-reminder` y `send-sms-reminder`
+**Severidad**: ALTO | **Estado**: ✅ CORREGIDO
+**Archivos**: `send-email-reminder/index.ts`, `send-sms-reminder/index.ts`
+
+**Descripción**: Ambas funciones usaban `'Access-Control-Allow-Origin': '*'` a pesar de que funciones equivalentes ya habían sido corregidas en Rondas 1-3. Estas funciones podían recibir requests desde cualquier origen en el browser.
+
+**Corrección aplicada**: Reemplazado CORS wildcard por `_shared/cors.ts` en ambas funciones.
+
+---
+
+### MEDIOS
+
+#### VULN-46 — `send-bug-report-email` CORS wildcard
+**Severidad**: MEDIO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/send-bug-report-email/index.ts`
+
+**Descripción**: Función de reporte de bugs con CORS wildcard. Aunque requiere auth, el wildcard es innecesario.
+
+**Corrección aplicada**: Reemplazado por `_shared/cors.ts`.
+
+---
+
+#### VULN-47 — `send-whatsapp` intenta releer body consumido en catch (código muerto/peligroso)
+**Severidad**: MEDIO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/send-whatsapp/index.ts` (líneas 183-187)
+
+**Descripción**: El catch block intentaba releer el body del request con `req.json()` dos veces más, pero el stream ya había sido consumido. Las Promises generadas eran huérfanas (sin `await` ni `.catch()`), causando `UnhandledPromiseRejection` silencioso.
+
+```typescript
+// Código vulnerable:
+console.log('WhatsApp message that failed to send:', {
+  to: req.json().then(data => data.to),    // ← req.body ya consumido, Promise huérfana
+  message: req.json().then(data => data.message),  // ← ídem
+})
+```
+
+**Corrección aplicada**: Eliminado el bloque de fallback log completo.
+
+---
+
+#### VULN-48 — Stack traces y mensajes internos en catch de funciones reminder
+**Severidad**: MEDIO | **Estado**: ✅ PARCIALMENTE CORREGIDO
+**Archivos**: `send-email-reminder/index.ts`, `send-sms-reminder/index.ts`
+
+**Descripción**: Los catch blocks retornaban `String(error)` directamente al cliente, exponiendo mensajes internos de Deno, rutas de archivo y detalles de implementación.
+
+**Corrección aplicada**: Respuesta genérica `'Internal server error'` + log interno con `console.error()`. El campo `error_message` en BD para la notificación también ahora usa solo la info necesaria.
+
+---
+
+### BAJOS
+
+#### VULN-49 — Error details expuestos en `send-bug-report-email` catch
+**Severidad**: BAJO | **Estado**: ✅ CORREGIDO
+**Archivo**: `supabase/functions/send-bug-report-email/index.ts`
+
+**Descripción**: El catch retornaba `error.message` directamente. Dado que este endpoint se llama desde usuarios autenticados, el riesgo es bajo, pero sigue siendo una mala práctica exponer mensajes internos de error.
+
+**Corrección aplicada**: Respuesta genérica `'Internal server error'`.
+
+---
+
+## Archivos modificados en Ronda 4
+1. `supabase/functions/send-email-reminder/index.ts` — HTML escape + CORS restrictivo + error sanitizado
+2. `supabase/functions/send-sms-reminder/index.ts` — E.164 validation + CORS restrictivo + error sanitizado
+3. `supabase/functions/send-bug-report-email/index.ts` — HTML escape (10 campos) + CORS restrictivo + error sanitizado
+4. `supabase/functions/send-whatsapp/index.ts` — Eliminado fallback log con Promises huérfanas
+5. `package.json` — Versión bumped a 0.0.13
+
+---
+
+## Acciones pendientes acumuladas Ronda 4
+
+Vulnerabilidades pendientes de Rondas anteriores no tocadas en Ronda 4. Ver `SECURITY_PENDING.md` para lista completa.
+
+| # | Acción | Severidad | Tipo |
+|---|--------|-----------|------|
+| 1 | Rate limiting distribuido (checkout + send-message) | ALTO | Infraestructura |
+| 2 | Deduplicación de webhooks (tabla webhook_events) | ALTO | BD |
+| 3 | `manage-subscription` — verificar si admin check fue aplicado | ALTO | Código |
+| 4 | Validación de email en `request-absence` antes de `send-notification` | MEDIO | Código |
+| 5 | Metadata validation en `send-notification` (data: any, no size limit) | MEDIO | Código |
+| 6 | Mover env vars de `vercel.json` a Vercel Dashboard | CRÍTICO | Config manual |
+| 7 | Rotar credenciales si `.env` fue commiteado alguna vez | CRÍTICO | Config manual |
+| 8 | Configurar `MERCADOPAGO_WEBHOOK_SECRET` en Supabase Secrets | CRÍTICO | Config manual |
+| 9 | Deploy de todas las funciones corregidas en Rondas 1-4 | — | Operacional |
+
+```bash
+# Deploy Ronda 4:
+npx supabase functions deploy send-email-reminder
+npx supabase functions deploy send-sms-reminder
+npx supabase functions deploy send-bug-report-email
+npx supabase functions deploy send-whatsapp
+```
+
+---
+
+*Ronda 1: 16 Mar 2026 | Ronda 2: 16 Mar 2026 | Ronda 3: 16 Mar 2026 | Ronda 4: 16 Mar 2026 | Gestabiz v0.0.13*

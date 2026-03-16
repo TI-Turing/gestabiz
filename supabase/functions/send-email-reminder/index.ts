@@ -3,16 +3,23 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Escapa caracteres HTML para prevenir inyección en templates de email
+function escapeHtml(text: string | null | undefined): string {
+  if (!text) return ''
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+  const corsHeaders = getCorsHeaders(req)
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
@@ -85,26 +92,32 @@ serve(async (req) => {
     })
     const formattedTime = appointmentDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
 
-    const emailSubject = `Recordatorio: ${appointment.title ?? 'Tu cita'}`
+    // Escapar todos los datos de usuario antes de insertar en HTML
+    const safeTitle = escapeHtml(appointment.title ?? 'Tu cita')
+    const safeLocationName = escapeHtml(appointment.location?.name)
+    const safeDescription = escapeHtml(appointment.description)
+    const safeNotes = escapeHtml(appointment.notes)
+
+    const emailSubject = `Recordatorio: ${safeTitle}`
     const emailBody = `
       <html>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-              <h1 style="margin: 0; font-size: 24px;">📅 Recordatorio de Cita</h1>
+              <h1 style="margin: 0; font-size: 24px;">Recordatorio de Cita</h1>
             </div>
             <div style="background: white; padding: 30px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
               <h2 style="color: #667eea; margin-top: 0;">Detalles de su cita:</h2>
               <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p style="margin: 0 0 10px 0;"><strong>Título:</strong> ${appointment.title ?? ''}</p>
+                <p style="margin: 0 0 10px 0;"><strong>Título:</strong> ${safeTitle}</p>
                 <p style="margin: 0 0 10px 0;"><strong>Fecha:</strong> ${formattedDate}</p>
                 <p style="margin: 0 0 10px 0;"><strong>Hora:</strong> ${formattedTime}</p>
-                ${appointment.location?.name ? `<p style="margin: 0 0 10px 0;"><strong>Ubicación:</strong> ${appointment.location.name}</p>` : ''}
-                ${appointment.description ? `<p style="margin: 0 0 10px 0;"><strong>Descripción:</strong> ${appointment.description}</p>` : ''}
+                ${safeLocationName ? `<p style="margin: 0 0 10px 0;"><strong>Ubicación:</strong> ${safeLocationName}</p>` : ''}
+                ${safeDescription ? `<p style="margin: 0 0 10px 0;"><strong>Descripción:</strong> ${safeDescription}</p>` : ''}
               </div>
-              ${appointment.notes ? `
+              ${safeNotes ? `
                 <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                  <p style="margin: 0; color: #856404;"><strong>Notas:</strong> ${appointment.notes}</p>
+                  <p style="margin: 0; color: #856404;"><strong>Notas:</strong> ${safeNotes}</p>
                 </div>
               ` : ''}
               <div style="margin: 30px 0; text-align: center;">
@@ -170,7 +183,8 @@ serve(async (req) => {
       }
     } catch (_) {}
 
-    return new Response(JSON.stringify({ success: false, error: String(error) }), {
+    console.error('Error sending email reminder:', error)
+    return new Response(JSON.stringify({ success: false, error: 'Internal server error' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     })

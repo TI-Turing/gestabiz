@@ -178,13 +178,6 @@ Si necesitas cancelar o reprogramar, por favor responde a este mensaje.
 
   } catch (error) {
     console.error('Error sending WhatsApp message:', error)
-    
-    // Fallback: Log the attempt for manual follow-up
-    console.log('WhatsApp message that failed to send:', {
-      to: req.json().then(data => data.to),
-      message: req.json().then(data => data.message),
-      timestamp: new Date().toISOString()
-    })
 
     return new Response(
       JSON.stringify({

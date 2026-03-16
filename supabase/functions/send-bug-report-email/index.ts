@@ -1,10 +1,17 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendBrevoEmail } from '../_shared/brevo.ts'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Escapa caracteres HTML para prevenir inyección en templates de email
+function escapeHtml(text: string | null | undefined): string {
+  if (!text) return ''
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
 }
 
 interface BugReportEmailRequest {
@@ -24,10 +31,9 @@ interface BugReportEmailRequest {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+  const corsHeaders = getCorsHeaders(req)
 
   try {
     // Verificar API key
@@ -90,6 +96,18 @@ serve(async (req) => {
 
     const config = severityConfig[severity] || severityConfig.medium
 
+    // Escapar todos los datos de usuario antes de insertar en HTML
+    const safeTitle = escapeHtml(title)
+    const safeDescription = escapeHtml(description)
+    const safeStepsToReproduce = escapeHtml(stepsToReproduce)
+    const safeUserName = escapeHtml(userName)
+    const safeUserEmail = escapeHtml(userEmail)
+    const safeAffectedPage = escapeHtml(affectedPage)
+    const safeBrowserVersion = escapeHtml(browserVersion)
+    const safeDeviceType = escapeHtml(deviceType)
+    const safeScreenResolution = escapeHtml(screenResolution)
+    const safeBugReportId = escapeHtml(bugReportId)
+
     // Construir HTML del email
     const htmlBody = `
 <!DOCTYPE html>
@@ -130,7 +148,7 @@ serve(async (req) => {
           <tr>
             <td style="padding: 0 40px 24px 40px;">
               <h2 style="margin: 0; color: #1f2937; font-size: 22px; font-weight: 600;">
-                ${title}
+                ${safeTitle}
               </h2>
             </td>
           </tr>
@@ -142,13 +160,13 @@ serve(async (req) => {
                 <tr>
                   <td style="padding: 0;">
                     <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                      👤 Reportado por
+                      Reportado por
                     </p>
                     <p style="margin: 0; color: #1f2937; font-size: 16px; font-weight: 500;">
-                      ${userName}
+                      ${safeUserName}
                     </p>
                     <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">
-                      ${userEmail}
+                      ${safeUserEmail}
                     </p>
                   </td>
                 </tr>
@@ -160,26 +178,26 @@ serve(async (req) => {
           <tr>
             <td style="padding: 0 40px 24px 40px;">
               <h3 style="margin: 0 0 12px 0; color: #374151; font-size: 16px; font-weight: 600;">
-                📝 Descripción del Problema
+                Descripcion del Problema
               </h3>
               <div style="background-color: #f9fafb; border-left: 4px solid #667eea; padding: 16px; border-radius: 4px;">
                 <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">
-${description}
+${safeDescription}
                 </p>
               </div>
             </td>
           </tr>
 
-          ${stepsToReproduce ? `
+          ${safeStepsToReproduce ? `
           <!-- Steps to Reproduce -->
           <tr>
             <td style="padding: 0 40px 24px 40px;">
               <h3 style="margin: 0 0 12px 0; color: #374151; font-size: 16px; font-weight: 600;">
-                🔄 Pasos para Reproducir
+                Pasos para Reproducir
               </h3>
               <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 4px;">
                 <p style="margin: 0; color: #78350f; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">
-${stepsToReproduce}
+${safeStepsToReproduce}
                 </p>
               </div>
             </td>
@@ -190,52 +208,52 @@ ${stepsToReproduce}
           <tr>
             <td style="padding: 0 40px 24px 40px;">
               <h3 style="margin: 0 0 12px 0; color: #374151; font-size: 16px; font-weight: 600;">
-                ⚙️ Detalles Técnicos
+                Detalles Tecnicos
               </h3>
               <table style="width: 100%; border-collapse: collapse;">
-                ${affectedPage ? `
+                ${safeAffectedPage ? `
                 <tr>
                   <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                    <span style="color: #6b7280; font-size: 13px;">📄 Página Afectada:</span>
+                    <span style="color: #6b7280; font-size: 13px;">Pagina Afectada:</span>
                   </td>
                   <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">
-                    <span style="color: #1f2937; font-size: 13px; font-weight: 500;">${affectedPage}</span>
+                    <span style="color: #1f2937; font-size: 13px; font-weight: 500;">${safeAffectedPage}</span>
                   </td>
                 </tr>
                 ` : ''}
-                ${browserVersion ? `
+                ${safeBrowserVersion ? `
                 <tr>
                   <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                    <span style="color: #6b7280; font-size: 13px;">🌐 Navegador:</span>
+                    <span style="color: #6b7280; font-size: 13px;">Navegador:</span>
                   </td>
                   <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">
-                    <span style="color: #1f2937; font-size: 13px; font-weight: 500;">${browserVersion}</span>
+                    <span style="color: #1f2937; font-size: 13px; font-weight: 500;">${safeBrowserVersion}</span>
                   </td>
                 </tr>
                 ` : ''}
-                ${deviceType ? `
+                ${safeDeviceType ? `
                 <tr>
                   <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                    <span style="color: #6b7280; font-size: 13px;">📱 Dispositivo:</span>
+                    <span style="color: #6b7280; font-size: 13px;">Dispositivo:</span>
                   </td>
                   <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">
-                    <span style="color: #1f2937; font-size: 13px; font-weight: 500;">${deviceType}</span>
+                    <span style="color: #1f2937; font-size: 13px; font-weight: 500;">${safeDeviceType}</span>
                   </td>
                 </tr>
                 ` : ''}
-                ${screenResolution ? `
+                ${safeScreenResolution ? `
                 <tr>
                   <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                    <span style="color: #6b7280; font-size: 13px;">🖥️ Resolución:</span>
+                    <span style="color: #6b7280; font-size: 13px;">Resolucion:</span>
                   </td>
                   <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb; text-align: right;">
-                    <span style="color: #1f2937; font-size: 13px; font-weight: 500;">${screenResolution}</span>
+                    <span style="color: #1f2937; font-size: 13px; font-weight: 500;">${safeScreenResolution}</span>
                   </td>
                 </tr>
                 ` : ''}
                 <tr>
                   <td style="padding: 8px 0;">
-                    <span style="color: #6b7280; font-size: 13px;">📎 Evidencias Adjuntas:</span>
+                    <span style="color: #6b7280; font-size: 13px;">Evidencias Adjuntas:</span>
                   </td>
                   <td style="padding: 8px 0; text-align: right;">
                     <span style="color: #1f2937; font-size: 13px; font-weight: 500;">${evidenceCount} archivo(s)</span>
@@ -253,7 +271,7 @@ ${stepsToReproduce}
                   ID del Reporte
                 </p>
                 <p style="margin: 0; color: #1f2937; font-size: 14px; font-family: 'Courier New', monospace; font-weight: 600;">
-                  ${bugReportId}
+                  ${safeBugReportId}
                 </p>
               </div>
             </td>
@@ -277,38 +295,38 @@ ${stepsToReproduce}
 </html>
     `
 
-    // Texto plano alternativo
+    // Texto plano alternativo (sin HTML, pero usando valores sin escapado HTML)
     const textBody = `
 NUEVO REPORTE DE BUG
 
 Severidad: ${config.label}
-Título: ${title}
+Titulo: ${title}
 
 REPORTADO POR:
 ${userName} (${userEmail})
 
-DESCRIPCIÓN:
+DESCRIPCION:
 ${description}
 
 ${stepsToReproduce ? `PASOS PARA REPRODUCIR:\n${stepsToReproduce}\n\n` : ''}
 
-DETALLES TÉCNICOS:
-${affectedPage ? `Página Afectada: ${affectedPage}\n` : ''}
+DETALLES TECNICOS:
+${affectedPage ? `Pagina Afectada: ${affectedPage}\n` : ''}
 ${browserVersion ? `Navegador: ${browserVersion}\n` : ''}
 ${deviceType ? `Dispositivo: ${deviceType}\n` : ''}
-${screenResolution ? `Resolución: ${screenResolution}\n` : ''}
+${screenResolution ? `Resolucion: ${screenResolution}\n` : ''}
 Evidencias Adjuntas: ${evidenceCount} archivo(s)
 
 ID del Reporte: ${bugReportId}
 
 ---
-Este email fue generado automáticamente por el sistema de reporte de bugs de Gestabiz.
+Este email fue generado automaticamente por el sistema de reporte de bugs de Gestabiz.
     `
 
     // Enviar email vía Brevo
     const emailResult = await sendBrevoEmail({
       to: supportEmail,
-      subject: `🐛 [${config.label}] ${title}`,
+      subject: `[${config.label}] ${safeTitle}`,
       htmlBody: htmlBody,
       textBody: textBody,
       fromEmail: 'no-reply@gestabiz.com',
@@ -345,16 +363,9 @@ Este email fue generado automáticamente por el sistema de reporte de bugs de Ge
 
   } catch (error) {
     console.error('Error sending bug report email:', error)
-    
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message || 'Unknown error occurred'
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
+      JSON.stringify({ success: false, error: 'Internal server error' }),
+      { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }, status: 500 }
     )
   }
 })
