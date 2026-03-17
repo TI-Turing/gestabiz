@@ -41,6 +41,7 @@ const MainApp = lazy(() => import('@/components/MainApp'))
 const PublicBusinessProfile = lazy(() => import('@/pages/PublicBusinessProfile'))
 const AppointmentConfirmation = lazy(() => import('@/pages/AppointmentConfirmation'))
 const AppointmentCancellation = lazy(() => import('@/pages/AppointmentCancellation'))
+const GoogleCalendarCallback = lazy(() => import('@/pages/GoogleCalendarCallback'))
 
 // Loading component
 function AppLoader() {
@@ -109,6 +110,9 @@ function AppRoutes() {
       {/* Rutas públicas para confirmación de citas */}
       <Route path="/confirmar-cita/:token" element={<AppointmentConfirmation />} />
       <Route path="/cancelar-cita/:token" element={<AppointmentCancellation />} />
+
+      {/* OAuth callback para Google Calendar */}
+      <Route path="/auth/google/callback" element={<GoogleCalendarCallback />} />
       
       {/* Rutas protegidas - requieren autenticación */}
       <Route

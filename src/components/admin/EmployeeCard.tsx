@@ -6,6 +6,8 @@
  */
 
 import { MoreVertical, User, TrendingUp, Star, DollarSign, Edit, Eye, UserPlus, UserX, UserCheck } from 'lucide-react'
+import { useEmployeeMetrics } from '@/hooks/useEmployeeMetrics'
+import { formatCurrency } from '@/lib/utils'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -109,6 +111,18 @@ export function EmployeeCard({
   const initials = getInitials(employee.full_name)
   const employeeId = employee.user_id ?? employee.employee_id
   const { updateLevel, isUpdating } = useUpdateEmployeeHierarchySimple(businessId)
+
+  // Live performance metrics via RPCs (last 30 days)
+  const { occupancy, rating, revenue } = useEmployeeMetrics(
+    employeeId ?? null,
+    businessId,
+    { enableOccupancy: true, enableRating: true, enableRevenue: true },
+  )
+
+  // Prefer live data; fall back to hierarchy RPC data
+  const displayOccupancy = occupancy ?? employee.occupancy_rate
+  const displayRating = rating ?? employee.average_rating
+  const displayRevenue = revenue ?? employee.gross_revenue
 
   const toggleActiveMutation = useMutation({
     mutationFn: async (newIsActive: boolean) => {
@@ -274,8 +288,8 @@ export function EmployeeCard({
               <div>
                 <p className="text-xs text-muted-foreground">{t('employees.card.occupancy')}</p>
                 <p className="font-semibold">
-                  {employee.occupancy_rate !== null && employee.occupancy_rate !== undefined
-                    ? `${Number(employee.occupancy_rate).toFixed(0)}%`
+                  {displayOccupancy !== null && displayOccupancy !== undefined
+                    ? `${Number(displayOccupancy).toFixed(0)}%`
                     : 'N/A'}
                 </p>
               </div>
@@ -289,8 +303,8 @@ export function EmployeeCard({
               <div>
                 <p className="text-xs text-muted-foreground">{t('employees.card.rating')}</p>
                 <p className="font-semibold">
-                  {employee.average_rating !== null && employee.average_rating !== undefined
-                    ? <span className="flex items-center gap-1">{Number(employee.average_rating).toFixed(1)}<Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /></span>
+                  {displayRating !== null && displayRating !== undefined && Number(displayRating) > 0
+                    ? <span className="flex items-center gap-1">{Number(displayRating).toFixed(1)}<Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /></span>
                     : 'N/A'}
                 </p>
               </div>
@@ -304,8 +318,8 @@ export function EmployeeCard({
               <div>
                 <p className="text-xs text-muted-foreground">{t('employees.card.revenue')}</p>
                 <p className="font-semibold">
-                  {employee.gross_revenue !== null && employee.gross_revenue !== undefined
-                    ? `$${(Number(employee.gross_revenue) / 1000).toFixed(0)}k`
+                  {displayRevenue !== null && displayRevenue !== undefined && Number(displayRevenue) > 0
+                    ? formatCurrency(Number(displayRevenue))
                     : 'N/A'}
                 </p>
               </div>

@@ -211,24 +211,31 @@ export function NotificationSettings({ userId }: { userId: string }) {
             />
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Phone className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <Label htmlFor="sms-channel">{t('notifications.channels.sms')}</Label>
-                {preferences.phone_verified && (
-                  <Badge variant="outline" className="ml-2 text-xs">
-                    <Check className="h-3 w-3 mr-1" />
-                    {t('notifications.channels.verified')}
-                  </Badge>
-                )}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Phone className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <Label htmlFor="sms-channel">{t('notifications.channels.sms')}</Label>
+                  {preferences.phone_verified && (
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      <Check className="h-3 w-3 mr-1" />
+                      {t('notifications.channels.verified')}
+                    </Badge>
+                  )}
+                </div>
               </div>
+              <Switch
+                id="sms-channel"
+                checked={preferences.sms_enabled}
+                onCheckedChange={(checked) => updateChannelEnabled('sms', checked)}
+              />
             </div>
-            <Switch
-              id="sms-channel"
-              checked={preferences.sms_enabled}
-              onCheckedChange={(checked) => updateChannelEnabled('sms', checked)}
-            />
+            {preferences.sms_enabled && (
+              <p className="text-xs text-muted-foreground ml-8">
+                Requiere número de teléfono en formato internacional en tu perfil (ej: +573001234567).
+              </p>
+            )}
           </div>
 
           <div className="flex items-center justify-between">

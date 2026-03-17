@@ -118,6 +118,21 @@ export function useWizardState({
     true,
   )
 
+  // When wizard opens with a businessId prop but business object not yet loaded,
+  // fetch it so canProceed() can detect resource_model for resource-based businesses
+  React.useEffect(() => {
+    if (!businessId || wizardData.business) return
+    supabase
+      .from('businesses')
+      .select('id, name, description, resource_model')
+      .eq('id', businessId)
+      .single()
+      .then(({ data }) => {
+        if (data) updateWizardData({ business: data as WizardBusiness })
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [businessId])
+
   const initiatedFromEmployeeProfile = Boolean(preselectedEmployeeId)
   const needsEmployeeBusinessSelection =
     !!initiatedFromEmployeeProfile && !!wizardData.employeeId && employeeBusinesses.length > 1
@@ -343,8 +358,11 @@ export function useWizardState({
     }
 
     if (currentStep === getStepNumber('employee') && !isEmployeeOfAnyBusiness) {
-      toast.error(t('appointments.wizard_errors.professionalCannotAccept'))
-      return
+      // Resource bookings don't require an employee — skip this validation
+      if (!wizardData.resourceId) {
+        toast.error(t('appointments.wizard_errors.professionalCannotAccept'))
+        return
+      }
     }
 
     const maxStep = getTotalSteps() - 1
