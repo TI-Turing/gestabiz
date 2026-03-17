@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
@@ -133,18 +133,15 @@ export function useServiceStatus() {
     })
   }, [wasDown])
 
+  // Ref ensures the interval always calls the latest checkHealth (avoids stale wasDown closure)
+  const checkHealthRef = useRef(checkHealth)
+  useEffect(() => { checkHealthRef.current = checkHealth }, [checkHealth])
+
   useEffect(() => {
-    // CRITICAL: Check health once on mount
-    checkHealth()
-
-    // Health check every 5 minutes (not 30 seconds!) to avoid rate limiting
-    const interval = setInterval(() => {
-      checkHealth()
-    }, 300000) // 5 minutes = 300000ms
-
+    checkHealthRef.current()
+    const interval = setInterval(() => checkHealthRef.current(), 300000)
     return () => clearInterval(interval)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Empty deps! Don't include checkHealth to prevent infinite loop
+  }, [])
 
   return { ...status, refresh: checkHealth }
 }
