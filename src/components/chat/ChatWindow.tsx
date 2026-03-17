@@ -11,6 +11,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
 import { TypingIndicator } from './TypingIndicator';
@@ -67,6 +77,7 @@ export function ChatWindow({
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -92,6 +103,18 @@ export function ChatWindow({
     setEditingMessageId(null);
   }, [conversation?.id]);
 
+  // Escape key cancels reply/edit mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (replyToMessage) setReplyToMessage(null);
+        if (editingMessageId) setEditingMessageId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [replyToMessage, editingMessageId]);
+
   /**
    * Manejar responder a mensaje
    */
@@ -111,13 +134,16 @@ export function ChatWindow({
   /**
    * Manejar eliminar mensaje
    */
-  const handleDelete = async (messageId: string) => {
+  const handleDelete = (messageId: string) => {
     if (!onDeleteMessage) return;
+    setPendingDeleteId(messageId);
+  };
 
-    const confirmed = window.confirm('¿Estás seguro de que quieres eliminar este mensaje?');
-    if (confirmed) {
-      await onDeleteMessage(messageId);
+  const confirmDelete = async () => {
+    if (pendingDeleteId && onDeleteMessage) {
+      await onDeleteMessage(pendingDeleteId);
     }
+    setPendingDeleteId(null);
   };
 
   /**
@@ -365,6 +391,26 @@ export function ChatWindow({
           placeholder={getInputPlaceholder(editingMessageId, replyToMessage)}
         />
       </ChatComponentErrorBoundary>
+      {/* Confirmación de eliminación */}
+      <AlertDialog open={!!pendingDeleteId} onOpenChange={(open) => !open && setPendingDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar mensaje</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que quieres eliminar este mensaje? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

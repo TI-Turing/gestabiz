@@ -11,6 +11,8 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Copy,
+  ExternalLink,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -20,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { usePreferredLocation } from '@/hooks/usePreferredLocation'
 import PublicBusinessProfile from '@/pages/PublicBusinessProfile'
+import { toast } from 'sonner'
 
 interface OverviewTabProps {
   business: Business
@@ -144,6 +147,17 @@ export function OverviewTab({ business }: OverviewTabProps) {
     fetchStats()
   }, [fetchStats])
 
+  const currentMonthName = new Date().toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
+
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/negocio/${business.slug}`
+    navigator.clipboard.writeText(url).then(() => {
+      toast.success('Enlace copiado al portapapeles')
+    }).catch(() => {
+      toast.error('No se pudo copiar el enlace')
+    })
+  }
+
   const handleTodayCardClick = () => {
     const filters = {
       status: ['pending', 'confirmed', 'completed'],
@@ -212,8 +226,8 @@ export function OverviewTab({ business }: OverviewTabProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">{stats.upcomingAppointments}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Citas futuras este mes
+            <p className="text-xs text-muted-foreground mt-1 capitalize">
+              Futuras en {currentMonthName}
             </p>
           </CardContent>
         </Card>
@@ -227,8 +241,8 @@ export function OverviewTab({ business }: OverviewTabProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">{stats.completedAppointments}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Completadas este mes
+            <p className="text-xs text-muted-foreground mt-1 capitalize">
+              Completadas en {currentMonthName}
             </p>
           </CardContent>
         </Card>
@@ -310,8 +324,8 @@ export function OverviewTab({ business }: OverviewTabProps) {
             <div className="text-2xl font-bold text-foreground">
               ${stats.monthlyRevenue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Total de ingresos por citas completadas este mes
+            <p className="text-xs text-muted-foreground mt-1 capitalize">
+              Ingresos por citas completadas en {currentMonthName}
             </p>
           </CardContent>
         </Card>
@@ -334,47 +348,153 @@ export function OverviewTab({ business }: OverviewTabProps) {
         </Card>
       </div>
 
-      {/* Quick Actions or Alerts */}
-      {stats.totalLocations === 0 || stats.totalServices === 0 || business.is_configured === false ? (
-        <Card className="bg-amber-500/10 border-amber-500/20">
-          <CardContent className="pt-3">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-400 mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-foreground mb-1">
-                  Configuración Incompleta
-                </h3>
-                <p className="text-sm text-foreground/90">
-                  {stats.totalLocations === 0 && stats.totalServices === 0
-                    ? 'Necesitas agregar sedes y servicios para empezar a recibir citas.'
-                    : stats.totalLocations === 0
-                    ? 'Necesitas agregar al menos una sede para tu negocio.'
-                    : stats.totalServices === 0
-                    ? 'Necesitas agregar servicios que ofrecer a tus clientes.'
-                    : 'Verifica que todas las sedes tengan servicios activos y empleados/recursos asignados.'}
-                </p>
-                <div className="flex gap-2 mt-3">
-                  {stats.totalLocations === 0 && (
-                    <Badge variant="outline" className="border-amber-500/50 text-amber-300">
-                      Sin sedes
-                    </Badge>
-                  )}
-                  {stats.totalServices === 0 && (
-                    <Badge variant="outline" className="border-amber-500/50 text-amber-300">
-                      Sin servicios
-                    </Badge>
-                  )}
-                  {business.is_configured === false && (
-                    <Badge variant="destructive" className="bg-red-500 text-white flex items-center gap-1">
-                      <XCircle className="h-3 w-3" /> No disponible al público
-                    </Badge>
-                  )}
+      {/* Setup Checklist — shown when business is not fully configured */}
+      {(stats.totalLocations === 0 || stats.totalServices === 0 || business.is_configured === false) && (() => {
+        const checklistItems = [
+          {
+            key: 'location',
+            label: 'Al menos una sede',
+            hint: 'Define dónde atenderás a tus clientes.',
+            done: stats.totalLocations > 0,
+            navigateTo: '/app/admin/locations',
+            required: true,
+          },
+          {
+            key: 'services',
+            label: 'Servicios configurados',
+            hint: 'Define qué ofreces y sus precios para recibir reservas.',
+            done: stats.totalServices > 0,
+            navigateTo: '/app/admin/services',
+            required: true,
+          },
+          {
+            key: 'employees',
+            label: 'Profesionales o recursos asignados',
+            hint: 'Necesitas al menos un empleado o recurso para atender citas.',
+            done: stats.totalEmployees > 0,
+            navigateTo: '/app/admin/employees',
+            required: true,
+          },
+          {
+            key: 'logo',
+            label: 'Logo del negocio',
+            hint: 'Un logo mejora la confianza y reconocimiento de tu marca.',
+            done: !!business.logo_url,
+            navigateTo: '/app/admin/settings',
+            required: false,
+          },
+          {
+            key: 'description',
+            label: 'Descripción del negocio',
+            hint: 'Explica qué ofreces para atraer más clientes.',
+            done: !!business.description,
+            navigateTo: '/app/admin/settings',
+            required: false,
+          },
+          {
+            key: 'phone',
+            label: 'Teléfono de contacto',
+            hint: 'Facilita que los clientes puedan contactarte directamente.',
+            done: !!business.phone,
+            navigateTo: '/app/admin/settings',
+            required: false,
+          },
+        ]
+        const completedCount = checklistItems.filter((i) => i.done).length
+        const totalCount = checklistItems.length
+        const progressPct = Math.round((completedCount / totalCount) * 100)
+
+        return (
+          <Card className="bg-amber-500/10 border-amber-500/30">
+            <CardContent className="pt-4 pb-4">
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-foreground leading-tight">
+                      Completa la configuración de tu negocio
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {completedCount} de {totalCount} pasos completados · Tu negocio{' '}
+                      {business.is_configured
+                        ? 'ya es visible al público'
+                        : 'aún no es visible al público'}
+                    </p>
+                  </div>
                 </div>
+                <Badge
+                  variant="outline"
+                  className={
+                    business.is_configured
+                      ? 'border-green-500/50 text-green-400 shrink-0'
+                      : 'border-red-500/50 text-red-400 shrink-0'
+                  }
+                >
+                  {business.is_configured ? 'Público' : 'No público'}
+                </Badge>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
+
+              {/* Progress bar */}
+              <div className="w-full bg-muted rounded-full h-1.5 mb-4">
+                <div
+                  className="bg-green-500 h-1.5 rounded-full transition-all duration-500"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+
+              {/* Checklist items */}
+              <div className="space-y-1">
+                {checklistItems.map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between gap-3 py-1.5 px-1 rounded-md"
+                  >
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      {item.done ? (
+                        <CheckCircle className="h-4 w-4 text-green-400 shrink-0 mt-0.5" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                      )}
+                      <div className="min-w-0">
+                        <p
+                          className={`text-sm font-medium leading-tight ${
+                            item.done
+                              ? 'text-muted-foreground line-through decoration-muted-foreground/40'
+                              : 'text-foreground'
+                          }`}
+                        >
+                          {item.label}
+                          {item.required && !item.done && (
+                            <span className="ml-1.5 text-xs font-normal text-amber-400">
+                              requerido
+                            </span>
+                          )}
+                        </p>
+                        {!item.done && (
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
+                            {item.hint}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {!item.done && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs shrink-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                        onClick={() => navigate(item.navigateTo)}
+                      >
+                        Ir →
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })()}
 
       {/* Business Info Summary */}
       <Card className="bg-card border-border overflow-hidden">
@@ -409,14 +529,35 @@ export function OverviewTab({ business }: OverviewTabProps) {
                 <p className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wide">Información del Negocio</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0 mt-3"
-              onClick={() => setShowPublicProfile((prev) => !prev)}
-            >
-              {showPublicProfile ? 'Ocultar perfil' : 'Ver perfil del negocio'}
-            </Button>
+            <div className="flex items-center gap-1 shrink-0 mt-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopyLink}
+                title="Copiar enlace del perfil público"
+                className="px-2"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+              {business.slug && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.open(`/negocio/${business.slug}`, '_blank')}
+                  title="Abrir perfil público en nueva pestaña"
+                  className="px-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPublicProfile((prev) => !prev)}
+              >
+                {showPublicProfile ? 'Ocultar perfil' : 'Ver perfil'}
+              </Button>
+            </div>
           </div>
           {showPublicProfile && (
             <div className="mt-4">
