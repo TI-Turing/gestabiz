@@ -23,6 +23,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -98,6 +108,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
   const [pendingImageFiles, setPendingImageFiles] = useState<File[]>([])
   const [profileServiceId, setProfileServiceId] = useState<string | null>(null)
   const [showInactive, setShowInactive] = useState(false)
+  const [pendingDeleteServiceId, setPendingDeleteServiceId] = useState<string | null>(null)
 
   // Evitar caché del navegador/CDN cuando la URL no cambia
   const cacheBust = (url: string) => {
@@ -618,8 +629,9 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-12">
+      <div className="flex flex-col items-center justify-center p-12 gap-3">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500"></div>
+        <p className="text-sm text-muted-foreground">Cargando servicios...</p>
       </div>
     )
   }
@@ -731,7 +743,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
                       variant="ghost"
                       size="sm"
                       className="bg-white/80 hover:bg-white text-red-600 hover:text-red-700 rounded-full shadow"
-                      onClick={(e) => { e.stopPropagation(); handleDelete(service.id) }}
+                      onClick={(e) => { e.stopPropagation(); setPendingDeleteServiceId(service.id) }}
                       title="Eliminar"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -742,7 +754,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
                 <div className="absolute bottom-0 left-0 right-0 z-10 p-3 sm:p-4">
                   <div className="flex items-center justify-between">
                     <div className="min-w-0">
-                      <h3 className="text-white font-semibold text-base sm:text-lg truncate">{service.name}</h3>
+                      <h3 className="text-white font-semibold text-base sm:text-lg truncate" title={service.name}>{service.name}</h3>
                       {service.description && (
                         <p className="text-white/80 text-xs sm:text-sm line-clamp-2">{service.description}</p>
                       )}
@@ -795,19 +807,26 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
                 onChange={(e) => handleChange('name', e.target.value)}
                 placeholder="Ej: Corte de Cabello"
                 required
+                autoFocus
                 className="min-h-[44px]"
               />
             </div>
 
             {/* Description */}
             <div>
-              <Label htmlFor="description" className="text-sm sm:text-base">Descripción</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label htmlFor="description" className="text-sm sm:text-base">Descripción</Label>
+                <span className={`text-xs ${(formData.description?.length || 0) > 450 ? 'text-amber-400' : 'text-muted-foreground'}`}>
+                  {formData.description?.length || 0}/500
+                </span>
+              </div>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
                 placeholder="Describe el servicio"
                 rows={3}
+                maxLength={500}
                 className="min-h-[88px]"
               />
             </div>
@@ -1040,6 +1059,33 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
           if (svc) handleOpenDialog(svc)
         }}
       />
+
+      {/* Confirmación de eliminación de servicio */}
+      <AlertDialog
+        open={!!pendingDeleteServiceId}
+        onOpenChange={(open) => !open && setPendingDeleteServiceId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar servicio</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Estás seguro de que quieres eliminar este servicio? Se notificará a los clientes con citas activas y esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingDeleteServiceId) handleDelete(pendingDeleteServiceId)
+                setPendingDeleteServiceId(null)
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

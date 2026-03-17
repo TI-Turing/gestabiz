@@ -253,8 +253,9 @@ export function ResourcesManager({ business }: Readonly<ResourcesManagerProps>) 
 
         <CardContent>
           {isLoading && (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              <p className="text-sm text-muted-foreground">Cargando recursos...</p>
             </div>
           )}
           

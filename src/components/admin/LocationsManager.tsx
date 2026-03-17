@@ -754,8 +754,9 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-12">
+      <div className="flex flex-col items-center justify-center p-12 gap-3">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-500"></div>
+        <p className="text-sm text-muted-foreground">Cargando sedes...</p>
       </div>
     )
   }

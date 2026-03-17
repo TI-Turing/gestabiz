@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Building2, MapPin, DollarSign, BarChart3, Briefcase, Star, Mail, Phone, Globe } from 'lucide-react';
 import {
   Dialog,
@@ -70,6 +70,7 @@ export function EmploymentDetailModal({
   const [loading, setLoading] = useState(true);
   const [details, setDetails] = useState<BusinessDetails | null>(null);
   const [activeTab, setActiveTab] = useState('info');
+  const [ratingDist, setRatingDist] = useState<Record<number, number>>({});
 
   // Helper functions
   const formatDate = (dateString: string) => {
@@ -107,6 +108,25 @@ export function EmploymentDetailModal({
     }
   }, [open, businessId, employeeId, fetchDetails]);
 
+  // Fetch real rating distribution from reviews table
+  const fetchRatingDist = useCallback(async () => {
+    const { data } = await supabase
+      .from('reviews')
+      .select('rating')
+      .eq('employee_id', employeeId)
+      .eq('review_type', 'employee')
+    if (!data) return
+    const dist: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+    for (const r of data) {
+      if (r.rating >= 1 && r.rating <= 5) dist[r.rating] = (dist[r.rating] || 0) + 1
+    }
+    setRatingDist(dist)
+  }, [employeeId])
+
+  useEffect(() => {
+    if (open && employeeId) fetchRatingDist()
+  }, [open, employeeId, fetchRatingDist])
+
   if (!details && !loading) {
     return null;
   }
@@ -139,8 +159,9 @@ export function EmploymentDetailModal({
         </DialogHeader>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center justify-center py-12 gap-3">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p className="text-sm text-muted-foreground">Cargando detalles...</p>
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
@@ -217,7 +238,12 @@ export function EmploymentDetailModal({
                       {details?.email && (
                         <p className="text-foreground flex items-center gap-2">
                           <Mail className="h-4 w-4" />
-                          <span>{details.email}</span>
+                          <a
+                            href={`mailto:${details.email}`}
+                            className="hover:underline hover:text-primary transition-colors"
+                          >
+                            {details.email}
+                          </a>
                         </p>
                       )}
                       {details?.phone && (
@@ -405,7 +431,7 @@ export function EmploymentDetailModal({
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground mb-1">Calificación Promedio</p>
                       <p className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
-                        {details?.employee_avg_rating 
+                        {details?.employee_avg_rating
                           ? (
                             <>
                               <Star className="h-8 w-8 text-yellow-400 fill-yellow-400" />
@@ -421,6 +447,34 @@ export function EmploymentDetailModal({
                         </p>
                       )}
                     </div>
+
+                    {/* Real rating distribution */}
+                    {details?.employee_total_reviews !== undefined && details.employee_total_reviews > 0 && (
+                      <div className="mt-4 space-y-1.5">
+                        {[5, 4, 3, 2, 1].map(star => {
+                          const count = ratingDist[star] || 0
+                          const pct = details.employee_total_reviews
+                            ? Math.round((count / details.employee_total_reviews) * 100)
+                            : 0
+                          return (
+                            <div key={star} className="flex items-center gap-2">
+                              <span className="text-xs w-8 flex items-center gap-0.5 shrink-0">
+                                {star}<Star className="h-3 w-3 fill-yellow-400 text-yellow-400 inline" />
+                              </span>
+                              <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-yellow-400 rounded-full transition-all duration-500"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-muted-foreground w-8 text-right shrink-0">
+                                {count}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -439,39 +493,6 @@ export function EmploymentDetailModal({
                 </Card>
               </div>
 
-              {details?.employee_avg_rating !== undefined && details.employee_avg_rating > 0 && (
-                <Card className="mt-4">
-                  <CardHeader>
-                    <CardTitle className="text-base">Distribución de Calificaciones</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {[5, 4, 3, 2, 1].map(star => {
-                        const percentage = details.employee_total_reviews 
-                          ? Math.random() * 100 // TODO: Real distribution from reviews table
-                          : 0;
-                        return (
-                          <div key={star} className="flex items-center gap-3">
-                            <span className="text-sm w-12 flex items-center gap-1">
-                              <span>{star}</span>
-                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            </span>
-                            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-primary rounded-full transition-all"
-                                style={{ width: `${percentage}%` }}
-                              />
-                            </div>
-                            <span className="text-sm text-muted-foreground w-12 text-right">
-                              {percentage.toFixed(0)}%
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </TabsContent>
           </Tabs>
         )}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   DollarSign,
   TrendingUp,
@@ -45,6 +46,7 @@ export function FinancialOverview({
   locationId,
 }: Readonly<FinancialOverviewProps>) {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const [period, setPeriod] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
   const [appointmentStats, setAppointmentStats] = useState<AppointmentStats>({
     total_appointments: 0,
@@ -167,11 +169,6 @@ export function FinancialOverview({
 
   const loading = loadingTransactions || loadingStats;
 
-  // Calculate percentage changes (mock for now - would need historical data)
-  const getPercentageChange = (value: number) => {
-    // This would compare with previous period in real implementation
-    return Math.random() > 0.5 ? Math.floor(Math.random() * 30) : -Math.floor(Math.random() * 20);
-  };
 
   const profitMargin = summary.total_income > 0
     ? ((summary.net_profit / summary.total_income) * 100).toFixed(1)
@@ -245,7 +242,7 @@ export function FinancialOverview({
           t('financial.totalRevenue'),
           formatCurrency(summary.total_income),
           <DollarSign className="h-6 w-6 text-green-600" />,
-          getPercentageChange(summary.total_income),
+          undefined,
           'text-green-600',
           'bg-green-100'
         )}
@@ -254,7 +251,7 @@ export function FinancialOverview({
           t('financial.totalExpenses'),
           formatCurrency(summary.total_expenses),
           <TrendingDown className="h-6 w-6 text-red-600" />,
-          getPercentageChange(summary.total_expenses),
+          undefined,
           'text-red-600',
           'bg-red-100'
         )}
@@ -263,7 +260,7 @@ export function FinancialOverview({
           t('financial.netProfit'),
           formatCurrency(summary.net_profit),
           <TrendingUp className="h-6 w-6 text-primary" />,
-          getPercentageChange(summary.net_profit),
+          undefined,
           summary.net_profit >= 0 ? 'text-green-600' : 'text-red-600',
           'bg-primary/10'
         )}
@@ -284,7 +281,7 @@ export function FinancialOverview({
           t('financial.totalAppointments'),
           appointmentStats.total_appointments.toString(),
           <Calendar className="h-6 w-6 text-purple-600" />,
-          getPercentageChange(appointmentStats.total_appointments),
+          undefined,
           'text-purple-600',
           'bg-purple-100'
         )}
@@ -293,7 +290,7 @@ export function FinancialOverview({
           t('financial.completedAppointments'),
           appointmentStats.completed_appointments.toString(),
           <ShoppingBag className="h-6 w-6 text-indigo-600" />,
-          getPercentageChange(appointmentStats.completed_appointments),
+          undefined,
           'text-indigo-600',
           'bg-indigo-100'
         )}
@@ -302,7 +299,7 @@ export function FinancialOverview({
           t('financial.averageTicket'),
           formatCurrency(appointmentStats.average_ticket),
           <DollarSign className="h-6 w-6 text-orange-600" />,
-          getPercentageChange(appointmentStats.average_ticket),
+          undefined,
           'text-orange-600',
           'bg-orange-100'
         )}
@@ -311,7 +308,7 @@ export function FinancialOverview({
           t('financial.appointmentRevenue'),
           formatCurrency(appointmentStats.revenue_from_appointments),
           <TrendingUp className="h-6 w-6 text-teal-600" />,
-          getPercentageChange(appointmentStats.revenue_from_appointments),
+          undefined,
           'text-teal-600',
           'bg-teal-100'
         )}
@@ -326,7 +323,7 @@ export function FinancialOverview({
               {t('financial.periodSummaryDescription')}
             </p>
           </div>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => navigate('/app/admin/reports')}>
             <Users className="h-4 w-4 mr-2" />
             {t('financial.viewDetails')}
           </Button>

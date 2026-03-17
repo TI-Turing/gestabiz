@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -27,6 +31,7 @@ export default function GoogleCalendarIntegration({ user }: GoogleCalendarIntegr
   } = useGoogleCalendarSync(user)
 
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false)
 
   const handleConnect = async () => {
     try {
@@ -36,10 +41,8 @@ export default function GoogleCalendarIntegration({ user }: GoogleCalendarIntegr
     }
   }
 
-  const handleDisconnect = async () => {
-    if (window.confirm('Are you sure you want to disconnect Google Calendar? This will stop all automatic syncing.')) {
-      await disconnectGoogleCalendar()
-    }
+  const handleDisconnect = () => {
+    setShowDisconnectConfirm(true)
   }
 
   const handleSyncNow = async () => {
@@ -129,6 +132,7 @@ export default function GoogleCalendarIntegration({ user }: GoogleCalendarIntegr
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -287,5 +291,26 @@ export default function GoogleCalendarIntegration({ user }: GoogleCalendarIntegr
         </div>
       </CardContent>
     </Card>
+
+    <AlertDialog open={showDisconnectConfirm} onOpenChange={setShowDisconnectConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Desconectar Google Calendar</AlertDialogTitle>
+          <AlertDialogDescription>
+            ¿Estás seguro de que quieres desconectar Google Calendar? Esto detendrá la sincronización automática de tus citas.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => { disconnectGoogleCalendar(); setShowDisconnectConfirm(false) }}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Desconectar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   )
 }

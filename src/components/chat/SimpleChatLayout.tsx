@@ -242,8 +242,9 @@ export function SimpleChatLayout({
           )} */}
 
           {loading && conversations.length === 0 ? (
-            <div className="flex items-center justify-center flex-1 py-8">
-              <div className="text-muted-foreground">Cargando...</div>
+            <div className="flex flex-col items-center justify-center flex-1 py-8 gap-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              <div className="text-sm text-muted-foreground">Cargando conversaciones...</div>
             </div>
           ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center flex-1 p-8">

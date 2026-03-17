@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { 
@@ -356,7 +357,7 @@ export function NotificationCenter({
             <Button
               variant="ghost"
               size="sm"
-              onClick={markAllAsRead}
+              onClick={async () => { const n = unreadCount; await markAllAsRead(); if (n > 0) toast.success(`${n} notificación${n > 1 ? 'es' : ''} marcada${n > 1 ? 's' : ''} como leída${n > 1 ? 's' : ''}`) }}
               className="text-xs hidden sm:flex"
             >
               <CheckCheck className="h-3.5 w-3.5 mr-1" />
@@ -367,7 +368,7 @@ export function NotificationCenter({
             <Button
               variant="ghost"
               size="icon"
-              onClick={markAllAsRead}
+              onClick={async () => { const n = unreadCount; await markAllAsRead(); if (n > 0) toast.success(`${n} notificación${n > 1 ? 'es' : ''} marcada${n > 1 ? 's' : ''} como leída${n > 1 ? 's' : ''}`) }}
               className="h-9 w-9 sm:hidden min-h-[44px] min-w-[44px]"
               title={t('notifications.markAllAsRead')}
               aria-label={t('notifications.markAllAsRead')}
