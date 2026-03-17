@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Calendar, Clock, Briefcase, Search, CalendarOff } from 'lucide-react'
 import { UnifiedLayout } from '@/components/layouts/UnifiedLayout'
 import CompleteUnifiedSettings from '@/components/settings/CompleteUnifiedSettings'
+import { MyProfilePage } from '@/components/profile/MyProfilePage'
 import { MyEmployments } from '@/components/employee/MyEmploymentsEnhanced'
 import { EmployeeOnboarding } from '@/components/employee/EmployeeOnboarding'
 import { EmployeeAbsencesTab } from '@/components/employee/EmployeeAbsencesTab'
@@ -12,7 +13,7 @@ import { usePendingNavigation } from '@/hooks/usePendingNavigation'
 import { useEmployeeAbsences } from '@/hooks/useEmployeeAbsences'
 import { useEmployeeBusinesses } from '@/hooks/useEmployeeBusinesses'
 import { APP_CONFIG } from '@/constants'
-import { useEmployeeRequests } from '@/hooks/useEmployeeRequests'
+import { useMyJoinRequests } from '@/hooks/useEmployeeJoinRequests'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Button } from '@/components/ui/button'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
@@ -104,8 +105,8 @@ export function EmployeeDashboard({
   const effectiveBusinessId = selectedBusinessId || businessId || normalizedBusinesses[0]?.id
   const { vacationBalance, refresh: refreshAbsences } = useEmployeeAbsences(effectiveBusinessId || '')
   
-  // Hook para verificar solicitudes pendientes del usuario
-  const { requests: userRequests } = useEmployeeRequests({ userId: user?.id })
+  // Solicitudes pendientes del empleado (nueva tabla)
+  const { data: userRequests = [] } = useMyJoinRequests(user?.id)
   const hasPendingRequest = userRequests.some(req => req.status === 'pending')
 
   // Sincronizar activePage con URL
@@ -308,6 +309,9 @@ export function EmployeeDashboard({
           </div>
         )
       case 'profile':
+        return currentUser ? (
+          <MyProfilePage user={currentUser} onNavigate={handlePageChange} />
+        ) : null
       case 'settings':
         return (
           <div className="p-4">
@@ -317,7 +321,6 @@ export function EmployeeDashboard({
                 onUserUpdate={setCurrentUser}
                 currentRole="employee"
                 businessId={effectiveBusinessId || businessId}
-                initialTab={activePage === 'profile' ? 'profile' : undefined}
               />
             )}
           </div>

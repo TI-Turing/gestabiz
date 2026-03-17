@@ -12,6 +12,7 @@ import { AppointmentWizard } from '@/components/appointments/AppointmentWizard'
 import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary'
 import { AppointmentCard, type AppointmentCardData } from '@/components/cards/AppointmentCard'
 import CompleteUnifiedSettings from '@/components/settings/CompleteUnifiedSettings'
+import { MyProfilePage } from '@/components/profile/MyProfilePage'
 import { ClientCalendarView } from '@/components/client/ClientCalendarView'
 import logoTiTuring from '@/assets/images/tt/1.png'
 import { ClientHistory } from '@/components/client/ClientHistory'
@@ -713,6 +714,9 @@ export function ClientDashboard({
           </div>
         )
       case 'profile':
+        return currentUser ? (
+          <MyProfilePage user={currentUser} onNavigate={handlePageChange} />
+        ) : null
       case 'settings':
         return (
           <div className="p-4">
@@ -721,7 +725,6 @@ export function ClientDashboard({
                 user={currentUser}
                 onUserUpdate={setCurrentUser}
                 currentRole="client"
-                initialTab={activePage === 'profile' ? 'profile' : undefined}
               />
             )}
           </div>
