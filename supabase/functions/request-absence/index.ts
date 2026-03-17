@@ -253,29 +253,31 @@ serve(async (req) => {
         adminEmails.add(ownerProfile.email);
       }
 
-      // 10. Crear notificación in-app para CADA admin
-      for (const adminId of adminIds) {
+      // 10. Crear notificación in-app para TODOS los admins — batch insert (una sola query)
+      const notifTitle = `Nueva solicitud de ${absenceType === 'vacation' ? 'vacaciones' : 'ausencia'}`
+      const notifMessage = `${employeeName} ha solicitado ${absenceType === 'vacation' ? 'vacaciones' : 'una ausencia'} del ${startDate} al ${endDate}`
+      const notificationsToInsert = Array.from(adminIds).map(adminId => ({
+        user_id: adminId,
+        type: 'absence_request',
+        title: notifTitle,
+        message: notifMessage,
+        data: {
+          absenceId: absence.id,
+          employeeId: userId,
+          employeeName,
+          absenceType,
+          startDate,
+          endDate,
+          businessId,
+        },
+        action_url: `/admin/approvals?tab=absences&id=${absence.id}`,
+      }))
+      if (notificationsToInsert.length > 0) {
         const { error: notifError } = await supabaseClient
           .from('in_app_notifications')
-          .insert({
-            user_id: adminId,
-            type: 'absence_request',
-            title: `Nueva solicitud de ${absenceType === 'vacation' ? 'vacaciones' : 'ausencia'}`,
-            message: `${employeeName} ha solicitado ${absenceType === 'vacation' ? 'vacaciones' : 'una ausencia'} del ${startDate} al ${endDate}`,
-            data: {
-              absenceId: absence.id,
-              employeeId: userId,
-              employeeName,
-              absenceType,
-              startDate,
-              endDate,
-              businessId,
-            },
-            action_url: `/admin/approvals?tab=absences&id=${absence.id}`,
-          });
-
+          .insert(notificationsToInsert)
         if (notifError) {
-          console.error(`Error creating notification for admin ${adminId}:`, notifError);
+          console.error('Error creating absence request notifications:', notifError)
         }
       }
 
@@ -289,25 +291,28 @@ serve(async (req) => {
           other: 'Otro',
         }[absenceType] || 'Ausencia';
 
-        for (const email of adminEmails) {
-          await supabaseClient.functions.invoke('send-notification', {
-            body: {
-              userEmail: email,
-              type: 'email',
-              subject: `Nueva solicitud de ${absenceTypeLabel} - ${employeeName}`,
-              template: 'absence_request',
-              data: {
-                adminName: 'Administrador',
-                employeeName,
-                absenceType: absenceTypeLabel,
-                startDate,
-                endDate,
-                reason,
-                businessName: business.name,
+        // Enviar emails en paralelo (fire-and-forget, no bloquear por fallos individuales)
+        await Promise.allSettled(
+          Array.from(adminEmails).map(email =>
+            supabaseClient.functions.invoke('send-notification', {
+              body: {
+                userEmail: email,
+                type: 'email',
+                subject: `Nueva solicitud de ${absenceTypeLabel} - ${employeeName}`,
+                template: 'absence_request',
+                data: {
+                  adminName: 'Administrador',
+                  employeeName,
+                  absenceType: absenceTypeLabel,
+                  startDate,
+                  endDate,
+                  reason,
+                  businessName: business.name,
+                },
               },
-            },
-          });
-        }
+            })
+          )
+        )
       } catch (emailError) {
         console.error('Error sending notification emails:', emailError);
         // No fallar si el email no se envía (la notificación in-app sigue siendo válida)

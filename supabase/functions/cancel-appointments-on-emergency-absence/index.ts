@@ -109,38 +109,35 @@ serve(async (req) => {
       );
     }
 
-    // 5. Cancelar citas
-    const cancellationResults = {
-      success: [],
-      failed: [],
-    };
+    // 5. Cancelar citas — batch UPDATE + batch INSERT notifications (una query cada uno)
+    const cancellationResults: { success: any[]; failed: any[] } = { success: [], failed: [] }
+    const appointmentIds = appointments.map((a: any) => a.id)
+    const cancelledAt = new Date().toISOString()
 
-    for (const appointment of appointments) {
-      try {
-        // Cancelar cita
-        const { error: cancelError } = await supabaseClient
-          .from('appointments')
-          .update({
-            status: 'cancelled',
-            cancellation_reason: `Ausencia del profesional: ${absence.reason}`,
-            cancelled_at: new Date().toISOString(),
-            cancelled_by: user.id,
-          })
-          .eq('id', appointment.id);
+    const { error: batchCancelError } = await supabaseClient
+      .from('appointments')
+      .update({
+        status: 'cancelled',
+        cancellation_reason: `Ausencia del profesional: ${absence.reason}`,
+        cancelled_at: cancelledAt,
+        cancelled_by: user.id,
+      })
+      .in('id', appointmentIds)
 
-        if (cancelError) {
-          cancellationResults.failed.push({
-            appointmentId: appointment.id,
-            error: cancelError.message,
-          });
-          continue;
-        }
-
-        // Notificación in-app
-        await supabaseClient.from('in_app_notifications').insert({
+    if (batchCancelError) {
+      console.error('Error batch-cancelling appointments:', batchCancelError)
+      // Fall back: mark all as failed
+      for (const a of appointments) {
+        cancellationResults.failed.push({ appointmentId: a.id, error: batchCancelError.message })
+      }
+    } else {
+      // All succeeded — build success list and batch notifications
+      const notificationsToInsert = appointments
+        .filter((a: any) => a.client_id)
+        .map((appointment: any) => ({
           user_id: appointment.client_id,
           type: 'appointment_cancelled',
-          title: '⚠️ Cita cancelada',
+          title: 'Cita cancelada',
           message: `Su cita del ${new Date(appointment.start_time).toLocaleDateString('es-ES', {
             day: 'numeric',
             month: 'long',
@@ -151,33 +148,28 @@ serve(async (req) => {
             appointmentId: appointment.id,
             absenceId: absence.id,
             reason: absence.reason,
-            serviceName: appointment.service.service_name,
-            locationName: appointment.location.location_name,
+            serviceName: appointment.service?.service_name,
+            locationName: appointment.location?.location_name,
             startTime: appointment.start_time,
           },
           action_url: `/client/appointments?cancelled=${appointment.id}`,
-        });
+        }))
 
-        // TODO: Enviar email usando send-notification Edge Function
-        // await supabaseClient.functions.invoke('send-notification', {
-        //   body: {
-        //     userId: appointment.client_id,
-        //     type: 'appointment_cancelled',
-        //     channel: 'email',
-        //     data: { ... }
-        //   }
-        // });
+      if (notificationsToInsert.length > 0) {
+        const { error: notifError } = await supabaseClient
+          .from('in_app_notifications')
+          .insert(notificationsToInsert)
+        if (notifError) {
+          console.error('Error inserting cancellation notifications:', notifError)
+        }
+      }
 
+      for (const a of appointments) {
         cancellationResults.success.push({
-          appointmentId: appointment.id,
-          clientName: appointment.client.full_name,
-          startTime: appointment.start_time,
-        });
-      } catch (error) {
-        cancellationResults.failed.push({
-          appointmentId: appointment.id,
-          error: error.message,
-        });
+          appointmentId: a.id,
+          clientName: a.client?.full_name,
+          startTime: a.start_time,
+        })
       }
     }
 
