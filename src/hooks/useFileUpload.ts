@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
@@ -34,6 +34,9 @@ export function useFileUpload(bucket: StorageBucket) {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  // Track active progress interval so it can be cleared on unmount
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  useEffect(() => () => { if (progressIntervalRef.current) clearInterval(progressIntervalRef.current) }, [])
 
   /**
    * Validate file before upload
@@ -105,11 +108,12 @@ export function useFileUpload(bucket: StorageBucket) {
         const filePath = `${folderPath}/${finalFileName}`
 
         // Simulate progress (Supabase doesn't provide real-time upload progress)
-        const progressInterval = setInterval(() => {
+        progressIntervalRef.current = setInterval(() => {
           setUploadProgress((prev) => {
             const next = prev + 10
             if (next >= 90) {
-              clearInterval(progressInterval)
+              clearInterval(progressIntervalRef.current!)
+              progressIntervalRef.current = null
               return 90
             }
             if (uploadOptions.onProgress) {
@@ -127,7 +131,10 @@ export function useFileUpload(bucket: StorageBucket) {
             upsert: true, // Replace if exists
           })
 
-        clearInterval(progressInterval)
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current)
+          progressIntervalRef.current = null
+        }
         setUploadProgress(100)
         if (uploadOptions.onProgress) {
           uploadOptions.onProgress(100)
