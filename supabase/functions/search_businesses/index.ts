@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
 const BOGOTA_REGION_ID = 'fc6cc79b-dfd1-42c9-b35d-3d0df51c1c83'
 const BOGOTA_CITY_ID = 'c5861b80-bd05-48a9-9e24-d8c93e0d1d6b'
@@ -25,19 +26,11 @@ interface SearchRequest {
 }
 
 serve(async (req) => {
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+  const corsHeaders = getCorsHeaders(req)
+
   try {
-    const corsHeaders = {
-      'content-type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'authorization, content-type, x-client-info, apikey',
-      'Access-Control-Max-Age': '86400'
-    }
-
-    if (req.method === 'OPTIONS') {
-      return new Response('', { status: 200, headers: corsHeaders })
-    }
-
     if (req.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Method Not Allowed' }), { status: 405, headers: corsHeaders })
     }
