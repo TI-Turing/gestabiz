@@ -33,26 +33,46 @@ serve(async (req) => {
     const windowEnd1h = addMinutes(now, 60 + 30)
 
     // Fetch appointments in both windows
-    const { data: appts24h, error: err24 } = await supabase
-      .from('appointments')
-      .select('*')
-      .in('status', ['confirmed', 'scheduled'])
-      .gte('start_time', windowStart24h.toISOString())
-      .lte('start_time', windowEnd24h.toISOString())
+    const [{ data: appts24h, error: err24 }, { data: appts1h, error: err1 }] = await Promise.all([
+      supabase
+        .from('appointments')
+        .select('id, title, client_id, user_id')
+        .in('status', ['confirmed', 'scheduled'])
+        .gte('start_time', windowStart24h.toISOString())
+        .lte('start_time', windowEnd24h.toISOString()),
+      supabase
+        .from('appointments')
+        .select('id, title, client_id, user_id')
+        .in('status', ['confirmed', 'scheduled'])
+        .gte('start_time', windowStart1h.toISOString())
+        .lte('start_time', windowEnd1h.toISOString()),
+    ])
 
     if (err24) throw new Error(`Failed to fetch 24h window appointments: ${err24.message}`)
-
-    const { data: appts1h, error: err1 } = await supabase
-      .from('appointments')
-      .select('*')
-      .in('status', ['confirmed', 'scheduled'])
-      .gte('start_time', windowStart1h.toISOString())
-      .lte('start_time', windowEnd1h.toISOString())
-
     if (err1) throw new Error(`Failed to fetch 1h window appointments: ${err1.message}`)
 
     const whatsappConfigured = !!(Deno.env.get('TWILIO_ACCOUNT_SID') && Deno.env.get('TWILIO_AUTH_TOKEN') && Deno.env.get('TWILIO_WHATSAPP_NUMBER'))
     const smsConfigured = !!(Deno.env.get('TWILIO_ACCOUNT_SID') && Deno.env.get('TWILIO_AUTH_TOKEN') && Deno.env.get('TWILIO_SMS_NUMBER'))
+
+    const allApptIds = [
+      ...(appts24h ?? []).map(a => a.id),
+      ...(appts1h ?? []).map(a => a.id),
+    ]
+
+    // ✅ Batch-fetch all existing notifications for these appointments in ONE query
+    // instead of calling hasNotification() per appointment (N+1 pattern)
+    const existingNotifSet = new Set<string>()
+    if (allApptIds.length > 0) {
+      const { data: existingNotifs } = await supabase
+        .from('notifications')
+        .select('appointment_id, type, delivery_method')
+        .in('appointment_id', allApptIds)
+        .in('type', ['reminder_24h', 'reminder_1h'])
+
+      for (const n of existingNotifs ?? []) {
+        existingNotifSet.add(`${n.appointment_id}:${n.type}:${n.delivery_method}`)
+      }
+    }
 
     const notificationsToCreate: Array<{
       appointment_id: string
@@ -64,116 +84,43 @@ serve(async (req) => {
       delivery_method: 'email' | 'whatsapp' | 'sms'
     }> = []
 
-    // Helper to check if notification exists
-    const hasNotification = async (appointmentId: string, type: string, delivery?: 'email' | 'whatsapp' | 'sms') => {
-      let query = supabase
-        .from('notifications')
-        .select('id')
-        .eq('appointment_id', appointmentId)
-        .eq('type', type)
-      if (delivery) {
-        query = query.eq('delivery_method', delivery)
+    const addIfNew = (
+      apptId: string,
+      userId: string | null,
+      type: 'reminder_24h' | 'reminder_1h',
+      title: string,
+      message: string,
+      delivery: 'email' | 'whatsapp' | 'sms',
+    ) => {
+      if (!existingNotifSet.has(`${apptId}:${type}:${delivery}`)) {
+        notificationsToCreate.push({
+          appointment_id: apptId,
+          user_id: userId,
+          type,
+          title,
+          message,
+          scheduled_for: now.toISOString(),
+          delivery_method: delivery,
+        })
       }
-      const { data } = await query.limit(1)
-      return (data ?? []).length > 0
     }
 
     // Build notifications for 24h window
     for (const appt of appts24h ?? []) {
-      // Email siempre a 24h
-      const existsEmail24 = await hasNotification(appt.id, 'reminder_24h', 'email')
-      if (!existsEmail24) {
-        notificationsToCreate.push({
-          appointment_id: appt.id,
-          user_id: appt.client_id ?? appt.user_id ?? null,
-          type: 'reminder_24h',
-          title: 'Recordatorio de cita (24h)',
-          message: `Tu cita es mañana: ${appt.title ?? ''}`,
-          scheduled_for: now.toISOString(),
-          delivery_method: 'email',
-        })
-      }
-
-      // WhatsApp opcional a 24h si está configurado
-      if (whatsappConfigured) {
-        const existsWa24 = await hasNotification(appt.id, 'reminder_24h', 'whatsapp')
-        if (!existsWa24) {
-          notificationsToCreate.push({
-            appointment_id: appt.id,
-            user_id: appt.client_id ?? appt.user_id ?? null,
-            type: 'reminder_24h',
-            title: 'Recordatorio de cita (24h)',
-            message: `Tu cita es mañana: ${appt.title ?? ''}`,
-            scheduled_for: now.toISOString(),
-            delivery_method: 'whatsapp',
-          })
-        }
-      }
-
-      // SMS opcional a 24h si está configurado
-      if (smsConfigured) {
-        const existsSms24 = await hasNotification(appt.id, 'reminder_24h', 'sms')
-        if (!existsSms24) {
-          notificationsToCreate.push({
-            appointment_id: appt.id,
-            user_id: appt.client_id ?? appt.user_id ?? null,
-            type: 'reminder_24h',
-            title: 'Recordatorio de cita (24h)',
-            message: `Tu cita es mañana: ${appt.title ?? ''}`,
-            scheduled_for: now.toISOString(),
-            delivery_method: 'sms',
-          })
-        }
-      }
+      const userId = appt.client_id ?? appt.user_id ?? null
+      const msg = `Tu cita es mañana: ${appt.title ?? ''}`
+      addIfNew(appt.id, userId, 'reminder_24h', 'Recordatorio de cita (24h)', msg, 'email')
+      if (whatsappConfigured) addIfNew(appt.id, userId, 'reminder_24h', 'Recordatorio de cita (24h)', msg, 'whatsapp')
+      if (smsConfigured) addIfNew(appt.id, userId, 'reminder_24h', 'Recordatorio de cita (24h)', msg, 'sms')
     }
 
     // Build notifications for 1h window
     for (const appt of appts1h ?? []) {
-      // Always schedule email for 1h
-      const existsEmail = await hasNotification(appt.id, 'reminder_1h', 'email')
-      if (!existsEmail) {
-        notificationsToCreate.push({
-          appointment_id: appt.id,
-          user_id: appt.client_id ?? appt.user_id ?? null,
-          type: 'reminder_1h',
-          title: 'Recordatorio de cita (1h)',
-          message: `Tu cita es en 1 hora: ${appt.title ?? ''}`,
-          scheduled_for: now.toISOString(),
-          delivery_method: 'email',
-        })
-      }
-
-      // Schedule WhatsApp only if provider configured
-      if (whatsappConfigured) {
-        const existsWa = await hasNotification(appt.id, 'reminder_1h', 'whatsapp')
-        if (!existsWa) {
-          notificationsToCreate.push({
-            appointment_id: appt.id,
-            user_id: appt.client_id ?? appt.user_id ?? null,
-            type: 'reminder_1h',
-            title: 'Recordatorio de cita (1h)',
-            message: `Tu cita es en 1 hora: ${appt.title ?? ''}`,
-            scheduled_for: now.toISOString(),
-            delivery_method: 'whatsapp',
-          })
-        }
-      }
-
-      // Schedule SMS only if provider configured
-      if (smsConfigured) {
-        const existsSms = await hasNotification(appt.id, 'reminder_1h', 'sms')
-        if (!existsSms) {
-          notificationsToCreate.push({
-            appointment_id: appt.id,
-            user_id: appt.client_id ?? appt.user_id ?? null,
-            type: 'reminder_1h',
-            title: 'Recordatorio de cita (1h)',
-            message: `Tu cita es en 1 hora: ${appt.title ?? ''}`,
-            scheduled_for: now.toISOString(),
-            delivery_method: 'sms',
-          })
-        }
-      }
+      const userId = appt.client_id ?? appt.user_id ?? null
+      const msg = `Tu cita es en 1 hora: ${appt.title ?? ''}`
+      addIfNew(appt.id, userId, 'reminder_1h', 'Recordatorio de cita (1h)', msg, 'email')
+      if (whatsappConfigured) addIfNew(appt.id, userId, 'reminder_1h', 'Recordatorio de cita (1h)', msg, 'whatsapp')
+      if (smsConfigured) addIfNew(appt.id, userId, 'reminder_1h', 'Recordatorio de cita (1h)', msg, 'sms')
     }
 
     let created: any[] = []
@@ -191,76 +138,30 @@ serve(async (req) => {
       created = inserted ?? []
     }
 
-    // Fire actual senders (dual channel when configured)
-    for (const n of created) {
-      try {
-        if (n.type === 'reminder_24h') {
-          if (n.delivery_method === 'whatsapp') {
-            await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-reminder`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${supabaseKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ notificationId: n.id, appointmentId: n.appointment_id, type: n.type }),
-            })
-          } else if (n.delivery_method === 'sms') {
-            await fetch(`${supabaseUrl}/functions/v1/send-sms-reminder`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${supabaseKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ notificationId: n.id, appointmentId: n.appointment_id, type: n.type }),
-            })
-          } else {
-            await fetch(`${supabaseUrl}/functions/v1/send-email-reminder`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${supabaseKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ notificationId: n.id, appointmentId: n.appointment_id, type: n.type }),
-            })
-          }
-        } else if (n.type === 'reminder_1h') {
-          if (n.delivery_method === 'whatsapp') {
-            await fetch(`${supabaseUrl}/functions/v1/send-whatsapp-reminder`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${supabaseKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ notificationId: n.id, appointmentId: n.appointment_id, type: n.type }),
-            })
-          } else if (n.delivery_method === 'sms') {
-            await fetch(`${supabaseUrl}/functions/v1/send-sms-reminder`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${supabaseKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ notificationId: n.id, appointmentId: n.appointment_id, type: n.type }),
-            })
-          } else {
-            await fetch(`${supabaseUrl}/functions/v1/send-email-reminder`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${supabaseKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ notificationId: n.id, appointmentId: n.appointment_id, type: n.type }),
-            })
-          }
-        }
-      } catch (sendErr) {
-        // Mark notification failed
-        await supabase
-          .from('notifications')
-          .update({ status: 'failed', error_message: `${sendErr}` })
-          .eq('id', n.id)
-      }
+    // Fire actual senders in parallel batches grouped by delivery_method
+    const senderUrl = (method: string) => {
+      if (method === 'whatsapp') return `${supabaseUrl}/functions/v1/send-whatsapp-reminder`
+      if (method === 'sms') return `${supabaseUrl}/functions/v1/send-sms-reminder`
+      return `${supabaseUrl}/functions/v1/send-email-reminder`
     }
+
+    await Promise.allSettled(
+      created.map(n =>
+        fetch(senderUrl(n.delivery_method), {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ notificationId: n.id, appointmentId: n.appointment_id, type: n.type }),
+        }).catch(async (sendErr) => {
+          await supabase
+            .from('notifications')
+            .update({ status: 'failed', error_message: `${sendErr}` })
+            .eq('id', n.id)
+        })
+      )
+    )
 
     return new Response(
       JSON.stringify({

@@ -164,10 +164,10 @@ serve(async (req) => {
           console.error('Error cancelling appointments:', cancelError);
         }
 
-        // Notificar a cada cliente
-        for (const appointment of appointments) {
-          // Notificación in-app
-          await supabaseClient.from('in_app_notifications').insert({
+        // ✅ Batch insert all notifications in one query (was N sequential inserts)
+        const notificationsToInsert = appointments
+          .filter(a => a.client?.id)
+          .map(appointment => ({
             user_id: appointment.client.id,
             type: 'appointment_cancelled',
             title: 'Cita cancelada',
@@ -177,10 +177,9 @@ serve(async (req) => {
               absenceId: absence.id,
               reason: absence.reason,
             },
-          });
-
-          // TODO: Enviar email al cliente
-          console.log(`TODO: Enviar email a ${appointment.client.email} sobre cancelación`);
+          }))
+        if (notificationsToInsert.length > 0) {
+          await supabaseClient.from('in_app_notifications').insert(notificationsToInsert)
         }
       }
 
