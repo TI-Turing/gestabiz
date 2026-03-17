@@ -29,6 +29,7 @@ import { CancelSubscriptionModal } from './CancelSubscriptionModal'
 import { AddPaymentMethodModal } from './AddPaymentMethodModal'
 import { PricingPage } from '@/pages/PricingPage'
 import type { SubscriptionStatus } from '@/lib/payments/PaymentGateway'
+import { formatCurrency } from '@/lib/utils'
 
 interface BillingDashboardProps {
   businessId: string
@@ -134,14 +135,6 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
       paused: <Badge className="bg-purple-500">Pausada</Badge>,
     }
     return badges[status] || <Badge>{status}</Badge>
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(amount)
   }
 
   const formatDate = (date: string) => {

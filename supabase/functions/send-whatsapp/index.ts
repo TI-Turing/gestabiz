@@ -1,14 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
-
-// Valida formato E.164: + seguido de 7-15 dígitos
-const E164_REGEX = /^\+[1-9]\d{6,14}$/
-
-function validatePhone(phone: string): boolean {
-  const cleaned = phone.replace(/[\s\-().]/g, '')
-  return E164_REGEX.test(cleaned) && cleaned.length <= 16
-}
+import { validatePhone } from '../_shared/validation.ts'
 
 interface WhatsAppRequest {
   to: string

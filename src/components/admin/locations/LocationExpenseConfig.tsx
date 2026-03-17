@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { Wallet, Save, Loader2, Home, Zap, Droplet, Flame, Wifi, Phone, Shield, Sparkles, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { format, addMonths } from 'date-fns'
+import { formatCurrency } from '@/lib/utils'
 
 interface LocationExpenseConfigProps {
   locationId: string
@@ -287,14 +288,6 @@ export function LocationExpenseConfig({ locationId, businessId, locationName }: 
     } finally {
       setSaving(false)
     }
-  }
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(amount)
   }
 
   if (loading) {
