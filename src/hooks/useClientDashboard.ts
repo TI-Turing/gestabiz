@@ -286,25 +286,12 @@ export function useClientDashboard(clientId: string | null) {
       }
       */
 
-      console.log('[useClientDashboard] 🔍 Using RPC directly (Edge Function disabled for debugging)');
-      console.log('[useClientDashboard] 📊 Params:', { 
-        clientId, 
-        preferredCityName, 
-        preferredRegionName 
-      });
-
-      // ✅ Fallback: Usar RPC directamente si Edge Function falla o no retorna datos
+      // ✅ Usar RPC directamente (Edge Function deshabilitada temporalmente)
       if (!dashboardData) {
         const { data: rpcData, error: rpcError } = await supabase.rpc('get_client_dashboard_data', {
           p_client_id: clientId,
           p_preferred_city_name: preferredCityName,
           p_preferred_region_name: preferredRegionName,
-        });
-
-        console.log('[useClientDashboard] 🔥 RPC Response:', { 
-          hasData: !!rpcData,
-          error: rpcError,
-          suggestionsCount: rpcData?.suggestions?.length || 0
         });
 
         if (rpcError) {
@@ -330,24 +317,15 @@ export function useClientDashboard(clientId: string | null) {
         : [];
       const suggestionsWithFrequent = mergeSuggestions(frequentBusinesses, baseSuggestions);
 
-      console.log('[useClientDashboard] ✅ Final data:', { 
-        appointmentsCount: normalizedAppointments.length,
-        frequentCount: frequentBusinesses.length,
-        baseSuggestionsCount: baseSuggestions.length,
-        mergedSuggestionsCount: suggestionsWithFrequent.length
-      });
-
       return {
         ...dashboardData,
         appointments: normalizedAppointments,
         suggestions: suggestionsWithFrequent,
       } as ClientDashboardData;
     },
-    enabled: !!clientId, // Solo ejecutar si hay clientId
-    staleTime: 5 * 60 * 1000, // 5 minutos (300,000 ms)
-    gcTime: 10 * 60 * 1000, // 10 minutos en cache
-    retry: 2, // Reintentar 2 veces en caso de error
-    refetchOnWindowFocus: false, // No refetch al cambiar de tab
+    enabled: !!clientId,
+    ...QUERY_CONFIG.FREQUENT,
+    retry: 2,
   });
 }
 

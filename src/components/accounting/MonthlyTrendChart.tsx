@@ -11,6 +11,7 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
+import type { TooltipProps } from 'recharts';
 import { ChartDataPoint } from '@/types/accounting.types';
 import { formatCOP } from '@/lib/accounting/colombiaTaxes';
 import { COLOR_INCOME, COLOR_EXPENSE } from '@/constants/chartColors';
@@ -26,14 +27,14 @@ export const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
   height = 400,
   showArea = false,
 }) => {
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold text-foreground mb-2">
-            {payload[0].payload.period}
+            {(payload[0].payload as ChartDataPoint).period}
           </p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index: number) => (
             <p
               key={`item-${index}`}
               className="text-sm"

@@ -9,6 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import type { TooltipProps } from 'recharts';
 import { LocationComparison } from '@/types/accounting.types';
 import { formatCOP } from '@/lib/accounting/colombiaTaxes';
 
@@ -23,9 +24,9 @@ export const LocationBarChart: React.FC<LocationBarChartProps> = ({
   height = 400,
   horizontal = false,
 }) => {
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
-      const locationData = payload[0].payload;
+      const locationData = payload[0].payload as LocationComparison;
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold text-foreground mb-2">

@@ -7,6 +7,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import type { TooltipProps, PieLabelRenderProps } from 'recharts';
 import { CategoryDistribution } from '@/types/accounting.types';
 import { formatCOP } from '@/lib/accounting/colombiaTaxes';
 import { COLOR_DEFAULT } from '@/constants/chartColors';
@@ -29,30 +30,36 @@ export const CategoryPieChart: React.FC<CategoryPieChartProps> = ({
     innerRadius,
     outerRadius,
     percent,
-  }: any) => {
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  }: PieLabelRenderProps) => {
+    const cxNum = Number(cx);
+    const cyNum = Number(cy);
+    const innerR = Number(innerRadius);
+    const outerR = Number(outerRadius);
+    const pct = Number(percent);
+    const midAngleNum = Number(midAngle);
+    const radius = innerR + (outerR - innerR) * 0.5;
+    const x = cxNum + radius * Math.cos(-midAngleNum * RADIAN);
+    const y = cyNum + radius * Math.sin(-midAngleNum * RADIAN);
 
-    if (percent < 0.05) return null; // No mostrar etiquetas para segmentos muy pequeños
+    if (pct < 0.05) return null; // No mostrar etiquetas para segmentos muy pequeños
 
     return (
       <text
         x={x}
         y={y}
         fill="white"
-        textAnchor={x > cx ? 'start' : 'end'}
+        textAnchor={x > cxNum ? 'start' : 'end'}
         dominantBaseline="central"
         className="text-xs font-semibold"
       >
-        {`${(percent * 100).toFixed(0)}%`}
+        {`${(pct * 100).toFixed(0)}%`}
       </text>
     );
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
-      const data = payload[0].payload;
+      const data = payload[0].payload as CategoryDistribution;
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold text-foreground mb-1">

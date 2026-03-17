@@ -9,6 +9,7 @@
  * @returns { holidays, loading, error, isHoliday }
  */
 
+import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
@@ -80,32 +81,17 @@ export function usePublicHolidays(
     gcTime: 1000 * 60 * 60 * 24 * 7, // 7 días (antes "cacheTime")
   });
 
-  // Helper: Verificar si una fecha es festivo
-  const isHoliday = (date: Date | string): boolean => {
-    let dateStr: string;
-
-    if (typeof date === 'string') {
-      dateStr = date; // Asumir que está en formato YYYY-MM-DD
-    } else {
-      dateStr = format(date, 'yyyy-MM-dd');
-    }
-
+  // ✅ useCallback: evita recrear estas funciones en cada render (importante cuando se pasan como props)
+  const isHoliday = useCallback((date: Date | string): boolean => {
+    const dateStr = typeof date === 'string' ? date : format(date, 'yyyy-MM-dd');
     return holidays.some((holiday) => holiday.holiday_date === dateStr);
-  };
+  }, [holidays]);
 
-  // Helper: Obtener nombre del festivo para una fecha
-  const getHolidayName = (date: Date | string): string | null => {
-    let dateStr: string;
-
-    if (typeof date === 'string') {
-      dateStr = date;
-    } else {
-      dateStr = format(date, 'yyyy-MM-dd');
-    }
-
+  const getHolidayName = useCallback((date: Date | string): string | null => {
+    const dateStr = typeof date === 'string' ? date : format(date, 'yyyy-MM-dd');
     const holiday = holidays.find((h) => h.holiday_date === dateStr);
     return holiday?.name || null;
-  };
+  }, [holidays]);
 
   return {
     holidays,
