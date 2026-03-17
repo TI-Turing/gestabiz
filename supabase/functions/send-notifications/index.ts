@@ -42,56 +42,61 @@ serve(async (req) => {
       throw new Error(`Failed to fetch notifications: ${fetchError.message}`)
     }
 
-    const results = []
+    const notifications = pendingNotifications || []
 
-    for (const notification of pendingNotifications || []) {
-      try {
+    // ✅ Process all notifications in parallel (was sequential)
+    const settled = await Promise.allSettled(
+      notifications.map(async (notification) => {
         let emailSent = false
-
         if (notification.method === 'email') {
           const emailData = await generateEmailContent(notification)
           emailSent = await sendEmail(emailData)
         }
+        return { notification, emailSent }
+      })
+    )
 
-        // Update notification status
-        const updateData = emailSent 
-          ? { status: 'sent', sent_at: new Date().toISOString() }
-          : { 
-              status: 'failed', 
-              attempts: notification.attempts + 1,
-              error_message: 'Failed to send email'
-            }
+    // ✅ Batch status updates: two queries instead of N individual updates
+    const sentAt = new Date().toISOString()
+    const sentIds: string[] = []
+    const failedUpdates: Array<{ id: string; attempts: number; error: string }> = []
+    const results = []
 
-        await supabaseClient
-          .from('notification_queue')
-          .update(updateData)
-          .eq('id', notification.id)
-
-        results.push({
-          id: notification.id,
-          status: emailSent ? 'sent' : 'failed',
-          type: notification.type
-        })
-
-      } catch (error) {
-        console.error(`Error processing notification ${notification.id}:`, error)
-        
-        await supabaseClient
-          .from('notification_queue')
-          .update({
-            status: 'failed',
-            attempts: notification.attempts + 1,
-            error_message: error.message
-          })
-          .eq('id', notification.id)
-
-        results.push({
-          id: notification.id,
-          status: 'failed',
-          error: error.message
-        })
+    for (let i = 0; i < settled.length; i++) {
+      const result = settled[i]
+      const notification = notifications[i]
+      if (result.status === 'fulfilled' && result.value.emailSent) {
+        sentIds.push(notification.id)
+        results.push({ id: notification.id, status: 'sent', type: notification.type })
+      } else {
+        const errMsg = result.status === 'rejected'
+          ? String(result.reason?.message ?? result.reason)
+          : 'Failed to send email'
+        if (result.status === 'rejected') {
+          console.error(`Error processing notification ${notification.id}:`, result.reason)
+        }
+        failedUpdates.push({ id: notification.id, attempts: (notification.attempts ?? 0) + 1, error: errMsg })
+        results.push({ id: notification.id, status: 'failed', error: errMsg })
       }
     }
+
+    // Batch update sent notifications
+    if (sentIds.length > 0) {
+      await supabaseClient
+        .from('notification_queue')
+        .update({ status: 'sent', sent_at: sentAt })
+        .in('id', sentIds)
+    }
+
+    // Update failed ones individually (different attempts counts per row)
+    await Promise.allSettled(
+      failedUpdates.map(({ id, attempts, error }) =>
+        supabaseClient
+          .from('notification_queue')
+          .update({ status: 'failed', attempts, error_message: error })
+          .eq('id', id)
+      )
+    )
 
     return new Response(
       JSON.stringify({ 
