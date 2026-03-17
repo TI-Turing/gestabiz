@@ -6,6 +6,7 @@
 // =====================================================
 
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { QUERY_CONFIG } from '@/lib/queryConfig';
 import type { FavoriteBusiness } from '@/hooks/useFavorites';
@@ -339,12 +340,11 @@ export function useClientDashboard(clientId: string | null) {
  */
 export function useCompletedAppointmentsFromDashboard(clientId: string | null) {
   const { data, isLoading, error } = useClientDashboard(clientId);
-
-  return {
-    appointments: data?.appointments.filter((apt) => apt.status === 'completed') || [],
-    loading: isLoading,
-    error,
-  };
+  const appointments = useMemo(
+    () => data?.appointments.filter((apt) => apt.status === 'completed') ?? [],
+    [data?.appointments],
+  )
+  return { appointments, loading: isLoading, error };
 }
 
 /**
@@ -353,20 +353,15 @@ export function useCompletedAppointmentsFromDashboard(clientId: string | null) {
  */
 export function useUpcomingAppointmentsFromDashboard(clientId: string | null) {
   const { data, isLoading, error } = useClientDashboard(clientId);
-
-  const now = new Date();
-  const upcomingAppointments =
-    data?.appointments.filter(
+  const appointments = useMemo(() => {
+    const now = new Date();
+    return data?.appointments.filter(
       (apt) =>
         ['pending', 'confirmed', 'in_progress'].includes(apt.status) &&
-        new Date(apt.start_time) > now
-    ) || [];
-
-  return {
-    appointments: upcomingAppointments,
-    loading: isLoading,
-    error,
-  };
+        new Date(apt.start_time) > now,
+    ) ?? []
+  }, [data?.appointments])
+  return { appointments, loading: isLoading, error };
 }
 
 /**
@@ -376,11 +371,14 @@ export function useUpcomingAppointmentsFromDashboard(clientId: string | null) {
 export function usePendingReviewsInfo(clientId: string | null) {
   const { data, isLoading } = useClientDashboard(clientId);
 
+  const completedAppointments = useMemo(
+    () => data?.appointments.filter((apt) => apt.status === 'completed') ?? [],
+    [data?.appointments],
+  )
   return {
-    pendingReviewsCount: data?.pendingReviewsCount || 0,
-    reviewedAppointmentIds: data?.reviewedAppointmentIds || [],
-    completedAppointments:
-      data?.appointments.filter((apt) => apt.status === 'completed') || [],
+    pendingReviewsCount: data?.pendingReviewsCount ?? 0,
+    reviewedAppointmentIds: data?.reviewedAppointmentIds ?? [],
+    completedAppointments,
     loading: isLoading,
   };
 }

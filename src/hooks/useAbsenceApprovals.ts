@@ -15,7 +15,7 @@
  * await approveAbsence(absenceId, 'Aprobado, buen descanso');
  */
 
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -218,11 +218,15 @@ export function useAbsenceApprovals(businessId: string) {
     [absences, businessId],
   );
 
+  const pendingAbsences = useMemo(() => absences.filter((a) => a.status === 'pending'), [absences])
+  const approvedAbsences = useMemo(() => absences.filter((a) => a.status === 'approved'), [absences])
+  const rejectedAbsences = useMemo(() => absences.filter((a) => a.status === 'rejected'), [absences])
+
   return {
     absences,
-    pendingAbsences: absences.filter((a) => a.status === 'pending'),
-    approvedAbsences: absences.filter((a) => a.status === 'approved'),
-    rejectedAbsences: absences.filter((a) => a.status === 'rejected'),
+    pendingAbsences,
+    approvedAbsences,
+    rejectedAbsences,
     stats,
     loading: isLoading,
     approveAbsence: (absenceId: string, adminNotes?: string) =>
