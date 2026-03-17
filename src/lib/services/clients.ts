@@ -1,5 +1,6 @@
 import supabase from '@/lib/supabase'
 import type { Client } from '@/types'
+import { throwIfError } from '@/lib/errors'
 
 export interface ClientQuery {
   businessId?: string
@@ -15,30 +16,30 @@ export const clientsService = {
       query = query.ilike ? query.ilike('name', `%${q.search}%`) : query
     }
     const { data, error } = await query.order('name')
-    if (error) throw error
+    throwIfError(error, 'LIST_CLIENTS', 'No se pudieron cargar los clientes')
     return (data || []) as Client[]
   },
 
   async get(id: string): Promise<Client | null> {
     const { data, error } = await supabase.from('clients').select('*').eq('id', id).single()
-    if (error) throw error
+    throwIfError(error, 'GET_CLIENT', 'No se pudo cargar el cliente')
     return data as Client
   },
 
   async create(payload: Omit<Client, 'id' | 'created_at' | 'updated_at'>): Promise<Client> {
     const { data, error } = await supabase.from('clients').insert(payload).select().single()
-    if (error) throw error
+    throwIfError(error, 'CREATE_CLIENT', 'No se pudo crear el cliente')
     return data as Client
   },
 
   async update(id: string, updates: Partial<Client>): Promise<Client> {
     const { data, error } = await supabase.from('clients').update(updates).eq('id', id).select().single()
-    if (error) throw error
+    throwIfError(error, 'UPDATE_CLIENT', 'No se pudo actualizar el cliente')
     return data as Client
   },
 
   async remove(id: string): Promise<void> {
     const { error } = await supabase.from('clients').delete().eq('id', id)
-    if (error) throw error
+    throwIfError(error, 'DELETE_CLIENT', 'No se pudo eliminar el cliente')
   }
 }
