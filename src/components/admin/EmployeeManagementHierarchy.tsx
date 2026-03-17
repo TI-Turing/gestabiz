@@ -20,6 +20,7 @@ import { FiltersPanel } from './FiltersPanel'
 import { EmployeeListView } from './EmployeeListView'
 import { HierarchyMapView } from './HierarchyMapView'
 import { EmployeeProfileModal } from './EmployeeProfileModal'
+import { JoinRequestsCard } from './JoinRequestsManager'
 import supabase from '@/lib/supabase'
 import { toast } from 'sonner'
 import type { EmployeeHierarchy as EmployeeHierarchyFromTypes } from '@/types'
@@ -388,6 +389,9 @@ export function EmployeeManagementHierarchy({
           />
         </Card>
       )}
+
+      {/* JOIN REQUESTS - empleados que quieren unirse */}
+      <JoinRequestsCard businessId={businessId} />
 
       {/* PENDING SETUP ALERT - empleados sin jefe asignado */}
       {pendingSetup.length > 0 && (

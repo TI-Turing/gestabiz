@@ -9,6 +9,7 @@ import { locationsService } from '@/lib/services'
 import QUERY_CONFIG from '@/lib/queryConfig'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { OverviewTab } from './OverviewTab'
+import { MyProfilePage } from '@/components/profile/MyProfilePage'
 import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary'
 import { usePendingNavigation } from '@/hooks/usePendingNavigation'
 import type { Business, UserRole, User, EmployeeHierarchy } from '@/types/types'
@@ -279,8 +280,11 @@ export function AdminDashboard({
             currentUserId={user.id}
           />,
         )
-      case 'settings':
       case 'profile':
+        return wrap(
+          <MyProfilePage user={user} onNavigate={handlePageChange} />,
+        )
+      case 'settings':
         return wrap(
           <div className="p-4">
             <CompleteUnifiedSettings
@@ -289,7 +293,6 @@ export function AdminDashboard({
               currentRole="admin"
               businessId={business.id}
               business={business}
-              initialTab={activePage === 'profile' ? 'profile' : undefined}
             />
           </div>,
         )

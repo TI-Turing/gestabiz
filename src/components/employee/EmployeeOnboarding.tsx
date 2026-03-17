@@ -1,11 +1,17 @@
-﻿import { useState } from 'react'
+/**
+ * EmployeeOnboarding — Join a business via invite code or QR.
+ * Uses the new employee_join_requests table via useClaimInviteCode.
+ * Admin must approve after the code is claimed.
+ */
+
+import { useState } from 'react'
 import { Camera, AlertCircle, Loader2, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { useEmployeeRequests } from '@/hooks/useEmployeeRequests'
 import { QRScannerWeb } from '@/components/ui/QRScannerWeb'
+import { useMyJoinRequests, useClaimInviteCode } from '@/hooks/useEmployeeJoinRequests'
 import type { User } from '@/types/types'
 import type { BusinessInvitationQRData } from '@/components/ui/QRScannerWeb'
 
@@ -14,40 +20,36 @@ interface EmployeeOnboardingProps {
   onRequestCreated?: () => void
 }
 
-export function EmployeeOnboarding({ 
-  user, 
-  onRequestCreated
+export function EmployeeOnboarding({
+  user,
+  onRequestCreated,
 }: Readonly<EmployeeOnboardingProps>) {
   const [invitationCode, setInvitationCode] = useState('')
-  const [message, setMessage] = useState('')
   const [showScanner, setShowScanner] = useState(false)
   const [requestStatus, setRequestStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [errorMsg, setErrorMsg] = useState('')
 
-  const { createRequest, isLoading, requests } = useEmployeeRequests({ 
-    userId: user.id,
-    autoFetch: false
-  })
+  const { data: myRequests = [] } = useMyJoinRequests(user.id)
+  const claimCode = useClaimInviteCode(user.id)
 
-  const pendingRequests = requests.filter((r) => r.status === 'pending')
-  const approvedRequests = requests.filter((r) => r.status === 'approved')
+  const pendingRequests = myRequests.filter(r => r.status === 'pending')
+  const approvedRequests = myRequests.filter(r => r.status === 'approved')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
     if (!invitationCode.trim()) {
       setRequestStatus('error')
+      setErrorMsg('Ingresa el código de invitación')
       return
     }
-
-    const success = await createRequest(invitationCode.trim().toUpperCase(), message.trim() || undefined)
-
-    if (success) {
+    try {
+      await claimCode.mutateAsync(invitationCode.trim().toUpperCase())
       setRequestStatus('success')
       setInvitationCode('')
-      setMessage('')
       onRequestCreated?.()
-    } else {
+    } catch (err: unknown) {
       setRequestStatus('error')
+      setErrorMsg(err instanceof Error ? err.message : 'Código inválido o vencido')
     }
   }
 
@@ -58,7 +60,9 @@ export function EmployeeOnboarding({
   }
 
   const handleQRScanned = (data: BusinessInvitationQRData) => {
-    setInvitationCode(data.invitation_code)
+    if (data.invitation_code) {
+      setInvitationCode(data.invitation_code)
+    }
     setShowScanner(false)
   }
 
@@ -67,7 +71,8 @@ export function EmployeeOnboarding({
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Únete como Empleado</h1>
         <p className="text-muted-foreground">
-          Para trabajar en un negocio, necesitas un código de invitación proporcionado por el administrador
+          Ingresa el código de invitación que te proporcionó el administrador del negocio.
+          Una vez aplicado, el administrador aprobará tu ingreso.
         </p>
       </div>
 
@@ -83,7 +88,7 @@ export function EmployeeOnboarding({
             )}
             {approvedRequests.length > 0 && (
               <p className="text-green-600 dark:text-green-400 font-medium">
-                 Tienes {approvedRequests.length} solicitud(es) aprobada(s). Recarga la página para ver tu nuevo rol.
+                Tienes {approvedRequests.length} solicitud(es) aprobada(s). Recarga la página para ver tu nuevo rol.
               </p>
             )}
           </AlertDescription>
@@ -103,8 +108,16 @@ export function EmployeeOnboarding({
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertTitle className="text-green-600">¡Solicitud enviada!</AlertTitle>
               <AlertDescription className="text-green-600">
-                Tu solicitud ha sido enviada al administrador. Recibirás una notificación cuando sea revisada.
+                El código fue aplicado correctamente. Espera a que el administrador apruebe tu ingreso.
               </AlertDescription>
+            </Alert>
+          )}
+
+          {requestStatus === 'error' && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{errorMsg}</AlertDescription>
             </Alert>
           )}
 
@@ -117,36 +130,27 @@ export function EmployeeOnboarding({
                 id="invitation-code"
                 type="text"
                 value={invitationCode}
-                onChange={(e) => handleCodeChange(e.target.value)}
+                onChange={e => handleCodeChange(e.target.value)}
                 placeholder="ABC123"
                 maxLength={6}
                 className="text-center text-2xl font-mono tracking-widest uppercase"
-                disabled={isLoading}
+                disabled={claimCode.isPending}
               />
               <p className="text-xs text-muted-foreground text-center">
-                Ingresa el código de 6 caracteres (letras y números)
+                Código de 6 caracteres (letras y números) · Válido por 24 horas
               </p>
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="message" className="text-sm font-medium">
-                Mensaje al administrador (opcional)
-              </label>
-              <Input
-                id="message"
-                type="text"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Ej: Tengo experiencia en..."
-                disabled={isLoading}
-              />
-            </div>
-
-            <Button type="submit" className="w-full" size="lg" disabled={isLoading || invitationCode.length !== 6}>
-              {isLoading ? (
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={claimCode.isPending || invitationCode.length !== 6}
+            >
+              {claimCode.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Enviando solicitud...
+                  Aplicando código...
                 </>
               ) : (
                 'Enviar solicitud'
@@ -169,24 +173,11 @@ export function EmployeeOnboarding({
             className="w-full"
             size="lg"
             onClick={() => setShowScanner(true)}
-            disabled={isLoading}
+            disabled={claimCode.isPending}
           >
             <Camera className="mr-2 h-4 w-4" />
             Escanear código QR
           </Button>
-
-          {showScanner && (
-            <Alert>
-              <Camera className="h-4 w-4" />
-              <AlertTitle>Escanear QR desde móvil</AlertTitle>
-              <AlertDescription>
-                El escaneo de códigos QR está disponible en la aplicación móvil. Por ahora, ingresa el código manualmente.
-              </AlertDescription>
-              <Button variant="ghost" size="sm" className="mt-2" onClick={() => setShowScanner(false)}>
-                Cerrar
-              </Button>
-            </Alert>
-          )}
         </CardContent>
       </Card>
 
@@ -195,17 +186,16 @@ export function EmployeeOnboarding({
           <div className="space-y-3 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">¿Cómo funciona?</p>
             <ol className="list-decimal list-inside space-y-2">
-              <li>El administrador del negocio te proporciona un código de invitación único</li>
-              <li>Ingresas el código aquí o escaneas el código QR desde tu móvil</li>
-              <li>El administrador recibe tu solicitud por email</li>
+              <li>El administrador del negocio genera un código de invitación desde su panel</li>
+              <li>Ingresas el código aquí o escaneas el código QR</li>
+              <li>El administrador recibe tu solicitud y la aprueba</li>
               <li>Una vez aprobada, podrás acceder como empleado del negocio</li>
-              <li>Configura tu horario, sede y servicios que ofreces</li>
             </ol>
           </div>
         </CardContent>
       </Card>
 
-      {requests.length > 0 && (
+      {myRequests.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Mis solicitudes</CardTitle>
@@ -213,43 +203,33 @@ export function EmployeeOnboarding({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {requests.map((request) => (
-                <div
-                  key={request.id}
-                  className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium">{request.business?.name || 'Negocio desconocido'}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Código: <span className="font-mono">{request.invitation_code}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(request.created_at).toLocaleDateString('es', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </p>
+              {myRequests.map(req => {
+                const bizName = (req.business as unknown as { name?: string })?.name
+                return (
+                  <div
+                    key={req.id}
+                    className="flex items-center justify-between p-3 rounded-lg border"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{bizName ?? req.business_id}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(req.created_at).toLocaleDateString('es-CO', {
+                          day: 'numeric', month: 'long', year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                      req.status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        : req.status === 'approved'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                    }`}>
+                      {req.status === 'pending' ? 'Pendiente' : req.status === 'approved' ? 'Aprobada' : 'Rechazada'}
+                    </span>
                   </div>
-                  <div>
-                    {request.status === 'pending' && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
-                        Pendiente
-                      </span>
-                    )}
-                    {request.status === 'approved' && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                        Aprobada
-                      </span>
-                    )}
-                    {request.status === 'rejected' && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                        Rechazada
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </CardContent>
         </Card>
