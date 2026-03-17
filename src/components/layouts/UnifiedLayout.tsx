@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { 
   Settings, 
   Menu,
@@ -150,11 +150,11 @@ export function UnifiedLayout({
   const logoGestabizFull = isDark
     ? (language === 'en' ? logoGestabizDarkEn : logoGestabizDark)
     : (language === 'en' ? logoGestabizLightEn : logoGestabizLight)
-  const roleLabels: Record<UserRole, string> = {
+  const roleLabels = useMemo<Record<UserRole, string>>(() => ({
     admin: t('roleSelector.admin'),
     employee: t('roleSelector.employee'),
-    client: t('roleSelector.client')
-  }
+    client: t('roleSelector.client'),
+  }), [t])
   
   // Hook para preferencias de ciudad (solo para cliente)
   const {
@@ -189,7 +189,7 @@ export function UnifiedLayout({
   }, [locationMenuOpen])
 
   // Deduplicate available roles
-  const uniqueRoles = Array.from(new Set(availableRoles))
+  const uniqueRoles = useMemo(() => Array.from(new Set(availableRoles)), [availableRoles])
 
   // Swipe gestures to open/close side menus (mobile)
   useEffect(() => {
