@@ -28,6 +28,7 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
   
   // Manage user roles and active role switching
   const { roles, activeRole, activeBusiness, switchRole } = useUserRoles(user)
+  const availableRoles = React.useMemo(() => roles.map(r => r.role), [roles])
   
   // Fetch admin businesses if user is admin
   const { businesses, isLoading: isLoadingBusinesses, refetch: refetchBusinesses } = useAdminBusinesses(
@@ -144,7 +145,7 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
           user={user}
           onBusinessCreated={handleBusinessCreated}
           currentRole={activeRole}
-          availableRoles={roles.map(r => r.role)}
+          availableRoles={availableRoles}
           onRoleChange={switchRole}
           onLogout={handleLogout}
           businesses={businesses}
@@ -171,7 +172,7 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
           onUpdate={handleBusinessUpdate}
           onLogout={handleLogout}
           currentRole={activeRole}
-          availableRoles={roles.map(r => r.role)}
+          availableRoles={availableRoles}
           onRoleChange={switchRole}
           user={user}
         />
@@ -183,7 +184,7 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
       return (
         <EmployeeDashboard
           currentRole={activeRole}
-          availableRoles={roles.map(r => r.role)}
+          availableRoles={availableRoles}
           onRoleChange={switchRole}
           onLogout={handleLogout}
           user={user}
@@ -196,7 +197,7 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
     return (
       <ClientDashboard
         currentRole={activeRole}
-        availableRoles={roles.map(r => r.role)}
+        availableRoles={availableRoles}
         onRoleChange={switchRole}
         onLogout={handleLogout}
         user={user}
