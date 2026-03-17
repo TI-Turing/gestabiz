@@ -6,17 +6,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts';
-
-// Escapa caracteres HTML para prevenir inyección en templates de email
-function escapeHtml(text: string | null | undefined): string {
-  if (!text) return '';
-  return String(text)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+import { escapeHtml } from '../_shared/html.ts';
 
 interface SelectionNotificationPayload {
   type: 'started' | 'selected' | 'not_selected';

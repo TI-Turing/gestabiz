@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { CheckCircle, Loader2 } from 'lucide-react'
 import type { PlanType, BillingCycle } from '@/lib/payments/PaymentGateway'
+import { formatCurrency } from '@/lib/utils'
 
 interface PlanUpgradeModalProps {
   businessId: string
@@ -70,14 +71,6 @@ export function PlanUpgradeModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { updatePlan, applyDiscount } = useSubscription(businessId)
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
 
   const getPrice = (plan: PlanType, cycle: BillingCycle) => {
     if (plan === 'corporativo') return 'Personalizado'

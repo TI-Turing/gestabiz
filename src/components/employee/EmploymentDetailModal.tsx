@@ -13,6 +13,7 @@ import { LocationSelector } from './LocationSelector';
 import { ServiceSelector } from './ServiceSelector';
 import { WorkScheduleEditor } from './WorkScheduleEditor';
 import supabase from '@/lib/supabase';
+import { formatCurrency } from '@/lib/utils';
 
 interface EmploymentDetailModalProps {
   open: boolean;
@@ -71,14 +72,6 @@ export function EmploymentDetailModal({
   const [activeTab, setActiveTab] = useState('info');
 
   // Helper functions
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-CO', {
       year: 'numeric',

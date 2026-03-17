@@ -15,6 +15,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { PRICING_PLANS } from '@/lib/pricingPlans'
 import type { Plan } from '@/lib/pricingPlans'
 import { toast } from 'sonner'
+import { formatCurrency } from '@/lib/utils'
 
 type BillingCycle = 'monthly' | 'yearly'
 
@@ -37,16 +38,6 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
     discount: number
   } | null>(null)
   const [processingPlan, setProcessingPlan] = useState<string | null>(null)
-
-  // Format currency manually (COP)
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount)
-  }
 
   const handleBillingCycleToggle = () => {
     setBillingCycle((prev) => (prev === 'monthly' ? 'yearly' : 'monthly'))

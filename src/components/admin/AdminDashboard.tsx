@@ -59,13 +59,13 @@ export function AdminDashboard({
   const location = useLocation()
   
   // ✅ Extraer página activa de la URL (ej: /app/admin/appointments → 'appointments')
-  const getPageFromUrl = () => {
-    const path = location.pathname
-    const match = path.match(/\/app\/admin\/([^/]+)/)
+  // Función pura, no necesita ser hook: recibe pathname como argumento
+  const getPageFromUrl = useCallback((pathname: string) => {
+    const match = pathname.match(/\/app\/admin\/([^/]+)/)
     return match ? match[1] : 'overview'
-  }
-  
-  const [activePage, setActivePage] = useState(getPageFromUrl())
+  }, [])
+
+  const [activePage, setActivePage] = useState(() => getPageFromUrl(location.pathname))
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeHierarchy | null>(null)
   const [pageContext, setPageContext] = useState<Record<string, unknown>>({})
   const [chatConversationId, setChatConversationId] = useState<string | null>(null)
@@ -84,11 +84,11 @@ export function AdminDashboard({
   
   // ✅ Sincronizar activePage con la URL
   useEffect(() => {
-    const pageFromUrl = getPageFromUrl()
+    const pageFromUrl = getPageFromUrl(location.pathname)
     if (pageFromUrl !== activePage) {
       setActivePage(pageFromUrl)
     }
-  }, [location.pathname])
+  }, [location.pathname, activePage, getPageFromUrl])
   
   // ✅ Redirigir a /app/admin/overview si estamos en /app
   useEffect(() => {

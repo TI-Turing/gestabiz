@@ -10,6 +10,7 @@ import { DollarSign, Save, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { format, addMonths, addWeeks, addDays } from 'date-fns'
 import { PermissionGate } from '@/components/ui/PermissionGate'
+import { formatCurrency } from '@/lib/utils'
 
 interface EmployeeSalaryConfigProps {
   employeeId: string
@@ -214,13 +215,6 @@ export function EmployeeSalaryConfig({
     return labels[type]
   }
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
 
   return (
     <Card>

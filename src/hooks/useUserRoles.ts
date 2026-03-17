@@ -201,19 +201,17 @@ export function useUserRoles(user: User | null) {
     }
   }, [user?.id, user?.created_at])
 
-  // Load roles on mount (only once per user)
+  // ✅ Un solo useEffect: resetea la bandera y dispara el fetch cuando cambia el usuario.
+  // Antes había dos useEffects separados con la misma dependencia [user?.id], lo que
+  // causaba una race condition: Effect 1 ponía hasFetchedRef = true, Effect 2 lo volvía
+  // false, dejando la ref en estado inconsistente y permitiendo doble fetch.
   useEffect(() => {
-    if (user?.id && !hasFetchedRef.current) {
-      hasFetchedRef.current = true
-      fetchUserRoles()
-    }
-  }, [user?.id, fetchUserRoles])
-
-  // Reset fetch flag when user changes
-  useEffect(() => {
-    if (user?.id) {
-      hasFetchedRef.current = false
-    }
+    if (!user?.id) return
+    hasFetchedRef.current = false   // reset al cambiar de usuario
+    hasFetchedRef.current = true    // marcar fetch en curso
+    fetchUserRoles()
+  // fetchUserRoles es estable (useCallback con deps [user?.id, user?.created_at])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   // Function to switch active role (no database update needed!)

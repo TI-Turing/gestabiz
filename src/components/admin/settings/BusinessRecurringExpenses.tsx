@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Trash2, Plus, Loader2, DollarSign } from 'lucide-react'
 import { toast } from 'sonner'
 import { PermissionGate } from '@/components/ui/PermissionGate'
+import { formatCurrency } from '@/lib/utils'
 
 interface BusinessRecurringExpensesProps {
   businessId: string
@@ -198,14 +199,6 @@ export function BusinessRecurringExpenses({
     } finally {
       setSaving(false)
     }
-  }
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(amount)
   }
 
   const getCategoryLabel = (category: string): string => {
