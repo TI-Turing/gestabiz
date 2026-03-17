@@ -9,6 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import type { TooltipProps } from 'recharts';
 import { ChartDataPoint } from '@/types/accounting.types';
 import { formatCOP } from '@/lib/accounting/colombiaTaxes';
 
@@ -21,14 +22,14 @@ export const IncomeVsExpenseChart: React.FC<IncomeVsExpenseChartProps> = ({
   data,
   height = 400,
 }) => {
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold text-foreground mb-2">
-            {payload[0].payload.period}
+            {(payload[0].payload as ChartDataPoint).period}
           </p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index: number) => (
             <p
               key={`item-${index}`}
               className="text-sm"
@@ -37,9 +38,9 @@ export const IncomeVsExpenseChart: React.FC<IncomeVsExpenseChartProps> = ({
               {entry.name}: {formatCOP(entry.value)}
             </p>
           ))}
-          {payload[0]?.payload.profit !== undefined && (
+          {(payload[0]?.payload as ChartDataPoint | undefined)?.profit !== undefined && (
             <p className="text-sm font-semibold text-foreground mt-2 pt-2 border-t border-border">
-              Ganancia: {formatCOP(payload[0].payload.profit)}
+              Ganancia: {formatCOP((payload[0].payload as ChartDataPoint).profit ?? 0)}
             </p>
           )}
         </div>

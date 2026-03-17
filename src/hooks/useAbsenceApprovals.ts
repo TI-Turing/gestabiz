@@ -55,50 +55,65 @@ function daysBetween(startDate: string, endDate: string): number {
 }
 
 async function fetchAbsencesData(businessId: string): Promise<{ absences: AbsenceApproval[]; stats: AbsenceStats }> {
-  const { data, error } = await supabase
-    .from('employee_absences')
-    .select(`
-      *,
-      employee:employee_id(full_name, email)
-    `)
-    .eq('business_id', businessId)
-    .order('created_at', { ascending: false });
+  // ✅ Ejecutar ambas queries en paralelo para minimizar latencia
+  const [absencesResult, appointmentCountsResult] = await Promise.all([
+    supabase
+      .from('employee_absences')
+      .select(`
+        id, employee_id, business_id, absence_type, start_date, end_date,
+        reason, employee_notes, status, created_at,
+        employee:employee_id(full_name, email)
+      `)
+      .eq('business_id', businessId)
+      .order('created_at', { ascending: false }),
+    // ✅ Una sola query agrupada en lugar de N queries individuales (elimina el N+1)
+    // Cuenta citas activas por empleado dentro de cualquier rango de ausencia pendiente
+    supabase
+      .from('appointments')
+      .select('employee_id, start_time')
+      .eq('business_id', businessId)
+      .neq('status', 'cancelled'),
+  ]);
 
-  if (error) throw error;
-  if (!data) return { absences: [], stats: { totalAbsences: 0, pendingCount: 0, approvedCount: 0, rejectedCount: 0, vacationDaysUsed: 0, emergencyAbsences: 0 } };
+  if (absencesResult.error) throw absencesResult.error;
+  const data = absencesResult.data ?? [];
+  if (!data.length) {
+    return { absences: [], stats: { totalAbsences: 0, pendingCount: 0, approvedCount: 0, rejectedCount: 0, vacationDaysUsed: 0, emergencyAbsences: 0 } };
+  }
 
-  // Promise.allSettled — si falla UNA query de conteo no se pierde todo el resultado
-  const countResults = await Promise.allSettled(
-    data.map(async (absence) => {
-      if (absence.status !== 'pending') return 0;
-      const { count } = await supabase
-        .from('appointments')
-        .select('id', { count: 'exact', head: true })
-        .eq('employee_id', absence.employee_id)
-        .eq('business_id', businessId)
-        .gte('start_time', absence.start_date)
-        .lte('start_time', absence.end_date)
-        .neq('status', 'cancelled');
-      return count ?? 0;
-    }),
-  );
+  // Construir lookup: employeeId → Set<startTime> para contar por rango de forma eficiente
+  const appointmentsByEmployee = new Map<string, string[]>();
+  for (const apt of appointmentCountsResult.data ?? []) {
+    if (!appointmentsByEmployee.has(apt.employee_id)) {
+      appointmentsByEmployee.set(apt.employee_id, []);
+    }
+    appointmentsByEmployee.get(apt.employee_id)!.push(apt.start_time);
+  }
 
-  const absences: AbsenceApproval[] = data.map((absence, i) => ({
-    id: absence.id,
-    employeeId: absence.employee_id,
-    employeeName: (absence.employee as { full_name: string } | null)?.full_name ?? '',
-    employeeEmail: (absence.employee as { email: string } | null)?.email ?? '',
-    absenceType: absence.absence_type as AbsenceApproval['absenceType'],
-    startDate: absence.start_date,
-    endDate: absence.end_date,
-    daysRequested: daysBetween(absence.start_date, absence.end_date),
-    reason: absence.reason ?? '',
-    employeeNotes: absence.employee_notes ?? undefined,
-    status: absence.status as AbsenceApproval['status'],
-    createdAt: absence.created_at,
-    affectedAppointmentsCount:
-      countResults[i].status === 'fulfilled' ? countResults[i].value : 0,
-  }));
+  const absences: AbsenceApproval[] = data.map((absence) => {
+    let affectedCount = 0;
+    if (absence.status === 'pending') {
+      const employeeApts = appointmentsByEmployee.get(absence.employee_id) ?? [];
+      affectedCount = employeeApts.filter(
+        t => t >= absence.start_date && t <= absence.end_date + 'T23:59:59'
+      ).length;
+    }
+    return {
+      id: absence.id,
+      employeeId: absence.employee_id,
+      employeeName: (absence.employee as { full_name: string } | null)?.full_name ?? '',
+      employeeEmail: (absence.employee as { email: string } | null)?.email ?? '',
+      absenceType: absence.absence_type as AbsenceApproval['absenceType'],
+      startDate: absence.start_date,
+      endDate: absence.end_date,
+      daysRequested: daysBetween(absence.start_date, absence.end_date),
+      reason: absence.reason ?? '',
+      employeeNotes: absence.employee_notes ?? undefined,
+      status: absence.status as AbsenceApproval['status'],
+      createdAt: absence.created_at,
+      affectedAppointmentsCount: affectedCount,
+    };
+  });
 
   const stats: AbsenceStats = {
     totalAbsences: data.length,

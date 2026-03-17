@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
+import type { TooltipProps } from 'recharts';
 import { EmployeeRevenue } from '@/types/accounting.types';
 import { formatCOP } from '@/lib/accounting/colombiaTaxes';
 import { CHART_COLORS_SERIES } from '@/constants/chartColors';
@@ -23,9 +24,9 @@ export const EmployeeRevenueChart: React.FC<EmployeeRevenueChartProps> = ({
   data,
   height = 400,
 }) => {
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
-      const empData = payload[0].payload;
+      const empData = payload[0].payload as EmployeeRevenue;
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold text-foreground mb-2">

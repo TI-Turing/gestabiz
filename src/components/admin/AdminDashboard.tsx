@@ -6,27 +6,28 @@ import { usePreferredLocation } from '@/hooks/usePreferredLocation'
 import { APP_CONFIG } from '@/constants'
 import { useQuery } from '@tanstack/react-query'
 import { locationsService } from '@/lib/services'
+import QUERY_CONFIG from '@/lib/queryConfig'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { OverviewTab } from './OverviewTab'
-import { LocationsManager } from './LocationsManager'
-import { ServicesManager } from './ServicesManager'
-import { EmployeeManagementHierarchy } from './EmployeeManagementHierarchy'
-import { ReportsPage } from './ReportsPage'
-import { BillingDashboard } from '@/components/billing'
-import { RecruitmentDashboard } from '@/components/jobs/RecruitmentDashboard'
-import { QuickSalesPage } from '@/pages/QuickSalesPage'
-import { AppointmentsCalendar } from './AppointmentsCalendar'
-import { AbsencesTab } from './AbsencesTab'
-import { ResourcesManager } from './ResourcesManager'
-import { ExpensesManagementPage } from './expenses/ExpensesManagementPage'
-import CompleteUnifiedSettings from '@/components/settings/CompleteUnifiedSettings'
 import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary'
 import { usePendingNavigation } from '@/hooks/usePendingNavigation'
 import type { Business, UserRole, User, EmployeeHierarchy } from '@/types/types'
 import logoTiTuring from '@/assets/images/tt/1.png'
 
-// Lazy load de componentes pesados (optimización de performance)
-const PermissionsManager = lazy(() => import('./PermissionsManager').then(module => ({ default: module.PermissionsManager })))
+// ✅ Lazy load: solo se descarga el chunk cuando el usuario navega a esa pestaña
+const PermissionsManager = lazy(() => import('./PermissionsManager').then(m => ({ default: m.PermissionsManager })))
+const LocationsManager = lazy(() => import('./LocationsManager').then(m => ({ default: m.LocationsManager })))
+const ServicesManager = lazy(() => import('./ServicesManager').then(m => ({ default: m.ServicesManager })))
+const EmployeeManagementHierarchy = lazy(() => import('./EmployeeManagementHierarchy').then(m => ({ default: m.EmployeeManagementHierarchy })))
+const ReportsPage = lazy(() => import('./ReportsPage').then(m => ({ default: m.ReportsPage })))
+const BillingDashboard = lazy(() => import('@/components/billing').then(m => ({ default: m.BillingDashboard })))
+const RecruitmentDashboard = lazy(() => import('@/components/jobs/RecruitmentDashboard').then(m => ({ default: m.RecruitmentDashboard })))
+const QuickSalesPage = lazy(() => import('@/pages/QuickSalesPage').then(m => ({ default: m.QuickSalesPage })))
+const AppointmentsCalendar = lazy(() => import('./AppointmentsCalendar').then(m => ({ default: m.AppointmentsCalendar })))
+const AbsencesTab = lazy(() => import('./AbsencesTab').then(m => ({ default: m.AbsencesTab })))
+const ResourcesManager = lazy(() => import('./ResourcesManager').then(m => ({ default: m.ResourcesManager })))
+const ExpensesManagementPage = lazy(() => import('./expenses/ExpensesManagementPage').then(m => ({ default: m.ExpensesManagementPage })))
+const CompleteUnifiedSettings = lazy(() => import('@/components/settings/CompleteUnifiedSettings'))
 
 interface AdminDashboardProps {
   business: Business
@@ -75,7 +76,7 @@ export function AdminDashboard({
     queryKey: ['locations', business.id],
     queryFn: () => locationsService.list({ businessIds: [business.id], activeOnly: true }),
     enabled: !!business.id,
-    staleTime: 5 * 60 * 1000,
+    ...QUERY_CONFIG.STABLE,
   })
   
   // Estado para nombre de la sede
@@ -217,9 +218,14 @@ export function AdminDashboard({
   ], [t, showResourcesTab])
 
   const renderContent = () => {
+    const tabFallback = (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    )
     const wrap = (node: React.ReactNode, errorMsg?: string) => (
       <SectionErrorBoundary resetKey={activePage} errorMessage={errorMsg}>
-        {node}
+        <Suspense fallback={tabFallback}>{node}</Suspense>
       </SectionErrorBoundary>
     )
 
@@ -266,13 +272,11 @@ export function AdminDashboard({
         return wrap(<BillingDashboard businessId={business.id} />)
       case 'permissions':
         return wrap(
-          <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>}>
-            <PermissionsManager
-              businessId={business.id}
-              ownerId={business.owner_id}
-              currentUserId={user.id}
-            />
-          </Suspense>,
+          <PermissionsManager
+            businessId={business.id}
+            ownerId={business.owner_id}
+            currentUserId={user.id}
+          />,
         )
       case 'settings':
       case 'profile':

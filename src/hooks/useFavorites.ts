@@ -78,18 +78,10 @@ export function useFavorites(userId?: string) {
    * Toggle favorite (marcar/desmarcar) con optimistic update
    */
   const toggleFavorite = useCallback(async (businessId: string, businessName?: string): Promise<boolean> => {
-    console.log('[useFavorites] toggleFavorite called');
-    console.log('[useFavorites] userId:', userId);
-    console.log('[useFavorites] businessId:', businessId);
-    console.log('[useFavorites] businessName:', businessName);
-    
     if (!userId) {
-      console.log('[useFavorites] NO userId - showing error toast');
       toast.error('Debes iniciar sesión para marcar favoritos');
       return false;
     }
-
-    console.log('[useFavorites] userId exists, proceeding...');
 
     // Optimistic update
     const wasAlreadyFavorite = favoriteIds.has(businessId);

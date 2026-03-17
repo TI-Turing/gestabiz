@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 // Hook simplificado de autenticación para debuggear
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { User as SupabaseUser, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { User } from '@/types'
@@ -290,15 +290,22 @@ export function useAuthSimple() {
     void fetchBusinessContext()
   }, [state.user?.id])
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     debugLog('👋 Signing out...')
     await supabase.auth.signOut()
-  }
+  }, [])
 
-  return {
-    ...state,
-    signOut,
-    currentBusinessId,
-    businessOwnerId
-  }
+  // ✅ Estabilizar el objeto de retorno: solo cambia cuando cambian los valores reales.
+  // Sin esto, AuthContext.Provider genera un valor nuevo en cada render del hook,
+  // causando que TODOS los consumidores de useAuth() re-rendericen innecesariamente.
+  return useMemo(
+    () => ({
+      ...state,
+      signOut,
+      currentBusinessId,
+      businessOwnerId,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.user?.id, state.session?.access_token, state.loading, state.error, signOut, currentBusinessId, businessOwnerId],
+  )
 }
