@@ -118,7 +118,7 @@ export function NotificationBell({
             )}
           </Button>
         </DialogTrigger>
-        <DialogContent className="p-0 bg-card border-border w-[92vw] max-w-[92vw] sm:max-w-[480px]">
+        <DialogContent className="p-0 bg-card border-border w-[92vw] max-w-[92vw] sm:max-w-[480px]" hideClose>
           <NotificationErrorBoundary>
             <NotificationCenter
               userId={userId}

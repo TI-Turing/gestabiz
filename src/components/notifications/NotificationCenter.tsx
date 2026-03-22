@@ -369,11 +369,22 @@ export function NotificationCenter({
               variant="ghost"
               size="icon"
               onClick={async () => { const n = unreadCount; await markAllAsRead(); if (n > 0) toast.success(`${n} notificación${n > 1 ? 'es' : ''} marcada${n > 1 ? 's' : ''} como leída${n > 1 ? 's' : ''}`) }}
-              className="h-9 w-9 sm:hidden min-h-[44px] min-w-[44px]"
+              className="h-9 w-9 sm:hidden"
               title={t('notifications.markAllAsRead')}
               aria-label={t('notifications.markAllAsRead')}
             >
               <CheckCheck className="h-4 w-4" />
+            </Button>
+          )}
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-9 w-9 ml-1"
+              aria-label="Cerrar"
+            >
+              <X className="h-4 w-4" />
             </Button>
           )}
         </div>

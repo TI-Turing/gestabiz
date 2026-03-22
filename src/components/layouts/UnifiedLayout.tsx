@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { 
-  Settings, 
+import {
+  Settings,
   Menu,
   X,
   ChevronDown,
@@ -14,7 +14,8 @@ import {
   Plus,
   Bug,
   MapPin,
-  Lock
+  Lock,
+  Search
 } from 'lucide-react'
 import logoGestabizIcon from '@/assets/images/gestabiz/gestabiz_icon_clean.svg'
 import logoGestabizDark from '@/assets/images/gestabiz/gestabiz_logo_dark.svg'
@@ -142,6 +143,7 @@ export function UnifiedLayout({
   const [bugReportOpen, setBugReportOpen] = useState(false)
   const [locationMenuOpen, setLocationMenuOpen] = useState(false)
   const [mobileHeaderOpen, setMobileHeaderOpen] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
   const locationMenuRef = useRef<HTMLDivElement>(null)
   const rootRef = useRef<HTMLDivElement>(null)
   const touchRef = useRef({
@@ -243,8 +245,8 @@ export function UnifiedLayout({
 
       // Close menus with inverse swipe when already open
       if (directionalEnough) {
-        // Close left sidebar with swipe left from anywhere (avoid extreme left edge to reduce false positives)
-        if (sidebarOpen && dx < -threshold && startX > 80) {
+        // Close left sidebar with swipe left from anywhere (admin only)
+        if (currentRole === 'admin' && sidebarOpen && dx < -threshold && startX > 80) {
           setSidebarOpen(false)
           touchRef.current.edge = null
           touchRef.current.isSwiping = false
@@ -261,7 +263,7 @@ export function UnifiedLayout({
 
       // Open menus with directional swipe from anywhere on the screen
       if (directionalEnough) {
-        if (!sidebarOpen && dx > threshold) {
+        if (currentRole === 'admin' && !sidebarOpen && dx > threshold) {
           setSidebarOpen(true)
         } else if (!mobileHeaderOpen && dx < -threshold) {
           setMobileHeaderOpen(true)
@@ -284,8 +286,8 @@ export function UnifiedLayout({
 
   return (
     <div ref={rootRef} className="min-h-screen bg-background flex overflow-x-hidden">
-      {/* Sidebar - Full Height & Fixed - Collapsible */}
-      <aside
+      {/* Sidebar - Full Height & Fixed - Collapsible - Admin only */}
+      {currentRole === 'admin' && <aside
         className={cn(
           "fixed left-0 top-0 h-screen bg-card border-r border-border z-[100] transition-all duration-200 flex flex-col",
           sidebarCollapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W,
@@ -476,10 +478,10 @@ export function UnifiedLayout({
             <PanelLeftClose className="h-4 w-4" />
           )}
         </button>
-      </aside>
+      </aside>}
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
+      {/* Overlay for mobile sidebar - admin only */}
+      {currentRole === 'admin' && sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-[95] lg:hidden"
           onClick={() => setSidebarOpen(false)}
@@ -489,30 +491,46 @@ export function UnifiedLayout({
       {/* Right Side: Header + Content */}
       <div className={cn(
         "flex-1 flex flex-col min-h-screen overflow-y-auto transition-[margin] duration-200",
-        sidebarCollapsed ? SIDEBAR_COLLAPSED_ML : SIDEBAR_EXPANDED_ML
+        currentRole === 'admin' && (sidebarCollapsed ? SIDEBAR_COLLAPSED_ML : SIDEBAR_EXPANDED_ML)
       )}>
         {/* Header - Compact responsive height */}
         <header className={cn(
           "bg-card border-b border-border fixed inset-x-0 top-0 z-[90] sm:fixed sm:left-0 sm:right-0 sm:top-0 shrink-0 transition-[left] duration-200",
-          sidebarCollapsed ? SIDEBAR_COLLAPSED_LEFT : SIDEBAR_EXPANDED_LEFT
+          currentRole === 'admin' && (sidebarCollapsed ? SIDEBAR_COLLAPSED_LEFT : SIDEBAR_EXPANDED_LEFT)
         )}>
         {/* Mobile top bar: logo abre el menú izquierdo + botón menú derecho */}
         <div className="px-3 py-2 flex items-center justify-between sm:hidden min-h-[48px]">
           <div className="flex items-center gap-2">
-            {/* Logo como botón para abrir el menú izquierdo */}
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-1 hover:bg-muted rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label="Abrir menú izquierdo"
-            >
-              <img src={logoGestabizIcon} alt="Gestabiz" className="w-12 h-12 rounded-lg object-contain" />
-            </button>
+            {/* Logo — opens sidebar for admin, static for other roles */}
+            {currentRole === 'admin' ? (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-1 hover:bg-muted rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Abrir menú izquierdo"
+              >
+                <img src={logoGestabizIcon} alt="Gestabiz" className="w-12 h-12 rounded-lg object-contain" />
+              </button>
+            ) : (
+              <div className="p-1 min-w-[44px] min-h-[44px] flex items-center justify-center">
+                <img src={logoGestabizIcon} alt="Gestabiz" className="w-12 h-12 rounded-lg object-contain" />
+              </div>
+            )}
             <span className="text-sm font-semibold text-foreground">Gestabiz</span>
           </div>
-          {/* Right area: Notification bell + overlay toggle */}
-          <div className="flex items-center gap-2">
+          {/* Right area: search (client) + notification bell + overlay toggle */}
+          <div className="flex items-center gap-1">
+            {/* Search icon - client role only, before bell */}
+            {currentRole === 'client' && (
+              <button
+                onClick={() => setMobileSearchOpen(true)}
+                className="p-2 hover:bg-muted rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground"
+                aria-label="Buscar"
+              >
+                <Search className="h-5 w-5" />
+              </button>
+            )}
             {user?.id && (
-              <NotificationBell 
+              <NotificationBell
                 userId={user.id}
                 onNavigateToPage={(page, ctx) => onPageChange(page, ctx)}
                 currentRole={currentRole}
@@ -531,18 +549,20 @@ export function UnifiedLayout({
         </div>
         <div className="hidden sm:grid px-3 sm:px-4 py-2 grid-cols-[auto_1fr_auto] items-center gap-2 h-full min-h-[48px] sm:min-h-[56px]">
           <div className="flex items-center gap-2 min-w-0">
-            {/* Mobile menu toggle - Touch optimized */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label="Toggle menu"
-            >
-              {sidebarOpen ? (
-                <X className="h-6 w-6 text-foreground" />
-              ) : (
-                <Menu className="h-6 w-6 text-foreground" />
-              )}
-            </button>
+            {/* Sidebar toggle - admin only */}
+            {currentRole === 'admin' && (
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden p-2 hover:bg-muted rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Toggle menu"
+              >
+                {sidebarOpen ? (
+                  <X className="h-6 w-6 text-foreground" />
+                ) : (
+                  <Menu className="h-6 w-6 text-foreground" />
+                )}
+              </button>
+            )}
 
             {/* Logo/Business Info - Responsive */}
             {business ? (
@@ -692,12 +712,6 @@ export function UnifiedLayout({
                   preferredCityName={preferredCityName}
                   onCitySelect={setPreferredCity}
                 />
-                {/* Mobile: search moved into right overlay panel */}
-                <SearchBar
-                  onResultSelect={(result) => onSearchResultSelect?.(result)}
-                  onViewMore={(term, type) => onSearchViewMore?.(term, type)}
-                  className="hidden"
-                />
               </div>
             ) : (
               <div className="min-w-0 flex-1">
@@ -804,9 +818,49 @@ export function UnifiedLayout({
       </header>
 
       {/* Main Content - Scrollable area (mobile padding to account for fixed header + bottom nav) */}
-      <main className="flex-1 px-3 sm:px-4 max-w-[100vw] overflow-x-hidden pt-[48px] sm:pt-[56px] pb-20 lg:pb-0">
+      <main className="flex-1 px-3 sm:px-4 max-w-[100vw] overflow-x-hidden pt-[60px] sm:pt-[56px] pb-24 lg:pb-6">
           {children}
       </main>
+
+      {/* Mobile Search Overlay - Client role only */}
+      {currentRole === 'client' && (
+        <div
+          className={cn(
+            "fixed inset-0 z-[150] sm:hidden transition-all duration-200 bg-black/40 backdrop-blur-sm",
+            mobileSearchOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          )}
+          aria-hidden={!mobileSearchOpen}
+          onClick={() => setMobileSearchOpen(false)}
+        >
+          {/* Search panel - inside the overlay, not affected by backdrop-blur */}
+          <div
+            className="absolute top-0 left-0 right-0 bg-card border-b border-border shadow-xl px-4 pt-4 pb-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-1">
+              <SearchBar
+                onResultSelect={(result) => {
+                  onSearchResultSelect?.(result)
+                  setMobileSearchOpen(false)
+                }}
+                onViewMore={(term, type) => {
+                  onSearchViewMore?.(term, type)
+                  setMobileSearchOpen(false)
+                }}
+                className="flex-1"
+                autoFocus={mobileSearchOpen}
+              />
+              <button
+                onClick={() => setMobileSearchOpen(false)}
+                className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+                aria-label="Cerrar búsqueda"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Header Overlay - Right side drawer (animated open/close) */}
       <div
@@ -842,7 +896,107 @@ export function UnifiedLayout({
                 </button>
               </div>
 
-              <div className="p-4 space-y-6">
+              <div className="p-4 space-y-4">
+                {/* Selector de Negocio — admin y employee */}
+                {business && currentRole !== 'client' && businesses.length > 0 && (
+                  <div className="space-y-2 rounded-xl border border-border bg-muted/30 px-3 py-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Negocio</p>
+                    <div className="space-y-0.5">
+                      {businesses.map((biz) => (
+                        <button
+                          key={biz.id}
+                          onClick={() => {
+                            onSelectBusiness?.(biz.id)
+                            setMobileHeaderOpen(false)
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-3 px-2.5 py-2 rounded-lg transition-colors text-left",
+                            biz.id === business.id
+                              ? "bg-primary/20 text-foreground font-semibold"
+                              : "hover:bg-muted text-foreground"
+                          )}
+                        >
+                          {biz.logo_url ? (
+                            <img
+                              src={biz.logo_url}
+                              alt={biz.name}
+                              className="w-7 h-7 rounded-lg object-contain bg-muted p-0.5 border border-primary/20 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                              <Building2 className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                          )}
+                          <span className="flex-1 text-sm truncate">{biz.name}</span>
+                          {biz.id === business.id && (
+                            <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
+                          )}
+                        </button>
+                      ))}
+                      {onCreateNew && (
+                        <button
+                          onClick={() => {
+                            onCreateNew?.()
+                            setMobileHeaderOpen(false)
+                          }}
+                          className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg transition-colors text-left text-primary hover:bg-primary/10"
+                        >
+                          <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                            <Plus className="h-3.5 w-3.5 text-primary" />
+                          </div>
+                          <span className="text-sm font-medium">Crear Nuevo Negocio</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Selector de Sede — admin y employee */}
+                {availableLocations.length > 0 && currentRole !== 'client' && (
+                  <div className="space-y-2 rounded-xl border border-border bg-muted/30 px-3 py-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Sede</p>
+                    <div className="space-y-0.5">
+                      <button
+                        onClick={() => {
+                          onLocationSelect?.(null)
+                          setMobileHeaderOpen(false)
+                        }}
+                        className={cn(
+                          "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors text-left text-sm",
+                          !preferredLocationName
+                            ? "bg-primary/20 text-foreground font-semibold"
+                            : "hover:bg-muted text-muted-foreground"
+                        )}
+                      >
+                        <MapPin className="h-4 w-4 shrink-0" />
+                        Todas las sedes
+                        {!preferredLocationName && <span className="ml-auto h-2 w-2 rounded-full bg-primary shrink-0" />}
+                      </button>
+                      {availableLocations.map((location) => (
+                        <button
+                          key={location.id}
+                          onClick={() => {
+                            onLocationSelect?.(location.id)
+                            setMobileHeaderOpen(false)
+                          }}
+                          className={cn(
+                            "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors text-left text-sm",
+                            preferredLocationName === location.name
+                              ? "bg-primary/20 text-foreground font-semibold"
+                              : "hover:bg-muted text-muted-foreground"
+                          )}
+                        >
+                          <MapPin className="h-4 w-4 shrink-0" />
+                          {location.name}
+                          {preferredLocationName === location.name && (
+                            <span className="ml-auto h-2 w-2 rounded-full bg-primary shrink-0" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Ubicación */}
                 {currentRole === 'client' && (
                   <div className="space-y-3 rounded-xl border border-border bg-muted/30 px-3 py-3">
@@ -857,23 +1011,6 @@ export function UnifiedLayout({
                   </div>
                 )}
 
-                {/* Buscar */}
-                {currentRole === 'client' && (
-                  <div className="space-y-3 rounded-xl border border-border bg-muted/30 px-3 py-3">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Buscar</p>
-                    <SearchBar
-                      onResultSelect={(result) => {
-                        onSearchResultSelect?.(result)
-                        setMobileHeaderOpen(false)
-                      }}
-                      onViewMore={(term, type) => {
-                        onSearchViewMore?.(term, type)
-                        setMobileHeaderOpen(false)
-                      }}
-                      className="w-full"
-                    />
-                  </div>
-                )}
 
                 {/* Rol y notificaciones */}
                 <div className="space-y-3 rounded-xl border border-border bg-muted/30 px-3 py-3">
