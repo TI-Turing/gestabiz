@@ -52,7 +52,7 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
 
     try {
       // Validate discount code against selected plan and billing cycle
-      const result = await applyDiscount(discountCode, 'inicio', 80000) // Example values
+      const result = await applyDiscount(discountCode, 'basico', 89900) // Example values
       
       if (result.isValid) {
         setAppliedDiscount({
@@ -74,13 +74,13 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
       return
     }
 
-    // Solo permitir plan Inicio por ahora
-    if (plan.id === 'gratuito') {
+    // Solo permitir plan Básico por ahora
+    if (plan.id === 'free') {
       toast.info('Ya estás en el plan gratuito')
       return
     }
 
-    if (plan.id !== 'inicio') {
+    if (plan.id !== 'basico') {
       toast.info('Este plan estará disponible próximamente')
       return
     }
@@ -184,12 +184,12 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
         </div>
 
         {/* Plans Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {PRICING_PLANS.map((plan) => {
             const price = getPrice(plan)
             const isProcessing = processingPlan === plan.id
-            const isDisabled = plan.id !== 'inicio' && plan.id !== 'gratuito'
-            const isPlanGratuito = plan.id === 'gratuito'
+            const isDisabled = plan.id !== 'basico' && plan.id !== 'free'
+            const isPlanGratuito = plan.id === 'free'
 
             return (
               <Card

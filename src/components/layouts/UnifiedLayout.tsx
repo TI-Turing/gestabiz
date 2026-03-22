@@ -13,7 +13,8 @@ import {
   User as UserIcon,
   Plus,
   Bug,
-  MapPin
+  MapPin,
+  Lock
 } from 'lucide-react'
 import logoGestabizIcon from '@/assets/images/gestabiz/gestabiz_icon_clean.svg'
 import logoGestabizDark from '@/assets/images/gestabiz/gestabiz_logo_dark.svg'
@@ -93,6 +94,10 @@ interface SidebarItem {
   label: string
   icon: React.ReactNode
   badge?: number
+  /** Si true, el ítem se muestra bloqueado con candado (plan insuficiente) */
+  locked?: boolean
+  /** Nombre del plan requerido para mostrar en el tooltip / badge del candado */
+  lockedPlan?: string
 }
 
 const getBusinessCategoryName = (category: Business['category']) =>
@@ -190,6 +195,13 @@ export function UnifiedLayout({
 
   // Deduplicate available roles
   const uniqueRoles = useMemo(() => Array.from(new Set(availableRoles)), [availableRoles])
+
+  // Mobile bottom nav: up to 4 unlocked primary items + optional "Más" button
+  const mobileNavItems = useMemo(() => {
+    const unlocked = sidebarItems.filter(i => !i.locked)
+    return unlocked.slice(0, 4)
+  }, [sidebarItems])
+  const hasMobileMoreButton = sidebarItems.length > 4
 
   // Swipe gestures to open/close side menus (mobile)
   useEffect(() => {
@@ -306,44 +318,68 @@ export function UnifiedLayout({
           sidebarCollapsed ? "p-2" : "p-3"
         )}>
           {sidebarItems.map((item) => {
+            const isLocked = item.locked === true
             const navButton = (
               <button
                 key={item.id}
                 onClick={() => {
-                  onPageChange(item.id)
+                  if (isLocked) {
+                    // Redirigir a billing para upgrade
+                    onPageChange('billing')
+                  } else {
+                    onPageChange(item.id)
+                  }
                   if (window.innerWidth < 1024) {
                     setSidebarOpen(false)
                   }
                 }}
+                title={isLocked && item.lockedPlan ? `Requiere Plan ${item.lockedPlan}` : undefined}
                 className={cn(
                   "w-full flex items-center rounded-lg transition-colors text-left",
                   sidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
-                  activePage === item.id
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-foreground hover:bg-muted"
+                  isLocked
+                    ? "opacity-50 cursor-pointer hover:bg-muted hover:opacity-70"
+                    : activePage === item.id
+                      ? "bg-primary text-primary-foreground font-semibold"
+                      : "text-foreground hover:bg-muted"
                 )}
               >
                 <span className="shrink-0">{item.icon}</span>
                 {!sidebarCollapsed && (
                   <>
                     <span className="flex-1 text-sm">{item.label}</span>
-                    {item.badge !== undefined && item.badge > 0 && (
-                      <Badge 
-                        variant={activePage === item.id ? "secondary" : "default"}
-                        className="ml-auto text-xs"
-                      >
-                        {item.badge}
-                      </Badge>
+                    {/* Candado de plan (prioridad sobre badge de notificaciones) */}
+                    {isLocked ? (
+                      <span className="ml-auto flex items-center gap-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                        <Lock className="h-3 w-3" />
+                        {item.lockedPlan}
+                      </span>
+                    ) : (
+                      item.badge !== undefined && item.badge > 0 && (
+                        <Badge
+                          variant={activePage === item.id ? "secondary" : "default"}
+                          className="ml-auto text-xs"
+                        >
+                          {item.badge}
+                        </Badge>
+                      )
                     )}
                   </>
                 )}
-                {sidebarCollapsed && item.badge !== undefined && item.badge > 0 && (
-                  <Badge 
+                {/* Badge de notificaciones en modo colapsado (solo si no bloqueado) */}
+                {sidebarCollapsed && !isLocked && item.badge !== undefined && item.badge > 0 && (
+                  <Badge
                     variant={activePage === item.id ? "secondary" : "default"}
                     className="absolute -top-1 -right-1 text-[10px] h-4 min-w-4 px-1"
                   >
                     {item.badge}
                   </Badge>
+                )}
+                {/* Indicador de candado en modo colapsado */}
+                {sidebarCollapsed && isLocked && (
+                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-500 flex items-center justify-center">
+                    <Lock className="h-2.5 w-2.5 text-white" />
+                  </span>
                 )}
               </button>
             )
@@ -357,7 +393,10 @@ export function UnifiedLayout({
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="right" sideOffset={8}>
-                    {item.label}
+                    {isLocked
+                      ? `${item.label} — Requiere Plan ${item.lockedPlan ?? 'superior'}`
+                      : item.label
+                    }
                   </TooltipContent>
                 </Tooltip>
               )
@@ -764,8 +803,8 @@ export function UnifiedLayout({
         </div>
       </header>
 
-      {/* Main Content - Scrollable area (mobile padding to account for fixed header) */}
-      <main className="flex-1 px-3 sm:px-4 max-w-[100vw] overflow-x-hidden pt-[48px] sm:pt-[56px]">
+      {/* Main Content - Scrollable area (mobile padding to account for fixed header + bottom nav) */}
+      <main className="flex-1 px-3 sm:px-4 max-w-[100vw] overflow-x-hidden pt-[48px] sm:pt-[56px] pb-20 lg:pb-0">
           {children}
       </main>
 
@@ -940,8 +979,63 @@ export function UnifiedLayout({
         />
       )}
 
+      {/* Mobile Bottom Navigation Bar — fixed to viewport bottom, hidden on desktop */}
+      {mobileNavItems.length > 0 && (
+        <nav
+          className="fixed bottom-0 left-0 right-0 z-[88] bg-card border-t border-border lg:hidden"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        >
+          <div className="flex items-stretch">
+            {mobileNavItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  if (item.locked) {
+                    onPageChange('billing')
+                  } else {
+                    onPageChange(item.id)
+                  }
+                }}
+                className={cn(
+                  "flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 min-h-[52px] px-1 transition-colors",
+                  activePage === item.id
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span className="shrink-0 relative">
+                  {item.icon}
+                  {!item.locked && item.badge !== undefined && item.badge > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full h-3.5 min-w-[14px] flex items-center justify-center px-0.5">
+                      {item.badge > 9 ? '9+' : item.badge}
+                    </span>
+                  )}
+                  {item.locked && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-amber-500 rounded-full h-3.5 w-3.5 flex items-center justify-center">
+                      <Lock className="h-2 w-2 text-white" />
+                    </span>
+                  )}
+                </span>
+                <span className="text-[10px] font-medium truncate max-w-[64px] text-center leading-tight">
+                  {item.label}
+                </span>
+              </button>
+            ))}
+            {hasMobileMoreButton && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 min-h-[52px] px-1 transition-colors text-muted-foreground hover:text-foreground"
+              >
+                <Menu className="h-5 w-5" />
+                <span className="text-[10px] font-medium">Más</span>
+              </button>
+            )}
+          </div>
+        </nav>
+      )}
+
       {/* Bug Report Modal */}
-      <BugReportModal 
+      <BugReportModal
         open={bugReportOpen}
         onOpenChange={setBugReportOpen}
       />

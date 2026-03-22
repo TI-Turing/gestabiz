@@ -7,7 +7,10 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { Users, List, Network, Filter, AlertTriangle, Check, X, Loader2, Star } from 'lucide-react'
+import { usePlanFeatures } from '@/hooks/usePlanFeatures'
+import { PlanLimitBanner } from '@/components/ui/PlanLimitBanner'
 import { useBusinessHierarchy } from '@/hooks/useBusinessHierarchy'
 import { usePreferredLocation } from '@/hooks/usePreferredLocation'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -45,6 +48,8 @@ export function EmployeeManagementHierarchy({
   onEmployeeSelect,
 }: Readonly<EmployeeManagementHierarchyProps>) {
   const { t } = useLanguage()
+  const navigate = useNavigate()
+  const { quotaInfo, upgradePlan } = usePlanFeatures(businessId)
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [showFilters, setShowFilters] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeHierarchyFromTypes | null>(null)
@@ -247,7 +252,7 @@ export function EmployeeManagementHierarchy({
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
               {t('employees.management.title')}
             </h1>
             <p className="text-muted-foreground mt-1">
@@ -499,6 +504,14 @@ export function EmployeeManagementHierarchy({
           </Card>
         )}
       </div>
+
+      {/* Banner de límite de plan */}
+      <PlanLimitBanner
+        notShownCount={Math.max(0, employees.length - (quotaInfo('employees', employees.length).limit ?? employees.length))}
+        resourceLabel="empleados"
+        upgradePlanName={upgradePlan?.name}
+        onUpgradeClick={() => navigate('/app/admin/billing')}
+      />
 
       {/* EMPLOYEE PROFILE MODAL */}
       <EmployeeProfileModal

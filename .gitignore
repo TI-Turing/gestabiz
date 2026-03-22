@@ -66,6 +66,7 @@ supabase/.branches/
 .env.*.local
 .env.production
 .env.development
+.env.staging
 
 # Claude
 .claude/

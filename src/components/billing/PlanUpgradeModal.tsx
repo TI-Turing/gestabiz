@@ -32,29 +32,23 @@ interface PlanUpgradeModalProps {
 }
 
 const PLANS = {
-  inicio: {
-    name: 'Inicio',
-    monthly: 80000,
-    yearly: 800000,
-    features: ['1 sede', '5 empleados', '100 citas/mes', '50 clientes', '10 servicios'],
-  },
-  profesional: {
-    name: 'Profesional',
-    monthly: 200000,
-    yearly: 2000000,
-    features: ['3 sedes', '15 empleados', '500 citas/mes', '200 clientes', '30 servicios'],
-  },
-  empresarial: {
-    name: 'Empresarial',
-    monthly: 500000,
-    yearly: 5000000,
-    features: ['10 sedes', '50 empleados', '2000 citas/mes', '1000 clientes', '100 servicios'],
-  },
-  corporativo: {
-    name: 'Corporativo',
+  free: {
+    name: 'Free',
     monthly: 0,
     yearly: 0,
-    features: ['Sedes ilimitadas', 'Empleados ilimitados', 'Citas ilimitadas', 'Clientes ilimitados', 'Servicios ilimitados'],
+    features: ['1 sede', '1 empleado', '50 citas/mes', '50 clientes', '15 servicios'],
+  },
+  basico: {
+    name: 'Básico',
+    monthly: 89900,
+    yearly: 899000,
+    features: ['3 sedes', '6 empleados', 'Citas ilimitadas', 'CRM completo', 'Chat y WhatsApp'],
+  },
+  pro: {
+    name: 'Pro',
+    monthly: 159900,
+    yearly: 1599000,
+    features: ['10 sedes', '15 empleados', 'Contabilidad', 'Reclutamiento', 'Analíticas avanzadas'],
   },
 }
 
@@ -73,7 +67,7 @@ export function PlanUpgradeModal({
   const { updatePlan, applyDiscount } = useSubscription(businessId)
 
   const getPrice = (plan: PlanType, cycle: BillingCycle) => {
-    if (plan === 'corporativo') return 'Personalizado'
+    if (PLANS[plan].monthly === 0) return 'Gratis'
     const amount = PLANS[plan][cycle]
     return formatCurrency(amount)
   }
@@ -87,7 +81,7 @@ export function PlanUpgradeModal({
     try {
       // Aplicar código de descuento si existe
       if (discountCode) {
-        const amount = PLANS[selectedPlan][selectedCycle]
+        const amount = PLANS[selectedPlan]?.[selectedCycle] ?? 0
         await applyDiscount(discountCode, selectedPlan, amount)
       }
 
@@ -102,7 +96,7 @@ export function PlanUpgradeModal({
   }
 
   const isUpgrade = () => {
-    const planOrder = ['inicio', 'profesional', 'empresarial', 'corporativo']
+    const planOrder: PlanType[] = ['free', 'basico', 'pro']
     const currentIndex = planOrder.indexOf(currentPlan)
     const selectedIndex = planOrder.indexOf(selectedPlan)
     return selectedIndex > currentIndex
@@ -143,7 +137,7 @@ export function PlanUpgradeModal({
           </div>
 
           {/* Grid de planes */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:gap-4 sm:grid-cols-3">
             {(Object.keys(PLANS) as PlanType[]).map((planKey) => {
               const plan = PLANS[planKey]
               const isCurrent = planKey === currentPlan && selectedCycle === currentCycle
@@ -166,7 +160,7 @@ export function PlanUpgradeModal({
                   <h3 className="text-lg font-semibold mb-2">{plan.name}</h3>
                   <div className="text-2xl font-bold mb-4">
                     {getPrice(planKey, selectedCycle)}
-                    {planKey !== 'corporativo' && (
+                    {PLANS[planKey].monthly > 0 && (
                       <span className="text-sm font-normal text-muted-foreground">
                         /{selectedCycle === 'monthly' ? 'mes' : 'año'}
                       </span>

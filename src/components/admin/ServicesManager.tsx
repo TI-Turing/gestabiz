@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { usePlanFeatures } from '@/hooks/usePlanFeatures'
+import { PlanLimitBanner } from '@/components/ui/PlanLimitBanner'
 import {
   Briefcase,
   Plus,
@@ -94,6 +97,9 @@ const initialFormData: Omit<Service, 'id' | 'created_at' | 'updated_at' | 'busin
 }
 
 export function ServicesManager({ businessId }: ServicesManagerProps) {
+  const navigate = useNavigate()
+  const { quotaInfo, upgradePlan } = usePlanFeatures(businessId)
+
   const [services, setServices] = useState<Service[]>([])
   const [locations, setLocations] = useState<Location[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -641,6 +647,12 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
 
   const filteredServices = showInactive ? services : services.filter((s) => s.is_active)
 
+  // Límite de plan: mostrar hasta el límite, indicar cuántos no se muestran
+  const servicesQuota = quotaInfo('services', filteredServices.length)
+  const visibleServices = servicesQuota.limit !== null
+    ? filteredServices.slice(0, servicesQuota.limit)
+    : filteredServices
+
   return (
     <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
       {/* Header - Responsive */}
@@ -701,7 +713,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
         )
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {filteredServices.map((service) => (
+          {visibleServices.map((service) => (
             <Card
               key={service.id}
               className="group relative overflow-hidden border-border hover:border-border/80 transition-colors cursor-pointer"
@@ -785,6 +797,14 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
           ))}
         </div>
       )}
+
+      {/* Banner de límite de plan */}
+      <PlanLimitBanner
+        notShownCount={servicesQuota.notShownCount}
+        resourceLabel={servicesQuota.notShownCount === 1 ? 'servicio' : 'servicios'}
+        upgradePlanName={upgradePlan?.name}
+        onUpgradeClick={() => navigate('/app/admin/billing')}
+      />
 
       {/* Create/Edit Dialog - Mobile Responsive */}
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>

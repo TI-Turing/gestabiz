@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { usePlanFeatures } from '@/hooks/usePlanFeatures'
+import { PlanLimitBanner } from '@/components/ui/PlanLimitBanner'
 import { sendAppointmentCancellationNotification } from '@/lib/mailService'
 import {
   MapPin,
@@ -15,6 +18,7 @@ import {
   Play,
   X,
   Save,
+  AlertTriangle,
 } from 'lucide-react'
 import { PermissionGate } from '@/components/ui/PermissionGate'
 import { Button } from '@/components/ui/button'
@@ -41,6 +45,7 @@ import { MediaUploader } from '@/components/ui/MediaUploader'
 import { LocationProfileModal } from '@/components/admin/LocationProfileModal'
 import { BannerCropper } from '@/components/settings/BannerCropper'
 import { RegionSelect, CitySelect } from '@/components/catalog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { LocationAddress } from '@/components/ui/LocationAddress'
 import { LocationExpenseConfig } from '@/components/admin/locations/LocationExpenseConfig'
 
@@ -85,7 +90,13 @@ const initialFormData: Omit<Location, 'id' | 'created_at' | 'updated_at' | 'busi
 }
 
 export function LocationsManager({ businessId }: LocationsManagerProps) {
+  const navigate = useNavigate()
+  const { quotaInfo, upgradePlan, hasModule } = usePlanFeatures(businessId)
+
   const [locations, setLocations] = useState<Location[]>([])
+  const locationsAtLimit = quotaInfo('locations', locations.length).isAtLimit
+  // ID de la sede que pasará a ser principal cuando se desmarca la actual
+  const [newPrimaryId, setNewPrimaryId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingLocation, setEditingLocation] = useState<Location | null>(null)
@@ -250,9 +261,11 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
     } else {
       setEditingLocation(null)
       setSelectedRegionId('')
-      setFormData(initialFormData)
+      // Primera sede: marcar como principal automáticamente
+      setFormData({ ...initialFormData, is_primary: locations.length === 0 })
       setExistingMedia([])
     }
+    setNewPrimaryId(null)
     // Limpiar descripciones temporales
     setTempDescriptions({})
     setSavingDescriptions({})
@@ -265,13 +278,29 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       setEditingLocation(null)
       setSelectedRegionId('')
       setFormData(initialFormData)
-      // Limpiar descripciones temporales
+      setNewPrimaryId(null)
       setTempDescriptions({})
       setSavingDescriptions({})
     }
   }
 
   const handleChange = (field: keyof typeof formData, value: string | boolean | BusinessHours | string[]) => {
+    // Validación especial: no permitir desmarcar is_primary sin elegir una nueva sede principal
+    if (field === 'is_primary' && value === false) {
+      const wasPrimary = editingLocation?.is_primary ?? false
+      if (wasPrimary) {
+        const otherActive = locations.filter(l => l.id !== editingLocation?.id && l.is_active)
+        if (otherActive.length === 0) {
+          toast.error('No puedes desmarcar la sede principal si no hay otras sedes activas.')
+          return
+        }
+        // Permitir el desmarque pero exigir seleccionar la nueva principal
+        setNewPrimaryId(null)
+      }
+    }
+    if (field === 'is_primary' && value === true) {
+      setNewPrimaryId(null)
+    }
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -340,8 +369,23 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       return
     }
 
+    // Si se está desmarcando la sede principal, debe haberse elegido una nueva
+    const desmarcandoPrincipal = editingLocation?.is_primary && !formData.is_primary
+    if (desmarcandoPrincipal && !newPrimaryId) {
+      toast.error('Debes seleccionar cuál será la nueva sede principal antes de guardar.')
+      return
+    }
+
     setIsSaving(true)
     try {
+      // Si se desmarca la principal, promover la nueva sede seleccionada
+      if (desmarcandoPrincipal && newPrimaryId) {
+        await supabase
+          .from('locations')
+          .update({ is_primary: true })
+          .eq('id', newPrimaryId)
+      }
+
       // Si se marca como principal, desmarcar otras sedes principales
       if (formData.is_primary) {
         await supabase
@@ -771,14 +815,16 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
         </div>
         <div className="flex gap-2">
           <PermissionGate permission="locations.create" businessId={businessId} mode="hide">
-          <Button
-            onClick={() => handleOpenDialog()}
-            className="bg-primary hover:bg-primary/90 w-full sm:w-auto min-h-[44px]"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">Agregar Sede</span>
-            <span className="sm:hidden">Nueva Sede</span>
-          </Button>
+            <Button
+              onClick={() => handleOpenDialog()}
+              disabled={locationsAtLimit}
+              title={locationsAtLimit ? `Límite de sedes alcanzado — actualiza al plan ${upgradePlan?.name ?? 'superior'}` : undefined}
+              className="bg-primary hover:bg-primary/90 w-full sm:w-auto min-h-[44px]"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Agregar Sede</span>
+              <span className="sm:hidden">Nueva Sede</span>
+            </Button>
           </PermissionGate>
         </div>
       </div>
@@ -934,6 +980,14 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
         />
       )}
 
+      {/* Banner de límite de plan */}
+      <PlanLimitBanner
+        notShownCount={Math.max(0, locations.length - (quotaInfo('locations', locations.length).limit ?? locations.length))}
+        resourceLabel="sedes"
+        upgradePlanName={upgradePlan?.name}
+        onUpgradeClick={() => navigate('/app/admin/billing')}
+      />
+
       {/* Create/Edit Dialog - Mobile Responsive */}
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
   <DialogContent className="bg-card border-border text-foreground max-w-[95vw] sm:max-w-3xl lg:max-w-5xl w-full max-h-[90vh] overflow-y-auto p-4 sm:p-6">
@@ -949,12 +1003,14 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
           </DialogHeader>
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'info' | 'expenses')} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className={hasModule('expenses') ? 'grid w-full grid-cols-2' : 'grid w-full grid-cols-1'}>
               <TabsTrigger value="info">Información</TabsTrigger>
-              <TabsTrigger value="expenses" disabled={!editingLocation}>
-                Egresos
-                {!editingLocation && <span className="ml-2 text-xs">(Guarda primero)</span>}
-              </TabsTrigger>
+              {hasModule('expenses') && (
+                <TabsTrigger value="expenses" disabled={!editingLocation}>
+                  Egresos
+                  {!editingLocation && <span className="ml-2 text-xs">(Guarda primero)</span>}
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="info" className="mt-6">
@@ -1267,21 +1323,47 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 p-3 sm:p-4 rounded-lg border border-border bg-card min-h-[68px]">
-                <Checkbox
-                  id="is_primary"
-                  checked={formData.is_primary || false}
-                  onCheckedChange={(checked) => handleChange('is_primary', checked === true)}
-                  className="min-w-[44px] min-h-[44px]"
-                />
-                <div className="flex flex-col">
-                  <Label htmlFor="is_primary" className="cursor-pointer text-xs sm:text-sm font-medium text-foreground">
-                    Sede principal
-                  </Label>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground">
-                    Solo puede haber una sede principal por negocio
-                  </span>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-3 p-3 sm:p-4 rounded-lg border border-border bg-card min-h-[68px]">
+                  <Checkbox
+                    id="is_primary"
+                    checked={formData.is_primary || false}
+                    disabled={!editingLocation && locations.length === 0}
+                    onCheckedChange={(checked) => handleChange('is_primary', checked === true)}
+                    className="min-w-[44px] min-h-[44px]"
+                  />
+                  <div className="flex flex-col">
+                    <Label htmlFor="is_primary" className="cursor-pointer text-xs sm:text-sm font-medium text-foreground">
+                      Sede principal
+                    </Label>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">
+                      Solo puede haber una sede principal por negocio
+                    </span>
+                  </div>
                 </div>
+
+                {/* Selector de nueva sede principal al desmarcar */}
+                {editingLocation?.is_primary && !formData.is_primary && (
+                  <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-2">
+                    <div className="flex items-center gap-2 text-amber-700 text-sm font-medium">
+                      <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                      Selecciona la nueva sede principal
+                    </div>
+                    <Select value={newPrimaryId ?? ''} onValueChange={setNewPrimaryId}>
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Elige una sede..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations
+                          .filter(l => l.id !== editingLocation.id && l.is_active)
+                          .map(l => (
+                            <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                          ))
+                        }
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </div>
 

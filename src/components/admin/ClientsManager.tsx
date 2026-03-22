@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -9,6 +10,8 @@ import { es } from 'date-fns/locale'
 import { QUERY_CONFIG } from '@/lib/queryConfig'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { ClientProfileModal } from './ClientProfileModal'
+import { usePlanFeatures } from '@/hooks/usePlanFeatures'
+import { PlanLimitBanner } from '@/components/ui/PlanLimitBanner'
 
 interface ClientsManagerProps {
   businessId: string
@@ -107,6 +110,9 @@ async function fetchClients(businessId: string): Promise<ClientSummary[]> {
 export function ClientsManager({ businessId }: ClientsManagerProps) {
   const [search, setSearch] = useState('')
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
+  const navigate = useNavigate()
+
+  const { quotaInfo, upgradePlan } = usePlanFeatures(businessId)
 
   const { data: clients = [], isLoading } = useQuery({
     queryKey: ['business-clients', businessId],
@@ -115,21 +121,34 @@ export function ClientsManager({ businessId }: ClientsManagerProps) {
     ...QUERY_CONFIG.FREQUENT,
   })
 
+  // Calcular límite del plan para clientes
+  const clientsQuota = quotaInfo('clients', clients.length)
+
+  // Lista visible: limitada por el plan (todos se almacenan, solo se muestran hasta el límite)
+  const visibleClients = useMemo(() => {
+    const limit = clientsQuota.limit
+    return limit !== null ? clients.slice(0, limit) : clients
+  }, [clients, clientsQuota.limit])
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return clients
+    if (!search.trim()) return visibleClients
     const q = search.toLowerCase()
-    return clients.filter(
+    return visibleClients.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
         (c.email ?? '').toLowerCase().includes(q),
     )
-  }, [clients, search])
+  }, [visibleClients, search])
+
+  const handleUpgradeClick = useCallback(() => {
+    navigate('/app/admin/billing')
+  }, [navigate])
 
   return (
     <div className="p-4 space-y-4">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-bold">Clientes</h2>
+        <h2 className="text-xl sm:text-2xl font-bold">Clientes</h2>
         <p className="text-sm text-muted-foreground">
           {isLoading
             ? 'Cargando…'
@@ -138,7 +157,7 @@ export function ClientsManager({ businessId }: ClientsManagerProps) {
       </div>
 
       {/* Búsqueda */}
-      <div className="relative max-w-sm">
+      <div className="relative w-full max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Buscar por nombre o correo..."
@@ -163,51 +182,61 @@ export function ClientsManager({ businessId }: ClientsManagerProps) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtered.map((client) => (
-            <div
-              key={client.id}
-              role="button"
-              tabIndex={0}
-              onClick={() => setSelectedClientId(client.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') setSelectedClientId(client.id)
-              }}
-              className="rounded-xl border bg-card p-4 cursor-pointer hover:shadow-md hover:border-primary/40 transition-all duration-200"
-            >
-              <div className="flex items-start gap-3">
-                <Avatar className="h-10 w-10 shrink-0">
-                  <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
-                    {getInitials(client.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm line-clamp-1">{client.name}</p>
-                  {client.email && (
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <Mail className="h-3 w-3 text-muted-foreground shrink-0" />
-                      <p className="text-xs text-muted-foreground truncate">{client.email}</p>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-3 mt-2">
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      <span>
-                        {client.total} cita{client.total !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                    {client.lastVisit && (
-                      <span className="text-xs text-muted-foreground">
-                        Última:{' '}
-                        {format(new Date(client.lastVisit), 'd MMM', { locale: es })}
-                      </span>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filtered.map((client) => (
+              <div
+                key={client.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedClientId(client.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') setSelectedClientId(client.id)
+                }}
+                className="rounded-xl border bg-card p-4 cursor-pointer hover:shadow-md hover:border-primary/40 transition-all duration-200"
+              >
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-10 w-10 shrink-0">
+                    <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+                      {getInitials(client.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm line-clamp-1">{client.name}</p>
+                    {client.email && (
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <Mail className="h-3 w-3 text-muted-foreground shrink-0" />
+                        <p className="text-xs text-muted-foreground truncate">{client.email}</p>
+                      </div>
                     )}
+                    <div className="flex items-center gap-3 mt-2">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3" />
+                        <span>
+                          {client.total} cita{client.total !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      {client.lastVisit && (
+                        <span className="text-xs text-muted-foreground">
+                          Última:{' '}
+                          {format(new Date(client.lastVisit), 'd MMM', { locale: es })}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          {/* Banner de límite de plan */}
+          <PlanLimitBanner
+            notShownCount={clientsQuota.notShownCount}
+            resourceLabel={clientsQuota.notShownCount === 1 ? 'cliente' : 'clientes'}
+            upgradePlanName={upgradePlan?.name}
+            onUpgradeClick={handleUpgradeClick}
+          />
+        </>
       )}
 
       <ClientProfileModal

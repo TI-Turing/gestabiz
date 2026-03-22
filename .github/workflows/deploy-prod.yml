@@ -1,0 +1,68 @@
+name: Deploy PROD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run type-check
+
+  deploy:
+    name: Build & Deploy to PROD
+    runs-on: ubuntu-latest
+    needs: typecheck
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create .env.production from secrets
+        run: |
+          cat > .env.production << EOF
+          VITE_SUPABASE_URL=${{ secrets.PROD_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY=${{ secrets.PROD_SUPABASE_ANON_KEY }}
+          VITE_APP_URL=https://gestabiz.com
+          VITE_SITE_URL=https://gestabiz.com
+          VITE_APP_NAME=Gestabiz
+          VITE_DEMO_MODE=false
+          VITE_PAYMENT_GATEWAY=${{ secrets.PROD_PAYMENT_GATEWAY }}
+          VITE_MERCADOPAGO_PUBLIC_KEY=${{ secrets.PROD_MERCADOPAGO_PUBLIC_KEY }}
+          VITE_SUPPORT_EMAIL=soporte@gestabiz.com
+          VITE_SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+          VITE_APP_VERSION=${{ github.ref_name }}
+          VITE_SENTRY_SAMPLE_RATE=0.3
+          VITE_GA_MEASUREMENT_ID=${{ secrets.PROD_GA_MEASUREMENT_ID }}
+          EOF
+
+      - name: Build for production
+        run: npm run build
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Deploy to Vercel (PROD)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+          working-directory: ./
