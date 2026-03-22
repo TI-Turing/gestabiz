@@ -4,7 +4,7 @@
 
 > **Gestabiz** — Sistema SaaS de gestión de citas y negocios
 > **Stack**: React 19 + TypeScript 5.7 + Vite 6 + Supabase + Tailwind 4
-> **Versión actual**: 0.0.4 (incrementar PATCH en cada commit)
+> **Versión actual**: 0.0.36 (incrementar PATCH en cada commit)
 > **Estado**: BETA completada — solo bugs, optimizaciones y features puntuales
 
 ---
@@ -52,7 +52,11 @@ gestabiz/
 │   ├── components/
 │   │   ├── MainApp.tsx            # Enrutador de roles (Admin/Employee/Client)
 │   │   ├── admin/                 # Dashboard admin y todos sus módulos
+│   │   │   ├── ClientsManager.tsx     # CRM clientes del negocio (admin)
+│   │   │   ├── SalesHistoryPage.tsx   # Historial de ventas/citas completadas (admin)
+│   │   │   └── ClientProfileModal.tsx # Modal perfil cliente — compartido admin+empleado
 │   │   ├── employee/              # Dashboard empleado
+│   │   │   └── EmployeeClientsPage.tsx # Clientes atendidos por el empleado
 │   │   ├── client/                # Dashboard cliente
 │   │   ├── appointments/          # AppointmentWizard (wizard multi-paso)
 │   │   ├── absences/              # AbsenceRequestModal, VacationDaysWidget, ApprovalCard
@@ -191,6 +195,8 @@ El AdminDashboard tiene estas pestañas/páginas en su sidebar:
 | `resources` | Recursos | ResourcesManager | Box |
 | `employees` | Empleados | EmployeeManagementHierarchy | Users |
 | `recruitment` | Reclutamiento | RecruitmentDashboard | BriefcaseBusiness |
+| `clients` | Clientes | ClientsManager | UserCheck |
+| `sales` | Ventas | SalesHistoryPage | BarChart3 |
 | `quickSales` | Ventas Rápidas | QuickSalesPage | ShoppingCart |
 | `expenses` | Gastos | ExpensesManagementPage | Wallet |
 | `reports` | Reportes | ReportsPage | FileText |
@@ -390,6 +396,48 @@ import { PermissionGate } from '@/components/ui/PermissionGate'
 - **Trigger**: `auto_insert_owner_to_business_employees()` al crear negocio
 - **Role**: `manager`, `status: approved`, `is_active: true`
 - **Backfill**: 30 owners existentes migrados
+
+### 22. CRM de Clientes (Admin) — COMPLETADO (Mar 2026)
+
+- **Componente**: `src/components/admin/ClientsManager.tsx`
+- **Acceso**: sidebar admin `id: 'clients'` → `/app/admin/clients`
+- **Scope**: a nivel de negocio — muestra todos los clientes que han tenido al menos una cita no cancelada en el negocio activo
+- **Datos**: query en dos pasos — `appointments` (client_id, start_time, status) → `profiles` (full_name, email, avatar_url)
+- **Agregación**: total de visitas, visitas completadas, última visita — calculadas en cliente
+- **Vista**: grid de cards con avatar de iniciales, email, contador de visitas, fecha última visita
+- **Acción**: click en cliente abre `ClientProfileModal` con historial completo
+- **Búsqueda**: filtro local por nombre o email
+- **GOTCHA**: `appointments` NO tiene columnas `client_name`, `client_email` — siempre usar two-step query (appointments → profiles)
+
+### 23. Historial de Ventas (Admin) — COMPLETADO (Mar 2026)
+
+- **Componente**: `src/components/admin/SalesHistoryPage.tsx`
+- **Acceso**: sidebar admin `id: 'sales'` → `/app/admin/sales`
+- **Scope**: a nivel de negocio — citas con `status = 'completed'`
+- **Filtro de rango**: últimos 7/30/90/365 días (default 30)
+- **Summary cards**: total de ventas completadas, ingresos totales, promedio por cita
+- **Tabla**: fecha, servicio, cliente (botón → abre `ClientProfileModal`), precio
+- **Datos**: query en dos pasos — `appointments` → `profiles` + `services` en batch
+- **GOTCHA**: `appointments` usa `service_id` (FK a `services`) — el nombre del servicio requiere join separado
+
+### 24. Mis Clientes (Empleado) — COMPLETADO (Mar 2026)
+
+- **Componente**: `src/components/employee/EmployeeClientsPage.tsx`
+- **Acceso**: sidebar empleado `id: 'my-clients'` → `/app/employee/my-clients`
+- **Scope**: clientes atendidos por el empleado — filtra `employee_id = currentUser.id` en `appointments`
+- **Ordenamiento**: por cantidad de visitas completadas (más atendidos primero)
+- **Vista**: grid de cards — igual visual que `ClientsManager` pero acotado al empleado
+- **Acción**: click abre `ClientProfileModal` (importado desde `src/components/admin/`)
+- **GOTCHA**: misma limitación que ClientsManager — two-step query obligatorio
+
+### 25. Modal de Perfil de Cliente — COMPLETADO (Mar 2026)
+
+- **Componente**: `src/components/admin/ClientProfileModal.tsx`
+- **Usado por**: `ClientsManager`, `SalesHistoryPage`, `EmployeeClientsPage`
+- **Props**: `clientId`, `businessId`, `isOpen`, `onClose`
+- **Tabs**: "Información" (stats, fecha primer/última visita) y "Historial (N)" (lista de citas con servicio, fecha, estado, precio)
+- **Datos**: `profiles` (info de contacto) + `appointments` + `services` (two-step)
+- **Patrón**: Radix UI Dialog + Tabs, basado en `ApplicantProfileModal`
 
 ### 21. Configuraciones Unificadas — COMPLETADO
 
@@ -757,6 +805,9 @@ SUPPORT_EMAIL
 ## CONVENCIONES Y GOTCHAS
 
 ### CRÍTICOS
+- **`appointments` NO tiene columnas de texto denormalizadas**: NO existen `client_name`, `client_email`, `title`, `service_name` en la tabla real. Siempre usar two-step query: fetch `client_id`/`service_id` de appointments → batch fetch `profiles`/`services` por separado. Las columnas falsas solo existen en el mock data (`src/lib/demoData.ts`).
+- **`services!inner` en joins oculta citas silenciosamente**: si el servicio fue eliminado, el INNER JOIN excluye la cita. Usar `services (...)` (LEFT JOIN) en calendarios y listados históricos.
+- **Hora de almuerzo no aplica a días pasados**: `isLunchBreak()` en `AppointmentsCalendar` retorna `false` para fechas anteriores a hoy, evitando ocultar citas históricas que se crearon con un horario de almuerzo distinto.
 - **`business_employees` usa `employee_id` NO `user_id`**: siempre `employee_id = auth.uid()`
 - **`appointments` tiene `is_location_exception`**: empleados trabajando fuera de su sede asignada
 - **RLS no puede consultar la misma tabla que protege**: evitar recursión infinita en políticas

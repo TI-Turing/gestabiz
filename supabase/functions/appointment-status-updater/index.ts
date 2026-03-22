@@ -19,38 +19,55 @@ serve(async (req) => {
     const nowIso = now.toISOString()
 
     console.log(`Running appointment status updater at ${nowIso}`)
-    console.log(`Marking appointments as no_show when auto_no_show_at or end_time <= now`)
 
-    // Marcar citas como 'no_show' si su ventana de auto-no-show pasó
-    // o si la cita ya terminó y no se marcó como completada/cancelada
+    // CASO 1: Auto-completar citas que estaban 'in_progress' y ya pasó su end_time.
+    // El cliente SÍ se presentó (por eso estaba en progreso), el admin olvidó marcarla.
+    const { data: autoCompleted, error: autoCompleteError } = await supabase
+      .from('appointments')
+      .update({
+        status: 'completed',
+        updated_at: nowIso
+      })
+      .eq('status', 'in_progress')
+      .lte('end_time', nowIso)
+      .select('id, client_id, start_time, end_time')
+
+    if (autoCompleteError) {
+      console.error('Error auto-completing in_progress appointments:', autoCompleteError)
+    } else {
+      console.log(`Auto-completed ${autoCompleted?.length || 0} in_progress appointments`)
+    }
+
+    // CASO 2: Marcar como 'no_show' citas que el cliente no confirmó ni se presentó.
+    // Solo aplica a estados donde el cliente NO ha llegado aún: pending, pending_confirmation,
+    // scheduled, confirmed. Se activa cuando pasa auto_no_show_at (configurable, default
+    // 10 min después del start_time) o cuando ya pasó el end_time completo.
     const { data: noShowAppointments, error: noShowError } = await supabase
       .from('appointments')
-      .update({ 
+      .update({
         status: 'no_show',
         updated_at: nowIso
       })
-      .in('status', ['confirmed', 'in_progress'])
+      .in('status', ['pending', 'pending_confirmation', 'scheduled', 'confirmed'])
       .or(`auto_no_show_at.lte.${nowIso},end_time.lte.${nowIso}`)
       .select('id, client_id, start_time, end_time')
 
     if (noShowError) {
       console.error('Error updating no-show appointments:', noShowError)
     } else {
-      console.log(`Updated ${noShowAppointments?.length || 0} no-show appointments`)
+      console.log(`Marked ${noShowAppointments?.length || 0} appointments as no_show`)
     }
 
     // Nota: la inserción de notificaciones se omite aquí para evitar desalineaciones
     // con enums divergentes de notificaciones. Se puede reactivar cuando estén unificados.
-    const totalUpdated = noShowAppointments?.length || 0
-    if (totalUpdated > 0) {
-      console.log(`Total appointments marked as no_show: ${totalUpdated}`)
-    }
+    const totalUpdated = (autoCompleted?.length || 0) + (noShowAppointments?.length || 0)
 
     return new Response(
       JSON.stringify({
         success: true,
         message: 'Appointment status update completed',
         stats: {
+          auto_completed: autoCompleted?.length || 0,
           no_show_appointments: noShowAppointments?.length || 0,
           total_updated: totalUpdated
         },

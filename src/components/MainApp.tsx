@@ -70,19 +70,21 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
     }
   }, [searchParams, setSearchParams])
 
-  // Auto-select business if there's only one or use activeBusiness
+  // Auto-select business if there's only one or use persisted selection
   // FIXED: Use businesses.length as dependency to prevent infinite loop
   const businessesLength = businesses.length
   const activeBusinessId = activeBusiness?.id
   React.useEffect(() => {
     if (activeRole === 'admin' && businesses.length > 0 && !isCreatingNewBusiness) {
       if (!selectedBusinessId) {
-        // Prefer activeBusiness, then first in list
-        const initialId = activeBusiness?.id || businesses[0].id
+        // 1st: check isolated admin-business key, 2nd: activeBusiness, 3rd: first in list
+        const savedId = user?.id ? localStorage.getItem(`gestabiz-admin-business-${user.id}`) : null
+        const validSaved = savedId ? businesses.find((b) => b.id === savedId) : null
+        const initialId = validSaved?.id ?? activeBusiness?.id ?? businesses[0].id
         setSelectedBusinessId(initialId)
       }
     }
-  }, [activeRole, businessesLength, activeBusinessId, selectedBusinessId, isCreatingNewBusiness])
+  }, [activeRole, businessesLength, activeBusinessId, selectedBusinessId, isCreatingNewBusiness, user?.id])
   
   // Si no hay usuario autenticado, no renderizar nada (el App.tsx maneja esto)
   if (!user) {
@@ -105,6 +107,14 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
   const handleBusinessUpdate = async () => {
     // Refresh businesses list after update
     await refetchBusinesses()
+  }
+
+  const handleSelectBusiness = (businessId: string) => {
+    setSelectedBusinessId(businessId)
+    // Persist admin business selection isolated from the global role context
+    if (user?.id) {
+      localStorage.setItem(`gestabiz-admin-business-${user.id}`, businessId)
+    }
   }
 
   const handleCreateNewBusiness = () => {
@@ -149,7 +159,7 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
           onRoleChange={switchRole}
           onLogout={handleLogout}
           businesses={businesses}
-          onSelectBusiness={setSelectedBusinessId}
+          onSelectBusiness={handleSelectBusiness}
           onNavigateToAdmin={() => {
             // When user clicks non-onboarding pages, show AdminDashboard instead
             // The logic will fallthrough to show AdminDashboard if a business is selected
@@ -167,7 +177,7 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
         <AdminDashboard
           business={selectedBusiness}
           businesses={businesses}
-          onSelectBusiness={setSelectedBusinessId}
+          onSelectBusiness={handleSelectBusiness}
           onCreateNew={handleCreateNewBusiness}
           onUpdate={handleBusinessUpdate}
           onLogout={handleLogout}

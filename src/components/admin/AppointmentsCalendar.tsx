@@ -633,7 +633,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           commission_amount,
           net_amount,
           other_deductions,
-          services!inner (
+          services (
             id,
             name,
             price,
@@ -1583,15 +1583,22 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     setTimeout(() => attemptScroll(0, 5), 500);
   }, [isSelectedDateToday, currentTimePosition, operatingHours, selectedDate, showFilters]);
 
-  // Check if hour is within employee's lunch break
+  // Check if hour is within employee's lunch break.
+  // Never block past days — lunch times change over time and would hide historical appointments.
   const isLunchBreak = (hour: number, employee: Employee): boolean => {
     if (!employee.has_lunch_break || !employee.lunch_break_start || !employee.lunch_break_end) {
       return false;
     }
-    
+    // Past days: don't show lunch block (avoids hiding historical appointments)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sel = new Date(selectedDate);
+    sel.setHours(0, 0, 0, 0);
+    if (sel < today) return false;
+
     const lunchStart = Number.parseInt(employee.lunch_break_start.split(':')[0]);
     const lunchEnd = Number.parseInt(employee.lunch_break_end.split(':')[0]);
-    
+
     return hour >= lunchStart && hour < lunchEnd;
   };
 
@@ -1609,10 +1616,15 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       // ✅ Mejorado para ambos temas: mejor contraste en light mode
       return 'bg-green-100 border border-green-400 text-green-900 dark:bg-green-900/30 dark:border-green-700 dark:text-green-200';
     }
+    if (status === 'in_progress') {
+      return 'bg-purple-100 border border-purple-400 text-purple-900 dark:bg-purple-900/30 dark:border-purple-700 dark:text-purple-200';
+    }
+    if (status === 'no_show') {
+      return 'bg-muted border border-border text-muted-foreground opacity-70 dark:bg-muted/50';
+    }
     if (status === 'cancelled') {
       return 'bg-red-50 border border-red-300 text-red-400 line-through opacity-60 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400';
     }
-    // ✅ Mejorado para ambos temas: mejor contraste en light mode (rechazada/otros)
     return 'bg-red-100 border border-red-400 text-red-900 dark:bg-red-900/30 dark:border-red-700 dark:text-red-200';
   };
 
@@ -1737,12 +1749,12 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                     <div className="px-2 py-2 border-b border-border">
                       <button
                         className="w-full text-left px-3 py-2 text-sm font-medium hover:bg-muted/40 rounded"
-                        onClick={() => setFilterStatus(['pending', 'confirmed', 'cancelled', 'completed'])}
+                        onClick={() => setFilterStatus(['pending', 'confirmed', 'in_progress', 'completed', 'no_show', 'cancelled'])}
                       >
                         Seleccionar Todos
                       </button>
                     </div>
-                    {['pending', 'confirmed', 'cancelled', 'completed'].map(status => (
+                    {['pending', 'confirmed', 'in_progress', 'completed', 'no_show', 'cancelled'].map(status => (
                       <label key={status} className="flex items-center px-3 py-2 hover:bg-muted/50 cursor-pointer">
                         <input
                           type="checkbox"
@@ -1759,8 +1771,10 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                         <span className="ml-2 text-sm text-foreground">
                           {status === 'pending' && 'Pendiente'}
                           {status === 'confirmed' && 'Confirmada'}
-                          {status === 'cancelled' && 'Cancelada'}
+                          {status === 'in_progress' && 'En progreso'}
                           {status === 'completed' && 'Completada'}
+                          {status === 'no_show' && 'No se presentó'}
+                          {status === 'cancelled' && 'Cancelada'}
                         </span>
                       </label>
                     ))}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, MapPin, Briefcase, Users, FileText, Shield, CreditCard, BriefcaseBusiness, ShoppingCart, Calendar, CalendarOff, Box, Wallet } from 'lucide-react'
+import { LayoutDashboard, MapPin, Briefcase, Users, FileText, Shield, CreditCard, BriefcaseBusiness, ShoppingCart, Calendar, CalendarOff, Box, Wallet, UserCheck, BarChart3 } from 'lucide-react'
 import { UnifiedLayout } from '@/components/layouts/UnifiedLayout'
 import { usePreferredLocation } from '@/hooks/usePreferredLocation'
 import { APP_CONFIG } from '@/constants'
@@ -28,6 +28,8 @@ const AppointmentsCalendar = lazy(() => import('./AppointmentsCalendar').then(m 
 const AbsencesTab = lazy(() => import('./AbsencesTab').then(m => ({ default: m.AbsencesTab })))
 const ResourcesManager = lazy(() => import('./ResourcesManager').then(m => ({ default: m.ResourcesManager })))
 const ExpensesManagementPage = lazy(() => import('./expenses/ExpensesManagementPage').then(m => ({ default: m.ExpensesManagementPage })))
+const ClientsManager = lazy(() => import('./ClientsManager').then(m => ({ default: m.ClientsManager })))
+const SalesHistoryPage = lazy(() => import('./SalesHistoryPage').then(m => ({ default: m.SalesHistoryPage })))
 const CompleteUnifiedSettings = lazy(() => import('@/components/settings/CompleteUnifiedSettings'))
 
 interface AdminDashboardProps {
@@ -120,7 +122,7 @@ export function AdminDashboard({
   // ✅ Función para manejar cambios de página con navegación de URL
   const handlePageChange = useCallback((page: string, context?: Record<string, unknown>) => {
     setActivePage(page)
-    navigate(`/app/admin/${page}`, { replace: true })
+    navigate(`/app/admin/${page}`)
     if (context) {
       setPageContext(context)
     } else {
@@ -185,6 +187,16 @@ export function AdminDashboard({
       id: 'recruitment',
       label: t('adminDashboard.sidebar.recruitment'),
       icon: <BriefcaseBusiness className="h-5 w-5" />
+    },
+    {
+      id: 'clients',
+      label: 'Clientes',
+      icon: <UserCheck className="h-5 w-5" />
+    },
+    {
+      id: 'sales',
+      label: 'Ventas',
+      icon: <BarChart3 className="h-5 w-5" />
     },
     {
       id: 'quick-sales',
@@ -264,6 +276,10 @@ export function AdminDashboard({
             onChatStarted={setChatConversationId}
           />,
         )
+      case 'clients':
+        return wrap(<ClientsManager businessId={business.id} />)
+      case 'sales':
+        return wrap(<SalesHistoryPage businessId={business.id} />)
       case 'quick-sales':
         return wrap(<QuickSalesPage businessId={business.id} />)
       case 'expenses':

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Calendar, Clock, Briefcase, Search, CalendarOff } from 'lucide-react'
+import { Calendar, Clock, Briefcase, Search, CalendarOff, Users } from 'lucide-react'
 import { UnifiedLayout } from '@/components/layouts/UnifiedLayout'
 import CompleteUnifiedSettings from '@/components/settings/CompleteUnifiedSettings'
 import { MyProfilePage } from '@/components/profile/MyProfilePage'
@@ -9,6 +9,7 @@ import { MyEmployments } from '@/components/employee/MyEmploymentsEnhanced'
 import { EmployeeOnboarding } from '@/components/employee/EmployeeOnboarding'
 import { EmployeeAbsencesTab } from '@/components/employee/EmployeeAbsencesTab'
 import { EmployeeAppointmentsPage } from '@/components/employee/EmployeeAppointmentsPage'
+import { EmployeeClientsPage } from '@/components/employee/EmployeeClientsPage'
 import { PhoneRequiredModal } from '@/components/employee/PhoneRequiredModal'
 import { usePendingNavigation } from '@/hooks/usePendingNavigation'
 import { useEmployeeAbsences } from '@/hooks/useEmployeeAbsences'
@@ -125,17 +126,22 @@ export function EmployeeDashboard({
     }
   }, [location.pathname, navigate])
 
-  // Sincronizar selectedBusinessId cuando cambia businessId (desde MainApp)
+  // Restaurar negocio seleccionado desde localStorage, luego fallback a businessId prop
   useEffect(() => {
-    if (businessId && !selectedBusinessId) {
-      setSelectedBusinessId(businessId)
-    }
-  }, [businessId, selectedBusinessId])
+    if (selectedBusinessId) return
+    const saved = user?.id ? localStorage.getItem(`gestabiz-employee-business-${user.id}`) : null
+    const validSaved = saved && normalizedBusinesses.length > 0
+      ? normalizedBusinesses.find(b => b.id === saved)
+      : null
+    const initialId = validSaved?.id ?? businessId ?? normalizedBusinesses[0]?.id
+    if (initialId) setSelectedBusinessId(initialId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [businessId, normalizedBusinesses.length, user?.id])
 
   // Función para manejar cambios de página con contexto
   const handlePageChange = (page: string, context?: Record<string, unknown>) => {
     setActivePage(page)
-    navigate(`/app/employee/${page}`, { replace: true })
+    navigate(`/app/employee/${page}`)
     // Aquí puedes usar el context si necesitas pasarlo a componentes hijos
     if (context) {
       // eslint-disable-next-line no-console
@@ -194,6 +200,11 @@ export function EmployeeDashboard({
       id: 'schedule',
       label: t('employeeDashboard.sidebar.schedule'),
       icon: <Clock className="h-5 w-5" />
+    },
+    {
+      id: 'my-clients',
+      label: 'Mis Clientes',
+      icon: <Users className="h-5 w-5" />
     }
   ]
 
@@ -292,6 +303,17 @@ export function EmployeeDashboard({
             <p className="text-muted-foreground">No estás vinculado a ningún negocio</p>
           </div>
         )
+      case 'my-clients':
+        return effectiveBusinessId ? (
+          <EmployeeClientsPage
+            employeeId={currentUser.id}
+            businessId={effectiveBusinessId}
+          />
+        ) : (
+          <div className="p-4">
+            <p className="text-muted-foreground">No estás vinculado a ningún negocio</p>
+          </div>
+        )
       case 'profile':
         return currentUser ? (
           <MyProfilePage user={currentUser} onNavigate={handlePageChange} />
@@ -314,9 +336,12 @@ export function EmployeeDashboard({
     }
   }
 
-  // Handler para cambiar de negocio
+  // Handler para cambiar de negocio — persiste en localStorage
   const handleBusinessSelect = (newBusinessId: string) => {
     setSelectedBusinessId(newBusinessId)
+    if (user?.id) {
+      localStorage.setItem(`gestabiz-employee-business-${user.id}`, newBusinessId)
+    }
   }
 
   return (
