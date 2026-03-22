@@ -24,9 +24,20 @@ export const BannerCropper: React.FC<BannerCropperProps> = ({
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
   const imgRef = useRef<HTMLImageElement>(null)
 
-  // Load image when file changes
+  // Reset state when dialog opens/closes
   React.useEffect(() => {
-    if (!imageFile) return
+    if (!isOpen) {
+      setImageSrc(null)
+      setCrop(undefined)
+      setCompletedCrop(undefined)
+    }
+  }, [isOpen])
+
+  // Load image when file changes or dialog opens
+  React.useEffect(() => {
+    if (!imageFile || !isOpen) return
+    // Reject video files — they can't be cropped
+    if (imageFile.type.startsWith('video/')) return
 
     const reader = new FileReader()
     reader.addEventListener('load', () => {
@@ -36,7 +47,7 @@ export const BannerCropper: React.FC<BannerCropperProps> = ({
       }
     })
     reader.readAsDataURL(imageFile)
-  }, [imageFile])
+  }, [imageFile, isOpen])
 
   // Initialize crop when image loads
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -132,6 +143,7 @@ export const BannerCropper: React.FC<BannerCropperProps> = ({
               aspect={16 / 9}
             >
               <img
+                key={imageSrc}
                 ref={imgRef}
                 src={imageSrc}
                 alt="Crop preview"

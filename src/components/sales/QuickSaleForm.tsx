@@ -25,6 +25,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { usePreferredLocation } from '@/hooks/usePreferredLocation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { PermissionGate } from '@/components/ui/PermissionGate'
+import { PhonePrefixSelect } from '@/components/catalog/PhonePrefixSelect'
 
 interface Service {
   id: string
@@ -62,6 +63,7 @@ export function QuickSaleForm({ businessId, onSuccess }: QuickSaleFormProps) {
   // Form state
   const [clientName, setClientName] = useState('')
   const [clientPhone, setClientPhone] = useState('')
+  const [clientPhonePrefix, setClientPhonePrefix] = useState('+57')
   const [clientDocument, setClientDocument] = useState('')
   const [clientEmail, setClientEmail] = useState('')
   const [serviceId, setServiceId] = useState('')
@@ -200,7 +202,7 @@ export function QuickSaleForm({ businessId, onSuccess }: QuickSaleFormProps) {
           payment_method: paymentMethod,
           metadata: {
             client_name: clientName,
-            client_phone: clientPhone || null,
+            client_phone: clientPhone ? `${clientPhonePrefix}${clientPhone}` : null,
             client_document: clientDocument || null,
             client_email: clientEmail || null,
             service_id: serviceId,
@@ -277,13 +279,20 @@ export function QuickSaleForm({ businessId, onSuccess }: QuickSaleFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="clientPhone">Teléfono (Opcional)</Label>
-              <Input
-                id="clientPhone"
-                type="tel"
-                value={clientPhone}
-                onChange={(e) => setClientPhone(e.target.value)}
-                placeholder={t('common.placeholders.clientPhone')}
-              />
+              <div className="flex gap-2">
+                <PhonePrefixSelect
+                  value={clientPhonePrefix}
+                  onChange={setClientPhonePrefix}
+                  className="w-28 shrink-0"
+                />
+                <Input
+                  id="clientPhone"
+                  type="tel"
+                  value={clientPhone}
+                  onChange={(e) => setClientPhone(e.target.value)}
+                  placeholder={t('common.placeholders.clientPhone')}
+                />
+              </div>
             </div>
           </div>
 

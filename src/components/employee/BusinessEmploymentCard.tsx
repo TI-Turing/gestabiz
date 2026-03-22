@@ -38,7 +38,7 @@ export interface EnhancedBusiness {
 interface BusinessEmploymentCardProps {
   business: EnhancedBusiness;
   onViewDetails?: () => void; // Opcional - solo si el modal está implementado
-  onRequestTimeOff: (type: 'vacation' | 'sick_leave' | 'personal') => void;
+  onRequestTimeOff: (type: 'vacation' | 'sick_leave' | 'personal' | 'emergency' | 'other') => void;
   onEndEmployment: () => void;
 }
 
@@ -205,6 +205,14 @@ export function BusinessEmploymentCard({
               <DropdownMenuItem onClick={() => onRequestTimeOff('personal')}>
                 <Calendar className="h-4 w-4 mr-2 text-purple-600" />
                 <span>Solicitar Permiso Personal</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onRequestTimeOff('emergency')}>
+                <Calendar className="h-4 w-4 mr-2 text-red-600" />
+                <span>Solicitar Emergencia</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onRequestTimeOff('other')}>
+                <Calendar className="h-4 w-4 mr-2 text-gray-600" />
+                <span>Otro tipo de ausencia</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 

@@ -326,8 +326,9 @@ const CustomDateInput = forwardRef<HTMLDivElement, CustomDateInputProps>(
               "pr-10", // Space for icon
               className
             )}
-            popperClassName="z-50"
+            popperClassName="z-[9999]"
             popperContainer={popperContainerFn}
+            popperProps={{ strategy: 'fixed' }}
           />
           {/* Custom calendar icon */}
           <CalendarDays

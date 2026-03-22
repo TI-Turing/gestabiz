@@ -4,6 +4,7 @@ import { Calendar, Clock, Briefcase, Search, CalendarOff } from 'lucide-react'
 import { UnifiedLayout } from '@/components/layouts/UnifiedLayout'
 import CompleteUnifiedSettings from '@/components/settings/CompleteUnifiedSettings'
 import { MyProfilePage } from '@/components/profile/MyProfilePage'
+import { WorkScheduleEditor } from '@/components/employee/WorkScheduleEditor'
 import { MyEmployments } from '@/components/employee/MyEmploymentsEnhanced'
 import { EmployeeOnboarding } from '@/components/employee/EmployeeOnboarding'
 import { EmployeeAbsencesTab } from '@/components/employee/EmployeeAbsencesTab'
@@ -240,29 +241,6 @@ export function EmployeeDashboard({
       case 'absences':
         return effectiveBusinessId ? (
           <div className="p-4 space-y-4">
-            {/* Selector de negocio si hay múltiples */}
-            {employeeBusinesses.length > 1 && (
-              <div className="flex items-end gap-4">
-                <div className="flex-1 max-w-xs">
-                  <label htmlFor="business-select" className="text-sm font-medium text-muted-foreground mb-2 block">
-                    Seleccionar Negocio
-                  </label>
-                  <Select value={selectedBusinessId || ''} onValueChange={setSelectedBusinessId}>
-                    <SelectTrigger id="business-select" className="w-full">
-                      <SelectValue placeholder="Elige un negocio..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employeeBusinesses.map((business) => (
-                        <SelectItem key={business.id} value={business.id}>
-                          {business.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-            
             {/* Widget de vacaciones y botón de solicitud */}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
@@ -302,10 +280,16 @@ export function EmployeeDashboard({
           </div>
         )
       case 'schedule':
-        return (
+        return effectiveBusinessId ? (
+          <div className="p-4 max-w-2xl">
+            <WorkScheduleEditor
+              businessId={effectiveBusinessId}
+              employeeId={currentUser.id}
+            />
+          </div>
+        ) : (
           <div className="p-4">
-            <h2 className="text-xl font-bold text-foreground mb-3">Mi Horario</h2>
-            <p className="text-muted-foreground">Gestiona tu disponibilidad - Próximamente</p>
+            <p className="text-muted-foreground">No estás vinculado a ningún negocio</p>
           </div>
         )
       case 'profile':
