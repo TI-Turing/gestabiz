@@ -175,7 +175,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
 
   if (isLoading || !stats) {
     return (
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-foreground">Resumen</CardTitle>
@@ -195,7 +195,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
   return (
     <div className="space-y-4">
       {/* Stats Grid */}
-      <div className="grid gap-3 grid-cols-1 lg:grid-cols-3">
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
         <Card
           className="bg-card border-border cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all group"
           onClick={handleTodayCardClick}
@@ -249,7 +249,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
       </div>
 
       {/* Detailed Stats Grid */}
-      <div className="grid gap-3 grid-cols-1 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -312,7 +312,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
       </div>
 
       {/* Revenue and Avg Value */}
-      <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">

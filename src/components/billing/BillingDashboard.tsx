@@ -30,6 +30,8 @@ import { AddPaymentMethodModal } from './AddPaymentMethodModal'
 import { PricingPage } from '@/pages/PricingPage'
 import type { SubscriptionStatus } from '@/lib/payments/PaymentGateway'
 import { formatCurrency } from '@/lib/utils'
+import { usePlanFeatures } from '@/hooks/usePlanFeatures'
+import { PRICING_PLANS, getPlanName, type PlanId } from '@/lib/pricingPlans'
 
 interface BillingDashboardProps {
   businessId: string
@@ -37,6 +39,7 @@ interface BillingDashboardProps {
 
 export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>) {
   const { dashboard, isLoading, refresh } = useSubscription(businessId)
+  const { planId, plan: currentPlan, limits } = usePlanFeatures(businessId)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [showAddPaymentModal, setShowAddPaymentModal] = useState(false)
@@ -68,55 +71,108 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
   }
 
   if (!dashboard?.subscription) {
+    // Plan Free — sin suscripción activa
+    const freePlan = PRICING_PLANS.find(p => p.id === 'free')!
+    const basicoPlan = PRICING_PLANS.find(p => p.id === 'basico')!
+    const proPlan    = PRICING_PLANS.find(p => p.id === 'pro')!
+
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-4 sm:p-6">
         {/* Page Title */}
         <div className="space-y-1">
-          <h2 className="text-3xl font-bold tracking-tight">Facturación</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Facturación</h2>
           <p className="text-muted-foreground">Administra tu suscripción y métodos de pago</p>
         </div>
-        <Card>
+
+        {/* Plan actual: Free */}
+        <Card className="border-2 border-primary/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-500" />
-              Plan Gratuito
+              Plan Free — Activo
             </CardTitle>
             <CardDescription>
-              Actualmente estás usando el plan gratuito con funcionalidades básicas
+              {freePlan.description}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <h4 className="font-medium text-sm">Características incluidas:</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  Registro de negocios básico
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  Hasta 3 citas por mes
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  1 empleado
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  1 servicio
-                </li>
+              <h4 className="font-medium text-sm">Lo que incluye:</h4>
+              <ul className="space-y-1.5 text-sm text-muted-foreground">
+                {freePlan.features.filter(f => f.included).map((f, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                    {f.name}
+                  </li>
+                ))}
               </ul>
-            </div>
-            <div className="pt-4 border-t">
-              <p className="text-sm text-muted-foreground mb-4">
-                ¿Quieres desbloquear más funcionalidades? Actualiza al Plan Inicio
-              </p>
-              <Button onClick={() => setShowPricingPage(true)} className="w-full">
-                Ver Plan Inicio
-              </Button>
             </div>
           </CardContent>
         </Card>
+
+        {/* Comparativa de planes */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Plan Básico */}
+          <Card className="relative border-primary">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
+                Más Popular
+              </span>
+            </div>
+            <CardHeader className="pt-6">
+              <CardTitle>{basicoPlan.name}</CardTitle>
+              <CardDescription>{basicoPlan.description}</CardDescription>
+              <div className="mt-2">
+                <span className="text-2xl sm:text-3xl font-bold">${basicoPlan.price.toLocaleString('es-CO')}</span>
+                <span className="text-muted-foreground text-sm">/mes</span>
+                <p className="text-xs text-green-600 mt-1">
+                  ${basicoPlan.priceAnnual.toLocaleString('es-CO')}/año (2 meses gratis)
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ul className="space-y-1.5 text-sm">
+                {basicoPlan.features.filter(f => f.included).slice(0, 6).map((f, i) => (
+                  <li key={i} className={`flex items-start gap-2 ${f.highlight ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                    {f.name}
+                  </li>
+                ))}
+              </ul>
+              <Button onClick={() => setShowPricingPage(true)} className="w-full mt-4">
+                Activar Plan Básico
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Plan Pro */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{proPlan.name}</CardTitle>
+              <CardDescription>{proPlan.description}</CardDescription>
+              <div className="mt-2">
+                <span className="text-2xl sm:text-3xl font-bold">${proPlan.price.toLocaleString('es-CO')}</span>
+                <span className="text-muted-foreground text-sm">/mes</span>
+                <p className="text-xs text-green-600 mt-1">
+                  ${proPlan.priceAnnual.toLocaleString('es-CO')}/año (2 meses gratis)
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ul className="space-y-1.5 text-sm">
+                {proPlan.features.filter(f => f.included).slice(0, 6).map((f, i) => (
+                  <li key={i} className={`flex items-start gap-2 ${f.highlight ? 'font-semibold text-primary' : 'text-muted-foreground'}`}>
+                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                    {f.name}
+                  </li>
+                ))}
+              </ul>
+              <Button variant="outline" onClick={() => setShowPricingPage(true)} className="w-full mt-4">
+                Activar Plan Pro
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
@@ -146,10 +202,10 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       {/* Page Title */}
       <div className="space-y-1">
-        <h2 className="text-3xl font-bold tracking-tight">Facturación</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Facturación</h2>
         <p className="text-muted-foreground">Administra tu suscripción y métodos de pago</p>
       </div>
       {/* Header con información de suscripción */}
@@ -160,7 +216,9 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold capitalize">{subscription.planType}</div>
+            <div className="text-2xl font-bold">
+              {getPlanName(subscription.planType as PlanId)}
+            </div>
             <p className="text-xs text-muted-foreground">
               {subscription.billingCycle === 'monthly' ? 'Mensual' : 'Anual'}
             </p>
@@ -304,32 +362,38 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
             </CardHeader>
             <CardContent className="space-y-4">
               {usageMetrics && Object.entries(usageMetrics).map(([key, value]) => {
-                const percentage = (value.current / value.limit) * 100
-                const isNearLimit = percentage >= 80
+                const planLimit = limits[key as keyof typeof limits]
+                const effectiveLimit = planLimit ?? value.limit
+                const isUnlimited  = planLimit === null
+                const percentage   = isUnlimited ? 0 : Math.min(100, (value.current / (effectiveLimit || 1)) * 100)
+                const isNearLimit  = !isUnlimited && percentage >= 80
 
                 return (
                   <div key={key} className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="capitalize font-medium">
-                        {key === 'locations' ? 'Sedes' : 
-                         key === 'employees' ? 'Empleados' :
+                        {key === 'locations'    ? 'Sedes' :
+                         key === 'employees'    ? 'Empleados' :
                          key === 'appointments' ? 'Citas' :
-                         key === 'clients' ? 'Clientes' :
-                         key === 'services' ? 'Servicios' : key}
+                         key === 'clients'      ? 'Clientes' :
+                         key === 'services'     ? 'Servicios' : key}
                       </span>
-                      <span className={isNearLimit ? 'text-yellow-600 font-semibold' : ''}>
-                        {value.current} / {value.limit}
+                      <span className={isNearLimit ? 'text-yellow-600 font-semibold' : 'text-muted-foreground'}>
+                        {value.current}
+                        {isUnlimited ? ' / Ilimitado' : ` / ${effectiveLimit}`}
                       </span>
                     </div>
-                    <Progress 
-                      value={percentage} 
-                      className={isNearLimit ? 'bg-yellow-100' : ''}
-                    />
+                    {!isUnlimited && (
+                      <Progress
+                        value={percentage}
+                        className={isNearLimit ? 'bg-yellow-100' : ''}
+                      />
+                    )}
                   </div>
                 )
               })}
 
-              <div className="pt-4 space-x-2">
+              <div className="pt-4 flex flex-wrap gap-2">
                 <PermissionGate permission="billing.manage" businessId={businessId} mode="hide">
                   <Button onClick={() => setShowUpgradeModal(true)}>
                     Actualizar Plan
@@ -360,9 +424,9 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
             <CardContent>
               <div className="space-y-4">
                 {recentPayments.map((payment) => (
-                  <div 
-                    key={payment.id} 
-                    className="flex items-center justify-between p-4 border rounded-lg"
+                  <div
+                    key={payment.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg gap-2 sm:gap-0"
                   >
                     <div className="flex items-center gap-4">
                       {payment.status === 'completed' ? (
@@ -431,9 +495,9 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
             </CardHeader>
             <CardContent className="space-y-4">
               {paymentMethods.map((method) => (
-                <div 
+                <div
                   key={method.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg gap-2 sm:gap-0"
                 >
                   <div className="flex items-center gap-4">
                     <CreditCard className="h-5 w-5 text-muted-foreground" />

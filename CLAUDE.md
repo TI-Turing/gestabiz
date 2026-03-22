@@ -4,7 +4,7 @@
 
 > **Gestabiz** — Sistema SaaS de gestión de citas y negocios
 > **Stack**: React 19 + TypeScript 5.7 + Vite 6 + Supabase + Tailwind 4
-> **Versión actual**: 0.0.36 (incrementar PATCH en cada commit)
+> **Versión actual**: 0.0.40 (incrementar PATCH en cada commit)
 > **Estado**: BETA completada — solo bugs, optimizaciones y features puntuales
 
 ---

@@ -1,0 +1,55 @@
+name: Deploy DEV
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy:
+    name: Build & Deploy to DEV
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create .env.staging from secrets
+        run: |
+          cat > .env.staging << EOF
+          VITE_SUPABASE_URL=${{ secrets.DEV_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY=${{ secrets.DEV_SUPABASE_ANON_KEY }}
+          VITE_APP_URL=${{ secrets.DEV_APP_URL }}
+          VITE_SITE_URL=${{ secrets.DEV_APP_URL }}
+          VITE_APP_NAME=Gestabiz [DEV]
+          VITE_DEMO_MODE=false
+          VITE_PAYMENT_GATEWAY=${{ secrets.DEV_PAYMENT_GATEWAY }}
+          VITE_MERCADOPAGO_PUBLIC_KEY=${{ secrets.DEV_MERCADOPAGO_PUBLIC_KEY }}
+          VITE_SUPPORT_EMAIL=dev@gestabiz.com
+          VITE_SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+          VITE_APP_VERSION=${{ github.sha }}
+          VITE_SENTRY_SAMPLE_RATE=1.0
+          VITE_GA_MEASUREMENT_ID=${{ secrets.DEV_GA_MEASUREMENT_ID }}
+          EOF
+
+      - name: Build for staging
+        run: npm run build:dev
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Deploy to Vercel (DEV)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+          alias-domains: dev.gestabiz.com
+          working-directory: ./

@@ -8,6 +8,8 @@ import { useQuery } from '@tanstack/react-query'
 import { locationsService } from '@/lib/services'
 import QUERY_CONFIG from '@/lib/queryConfig'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { usePlanFeatures } from '@/hooks/usePlanFeatures'
+import { PlanGate } from '@/components/ui/PlanGate'
 import { OverviewTab } from './OverviewTab'
 import { MyProfilePage } from '@/components/profile/MyProfilePage'
 import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary'
@@ -143,92 +145,52 @@ export function AdminDashboard({
     return () => window.removeEventListener('avatar-updated', handleAvatarUpdate)
   }, [onUpdate])
 
+  // Plan activo del negocio
+  const { hasModule, upgradePlan } = usePlanFeatures(business.id)
+
   // Determinar si mostrar tab de recursos
   const showResourcesTab = business.resource_model && business.resource_model !== 'professional'
 
-  const sidebarItems = useMemo(() => [
-    {
-      id: 'overview',
-      label: t('adminDashboard.sidebar.overview'),
-      icon: <LayoutDashboard className="h-5 w-5" />
-    },
-    {
-      id: 'appointments',
-      label: t('adminDashboard.sidebar.appointments'),
-      icon: <Calendar className="h-5 w-5" />
-    },
-    {
-      id: 'absences',
-      label: t('adminDashboard.sidebar.absences'),
-      icon: <CalendarOff className="h-5 w-5" />
-    },
-    {
-      id: 'locations',
-      label: t('adminDashboard.sidebar.locations'),
-      icon: <MapPin className="h-5 w-5" />
-    },
-    {
-      id: 'services',
-      label: t('adminDashboard.sidebar.services'),
-      icon: <Briefcase className="h-5 w-5" />
-    },
-    // Tab de recursos (solo para negocios con recursos físicos)
-    ...(showResourcesTab ? [{
-      id: 'resources',
-      label: t('adminDashboard.sidebar.resources'),
-      icon: <Box className="h-5 w-5" />
-    }] : []),
-    {
-      id: 'employees',
-      label: t('adminDashboard.sidebar.employees'),
-      icon: <Users className="h-5 w-5" />
-    },
-    {
-      id: 'recruitment',
-      label: t('adminDashboard.sidebar.recruitment'),
-      icon: <BriefcaseBusiness className="h-5 w-5" />
-    },
-    {
-      id: 'clients',
-      label: 'Clientes',
-      icon: <UserCheck className="h-5 w-5" />
-    },
-    {
-      id: 'sales',
-      label: 'Ventas',
-      icon: <BarChart3 className="h-5 w-5" />
-    },
-    {
-      id: 'quick-sales',
-      label: t('adminDashboard.sidebar.quickSales'),
-      icon: <ShoppingCart className="h-5 w-5" />
-    },
-    {
-      id: 'expenses',
-      label: 'Egresos',
-      icon: <Wallet className="h-5 w-5" />
-    },
-    // {
-    //   id: 'accounting',
-    //   label: t('adminDashboard.sidebar.accounting'),
-    //   icon: <Calculator className="h-5 w-5" />
-    // },
-    {
-      id: 'reports',
-      label: t('adminDashboard.sidebar.reports'),
-      icon: <FileText className="h-5 w-5" />
-    },
-    {
-      id: 'billing',
-      label: t('adminDashboard.sidebar.billing'),
-      icon: <CreditCard className="h-5 w-5" />
-    },
-    {
-      id: 'permissions',
-      label: t('adminDashboard.sidebar.permissions'),
-      icon: <Shield className="h-5 w-5" />
+  // Helper: enriquece un item con estado locked si el módulo no está en el plan activo
+  const planItem = useCallback((
+    id: string,
+    label: string,
+    icon: React.ReactNode,
+    extra?: { badge?: number }
+  ) => {
+    const locked = !hasModule(id)
+    return {
+      id,
+      label,
+      icon,
+      locked,
+      lockedPlan: locked ? (upgradePlan?.name ?? 'superior') : undefined,
+      ...extra,
     }
-  ], [t, showResourcesTab])
+  }, [hasModule, upgradePlan])
+
+  const sidebarItems = useMemo(() => {
+    const items = [
+      planItem('overview',    t('adminDashboard.sidebar.overview'),     <LayoutDashboard className="h-5 w-5" />),
+      planItem('appointments',t('adminDashboard.sidebar.appointments'), <Calendar className="h-5 w-5" />),
+      planItem('absences',    t('adminDashboard.sidebar.absences'),     <CalendarOff className="h-5 w-5" />),
+      planItem('locations',   t('adminDashboard.sidebar.locations'),    <MapPin className="h-5 w-5" />),
+      planItem('services',    t('adminDashboard.sidebar.services'),     <Briefcase className="h-5 w-5" />),
+      // Tab de recursos (solo para negocios con recursos físicos)
+      ...(showResourcesTab ? [planItem('resources', t('adminDashboard.sidebar.resources'), <Box className="h-5 w-5" />)] : []),
+      planItem('employees',   t('adminDashboard.sidebar.employees'),    <Users className="h-5 w-5" />),
+      planItem('recruitment', t('adminDashboard.sidebar.recruitment'),  <BriefcaseBusiness className="h-5 w-5" />),
+      planItem('clients',     'Clientes',                               <UserCheck className="h-5 w-5" />),
+      planItem('sales',       'Ventas',                                 <BarChart3 className="h-5 w-5" />),
+      planItem('quick-sales', t('adminDashboard.sidebar.quickSales'),   <ShoppingCart className="h-5 w-5" />),
+      planItem('expenses',    'Egresos',                                <Wallet className="h-5 w-5" />),
+      planItem('reports',     t('adminDashboard.sidebar.reports'),      <FileText className="h-5 w-5" />),
+      planItem('billing',     t('adminDashboard.sidebar.billing'),      <CreditCard className="h-5 w-5" />),
+      planItem('permissions', t('adminDashboard.sidebar.permissions'),  <Shield className="h-5 w-5" />),
+    ]
+    // Módulos disponibles en el plan activo primero, bloqueados al final
+    return [...items.filter(i => !i.locked), ...items.filter(i => i.locked)]
+  }, [t, showResourcesTab, planItem])
 
   const renderContent = () => {
     const tabFallback = (
@@ -243,21 +205,35 @@ export function AdminDashboard({
       </SectionErrorBoundary>
     )
 
+    // Wrapper que añade PlanGate si el módulo requiere un plan superior
+    const planWrap = (moduleId: string, node: React.ReactNode) => {
+      if (hasModule(moduleId)) return wrap(node)
+      return (
+        <PlanGate
+          feature={moduleId}
+          businessId={business.id}
+          onUpgradeClick={() => handlePageChange('billing')}
+        >
+          {node}
+        </PlanGate>
+      )
+    }
+
     switch (activePage) {
       case 'overview':
         return wrap(<OverviewTab business={business} />)
       case 'appointments':
         return wrap(<AppointmentsCalendar businessId={business.id} />)
       case 'absences':
-        return wrap(<AbsencesTab businessId={business.id} />)
+        return planWrap('absences', <AbsencesTab businessId={business.id} />)
       case 'locations':
-        return wrap(<LocationsManager businessId={business.id} />)
+        return planWrap('locations', <LocationsManager businessId={business.id} />)
       case 'services':
         return wrap(<ServicesManager businessId={business.id} />)
       case 'resources':
-        return wrap(<ResourcesManager business={business} />)
+        return planWrap('resources', <ResourcesManager business={business} />)
       case 'employees':
-        return wrap(
+        return planWrap('employees',
           <>
             <EmployeeManagementHierarchy
               businessId={business.id}
@@ -269,7 +245,7 @@ export function AdminDashboard({
           </>,
         )
       case 'recruitment':
-        return wrap(
+        return planWrap('recruitment',
           <RecruitmentDashboard
             businessId={business.id}
             highlightedVacancyId={pageContext.vacancyId as string | undefined}
@@ -279,17 +255,17 @@ export function AdminDashboard({
       case 'clients':
         return wrap(<ClientsManager businessId={business.id} />)
       case 'sales':
-        return wrap(<SalesHistoryPage businessId={business.id} />)
+        return planWrap('sales', <SalesHistoryPage businessId={business.id} />)
       case 'quick-sales':
-        return wrap(<QuickSalesPage businessId={business.id} />)
+        return planWrap('quick-sales', <QuickSalesPage businessId={business.id} />)
       case 'expenses':
-        return wrap(<ExpensesManagementPage businessId={business.id} />)
+        return planWrap('expenses', <ExpensesManagementPage businessId={business.id} />)
       case 'reports':
-        return wrap(<ReportsPage businessId={business.id} user={user} />)
+        return planWrap('reports', <ReportsPage businessId={business.id} user={user} />)
       case 'billing':
         return wrap(<BillingDashboard businessId={business.id} />)
       case 'permissions':
-        return wrap(
+        return planWrap('permissions',
           <PermissionsManager
             businessId={business.id}
             ownerId={business.owner_id}
@@ -343,12 +319,12 @@ export function AdminDashboard({
       } : undefined}
     >
       <div className="flex flex-col min-h-full">
-        <div key={business.id} className="flex-1 p-4">
+        <div key={business.id} className="flex-1 p-3 sm:p-4">
           {renderContent()}
         </div>
-        
+
         {/* Ti Turing Footer */}
-        <footer className="border-t border-border/50 py-2 px-4 mt-auto">
+        <footer className="border-t border-border/50 py-2 px-4 mt-auto hidden sm:block">
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <span>{t('landing.footer.developedBy')}</span>
             <a 

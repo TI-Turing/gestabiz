@@ -50,37 +50,34 @@ const STATUS_MAPPING = {
   cancelled: 'canceled',
 }
 
-// Plan limits
-const PLAN_LIMITS = {
-  gratuito: {
+// Plan limits (-1 = ilimitado)
+const PLAN_LIMITS: Record<string, {
+  max_locations: number
+  max_employees: number
+  max_services: number
+  max_monthly_appointments: number
+  max_clients: number
+}> = {
+  free: {
     max_locations: 1,
     max_employees: 1,
-    max_services: 1,
-    max_monthly_appointments: 3,
+    max_services: 15,
+    max_monthly_appointments: 50,
+    max_clients: 50,
   },
-  inicio: {
-    max_locations: 1,
-    max_employees: 3,
-    max_services: 5,
-    max_monthly_appointments: -1, // ilimitado
-  },
-  profesional: {
+  basico: {
     max_locations: 3,
-    max_employees: 10,
-    max_services: 20,
-    max_monthly_appointments: -1,
-  },
-  empresarial: {
-    max_locations: 10,
-    max_employees: 50,
-    max_services: 100,
-    max_monthly_appointments: -1,
-  },
-  corporativo: {
-    max_locations: -1,
-    max_employees: -1,
+    max_employees: 6,
     max_services: -1,
     max_monthly_appointments: -1,
+    max_clients: -1,
+  },
+  pro: {
+    max_locations: 10,
+    max_employees: 15,
+    max_services: -1,
+    max_monthly_appointments: -1,
+    max_clients: -1,
   },
 }
 
@@ -236,7 +233,7 @@ Deno.serve(async (req) => {
     }
 
     // Get plan limits
-    const limits = PLAN_LIMITS[planType] || PLAN_LIMITS.gratuito
+    const limits = PLAN_LIMITS[planType] || PLAN_LIMITS.free
 
     // Upsert business_plan
     const { data: businessPlan, error: businessPlanError } = await supabase
@@ -254,6 +251,7 @@ Deno.serve(async (req) => {
         max_employees: limits.max_employees,
         max_services: limits.max_services,
         max_monthly_appointments: limits.max_monthly_appointments,
+        max_clients: limits.max_clients,
         payment_gateway: 'mercadopago',
         gateway_subscription_id: payment.id.toString(),
         updated_at: new Date().toISOString(),

@@ -1,13 +1,15 @@
 {
   "name": "Gestabiz",
   "private": true,
-  "version": "0.0.36",
+  "version": "0.0.40",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:staging": "vite --mode staging",
     "dev:owner": "vite --config vite.config.owner.ts",
     "dev:users": "vite --config vite.config.users.ts",
-    "build": "tsc -b --noCheck && vite build",
+    "build": "npm run generate-sitemap && tsc -b --noCheck && vite build",
+    "build:dev": "tsc -b --noCheck && vite build --mode staging",
     "preview": "vite preview",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
@@ -29,7 +31,10 @@
     "supabase:list": "npx supabase migration list --dns-resolver https",
     "supabase:fetch": "npx supabase migration fetch --yes --dns-resolver https",
     "supabase:repair": "npx supabase migration repair --status reverted",
-    "supabase:push": "npx supabase db push --dns-resolver https"
+    "supabase:push": "npx supabase db push --dns-resolver https --yes",
+    "supabase:link:dev": "npx supabase link --project-ref YOUR_DEV_PROJECT_REF --dns-resolver https",
+    "supabase:link:prod": "npx supabase link --project-ref dkancockzvcqorqbwtyh --dns-resolver https",
+    "supabase:deploy:functions": "npx supabase functions deploy --dns-resolver https"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

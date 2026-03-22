@@ -5,7 +5,8 @@
  * de implementación específica (Stripe, Wompi, MercadoPago, etc.)
  */
 
-export type PlanType = 'inicio' | 'profesional' | 'empresarial' | 'corporativo'
+/** Planes Fase 1 (Abril 2026) */
+export type PlanType = 'free' | 'basico' | 'pro'
 export type BillingCycle = 'monthly' | 'yearly'
 export type SubscriptionStatus = 
   | 'active' 

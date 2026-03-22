@@ -25,12 +25,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
 // Prices por plan (COP - Pesos Colombianos)
-const PLAN_PRICES = {
-  gratuito: { monthly: 0, yearly: 0 },
-  inicio: { monthly: 80000, yearly: 800000 },
-  profesional: { monthly: 200000, yearly: 2000000 },
-  empresarial: { monthly: 500000, yearly: 5000000 },
-  corporativo: { monthly: 0, yearly: 0 }, // Custom pricing
+const PLAN_PRICES: Record<string, { monthly: number; yearly: number }> = {
+  free:   { monthly: 0,       yearly: 0        },
+  basico: { monthly: 89900,   yearly: 899000   },
+  pro:    { monthly: 159900,  yearly: 1599000  },
 }
 
 Deno.serve(async (req) => {
@@ -146,7 +144,7 @@ Deno.serve(async (req) => {
       auto_return: 'approved', // Auto-redirect on success
       external_reference: referenceCode,
       notification_url: `${supabaseUrl}/functions/v1/mercadopago-webhook`,
-      statement_descriptor: 'APPOINTSYNC',
+      statement_descriptor: 'GESTABIZ',
       metadata: {
         business_id: businessId,
         plan_type: planType,

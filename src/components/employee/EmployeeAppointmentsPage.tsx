@@ -146,12 +146,12 @@ export function EmployeeAppointmentsPage({
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-6">
       {/* Header con stats */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="space-y-3 sm:space-y-4">
+        <div className="flex items-center justify-between gap-2">
           <div>
-            <h2 className="text-2xl font-bold">Mis Citas</h2>
+            <h2 className="text-xl sm:text-2xl font-bold">Mis Citas</h2>
             <p className="text-muted-foreground">
               Gestiona tus citas asignadas
             </p>

@@ -378,7 +378,7 @@ export function MyEmployments({ employeeId, onJoinBusiness, hasPendingRequest = 
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {activeEmployments.map((business) => (
                 <BusinessEmploymentCard
                   key={business.id}
@@ -396,7 +396,7 @@ export function MyEmployments({ employeeId, onJoinBusiness, hasPendingRequest = 
         {showPrevious && previousEmployments.length > 0 && (
           <div>
             <h3 className="text-lg font-semibold text-foreground mb-4">Empleos Anteriores</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {previousEmployments.map((business) => (
                 <BusinessEmploymentCard
                   key={business.id}

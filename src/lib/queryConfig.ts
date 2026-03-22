@@ -83,6 +83,10 @@ export const QUERY_CONFIG = {
     MESSAGES: (conversationId: string, page = 0) =>
       ['messages', conversationId, page] as const,
 
+    // ── Planes / Suscripciones ───────────────────────────────────────────
+    PLAN_FEATURES: (businessId: string) =>
+      ['plan-features', businessId] as const,
+
     // ── Dashboard ────────────────────────────────────────────────────────
     CLIENT_DASHBOARD: (
       clientId: string,

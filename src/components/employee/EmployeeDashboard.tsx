@@ -369,18 +369,18 @@ export function EmployeeDashboard({
         </div>
         
         {/* Ti Turing Footer */}
-        <footer className="border-t border-border/50 py-2 px-4 mt-auto">
+        <footer className="border-t border-border/50 py-2 px-4 mt-auto hidden sm:block">
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <span>{t('landing.footer.developedBy')}</span>
-            <a 
-              href="https://tituring.com" 
-              target="_blank" 
+            <a
+              href="https://tituring.com"
+              target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
             >
-              <img 
-                src={logoTiTuring} 
-                alt="Ti Turing" 
+              <img
+                src={logoTiTuring}
+                alt="Ti Turing"
                 className="h-4 w-4 object-contain"
               />
               <span className="font-semibold text-primary">Ti Turing</span>
