@@ -29,6 +29,7 @@ interface SearchBarProps {
   onResultSelect: (result: SearchResult) => void
   onViewMore: (searchTerm: string, searchType: SearchType) => void
   className?: string
+  autoFocus?: boolean
 }
 
 const searchTypeIconConfig = {
@@ -38,7 +39,7 @@ const searchTypeIconConfig = {
   users: User
 }
 
-export function SearchBar({ onResultSelect, onViewMore, className }: SearchBarProps) {
+export function SearchBar({ onResultSelect, onViewMore, className, autoFocus }: SearchBarProps) {
   const { t } = useLanguage()
   const [searchType, setSearchType] = useState<SearchType>('services')
   const [searchTerm, setSearchTerm] = useState('')
@@ -297,7 +298,7 @@ export function SearchBar({ onResultSelect, onViewMore, className }: SearchBarPr
               <ChevronDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-44 sm:w-48 z-[120]">
+          <DropdownMenuContent align="start" className="w-44 sm:w-48 z-[200]">
             {(Object.keys(searchTypeIconConfig) as SearchType[]).map((type) => {
               const TypeIcon = searchTypeIconConfig[type]
               const isActive = type === searchType
@@ -327,6 +328,7 @@ export function SearchBar({ onResultSelect, onViewMore, className }: SearchBarPr
             value={searchTerm}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
+            autoFocus={autoFocus}
             onFocus={() => searchTerm.length >= 2 && setShowResults(true)}
             className="w-full py-2 sm:py-3 pl-8 sm:pl-12 pr-10 sm:pr-12 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none text-sm sm:text-base min-h-[44px]"
           />
@@ -338,7 +340,7 @@ export function SearchBar({ onResultSelect, onViewMore, className }: SearchBarPr
 
       {/* Results Dropdown - Mobile Full Width */}
       {showResults && (
-        <div className="absolute top-full mt-2 sm:mt-3 left-0 right-0 w-full bg-card border border-border rounded-lg shadow-xl z-50 max-h-[70vh] sm:max-h-[32rem] overflow-y-auto">
+        <div className="absolute top-full mt-2 sm:mt-3 left-0 right-0 w-full bg-card border border-border rounded-lg shadow-xl z-[200] max-h-[70vh] sm:max-h-[32rem] overflow-y-auto">
           {results.length > 0 ? (
             <>
               {results.map((result) => {
