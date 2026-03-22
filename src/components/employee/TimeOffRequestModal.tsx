@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, AlertCircle } from 'lucide-react';
 import {
   Dialog,
@@ -48,6 +48,17 @@ export function TimeOffRequestModal({
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Reset type to defaultType every time the modal opens
+  useEffect(() => {
+    if (open) {
+      setType(defaultType);
+      setStartDate('');
+      setEndDate('');
+      setNotes('');
+      setError(null);
+    }
+  }, [open, defaultType]);
 
   // Calcular días totales
   const calculateDays = (): number => {

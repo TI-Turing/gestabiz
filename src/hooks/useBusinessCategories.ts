@@ -37,7 +37,7 @@ export function useBusinessCategories(): UseBusinessCategoriesReturn {
         .from('business_categories')
         .select('*')
         .eq('is_active', true)
-        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true })
 
       if (fetchError) {
         throw fetchError

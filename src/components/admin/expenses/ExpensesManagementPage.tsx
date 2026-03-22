@@ -158,42 +158,38 @@ export const ExpensesManagementPage: React.FC<ExpensesManagementPageProps> = ({ 
   };
 
   const fetchStats = async () => {
-    const today = new Date().toISOString().split('T')[0];
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const tomorrowStr = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const sevenDaysAgoStr = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const firstDayOfMonthStr = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
 
-    // Today
-    const { data: todayData } = await supabase
-      .from('transactions')
-      .select('amount')
-      .eq('business_id', businessId)
-      .eq('type', 'expense')
-      .eq('transaction_date', today);
-    
-    const todayTotal = todayData?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
-    setTotalToday(todayTotal);
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('amount, transaction_date')
+        .eq('business_id', businessId)
+        .eq('type', 'expense')
+        .gte('transaction_date', firstDayOfMonthStr);
 
-    // Last 7 days
-    const { data: weekData } = await supabase
-      .from('transactions')
-      .select('amount')
-      .eq('business_id', businessId)
-      .eq('type', 'expense')
-      .gte('transaction_date', sevenDaysAgo);
-    
-    const weekTotal = weekData?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
-    setTotalLast7Days(weekTotal);
+      if (error) throw error;
 
-    // This month
-    const { data: monthData } = await supabase
-      .from('transactions')
-      .select('amount')
-      .eq('business_id', businessId)
-      .eq('type', 'expense')
-      .gte('transaction_date', firstDayOfMonth);
-    
-    const monthTotal = monthData?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
-    setTotalThisMonth(monthTotal);
+      const expenses = data || [];
+      setTotalThisMonth(expenses.reduce((sum, t) => sum + (t.amount || 0), 0));
+      setTotalLast7Days(
+        expenses
+          .filter(t => t.transaction_date >= sevenDaysAgoStr)
+          .reduce((sum, t) => sum + (t.amount || 0), 0)
+      );
+      setTotalToday(
+        expenses
+          .filter(t => t.transaction_date >= todayStr && t.transaction_date < tomorrowStr)
+          .reduce((sum, t) => sum + (t.amount || 0), 0)
+      );
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Error al calcular estadísticas de egresos:', err);
+    }
   };
 
   const handleEditExpense = (expense: RecurringExpense) => {

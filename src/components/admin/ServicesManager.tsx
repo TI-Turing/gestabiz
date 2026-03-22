@@ -109,6 +109,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
   const [profileServiceId, setProfileServiceId] = useState<string | null>(null)
   const [showInactive, setShowInactive] = useState(false)
   const [pendingDeleteServiceId, setPendingDeleteServiceId] = useState<string | null>(null)
+  const [isIndependentBusiness, setIsIndependentBusiness] = useState(false)
 
   // Evitar caché del navegador/CDN cuando la URL no cambia
   const cacheBust = (url: string) => {
@@ -180,6 +181,8 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       setServices(servicesData || [])
       setLocations(locationsData || [])
       setEmployees(normalizedEmployees)
+      // Negocio independiente = solo 1 empleado (el dueño). La comisión no aplica.
+      setIsIndependentBusiness(normalizedEmployees.length <= 1)
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error al cargar datos:', error)
@@ -866,26 +869,30 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
                   {formData.price > 0 && `$ ${formatPrice(formData.price)}`}
                 </p>
               </div>
-              <div>
-                <Label htmlFor="commission_percentage" className="text-sm sm:text-base">Comisión (%)</Label>
-                <Input
-                  id="commission_percentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  value={typeof formData.commission_percentage === 'number' ? formData.commission_percentage : ''}
-                  onChange={(e) => {
-                    const v = e.target.value === '' ? null : Math.max(0, Math.min(100, parseFloat(e.target.value)))
-                    handleChange('commission_percentage', (v ?? null) as any)
-                  }}
-                  placeholder="Opcional"
-                  className="min-h-[44px]"
-                />
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
-                  {typeof formData.commission_percentage === 'number' ? `${formData.commission_percentage}%` : 'Sin comisión por defecto'}
-                </p>
-              </div>
+              {!isIndependentBusiness && (
+                <div>
+                  <Label htmlFor="commission_percentage" className="text-sm sm:text-base">Comisión (%)</Label>
+                  <Input
+                    id="commission_percentage"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={typeof formData.commission_percentage === 'number' ? formData.commission_percentage : ''}
+                    onChange={(e) => {
+                      const v = e.target.value === '' ? null : Math.max(0, Math.min(100, parseFloat(e.target.value)))
+                      handleChange('commission_percentage', (v ?? null) as any)
+                    }}
+                    placeholder="Opcional"
+                    className="min-h-[44px]"
+                  />
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                    {typeof formData.commission_percentage === 'number'
+                      ? `Ej: cita de $100.000 → el profesional recibe $${Math.round(100000 * formData.commission_percentage / 100).toLocaleString('es-CO')} (${formData.commission_percentage}%). Este valor se resta de las ganancias netas del negocio.`
+                      : 'La comisión va destinada al profesional que realiza el servicio. Ej: si la cita vale $100.000 y la comisión es del 10%, el profesional recibe $10.000. Este valor se resta de las ganancias netas del negocio.'}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Image Upload (OPCIONAL) */}

@@ -109,6 +109,9 @@ export const ExpenseRegistrationForm: React.FC<ExpenseRegistrationFormProps> = (
   const [description, setDescription] = useState(editingExpense?.description || '');
   const [category, setCategory] = useState<TransactionCategory>(editingExpense?.category || 'other_expense');
   const [amount, setAmount] = useState(editingExpense?.amount?.toString() || '');
+  const [amountDisplay, setAmountDisplay] = useState(
+    editingExpense?.amount ? Math.round(editingExpense.amount).toLocaleString('es-CO') : ''
+  );
   const [locationId, setLocationId] = useState(editingExpense?.location_id || '');
   const [isRecurring, setIsRecurring] = useState(!!editingExpense?.id);
   const [recurrenceFrequency, setRecurrenceFrequency] = useState<RecurrenceFrequency>(
@@ -194,6 +197,7 @@ export const ExpenseRegistrationForm: React.FC<ExpenseRegistrationFormProps> = (
       setDescription('');
       setCategory('other_expense');
       setAmount('');
+      setAmountDisplay('');
       setLocationId('');
       setIsRecurring(false);
       setRecurrenceFrequency('monthly');
@@ -275,13 +279,18 @@ export const ExpenseRegistrationForm: React.FC<ExpenseRegistrationFormProps> = (
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 id="amount"
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="numeric"
                 min="0"
-                placeholder="0.00"
+                placeholder="0"
                 className="pl-10"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                value={amountDisplay}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^\d]/g, '')
+                  const num = raw === '' ? 0 : parseInt(raw, 10)
+                  setAmount(num === 0 ? '' : num.toString())
+                  setAmountDisplay(num === 0 ? '' : num.toLocaleString('es-CO'))
+                }}
                 required
               />
             </div>

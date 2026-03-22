@@ -1237,9 +1237,11 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                     />
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-2 rounded-lg border border-dashed border-border p-4 bg-muted/30">
+                    <p className="text-sm font-medium text-foreground">Fotos y videos</p>
                     <p className="text-sm text-muted-foreground">
-                      Podrás subir multimedia después de crear la sede
+                      Una vez guardada la sede podrás subir fotos y videos para mostrarla a tus clientes.
+                      Las imágenes aparecen en el perfil público del negocio.
                     </p>
                   </div>
                 )}

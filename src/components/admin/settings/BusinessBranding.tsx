@@ -65,6 +65,10 @@ export function BusinessBranding({ businessId }: Readonly<BusinessBrandingProps>
   const onBannerFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (file.type.startsWith('video/')) {
+      toast.error('Los videos no se pueden recortar. Por favor selecciona una imagen (JPG, PNG, WEBP).')
+      return
+    }
     if (!file.type.startsWith('image/')) {
       toast.error('Por favor selecciona una imagen válida')
       return
