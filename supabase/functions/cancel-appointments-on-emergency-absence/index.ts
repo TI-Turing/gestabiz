@@ -14,6 +14,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('cancel-appointments-on-emergency-absence')
 
 interface CancellationRequest {
   absenceId: string;
@@ -208,6 +212,8 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in cancel-appointments-on-emergency-absence:', error);
+    captureEdgeFunctionError(error as Error, { functionName: 'cancel-appointments-on-emergency-absence' })
+    await flushSentry()
     return new Response(
       JSON.stringify({
         success: false,

@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { ValidationSchema, FormValidationResult } from '@/lib/validation'
+import * as Sentry from '@sentry/react'
 
 interface UseFormOptions<T> {
   initialValues: T
@@ -175,6 +176,7 @@ export function useForm<T extends Record<string, unknown>>({
     } catch (error) {
       // Handle submission error
       if (error instanceof Error) {
+        Sentry.captureException(error, { tags: { component: 'useForm', operation: 'handleSubmit' } })
         setError('submit' as keyof T, error.message)
       }
     } finally {

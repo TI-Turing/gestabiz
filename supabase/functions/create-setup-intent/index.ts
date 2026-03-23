@@ -6,6 +6,10 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7'
 import Stripe from 'https://esm.sh/stripe@14.11.0?target=deno'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('create-setup-intent')
 
 interface CreateSetupIntentRequest {
   businessId: string
@@ -148,6 +152,8 @@ serve(async (req) => {
     })
   } catch (error) {
     console.error('[create-setup-intent] Error:', error)
+    captureEdgeFunctionError(error as Error, { functionName: 'create-setup-intent' })
+    await flushSentry()
     return new Response(
       JSON.stringify({ 
         error: 'Error al crear Setup Intent',

@@ -4,6 +4,7 @@
  */
 
 import type { InAppNotification } from '@/types/types'
+import * as Sentry from '@sentry/react'
 
 export type UserRole = 'admin' | 'employee' | 'client'
 
@@ -365,6 +366,7 @@ export async function handleNotificationWithRoleSwitch(
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Error handling notification with role switch:', error)
+    Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { service: 'notificationRoleMapping' } })
     sessionStorage.removeItem('pending-navigation')
     options?.onError?.(error as Error)
   }

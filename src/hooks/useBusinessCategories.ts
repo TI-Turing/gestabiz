@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import { BusinessCategory } from '@/types/types'
 
@@ -60,6 +61,7 @@ export function useBusinessCategories(): UseBusinessCategoriesReturn {
       setCategories(mainsWithSubs)
     } catch (err) {
       console.error('Error fetching business categories:', err)
+      void logger.error('useBusinessCategories: fetchCategories failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBusinessCategories' })
       setError(err instanceof Error ? err.message : 'Error al cargar categorías')
     } finally {
       setIsLoading(false)

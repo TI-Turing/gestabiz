@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react'
 import supabase from '@/lib/supabase'
 import type { Appointment } from '@/types'
 import { normalizeAppointment, toDbAppointmentStatus } from '@/lib/normalizers'
@@ -150,6 +151,12 @@ export const appointmentsService = {
   },
 
   async create(payload: Omit<Appointment, 'id' | 'created_at' | 'updated_at' | 'user_id'>, options?: OverlapOptions): Promise<Appointment> {
+    Sentry.addBreadcrumb({
+      category: 'appointments',
+      message: 'Creating appointment',
+      level: 'info',
+      data: { business_id: payload.business_id, service_id: payload.service_id, employee_id: payload.employee_id, start_time: payload.start_time },
+    })
     // Validación de solapamientos (overbooking) solo si hay empleado asignado
     if (payload.employee_id) {
       const overlap = await hasOverlap({
@@ -203,7 +210,11 @@ export const appointmentsService = {
         await sendAppointmentConfirmationEmail(appointment.id)
       } catch (emailError) {
         console.error('Error sending confirmation email:', emailError)
-        // No fallar la creación de la cita si el email falla
+        // Capturar en Sentry pero no fallar la creación de la cita
+        Sentry.captureException(emailError, {
+          tags: { service: 'appointments', operation: 'send_confirmation_email' },
+          extra: { appointmentId: appointment.id },
+        })
       }
     }
     
@@ -211,6 +222,12 @@ export const appointmentsService = {
   },
 
   async update(id: string, updates: Partial<Appointment>, options?: OverlapOptions): Promise<Appointment> {
+    Sentry.addBreadcrumb({
+      category: 'appointments',
+      message: 'Updating appointment',
+      level: 'info',
+      data: { appointmentId: id, status: updates.status },
+    })
     const current = await this.get(id)
     if (!current) throw new Error('NOT_FOUND')
     await this._checkOverlapIfNeeded(id, current, updates, options)

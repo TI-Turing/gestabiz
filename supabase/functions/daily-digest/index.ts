@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('daily-digest')
 
 serve(async (req) => {
   const corsPreFlight = handleCorsPreFlight(req)
@@ -96,6 +100,8 @@ serve(async (req) => {
       }
     }
 
+    captureEdgeFunctionError(error as Error, { functionName: 'daily-digest' })
+    await flushSentry()
     return new Response(
       JSON.stringify({
         success: true,
@@ -111,6 +117,8 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in daily-digest function:', error)
     
+    captureEdgeFunctionError(error as Error, { functionName: 'daily-digest' })
+    await flushSentry()
     return new Response(
       JSON.stringify({
         success: false,

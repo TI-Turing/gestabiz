@@ -22,6 +22,7 @@
  * @date 2025-10-17
  */
 
+import * as Sentry from '@sentry/react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   IPaymentGateway,
@@ -35,6 +36,14 @@ import type {
 } from './PaymentGateway'
 import { PaymentGatewayError } from './PaymentGateway'
 
+function captureMPError(error: unknown, operation: string, extra?: Record<string, unknown>): void {
+  if (!(error instanceof PaymentGatewayError)) {
+    Sentry.captureException(error, { tags: { gateway: 'mercadopago', operation }, extra })
+  } else {
+    Sentry.addBreadcrumb({ category: 'payment', message: `MercadoPago ${operation} failed: ${error.message}`, level: 'error', data: { code: error.code } })
+  }
+}
+
 export class MercadoPagoGateway implements IPaymentGateway {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -46,6 +55,7 @@ export class MercadoPagoGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'fetch_dashboard_error')
       return data as SubscriptionDashboard
     } catch (error) {
+      captureMPError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -66,6 +76,7 @@ export class MercadoPagoGateway implements IPaymentGateway {
         sessionId: data.preference_id,
       }
     } catch (error) {
+      captureMPError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -83,6 +94,7 @@ export class MercadoPagoGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'update_subscription_error')
       return data.subscription as SubscriptionInfo
     } catch (error) {
+      captureMPError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -100,6 +112,7 @@ export class MercadoPagoGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'cancel_subscription_error')
       return data.subscription as SubscriptionInfo
     } catch (error) {
+      captureMPError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -117,6 +130,7 @@ export class MercadoPagoGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'pause_subscription_error')
       return data.subscription as SubscriptionInfo
     } catch (error) {
+      captureMPError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -134,6 +148,7 @@ export class MercadoPagoGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'resume_subscription_error')
       return data.subscription as SubscriptionInfo
     } catch (error) {
+      captureMPError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -151,6 +166,7 @@ export class MercadoPagoGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'reactivate_subscription_error')
       return data.subscription as SubscriptionInfo
     } catch (error) {
+      captureMPError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -174,6 +190,7 @@ export class MercadoPagoGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'validate_limit_error')
       return data
     } catch (error) {
+      captureMPError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -204,6 +221,7 @@ export class MercadoPagoGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'apply_discount_error')
       return data
     } catch (error) {
+      captureMPError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',

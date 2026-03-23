@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger'
 
 export interface PendingReview {
   appointment_id: string;
@@ -113,6 +114,7 @@ export function usePendingReviews() {
 
       setPendingReviews(filtered);
     } catch (err: unknown) {
+      void logger.error('usePendingReviews: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'usePendingReviews' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al cargar reseñas pendientes', {
@@ -143,6 +145,7 @@ export function usePendingReviews() {
         description: 'Te recordaremos en 5 minutos'
       });
     } catch (err: unknown) {
+      void logger.error('usePendingReviews: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'usePendingReviews' })
       const error = err as Error;
       toast.error('Error al posponer recordatorio', {
         description: error.message
@@ -179,6 +182,7 @@ export function usePendingReviews() {
       
       localStorage.setItem(REMIND_LATER_KEY, JSON.stringify(updated));
     } catch (err: unknown) {
+      void logger.error('usePendingReviews: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'usePendingReviews' })
       const error = err as Error;
       toast.error('Error al actualizar recordatorios', {
         description: error.message

@@ -25,6 +25,7 @@ import { PricingPlans } from './PricingPlans'
 import { useAnalytics } from '@/hooks/useAnalytics'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { usePageMeta } from '@/hooks/usePageMeta'
 import { LanguageToggle } from '@/components/ui/language-toggle'
 import logoTiTuring from '@/assets/images/tt/1.png'
 
@@ -40,6 +41,16 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
   const navigate = useNavigate()
   const { user, loading } = useAuth()
   const { t } = useLanguage()
+
+  usePageMeta({
+    title: 'Gestabiz — Software de Gestión de Citas Online para Negocios | Colombia',
+    description: 'Gestabiz: plataforma todo-en-uno para salones, clínicas y gimnasios. Agenda citas online, recordatorios WhatsApp, gestión de clientes y contabilidad. Prueba gratis 30 días sin tarjeta.',
+    keywords: 'software de gestión de citas, agendar citas online, sistema de agendamiento, reservas online, agenda online negocios, software salón de belleza, software peluquería, software barbería, software clínica, software gimnasio, software spa, gestión de turnos online, recordatorios WhatsApp citas, app para negocios colombia, software pyme colombia, plataforma saas colombia, sistema citas colombia',
+    ogType: 'website',
+    ogUrl: 'https://gestabiz.com/',
+    ogImage: 'https://gestabiz.com/og-image.png',
+    canonical: 'https://gestabiz.com/',
+  })
 
   // Track page view on mount
   useEffect(() => {

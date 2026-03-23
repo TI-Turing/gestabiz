@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 export interface EmployeeBusinessDetails {
   // Business info
@@ -82,6 +83,7 @@ export function useEmployeeBusinessDetails(
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar detalles del empleo';
+      void logger.error('useEmployeeBusinessDetails: fetchDetails failed', err instanceof Error ? err : new Error(errorMessage), { component: 'useEmployeeBusinessDetails', employeeId, businessId })
       setError(errorMessage);
       setDetails(null);
     } finally {

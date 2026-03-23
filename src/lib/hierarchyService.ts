@@ -5,6 +5,7 @@
  */
 
 import { supabase } from './supabase';
+import * as Sentry from '@sentry/react'
 
 // UUID type alias para mejor legibilidad
 // =====================================================
@@ -94,6 +95,7 @@ class HierarchyService {
 
       return { success: true };
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { service: 'hierarchyService' } })
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido',
@@ -151,6 +153,7 @@ class HierarchyService {
 
       return { success: true };
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { service: 'hierarchyService' } })
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido',
@@ -223,6 +226,7 @@ class HierarchyService {
         warnings,
       };
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { service: 'hierarchyService' } })
       errors.push(
         error instanceof Error ? error.message : 'Error al validar cambio de jerarquía'
       );
@@ -347,6 +351,7 @@ class HierarchyService {
 
       return { success: true };
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { service: 'hierarchyService' } })
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido',
@@ -373,6 +378,7 @@ class HierarchyService {
 
       return { success: true, data: data || [] };
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { service: 'hierarchyService' } })
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido',
@@ -399,6 +405,7 @@ class HierarchyService {
 
       return { success: true, data: data || [] };
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { service: 'hierarchyService' } })
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido',
@@ -425,6 +432,7 @@ class HierarchyService {
 
       return { success: true, hasPermission: data === true };
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { service: 'hierarchyService' } })
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Error desconocido',

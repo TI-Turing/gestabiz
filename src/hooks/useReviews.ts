@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import supabase from '@/lib/supabase';
 import { Review, ReviewFilters } from '@/types/types';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger'
 
 /**
  * Hook para gestionar reviews (calificaciones de clientes)
@@ -77,6 +78,7 @@ export function useReviews(filters?: ReviewFilters) {
         });
       }
     } catch (err) {
+      void logger.error('useReviews: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useReviews' })
       const error = err as Error;
       setError(error);
       toast.error(`Error al cargar reviews: ${error.message}`);
@@ -115,6 +117,7 @@ export function useReviews(filters?: ReviewFilters) {
       fetchReviews();
       return data;
     } catch (err) {
+      void logger.error('useReviews: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useReviews' })
       const error = err as Error;
       toast.error(`Error al crear review: ${error.message}`);
       throw error;
@@ -134,6 +137,7 @@ export function useReviews(filters?: ReviewFilters) {
       toast.success('Review actualizada exitosamente');
       fetchReviews();
     } catch (err) {
+      void logger.error('useReviews: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useReviews' })
       const error = err as Error;
       toast.error(`Error al actualizar review: ${error.message}`);
       throw error;
@@ -157,6 +161,7 @@ export function useReviews(filters?: ReviewFilters) {
       toast.success('Respuesta publicada exitosamente');
       fetchReviews();
     } catch (err) {
+      void logger.error('useReviews: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useReviews' })
       const error = err as Error;
       toast.error(`Error al responder review: ${error.message}`);
       throw error;
@@ -176,6 +181,7 @@ export function useReviews(filters?: ReviewFilters) {
       toast.success('Review eliminada');
       fetchReviews();
     } catch (err) {
+      void logger.error('useReviews: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useReviews' })
       const error = err as Error;
       toast.error(`Error al eliminar review: ${error.message}`);
       throw error;
@@ -195,6 +201,7 @@ export function useReviews(filters?: ReviewFilters) {
       toast.success(isVisible ? 'Review publicada' : 'Review oculta');
       fetchReviews();
     } catch (err) {
+      void logger.error('useReviews: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useReviews' })
       const error = err as Error;
       toast.error(`Error al actualizar visibilidad: ${error.message}`);
       throw error;

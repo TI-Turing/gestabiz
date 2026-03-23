@@ -21,6 +21,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { QUERY_CONFIG } from '@/lib/queryConfig';
+import { logger } from '@/lib/logger'
 
 export interface AbsenceApproval {
   id: string;
@@ -210,6 +211,7 @@ export function useAbsenceApprovals(businessId: string) {
         if (error) throw error;
         return apts ?? [];
       } catch (error: unknown) {
+        void logger.error('useAbsenceApprovals: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useAbsenceApprovals' })
         const message = error instanceof Error ? error.message : 'Error desconocido';
         toast.error(`No se pudieron cargar las citas: ${message}`);
         return [];

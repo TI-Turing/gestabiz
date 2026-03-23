@@ -2,6 +2,7 @@
 // Hook simplificado de autenticación para debuggear
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { User as SupabaseUser, Session } from '@supabase/supabase-js'
+import * as Sentry from '@sentry/react'
 import { supabase } from '@/lib/supabase'
 import { User } from '@/types'
 import type { Database } from '@/types/database'
@@ -142,6 +143,11 @@ export function useAuthSimple() {
 
         if (session?.user && mounted) {
           const fallbackUser = buildUserFromSession(session.user)
+          // Establecer contexto de usuario en Sentry
+          Sentry.setUser({
+            id: session.user.id,
+            email: session.user.email,
+          })
           setState(prev => ({
             ...prev,
             user: fallbackUser,
@@ -178,6 +184,8 @@ export function useAuthSimple() {
 
         if (!session) {
           debugLog('👋 User signed out in listener')
+          // Limpiar contexto de usuario en Sentry al hacer logout
+          Sentry.setUser(null)
           setState(prev => ({
             ...prev,
             user: null,
@@ -190,6 +198,11 @@ export function useAuthSimple() {
 
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           const fallbackUser = buildUserFromSession(session.user)
+          // Establecer contexto de usuario en Sentry para trazabilidad
+          Sentry.setUser({
+            id: session.user.id,
+            email: session.user.email,
+          })
           setState(prev => ({
             ...prev,
             user: fallbackUser,

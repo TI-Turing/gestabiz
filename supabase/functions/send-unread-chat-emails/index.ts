@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('send-unread-chat-emails')
 
 interface UnreadMessage {
   conversation_id: string
@@ -282,6 +286,8 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('[send-unread-chat-emails] ❌ Error general:', error)
+    captureEdgeFunctionError(err as Error, { functionName: 'send-unread-chat-emails' })
+    await flushSentry()
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
