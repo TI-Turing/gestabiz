@@ -1,6 +1,13 @@
 import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from "react-error-boundary";
 import * as Sentry from "@sentry/react";
+import {
+  useEffect,
+  useLocation,
+  useNavigationType,
+  createRoutesFromChildren,
+  matchRoutes,
+} from 'react-router-dom';
 
 import App from './App.tsx'
 
@@ -27,7 +34,13 @@ if (SENTRY_DSN && SENTRY_DSN !== 'https://examplePublicKey@o0.ingest.sentry.io/0
     
     // Integrations
     integrations: [
-      Sentry.browserTracingIntegration(),
+      Sentry.reactRouterV6BrowserTracingIntegration({
+        useEffect,
+        useLocation,
+        useNavigationType,
+        createRoutesFromChildren,
+        matchRoutes,
+      }),
       Sentry.replayIntegration({
         maskAllText: true,
         blockAllMedia: true,

@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
+import * as Sentry from '@sentry/react'
 
 export type StorageBucket = 'business-logos' | 'location-images' | 'service-images' | 'user-avatars' | 'location-videos'
 
@@ -124,13 +125,11 @@ export function useFileUpload(bucket: StorageBucket) {
           })
         }, 100)
 
-        // Upload file
-        const { data, error: uploadError } = await supabase.storage
-          .from(bucket)
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: true, // Replace if exists
-          })
+        // Upload file (tracked as Sentry performance span)
+        const { data, error: uploadError } = await Sentry.startSpan(
+          { name: `storage.upload.${bucket}`, op: 'file.upload', attributes: { bucket, filePath, fileSizeBytes: file.size } },
+          () => supabase.storage.from(bucket).upload(filePath, file, { cacheControl: '3600', upsert: true })
+        )
 
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current)

@@ -194,12 +194,10 @@ export const appointmentsService = {
       reminder_sent: payload.reminder_sent ?? false,
     }
 
-    const { data, error } = await supabase
-      .from('appointments')
-      // Cast defensivo por si el tipo Insert no incluye id: lo imponemos en tiempo de inserción
-      .insert(insertRow as unknown as Record<string, unknown>)
-      .select()
-      .single()
+    const { data, error } = await Sentry.startSpan(
+      { name: 'db.appointment.insert', op: 'db.query', attributes: { business_id: payload.business_id, service_id: payload.service_id } },
+      () => supabase.from('appointments').insert(insertRow as unknown as Record<string, unknown>).select().single()
+    )
     if (error) throw error
     
     const appointment = normalizeAppointment(data as Row<'appointments'>)
@@ -232,7 +230,10 @@ export const appointmentsService = {
     if (!current) throw new Error('NOT_FOUND')
     await this._checkOverlapIfNeeded(id, current, updates, options)
     const dbUpdates = this._buildDbUpdates(updates)
-    const { data, error } = await supabase.from('appointments').update(dbUpdates).eq('id', id).select().single()
+    const { data, error } = await Sentry.startSpan(
+      { name: 'db.appointment.update', op: 'db.query', attributes: { appointmentId: id } },
+      () => supabase.from('appointments').update(dbUpdates).eq('id', id).select().single()
+    )
     if (error) throw error
     return normalizeAppointment(data as Row<'appointments'>)
   },
