@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { businessesService } from '@/lib/services'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -127,6 +128,7 @@ export default function BusinessRegistration({ user, onBusinessCreated, onCancel
       toast.success(t('business.registration.success'))
       onBusinessCreated(createdBusiness)
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessRegistration', operation: 'createBusiness' } })
       toast.error(t('business.registration.error'))
       throw error
     } finally {

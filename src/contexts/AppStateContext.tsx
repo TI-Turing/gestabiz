@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useReducer, useMemo, useCallback } from 'react'
 import { toast } from 'sonner'
+import * as Sentry from '@sentry/react'
 
 interface AppState {
   isLoading: boolean
@@ -145,9 +146,10 @@ export function useAsyncOperation() {
       options?.onSuccess?.(result)
       return result
     } catch (error) {
-      const errorMessage = options?.errorMessage || 
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { context: 'AppStateContext', operation: 'executeWithLoading' } })
+      const errorMessage = options?.errorMessage ||
         (error instanceof Error ? error.message : 'Error desconocido')
-      
+
       showErrorToast(errorMessage)
       options?.onError?.(error instanceof Error ? error : new Error(String(error)))
       return null
