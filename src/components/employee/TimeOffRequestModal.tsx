@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as Sentry from '@sentry/react'
 import { Calendar, AlertCircle } from 'lucide-react';
 import {
   Dialog,
@@ -123,6 +124,7 @@ export function TimeOffRequestModal({
       
       onClose();
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'TimeOffRequestModal' } })
       setError(err instanceof Error ? err.message : t('common.messages.saveError'));
     } finally {
       setLoading(false);

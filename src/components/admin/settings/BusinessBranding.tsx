@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -42,6 +43,7 @@ export function BusinessBranding({ businessId }: Readonly<BusinessBrandingProps>
         setLogoUrl(data?.logo_url || '')
         setBannerUrl(data?.banner_url || '')
       } catch (err) {
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'BusinessBranding' } })
         // Keep empty if not present
       } finally {
         setLoadingInitial(false)
@@ -114,6 +116,7 @@ export function BusinessBranding({ businessId }: Readonly<BusinessBrandingProps>
       setLogoUrl(nextUrl)
       toast.success('Logo actualizado correctamente')
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'BusinessBranding' } })
       const e = err as Error
       toast.error(e.message || 'Error al actualizar el logo')
     } finally {
@@ -158,6 +161,7 @@ export function BusinessBranding({ businessId }: Readonly<BusinessBrandingProps>
       setBannerUrl(nextUrl)
       toast.success('Banner actualizado correctamente')
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'BusinessBranding' } })
       const e = err as Error
       toast.error(e.message || 'Error al actualizar el banner')
     } finally {

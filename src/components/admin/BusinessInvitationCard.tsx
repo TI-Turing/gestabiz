@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { QrCode, Copy, Download, CheckCircle, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -47,6 +48,7 @@ export function BusinessInvitationCard({ business, className }: BusinessInvitati
       setQrCodeDataUrl(dataUrl)
       toast.success(t('businessInvitationCard.qrGenerated'))
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessInvitationCard' } })
       console.error('Error generating QR:', error)
       toast.error(t('businessInvitationCard.qrError'))
     } finally {
@@ -75,6 +77,7 @@ export function BusinessInvitationCard({ business, className }: BusinessInvitati
         })
         toast.success(t('businessInvitationCard.shareSuccess'))
       } catch (error) {
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessInvitationCard' } })
         if (error instanceof Error && error.name !== 'AbortError') {
           console.error('Error sharing:', error)
           toast.error(t('businessInvitationCard.shareError'))

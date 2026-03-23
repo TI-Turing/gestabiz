@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as Sentry from '@sentry/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -124,6 +125,7 @@ export const EmployeeProfileSettings: React.FC<EmployeeProfileSettingsProps> = (
 
       toast.success('Perfil actualizado exitosamente');
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeProfileSettings' } })
       const err = error as Error;
       toast.error(err.message || 'Error al actualizar perfil');
     } finally {
@@ -139,6 +141,7 @@ export const EmployeeProfileSettings: React.FC<EmployeeProfileSettingsProps> = (
       setNewSpecialization('');
       toast.success('Especialización agregada');
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeProfileSettings' } })
       const err = error as Error;
       toast.error(err.message);
     }
@@ -152,6 +155,7 @@ export const EmployeeProfileSettings: React.FC<EmployeeProfileSettingsProps> = (
       setNewLanguage('');
       toast.success('Idioma agregado');
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeProfileSettings' } })
       const err = error as Error;
       toast.error(err.message);
     }
@@ -183,6 +187,7 @@ export const EmployeeProfileSettings: React.FC<EmployeeProfileSettingsProps> = (
       setShowCertificationForm(false);
       toast.success('Certificación agregada');
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeProfileSettings' } })
       const err = error as Error;
       toast.error(err.message);
     }
@@ -193,6 +198,7 @@ export const EmployeeProfileSettings: React.FC<EmployeeProfileSettingsProps> = (
       await removeSpecialization(spec);
       toast.success('Especialización eliminada');
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeProfileSettings' } })
       const err = error as Error;
       toast.error(err.message);
     }
@@ -203,6 +209,7 @@ export const EmployeeProfileSettings: React.FC<EmployeeProfileSettingsProps> = (
       await removeLanguage(lang);
       toast.success('Idioma eliminado');
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeProfileSettings' } })
       const err = error as Error;
       toast.error(err.message);
     }
@@ -213,6 +220,7 @@ export const EmployeeProfileSettings: React.FC<EmployeeProfileSettingsProps> = (
       await removeCertification(certId);
       toast.success('Certificación eliminada');
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeProfileSettings' } })
       const err = error as Error;
       toast.error(err.message);
     }

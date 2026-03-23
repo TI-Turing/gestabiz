@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { useKV } from '@/lib/useKV'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -229,6 +230,7 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
       
       toast.success(t('profile.success'))
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
       toast.error(t('profile.error'))
       throw error
     } finally {

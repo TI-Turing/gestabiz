@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import * as Sentry from '@sentry/react'
 import { Search, Building2, Briefcase, Tag, User, ChevronDown, Loader2 } from 'lucide-react'
 import { MapPin } from '@phosphor-icons/react'
 import {
@@ -217,6 +218,7 @@ export function SearchBar({ onResultSelect, onViewMore, className, autoFocus }: 
 
       setResults(data)
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'SearchBar' } })
       // eslint-disable-next-line no-console
       console.error('Error searching:', error)
       setResults([])

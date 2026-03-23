@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -118,6 +119,7 @@ export default function ServiceManagement({ user }: Readonly<ServiceManagementPr
         max_participants: 1
       })
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServiceManagement' } })
       toast.error(t('message.error'))
       throw error
     }
@@ -134,6 +136,7 @@ export default function ServiceManagement({ user }: Readonly<ServiceManagementPr
       setServices(prev => prev.filter(service => service.id !== serviceId))
       toast.success(t('services.service_deleted'))
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServiceManagement' } })
       toast.error(t('message.error'))
       throw error
     }

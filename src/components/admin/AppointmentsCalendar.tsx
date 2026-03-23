@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import React, { useState, useEffect, useMemo, useRef, useLayoutEffect, useCallback } from 'react';
+import * as Sentry from '@sentry/react'
 import { Calendar, Clock, ChevronLeft, ChevronRight, User, X, Check, AlertCircle, Eye, EyeOff, DollarSign, Mail } from 'lucide-react';
 import { Money } from '@phosphor-icons/react';
 import { createPortal } from 'react-dom';
@@ -47,6 +48,7 @@ const extractTimeZoneParts = (date: Date, timeZone: string = DEFAULT_TIME_ZONE) 
     
     return result;
   } catch (error) {
+    Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AppointmentsCalendar' } })
     console.warn('⚠️ toLocaleString falló, usando offset manual', error);
   }
   
@@ -568,6 +570,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         if (parsed.employee) setFilterEmployee(parsed.employee);
       }
     } catch (e) {
+      Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
       console.warn('Failed to load cached filters', e);
     }
   }, [currentBusinessId]);
@@ -579,6 +582,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     try {
       localStorage.setItem(`appointments-filters-${currentBusinessId}`, JSON.stringify(payload));
     } catch (e) {
+      Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
       console.warn('Failed to persist filters', e);
     }
   }, [currentBusinessId, filterStatus, filterLocation, filterService, filterEmployee]);
@@ -1023,6 +1027,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         // Nota: fetchAppointments se llamará desde el siguiente effect
         // cuando business.id esté disponible
       } catch (error) {
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AppointmentsCalendar' } })
         console.error('Error al cargar datos del calendario de citas', error);
         toast.error('Error al cargar los datos');
       } finally {
@@ -1054,6 +1059,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     try {
       localStorage.setItem(`appointments-filters-${currentBusinessId}`, JSON.stringify(payload));
     } catch (e) {
+      Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
       console.warn('Failed to persist filters', e);
     }
   }, [currentBusinessId, filterStatus, filterLocation, filterService, filterEmployee]);
@@ -1208,6 +1214,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         await fetchAppointments(currentBusinessId, selectedDate);
       }
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AppointmentsCalendar' } })
       console.error('Error al completar la cita en el calendario admin', error);
       toast.error('Error al completar la cita');
     }

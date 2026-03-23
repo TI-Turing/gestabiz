@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { useSubscription } from '@/hooks/useSubscription'
 import {
   Dialog,
@@ -43,6 +44,7 @@ export function CancelSubscriptionModal({
       await cancelSubscription(cancelAtPeriodEnd, reason || undefined)
       onSuccess()
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'CancelSubscriptionModal' } })
       // Error is handled by the hook
     } finally {
       setIsSubmitting(false)

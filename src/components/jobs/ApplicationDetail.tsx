@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import * as Sentry from '@sentry/react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -159,6 +160,7 @@ export function ApplicationDetail({
 
       toast.success('CV descargado exitosamente')
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ApplicationDetail' } })
       const error = err as Error
       toast.error('Error al descargar CV: ' + error.message)
     } finally {

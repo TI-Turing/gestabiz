@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as Sentry from '@sentry/react'
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -208,6 +209,7 @@ export const ExpenseRegistrationForm: React.FC<ExpenseRegistrationFormProps> = (
 
       if (onSuccess) onSuccess();
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ExpenseRegistrationForm' } })
       console.error('Error registering expense:', error);
       toast.error('Error al registrar el egreso');
     } finally {

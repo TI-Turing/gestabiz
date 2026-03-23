@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import type { FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -186,6 +187,7 @@ export function AppointmentForm({ isOpen, onClose, onSubmit, user, appointment }
       toast.success(appointment ? t('appointments.updated') : t('appointments.created'))
       onClose()
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AppointmentForm' } })
       toast.error(t('common.error'))
       throw error
     } finally {
