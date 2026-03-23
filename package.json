@@ -1,7 +1,7 @@
 {
   "name": "Gestabiz",
   "private": true,
-  "version": "0.0.51",
+  "version": "0.0.52",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -32,8 +32,8 @@
     "supabase:fetch": "npx supabase migration fetch --yes --dns-resolver https",
     "supabase:repair": "npx supabase migration repair --status reverted",
     "supabase:push": "npx supabase db push --dns-resolver https --yes",
-    "supabase:link:dev": "npx supabase link --project-ref YOUR_DEV_PROJECT_REF --dns-resolver https",
-    "supabase:link:prod": "npx supabase link --project-ref dkancockzvcqorqbwtyh --dns-resolver https",
+    "supabase:link:dev": "npx supabase link --project-ref dkancockzvcqorqbwtyh --dns-resolver https",
+    "supabase:link:prod": "npx supabase link --project-ref emknatoknbomvmyumqju --dns-resolver https",
     "supabase:deploy:functions": "npx supabase functions deploy --dns-resolver https"
   },
   "dependencies": {
