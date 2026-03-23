@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger'
 
 export interface WorkSchedule {
   [day: string]: {
@@ -66,13 +67,14 @@ export function useScheduleConflicts() {
         work_schedule: undefined // work_schedule no se almacena en business_employees
       }));
     } catch (err: unknown) {
+      void logger.error('useScheduleConflicts: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useScheduleConflicts' })
       const error = err as Error;
       throw new Error(`Error al obtener empleos actuales: ${error.message}`);
     }
   };
 
   const parseTime = (timeStr: string): number => {
-    const [hours, minutes] = timeStr.split(':').map(Number);
+    const [hours, minutes] = timeStr.split('useScheduleConflicts:').map(Number);
     return hours * 60 + minutes; // Convert to minutes since midnight
   };
 
@@ -178,6 +180,7 @@ export function useScheduleConflicts() {
         conflicts
       };
     } catch (err: unknown) {
+      void logger.error('useScheduleConflicts: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useScheduleConflicts' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al verificar conflictos', {
@@ -201,6 +204,7 @@ export function useScheduleConflicts() {
       // Este método retorna un array vacío hasta que se implemente la tabla work_schedules
       return [];
     } catch (err: unknown) {
+      void logger.error('useScheduleConflicts: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useScheduleConflicts' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al obtener negocios conflictivos', {

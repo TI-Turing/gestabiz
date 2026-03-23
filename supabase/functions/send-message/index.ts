@@ -7,6 +7,10 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('send-message')
 
 // Rate limiting simple (en memoria, se reinicia con cada cold start)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
@@ -364,6 +368,8 @@ serve(async (req) => {
     })
   } catch (error) {
     console.error('Unexpected error:', error)
+    captureEdgeFunctionError(error as Error, { functionName: 'send-message' })
+    await flushSentry()
     return new Response(
       JSON.stringify({
         success: false,

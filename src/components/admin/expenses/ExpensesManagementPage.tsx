@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as Sentry from '@sentry/react'
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -189,6 +190,7 @@ export const ExpensesManagementPage: React.FC<ExpensesManagementPageProps> = ({ 
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Error al calcular estadísticas de egresos:', err);
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ExpensesManagementPage' } })
     }
   };
 

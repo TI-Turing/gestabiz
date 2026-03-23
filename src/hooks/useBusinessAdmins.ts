@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 
 export interface BusinessAdminLocation {
   location_id: string;
@@ -158,6 +159,7 @@ export function useBusinessAdmins({ businessId, userLocation }: UseBusinessAdmin
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Error fetching business admins:', err);
+      void logger.error('useBusinessAdmins: fetchAdmins failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBusinessAdmins', businessId })
       setError(err instanceof Error ? err.message : 'Error al cargar administradores');
     } finally {
       setLoading(false);

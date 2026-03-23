@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import * as Sentry from '@sentry/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -101,6 +102,7 @@ export function ServiceForm({
       toast.success(service ? t('services.updated') : t('services.created'))
       onClose()
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServiceForm' } })
       toast.error(t('common.error'))
       throw error
     } finally {
@@ -329,6 +331,7 @@ export function ServicesManagement({ user, businessId }: Readonly<ServicesManage
 
       setServices(data || [])
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServiceForm' } })
       toast.error(t('services.fetchError'))
       throw error
     } finally {
@@ -458,6 +461,7 @@ export function ServicesManagement({ user, businessId }: Readonly<ServicesManage
           : t('services.deleted')
       )
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServiceForm' } })
       toast.error(t('services.deleteError'))
       throw error
     }

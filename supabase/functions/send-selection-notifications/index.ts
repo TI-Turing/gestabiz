@@ -7,6 +7,10 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts';
 import { escapeHtml } from '../_shared/html.ts';
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('send-selection-notifications')
 
 interface SelectionNotificationPayload {
   type: 'started' | 'selected' | 'not_selected';
@@ -104,6 +108,8 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error en send-selection-notifications:', error);
+    captureEdgeFunctionError(error as Error, { functionName: 'send-selection-notifications' })
+    await flushSentry()
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }, status: 500 }

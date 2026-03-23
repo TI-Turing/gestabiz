@@ -5,6 +5,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Stripe from 'https://esm.sh/stripe@14.11.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('manage-subscription')
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
   apiVersion: '2023-10-16',
@@ -151,6 +155,8 @@ serve(async (req) => {
     })
   } catch (err) {
     console.error('[ManageSubscription] Error:', err)
+    captureEdgeFunctionError(err as Error, { functionName: 'manage-subscription' })
+    await flushSentry()
     return new Response(
       JSON.stringify({ 
         error: err instanceof Error ? err.message : 'Unknown error',

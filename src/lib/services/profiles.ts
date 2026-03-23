@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react'
 import supabase from '@/lib/supabase'
 import type { User } from '@/types'
 import type { Json } from '@/types/database'
@@ -5,7 +6,10 @@ import type { Json } from '@/types/database'
 export const profilesService = {
   async get(id: string): Promise<User | null> {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single()
-    if (error) throw error
+    if (error) {
+      Sentry.captureException(error, { tags: { service: 'profiles', operation: 'get' }, extra: { userId: id } })
+      throw error
+    }
     if (!data) return null
     const settings = (data.settings as Json) as unknown as { language?: 'es' | 'en' } | null
     return {

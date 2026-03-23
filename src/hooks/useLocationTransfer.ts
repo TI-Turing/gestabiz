@@ -13,6 +13,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger'
 
 interface TransferImpact {
   appointmentsToKeep: number;
@@ -74,6 +75,7 @@ export function useLocationTransfer(): UseLocationTransferReturn {
           effectiveDate: data.effective_date,
         };
       } catch (error) {
+        void logger.error('useLocationTransfer: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useLocationTransfer' })
         console.error('Error en getTransferImpact:', error);
         return null;
       } finally {
@@ -170,6 +172,7 @@ export function useLocationTransfer(): UseLocationTransferReturn {
 
         return { success: true, impact };
       } catch (error) {
+        void logger.error('useLocationTransfer: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useLocationTransfer' })
         console.error('Error en scheduleTransfer:', error);
         toast.error('Error al programar el traslado');
         return { success: false };
@@ -230,6 +233,7 @@ export function useLocationTransfer(): UseLocationTransferReturn {
         toast.success('Traslado cancelado exitosamente');
         return true;
       } catch (error) {
+        void logger.error('useLocationTransfer: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useLocationTransfer' })
         console.error('Error en cancelTransfer:', error);
         toast.error('Error al cancelar el traslado');
         return false;
@@ -269,6 +273,7 @@ export function useLocationTransfer(): UseLocationTransferReturn {
           scheduledAt: data.transfer_scheduled_at,
         };
       } catch (error) {
+        void logger.error('useLocationTransfer: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useLocationTransfer' })
         console.error('Error en getTransferStatus:', error);
         return null;
       }

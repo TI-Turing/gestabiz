@@ -5,6 +5,7 @@
  */
 
 import { useEffect } from 'react'
+import * as Sentry from '@sentry/react'
 
 interface PendingNavigation {
   page: string
@@ -47,6 +48,7 @@ export function usePendingNavigation(
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error processing pending navigation:', error)
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'usePendingNavigation' } })
         sessionStorage.removeItem('pending-navigation')
       }
     }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -95,6 +96,7 @@ export default function AppointmentConfirmation() {
         confirmation_deadline: data.confirmation_deadline
       })
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'AppointmentConfirmation' } })
       console.error('Error fetching appointment:', err)
       setError('Error al cargar los detalles de la cita')
     } finally {
@@ -122,6 +124,7 @@ export default function AppointmentConfirmation() {
       // RPC returns JSON payload; treat success true
       setSuccess(true)
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'AppointmentConfirmation' } })
       console.error('Error confirming appointment:', err)
       setError('Error al confirmar la cita. Por favor, inténtalo de nuevo.')
     } finally {

@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('send-employee-request-notification')
 
 interface EmployeeRequestNotification {
   request_id: string
@@ -240,6 +244,8 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error sending employee request notification:', error)
     
+    captureEdgeFunctionError(error as Error, { functionName: 'send-employee-request-notification' })
+    await flushSentry()
     return new Response(
       JSON.stringify({ 
         success: false, 

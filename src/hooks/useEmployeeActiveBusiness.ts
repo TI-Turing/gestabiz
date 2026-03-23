@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 interface BusinessSchedule {
   business_id: string
@@ -108,6 +109,7 @@ export function useEmployeeActiveBusiness(employeeId: string | null | undefined)
         })
       } catch (err) {
         console.error('[useEmployeeActiveBusiness] Unexpected error:', err)
+        void logger.error('useEmployeeActiveBusiness: fetch failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeActiveBusiness', employeeId })
         setResult({
           business_id: null,
           business_name: null,

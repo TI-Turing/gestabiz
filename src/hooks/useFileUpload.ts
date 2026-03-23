@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 export type StorageBucket = 'business-logos' | 'location-images' | 'service-images' | 'user-avatars' | 'location-videos'
 
@@ -156,6 +157,7 @@ export function useFileUpload(bucket: StorageBucket) {
           path: data.path,
         }
       } catch (err) {
+        void logger.error('useFileUpload: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFileUpload' })
         const errorMessage = err instanceof Error ? err.message : 'Error desconocido al subir archivo'
         setError(errorMessage)
         toast.error(errorMessage)
@@ -209,6 +211,7 @@ export function useFileUpload(bucket: StorageBucket) {
         toast.success('Archivo eliminado')
         return true
       } catch (err) {
+        void logger.error('useFileUpload: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFileUpload' })
         const errorMessage = err instanceof Error ? err.message : 'Error al eliminar archivo'
         toast.error(errorMessage)
         return false
@@ -242,6 +245,7 @@ export function useFileUpload(bucket: StorageBucket) {
 
         return data.map((file) => `${folderPath}/${file.name}`)
       } catch (err) {
+        void logger.error('useFileUpload: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFileUpload' })
         console.error('Error listing files:', err)
         return []
       }

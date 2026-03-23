@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger'
 
 interface Category {
   name: string;
@@ -342,6 +343,7 @@ export function useBusinessProfileData({ businessId, slug, userLocation }: UseBu
 
       setBusiness(finalBusiness);
     } catch (err) {
+      void logger.error('useBusinessProfileData: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBusinessProfileData' })
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar datos del negocio';
       setError(errorMessage);
       toast.error(errorMessage);

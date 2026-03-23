@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 export type BugReportSeverity = 'low' | 'medium' | 'high' | 'critical'
 export type BugReportStatus = 'reported' | 'acknowledged' | 'in_progress' | 'resolved' | 'closed' | 'wont_fix'
@@ -198,6 +199,7 @@ export function useBugReports(): UseBugReportsReturn {
           // No fallar el reporte si falla el email
         }
       } catch (emailError) {
+        void logger.error('useBugReports: operation failed', emailError instanceof Error ? emailError : new Error(String(emailError)), { component: 'useBugReports' })
         console.error('Error calling email function:', emailError)
         // No fallar el reporte si falla el email
       }
@@ -209,6 +211,7 @@ export function useBugReports(): UseBugReportsReturn {
       return bugReport as BugReport
 
     } catch (err) {
+      void logger.error('useBugReports: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBugReports' })
       const message = err instanceof Error ? err.message : 'Error al crear el reporte'
       setError(message)
       toast.error('Error al enviar el reporte', {
@@ -269,6 +272,7 @@ export function useBugReports(): UseBugReportsReturn {
       return evidence as BugReportEvidence
 
     } catch (err) {
+      void logger.error('useBugReports: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBugReports' })
       const message = err instanceof Error ? err.message : 'Error al subir el archivo'
       toast.error('Error al subir evidencia', {
         description: message
@@ -296,6 +300,7 @@ export function useBugReports(): UseBugReportsReturn {
       return (data || []) as BugReport[]
 
     } catch (err) {
+      void logger.error('useBugReports: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBugReports' })
       const message = err instanceof Error ? err.message : 'Error al obtener reportes'
       setError(message)
       return []
@@ -321,6 +326,7 @@ export function useBugReports(): UseBugReportsReturn {
       return data as BugReport
 
     } catch (err) {
+      void logger.error('useBugReports: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBugReports' })
       console.error('Error fetching bug report:', err)
       return null
     }
@@ -342,6 +348,7 @@ export function useBugReports(): UseBugReportsReturn {
       return (data || []) as BugReportEvidence[]
 
     } catch (err) {
+      void logger.error('useBugReports: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBugReports' })
       console.error('Error fetching evidences:', err)
       return []
     }
@@ -374,6 +381,7 @@ export function useBugReports(): UseBugReportsReturn {
       return true
 
     } catch (err) {
+      void logger.error('useBugReports: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBugReports' })
       const message = err instanceof Error ? err.message : 'Error al eliminar el reporte'
       toast.error('Error al eliminar', {
         description: message
@@ -407,6 +415,7 @@ export function useBugReports(): UseBugReportsReturn {
       return true
 
     } catch (err) {
+      void logger.error('useBugReports: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBugReports' })
       const message = err instanceof Error ? err.message : 'Error al eliminar la evidencia'
       toast.error('Error al eliminar', {
         description: message

@@ -10,6 +10,7 @@ import { useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { QUERY_CONFIG } from '@/lib/queryConfig';
 import type { FavoriteBusiness } from '@/hooks/useFavorites';
+import { logger } from '@/lib/logger'
 
 // =====================================================
 // TYPES
@@ -280,6 +281,7 @@ export function useClientDashboard(clientId: string | null) {
 
         dashboardData = (data as ClientDashboardData | null) ?? null;
       } catch (edgeFunctionError) {
+        void logger.error('useClientDashboard: operation failed', edgeFunctionError instanceof Error ? edgeFunctionError : new Error(String(edgeFunctionError)), { component: 'useClientDashboard' })
         lastError = edgeFunctionError instanceof Error
           ? edgeFunctionError
           : new Error(String(edgeFunctionError));

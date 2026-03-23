@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 import type { Location, Service } from '@/types/types';
 
 interface WizardDataCache {
@@ -93,6 +94,7 @@ export function useWizardDataCache(businessId: string | null) {
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Error al cargar datos';
+        void logger.error('useWizardDataCache: loadAllData failed', error instanceof Error ? error : new Error(message), { component: 'useWizardDataCache', businessId })
         setCache({
           locations: null,
           services: null,

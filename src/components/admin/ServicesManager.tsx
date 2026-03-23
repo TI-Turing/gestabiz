@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { usePlanFeatures } from '@/hooks/usePlanFeatures'
@@ -190,6 +191,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       // Negocio independiente = solo 1 empleado (el dueño). La comisión no aplica.
       setIsIndependentBusiness(normalizedEmployees.length <= 1)
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServicesManager' } })
       // eslint-disable-next-line no-console
       console.error('Error al cargar datos:', error)
       toast.error('Error al cargar los datos')
@@ -602,6 +604,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       )
       await fetchData()
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServicesManager' } })
       // eslint-disable-next-line no-console
       console.error('Error al eliminar servicio y cancelar citas:', error)
       toast.error('Error al eliminar el servicio y cancelar citas')
@@ -630,6 +633,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
         toast.message('Selecciona las sedes para este servicio')
       }
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ServicesManager' } })
       // eslint-disable-next-line no-console
       console.error('Error al reactivar servicio:', err)
       toast.error('Error al reactivar el servicio')

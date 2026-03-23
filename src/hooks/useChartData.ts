@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import supabase from '@/lib/supabase';
+import { logger } from '@/lib/logger';
 import {
   ChartDataPoint,
   CategoryDistribution,
@@ -260,6 +261,7 @@ export function useChartData(
       setEmployeePerformanceData(processEmployeePerformance(transactions));
     } catch (err) {
       const error = err as Error;
+      void logger.error('useChartData: fetchAndProcessData failed', error, { component: 'useChartData', businessId })
       setError(error);
     } finally {
       setLoading(false);

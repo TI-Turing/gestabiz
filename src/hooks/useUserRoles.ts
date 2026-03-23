@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import type { User, UserRole, UserRoleAssignment } from '@/types/types'
 import { useKV } from '@/lib/useKV'
 import { toast } from 'sonner'
+import { logger } from '@/lib/logger'
 
 const ACTIVE_ROLE_KEY = 'user-active-role'
 
@@ -193,6 +194,7 @@ export function useUserRoles(user: User | null) {
         setStoredContextRef.current({ role: 'client' })
       }
     } catch (error) {
+      void logger.error('useUserRoles: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useUserRoles' })
       // eslint-disable-next-line no-console
       console.error('Error fetching user roles:', error)
       toast.error('Error al cargar roles disponibles')
@@ -275,6 +277,7 @@ export function useUserRoles(user: User | null) {
 
         return true
       } catch (error) {
+        void logger.error('useUserRoles: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useUserRoles' })
         // eslint-disable-next-line no-console
         console.error('Error switching role:', error)
         toast.error('Error al cambiar de rol')

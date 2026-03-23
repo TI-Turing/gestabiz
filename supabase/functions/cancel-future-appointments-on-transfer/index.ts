@@ -1,6 +1,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('cancel-future-appointments-on-transfer')
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -234,6 +238,8 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('[cancel-future-appointments-on-transfer] Unexpected error:', error instanceof Error ? error.message : 'unknown')
+    captureEdgeFunctionError(error as Error, { functionName: 'cancel-future-appointments-on-transfer' })
+    await flushSentry()
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

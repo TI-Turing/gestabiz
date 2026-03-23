@@ -1,5 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('send-notification-reminders')
 
 
   // Handle CORS preflight requests
@@ -163,6 +167,8 @@ import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
   } catch (error) {
     console.error('Error processing notification reminders:', error)
+    captureEdgeFunctionError(error as Error, { functionName: 'send-notification-reminders' })
+    await flushSentry()
     return new Response(
 
         success: false,

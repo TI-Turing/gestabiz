@@ -8,6 +8,7 @@
  *  - DangerZone.tsx             — Desactivación de cuenta
  */
 import React from 'react'
+import * as Sentry from '@sentry/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -77,6 +78,7 @@ export default function CompleteUnifiedSettings({
       onUserUpdate(updatedUser)
       toast.success(t('settings.preferences_saved'))
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'CompleteUnifiedSettings' } })
       toast.error(t('common.messages.updateError'))
       throw error
     }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import * as Sentry from '@sentry/react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -109,6 +110,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
       }, 2000)
       
     } catch (error: any) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AuthScreen' } })
       console.error('Error sending reset email:', error)
       toast.error('Error al enviar email', {
         description: error.message || 'Por favor intenta nuevamente',
@@ -186,6 +188,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
         setFormError(result.error)
       }
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AuthScreen', operation: 'handleSignIn' } })
       const errorMsg = error instanceof Error ? error.message : t('auth.loginError')
       setFormError(errorMsg)
     } finally {
@@ -242,6 +245,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
         setFormError(result.error)
       }
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AuthScreen', operation: 'handleSignUp' } })
       const errorMsg = error instanceof Error ? error.message : t('auth.registrationError')
       setFormError(errorMsg)
     } finally {
@@ -295,6 +299,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
         setFormError(result.error)
       }
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AuthScreen', operation: 'handleMagicLink' } })
       const errorMsg = error instanceof Error ? error.message : 'Error al enviar Magic Link'
       setFormError(errorMsg)
     } finally {
