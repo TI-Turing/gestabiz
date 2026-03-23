@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react'
+import * as Sentry from '@sentry/react'
 import { Download, Filter, Calendar as CalendarIcon, User as UserIcon, Activity } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -184,6 +185,7 @@ export function AuditLog({ businessId, ownerId, currentUserId }: Readonly<AuditL
 
       toast.success('Auditoría exportada exitosamente')
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AuditLog' } })
       toast.error('Error al exportar auditoría', {
         description: error instanceof Error ? error.message : 'Error desconocido'
       })

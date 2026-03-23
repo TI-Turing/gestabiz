@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import * as Sentry from '@sentry/react'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -88,6 +89,7 @@ export function NotificationSettings({ userId }: { userId: string }) {
         setPreferences(data as NotificationPreferences)
       }
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'NotificationSettings' } })
       console.error('Failed to load notification preferences:', err)
       toast.error(t('notifications.errors.loadError'))
       setPreferences({

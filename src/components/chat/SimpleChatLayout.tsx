@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import * as Sentry from '@sentry/react'
 import { isSameDay } from 'date-fns';
 import { useChat } from '@/hooks/useChat';
 import { useEmployeeActiveBusiness } from '@/hooks/useEmployeeActiveBusiness';
@@ -206,6 +207,7 @@ export function SimpleChatLayout({
         type: 'text',
       });
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'SimpleChatLayout' } })
       console.error('[SimpleChatLayout] Error sending message:', error);
     }
   };

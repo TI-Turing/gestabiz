@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { useKV } from '@/lib/useKV'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -58,6 +59,7 @@ export default function EmployeeRequests({ business, user }: Readonly<EmployeeRe
         toast.success(t('employee.requests.rejected_success'))
       }
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeRequests' } })
       toast.error(t('employee.requests.error'))
       throw error
     } finally {

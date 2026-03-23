@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
 import { es as esLocale } from 'date-fns/locale'
@@ -211,6 +212,7 @@ export function EmployeeProfileModal({
       await queryClient.invalidateQueries({ queryKey: ['businessHierarchy', employee.business_id] })
       setEditingCargo(false)
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'EmployeeProfileModal' } })
       console.error('[handleSaveCargo] Error al guardar cargo:', err, {
         employee_id: employee.user_id,
         business_id: employee.business_id,
@@ -237,6 +239,7 @@ export function EmployeeProfileModal({
       await queryClient.invalidateQueries({ queryKey: ['employee-modal-detail', employee.user_id, employee.business_id] })
       setEditingSupervisor(false)
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'EmployeeProfileModal' } })
       toast.error(err instanceof Error ? err.message : t('employeeProfile.modal.supervisor.updateError'))
     } finally {
       setSavingSupervisor(false)

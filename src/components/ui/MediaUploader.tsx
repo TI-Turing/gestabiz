@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { Upload, X, Image as ImageIcon, Video as VideoIcon, Loader2, Star, Play, Scissors } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFileUpload } from '@/hooks/useFileUpload'
@@ -129,6 +130,7 @@ export function MediaUploader({
         }
         newItems.push({ file, type: 'video', description: '', durationSec: duration })
       } catch (err) {
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'MediaUploader' } })
         onUploadError?.('No se pudo validar el video')
       }
     }
@@ -225,6 +227,7 @@ export function MediaUploader({
           .insert(payload)
         if (error) throw error
       } catch (err) {
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'MediaUploader' } })
         onUploadError?.('Error al guardar metadata de multimedia')
       }
       onUploadComplete?.(results)

@@ -15,6 +15,7 @@
  */
 
 import { useState } from 'react';
+import * as Sentry from '@sentry/react'
 import { X, MessageCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -90,6 +91,7 @@ export default function ChatWithAdminModal({
         toast.error('No se pudo crear la conversación');
       }
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ChatWithAdminModal' } })
       // eslint-disable-next-line no-console
       console.error('[ChatWithAdminModal] Error starting chat:', err);
       toast.error('No se pudo iniciar el chat. Intenta nuevamente.');
@@ -208,6 +210,7 @@ export default function ChatWithAdminModal({
                             onChatStarted(conversationId);
                           }
                         } catch (err) {
+                          Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ChatWithAdminModal' } })
                           // eslint-disable-next-line no-console
                           console.error('Error starting chat:', err);
                           toast.error('No se pudo iniciar el chat.');

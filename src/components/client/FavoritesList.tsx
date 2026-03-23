@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import * as Sentry from '@sentry/react'
 import { useQueryClient } from '@tanstack/react-query';
 import { FavoriteBusiness, useFavorites } from '@/hooks/useFavorites';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -44,6 +45,7 @@ export default function FavoritesList({ favorites, loading, onBookAppointment }:
       // El hook useFavorites ya maneja su propio toast
       queryClient.invalidateQueries({ queryKey: ['client-dashboard-data'] });
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'FavoritesList' } })
       // El error ya se maneja en useFavorites con su propio toast
       console.error('Error removing favorite:', error);
     }

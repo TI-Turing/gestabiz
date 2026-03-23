@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, type ComponentProps } from 'react';
+import * as Sentry from '@sentry/react'
 import { useQuery } from '@tanstack/react-query';
 import { X, MapPin, Phone, Mail, Globe, Clock, Star, Calendar, ChevronRight, MessageCircle, Heart } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -368,6 +369,7 @@ export default function BusinessProfile({
         reviewCount: reviewsData?.length || 0
       });
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessProfile' } })
       if (error instanceof Error) {
         // eslint-disable-next-line no-console
         console.error('Error fetching business data:', error.message);
@@ -418,6 +420,7 @@ export default function BusinessProfile({
         setEligibleAppointmentId(null);
       }
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessProfile' } })
       // Error handling
       if (error instanceof Error) {
         // eslint-disable-next-line no-console
@@ -450,6 +453,7 @@ export default function BusinessProfile({
       // Refresh business data to update review count and rating
       fetchBusinessData();
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessProfile' } })
       // Error is already handled by useReviews hook
       // eslint-disable-next-line no-console
       console.error('Error submitting review:', error);

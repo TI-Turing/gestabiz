@@ -4,6 +4,7 @@
 // ============================================================================
 
 import React, { useState, Suspense, lazy } from 'react';
+import * as Sentry from '@sentry/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calculator, FileText, Settings } from 'lucide-react';
@@ -113,6 +114,7 @@ export function AccountingPage({ businessId, onUpdate }: AccountingPageProps) {
                       toast.success('Transacción guardada exitosamente');
                       onUpdate?.();
                     } catch (error) {
+                      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AccountingPage' } })
                       toast.error('Error al guardar transacción');
                       throw error;
                     }

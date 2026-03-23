@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import * as Sentry from '@sentry/react'
 import { User, Appointment } from '@/types'
 import { useLanguage } from '@/contexts'
 import { useKV } from '@/lib/useKV'
@@ -164,6 +165,7 @@ export default function ClientDashboard({
       })
       refetch() // Recargar la lista de citas
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })
       const message = error instanceof Error ? error.message : 'Error inesperado'
       toast.error(`Error al confirmar: ${message}`)
     } finally {
@@ -201,6 +203,7 @@ export default function ClientDashboard({
         icon: <Calendar size={20} />,
       })
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })
       toast.error('Error al abrir Google Calendar')
     }
   }
@@ -227,6 +230,7 @@ export default function ClientDashboard({
       toast.success(t('clientDashboard.deleteSuccess'))
       refetch() // Recargar la lista de citas
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })
       const message = error instanceof Error ? error.message : 'Error inesperado'
       toast.error(t('clientDashboard.errorDeleting', { message }))
     } finally {
