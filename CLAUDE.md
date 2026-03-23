@@ -21,7 +21,7 @@ Gestabiz es una plataforma SaaS **todo-en-uno** para PyMEs de servicios (salones
 **Backend**: 100% Supabase Cloud (PostgreSQL 15+, RLS, Edge Functions Deno, Realtime, Storage)
 
 **MCP configurados en `.claude/mcp.json`**:
-- `supabase`: operaciones SQL directas, migraciones (project-ref: `dkancockzvcqorqbwtyh`)
+- `supabase`: operaciones SQL directas, migraciones (project-ref DEV: `dkancockzvcqorqbwtyh` | PROD: `emknatoknbomvmyumqju`)
 - `chrome-devtools`: inspección de Network, Console, DOM en tiempo real
 
 ---
@@ -563,7 +563,9 @@ Capa de abstracción sobre Supabase para operaciones CRUD:
 
 ## BASE DE DATOS SUPABASE
 
-**Solo en la nube** (no hay instancia local). Project ref: `dkancockzvcqorqbwtyh`
+**Solo en la nube** (no hay instancia local).
+- **DEV**: `dkancockzvcqorqbwtyh` — proyecto original con data de prueba
+- **PROD**: `emknatoknbomvmyumqju` — proyecto nuevo, limpio
 
 ### Tablas principales (40+)
 
@@ -778,8 +780,13 @@ npm run pre-deploy        # Checks pre-deploy
 
 ## VARIABLES DE ENTORNO
 
-**Web (`.env`)**:
+**Web** — ver templates en `environments/`. Archivos gitignoreados:
+- `.env.development` → local/dev (apunta a `dkancockzvcqorqbwtyh`)
+- `.env.staging` → build de dev (idem)
+- `.env.production` → build de prod (apunta a `emknatoknbomvmyumqju`)
+
 ```bash
+# Ejemplo .env.development (DEV)
 VITE_SUPABASE_URL=https://dkancockzvcqorqbwtyh.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
 VITE_APP_URL=http://localhost:5173
@@ -865,8 +872,9 @@ SUPPORT_EMAIL
 - **Organización**: TI-Turing (https://github.com/TI-Turing)
 - **Repo**: https://github.com/TI-Turing/Gestabiz
 - **Deploy**: Vercel (configurado en `vercel.json`)
-- **Supabase Project**: `dkancockzvcqorqbwtyh`
-- **Versión**: 0.0.4 (siguiente commit → 0.0.5)
+- **Supabase DEV**: `dkancockzvcqorqbwtyh` (proyecto original, data de prueba)
+- **Supabase PROD**: `emknatoknbomvmyumqju` (proyecto nuevo, limpio)
+- **Versión**: 0.0.51
 - **Fase**: BETA completada — no se agregan nuevos flujos funcionales; solo bugs, optimizaciones y features puntuales solicitadas
 
 ---
