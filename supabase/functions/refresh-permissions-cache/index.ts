@@ -8,6 +8,10 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('refresh-permissions-cache')
 
 Deno.serve(async (req) => {
   const corsPreFlight = handleCorsPreFlight(req)
@@ -67,6 +71,8 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('❌ Exception in refresh-permissions-cache:', error);
     
+    captureEdgeFunctionError(error as Error, { functionName: 'refresh-permissions-cache' })
+    await flushSentry()
     return new Response(
       JSON.stringify({
         success: false,

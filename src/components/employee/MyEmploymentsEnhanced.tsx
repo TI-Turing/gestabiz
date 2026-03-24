@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as Sentry from '@sentry/react'
 import { Briefcase, Crown, CheckCircle2, Plus, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -221,6 +222,7 @@ export function MyEmployments({ employeeId, onJoinBusiness, hasPendingRequest = 
       // Refrescar lista
       window.location.reload();
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'MyEmploymentsEnhanced' } })
       const errorMessage = err instanceof Error ? err.message : 'Error al finalizar empleo';
       toast.error(errorMessage);
       throw err;

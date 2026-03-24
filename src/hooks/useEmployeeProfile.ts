@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger'
 
 export interface Certification {
   id: string;
@@ -79,6 +80,7 @@ export function useEmployeeProfile(userId?: string) {
 
       setProfile(data || null);
     } catch (err: unknown) {
+      void logger.error('useEmployeeProfile: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeProfile' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al cargar perfil', {
@@ -146,6 +148,7 @@ export function useEmployeeProfile(userId?: string) {
 
       return true;
     } catch (err: unknown) {
+      void logger.error('useEmployeeProfile: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeProfile' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al actualizar perfil', {
@@ -170,6 +173,7 @@ export function useEmployeeProfile(userId?: string) {
 
       return updateProfile({ certifications: updatedCertifications });
     } catch (err: unknown) {
+      void logger.error('useEmployeeProfile: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeProfile' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al agregar certificación', {
@@ -189,6 +193,7 @@ export function useEmployeeProfile(userId?: string) {
 
       return updateProfile({ certifications: updatedCertifications });
     } catch (err: unknown) {
+      void logger.error('useEmployeeProfile: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeProfile' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al eliminar certificación', {
@@ -212,6 +217,7 @@ export function useEmployeeProfile(userId?: string) {
 
       return updateProfile({ specializations: updatedSpecializations });
     } catch (err: unknown) {
+      void logger.error('useEmployeeProfile: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeProfile' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al agregar especialización', {
@@ -231,6 +237,7 @@ export function useEmployeeProfile(userId?: string) {
 
       return updateProfile({ specializations: updatedSpecializations });
     } catch (err: unknown) {
+      void logger.error('useEmployeeProfile: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeProfile' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al eliminar especialización', {
@@ -254,6 +261,7 @@ export function useEmployeeProfile(userId?: string) {
 
       return updateProfile({ languages: updatedLanguages });
     } catch (err: unknown) {
+      void logger.error('useEmployeeProfile: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeProfile' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al agregar idioma', {
@@ -273,6 +281,7 @@ export function useEmployeeProfile(userId?: string) {
 
       return updateProfile({ languages: updatedLanguages });
     } catch (err: unknown) {
+      void logger.error('useEmployeeProfile: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeProfile' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al eliminar idioma', {

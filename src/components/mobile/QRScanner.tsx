@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import * as Sentry from '@sentry/react'
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native'
 import { Camera, CameraType } from 'expo-camera'
 import { BarCodeScanner } from 'expo-barcode-scanner'
@@ -44,6 +45,7 @@ export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
         )
       }
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'QRScanner' } })
       console.error('Error requesting camera permission:', error)
       error('No se pudo solicitar permiso de cámara', { title: 'Error' })
     }
@@ -78,6 +80,7 @@ export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
         throw new Error('Formato de QR inválido')
       }
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'QRScanner' } })
       error(
         'El código QR escaneado no es válido para Gestabiz. Por favor escanea un código de invitación válido.',
         { title: 'Error', onConfirm: () => setScanned(false) }

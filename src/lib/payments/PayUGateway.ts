@@ -5,6 +5,7 @@
  * Documentación: https://developers.payulatam.com/
  */
 
+import * as Sentry from '@sentry/react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   IPaymentGateway,
@@ -18,6 +19,14 @@ import type {
 } from './PaymentGateway'
 import { PaymentGatewayError } from './PaymentGateway'
 
+function capturePayUError(error: unknown, operation: string, extra?: Record<string, unknown>): void {
+  if (!(error instanceof PaymentGatewayError)) {
+    Sentry.captureException(error, { tags: { gateway: 'payu', operation }, extra })
+  } else {
+    Sentry.addBreadcrumb({ category: 'payment', message: `PayU ${operation} failed: ${error.message}`, level: 'error', data: { code: error.code } })
+  }
+}
+
 export class PayUGateway implements IPaymentGateway {
   constructor(private readonly supabase: SupabaseClient) {}
 
@@ -29,6 +38,7 @@ export class PayUGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'fetch_dashboard_error')
       return data as SubscriptionDashboard
     } catch (error) {
+      capturePayUError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -49,6 +59,7 @@ export class PayUGateway implements IPaymentGateway {
         sessionId: data.referenceCode,
       }
     } catch (error) {
+      capturePayUError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -66,6 +77,7 @@ export class PayUGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'update_subscription_error')
       return data.subscription as SubscriptionInfo
     } catch (error) {
+      capturePayUError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -83,6 +95,7 @@ export class PayUGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'cancel_subscription_error')
       return data.subscription as SubscriptionInfo
     } catch (error) {
+      capturePayUError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -100,6 +113,7 @@ export class PayUGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'pause_subscription_error')
       return data.subscription as SubscriptionInfo
     } catch (error) {
+      capturePayUError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -117,6 +131,7 @@ export class PayUGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'resume_subscription_error')
       return data.subscription as SubscriptionInfo
     } catch (error) {
+      capturePayUError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -134,6 +149,7 @@ export class PayUGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'reactivate_subscription_error')
       return data.subscription as SubscriptionInfo
     } catch (error) {
+      capturePayUError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -155,6 +171,7 @@ export class PayUGateway implements IPaymentGateway {
       if (error) throw new PaymentGatewayError(error.message, 'validate_limit_error')
       return data
     } catch (error) {
+      capturePayUError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
@@ -184,6 +201,7 @@ export class PayUGateway implements IPaymentGateway {
         message: data.message,
       }
     } catch (error) {
+      capturePayUError(error, "payment_operation")
       if (error instanceof PaymentGatewayError) throw error
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',

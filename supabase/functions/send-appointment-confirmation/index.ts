@@ -5,6 +5,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('send-appointment-confirmation')
 
 serve(async (req) => {
   const corsPreFlight = handleCorsPreFlight(req)
@@ -145,6 +149,8 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    captureEdgeFunctionError(error as Error, { functionName: 'send-appointment-confirmation' })
+    await flushSentry()
     return new Response(JSON.stringify({ success: false, error: String(error) }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

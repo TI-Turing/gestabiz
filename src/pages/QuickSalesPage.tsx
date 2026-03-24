@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react'
+import * as Sentry from '@sentry/react'
 import { DollarSign, Calendar, User, Package, TrendingUp, Banknote, CreditCard, Landmark, Phone, IdCard, Mail, PencilLine } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { QuickSaleForm } from '@/components/sales/QuickSaleForm'
@@ -83,6 +84,7 @@ export function QuickSalesPage({ businessId }: Readonly<QuickSalesPageProps>) {
       }) as Transaction[]
       setRecentSales(normalized)
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'QuickSalesPage' } })
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
       toast.error(`Error al cargar ventas: ${errorMessage}`)
     } finally {
@@ -129,6 +131,7 @@ export function QuickSalesPage({ businessId }: Readonly<QuickSalesPageProps>) {
         month: monthData?.reduce((sum, t) => sum + t.amount, 0) || 0,
       })
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'QuickSalesPage' } })
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
       toast.error(`Error al cargar estadísticas: ${errorMessage}`)
     }

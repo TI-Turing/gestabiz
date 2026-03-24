@@ -5,6 +5,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 import { validatePhone } from '../_shared/validation.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('send-sms-reminder')
 
 serve(async (req) => {
   const corsPreFlight = handleCorsPreFlight(req)
@@ -132,6 +136,8 @@ serve(async (req) => {
     } catch (_) {}
 
     console.error('Error sending SMS reminder:', error)
+    captureEdgeFunctionError(_ as Error, { functionName: 'send-sms-reminder' })
+    await flushSentry()
     return new Response(JSON.stringify({ success: false, error: 'Internal server error' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 })
   }
 })

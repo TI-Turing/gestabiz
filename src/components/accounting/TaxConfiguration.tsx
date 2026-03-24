@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as Sentry from '@sentry/react'
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -97,6 +98,7 @@ export function TaxConfiguration({ businessId }: TaxConfigurationProps) {
       setHasConfig(true);
       toast.success(t('common.messages.saveSuccess'), { id: toastId });
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'TaxConfiguration' } })
       toast.error(t('common.messages.saveError') + `: ${error instanceof Error ? error.message : 'Error'}`, { id: toastId });
       throw error;
     }

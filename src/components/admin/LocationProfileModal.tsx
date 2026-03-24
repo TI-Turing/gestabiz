@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -87,6 +88,7 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
         const filtered = (data || []).filter((m) => !(m.is_banner || m.is_primary))
         setOtherMedia(filtered)
       } catch (err) {
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationProfileModal' } })
         // swallow
       } finally {
         setIsLoadingMedia(false)

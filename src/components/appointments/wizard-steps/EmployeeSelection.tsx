@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import * as Sentry from '@sentry/react'
 import { Loader2, Users } from 'lucide-react';
 import supabase from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -180,6 +181,7 @@ export function EmployeeSelection({
 
         setEmployees(mappedEmployees);
       } catch (error) {
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeSelection' } })
         const message = error instanceof Error ? error.message : 'Error inesperado';
         toast.error(`Error: ${message}`);
         setEmployees([]);

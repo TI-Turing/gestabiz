@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger'
 
 /**
  * Interface para los datos de favoritos que vienen de la RPC function
@@ -64,6 +65,7 @@ export function useFavorites(userId?: string) {
       setFavoriteIds(ids);
 
     } catch (err) {
+      void logger.error('useFavorites: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFavorites' })
       const error = err as Error;
       setError(error);
       // eslint-disable-next-line no-console
@@ -120,6 +122,7 @@ export function useFavorites(userId?: string) {
       return isNowFavorite;
 
     } catch (err) {
+      void logger.error('useFavorites: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFavorites' })
       const error = err as Error;
       // eslint-disable-next-line no-console
       console.error('[useFavorites] Error toggling favorite:', error);
@@ -155,6 +158,7 @@ export function useFavorites(userId?: string) {
       return data as boolean;
 
     } catch (err) {
+      void logger.error('useFavorites: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFavorites' })
       // eslint-disable-next-line no-console
       console.error('[useFavorites] Error checking favorite status:', err);
       return false;

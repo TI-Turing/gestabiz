@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import * as Sentry from '@sentry/react'
 import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js'
 import {
   Elements,
@@ -80,6 +81,7 @@ function PaymentForm({
       // Éxito
       onSuccess()
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'AddPaymentMethodModal' } })
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setIsSubmitting(false)
@@ -198,6 +200,7 @@ export function AddPaymentMethodModal({
         const data = await response.json()
         setClientSecret(data.clientSecret)
       } catch (err) {
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'AddPaymentMethodModal' } })
         setError(err instanceof Error ? err.message : 'Error al cargar formulario')
       } finally {
         setIsLoading(false)

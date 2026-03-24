@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('send-email')
 
 // Valida dirección de email (RFC5322 básico) y previene header injection
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
@@ -291,6 +295,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error sending email:', error)
+    captureEdgeFunctionError(error as Error, { functionName: 'send-email' })
+    await flushSentry()
     return new Response(
       JSON.stringify({
         success: false,

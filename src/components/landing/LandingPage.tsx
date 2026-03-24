@@ -22,11 +22,12 @@ import {
   X
 } from 'lucide-react'
 import { PricingPlans } from './PricingPlans'
+import { LandingFooter } from './LandingFooter'
 import { useAnalytics } from '@/hooks/useAnalytics'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { usePageMeta } from '@/hooks/usePageMeta'
 import { LanguageToggle } from '@/components/ui/language-toggle'
-import logoTiTuring from '@/assets/images/tt/1.png'
 
 interface LandingPageProps {
   onNavigateToAuth: () => void
@@ -40,6 +41,16 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
   const navigate = useNavigate()
   const { user, loading } = useAuth()
   const { t } = useLanguage()
+
+  usePageMeta({
+    title: 'Gestabiz — Software de Gestión de Citas Online para Negocios | Colombia',
+    description: 'Gestabiz: plataforma todo-en-uno para salones, clínicas y gimnasios. Agenda citas online, recordatorios WhatsApp, gestión de clientes y contabilidad. Prueba gratis 30 días sin tarjeta.',
+    keywords: 'software de gestión de citas, agendar citas online, sistema de agendamiento, reservas online, agenda online negocios, software salón de belleza, software peluquería, software barbería, software clínica, software gimnasio, software spa, gestión de turnos online, recordatorios WhatsApp citas, app para negocios colombia, software pyme colombia, plataforma saas colombia, sistema citas colombia',
+    ogType: 'website',
+    ogUrl: 'https://gestabiz.com/',
+    ogImage: 'https://gestabiz.com/og-image.png',
+    canonical: 'https://gestabiz.com/',
+  })
 
   // Track page view on mount
   useEffect(() => {
@@ -624,84 +635,7 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 px-4 border-t border-gray-200 bg-gray-50">
-        <div className="container mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="bg-purple-600 rounded-lg p-2">
-                  <Calendar className="h-5 w-5 text-white" />
-                </div>
-                <span className="font-bold text-xl text-gray-900">Gestabiz</span>
-              </div>
-              <p className="text-sm text-gray-600">
-                {t('landing.footer.tagline')}
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4 text-gray-900">{t('landing.footer.product.title')}</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><a href="#features" className="hover:text-purple-600">{t('landing.footer.product.features')}</a></li>
-                <li><a href="#pricing" className="hover:text-purple-600">{t('landing.footer.product.pricing')}</a></li>
-                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.product.integrations')}</a></li>
-                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.product.api')}</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4 text-gray-900">{t('landing.footer.resources.title')}</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.resources.blog')}</a></li>
-                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.resources.help')}</a></li>
-                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.resources.tutorials')}</a></li>
-                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.resources.contact')}</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4 text-gray-900">{t('landing.footer.legal.title')}</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.legal.terms')}</a></li>
-                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.legal.privacy')}</a></li>
-                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.legal.cookies')}</a></li>
-                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-purple-600">{t('landing.footer.legal.licenses')}</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-gray-200 pt-8 space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600">
-              <p>© {new Date().getFullYear()} Gestabiz. {t('landing.footer.rightsReserved')}</p>
-              <p>{t('landing.footer.madeIn')}</p>
-            </div>
-            
-            {/* Ti Turing Signature */}
-            <div className="flex flex-col items-center gap-3 pt-4 border-t border-gray-200">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <span>{t('landing.footer.developedBy')}</span>
-                <a 
-                  href="https://tituring.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                >
-                  <img 
-                    src={logoTiTuring} 
-                    alt="Ti Turing Logo" 
-                    className="h-6 w-6 object-contain"
-                  />
-                  <span className="font-semibold text-purple-600">{t('landing.footer.company')}</span>
-                </a>
-              </div>
-              <Badge variant="outline" className="text-xs text-gray-500 border-gray-300">
-                {t('landing.footer.version').replace('0.0.1', APP_CONFIG.VERSION)}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
   )
 }

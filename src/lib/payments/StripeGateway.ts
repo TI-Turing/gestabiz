@@ -5,6 +5,7 @@
  * Conecta con Edge Functions de Supabase
  */
 
+import * as Sentry from '@sentry/react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   IPaymentGateway,
@@ -48,6 +49,10 @@ export class StripeGateway implements IPaymentGateway {
       return response.data as CheckoutSessionResult
     } catch (error) {
       if (error instanceof PaymentGatewayError) throw error
+      Sentry.captureException(error, {
+        tags: { gateway: 'stripe', operation: 'createCheckoutSession' },
+        extra: { planType: params.planType, billingCycle: params.billingCycle, businessId: params.businessId },
+      })
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
         'checkout_error',
@@ -138,6 +143,10 @@ export class StripeGateway implements IPaymentGateway {
       return response.data.subscription as SubscriptionInfo
     } catch (error) {
       if (error instanceof PaymentGatewayError) throw error
+      Sentry.captureException(error, {
+        tags: { gateway: 'stripe', operation: 'manageSubscription' },
+        extra: { action: body.action, businessId: body.businessId },
+      })
       throw new PaymentGatewayError(
         error instanceof Error ? error.message : 'Unknown error',
         'subscription_error',

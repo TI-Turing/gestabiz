@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import * as Sentry from '@sentry/react'
 import { Building2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Location } from '@/types/types';
@@ -145,6 +146,7 @@ export function LocationSelection({
         const ids = filtered.map(l => l.id);
         await refreshLocationBanners(ids);
       } catch (error) {
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'LocationSelection' } })
         const message = error instanceof Error ? error.message : 'Error inesperado';
         toast.error(`Error: ${message}`);
         setLocations([]);

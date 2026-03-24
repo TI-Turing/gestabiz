@@ -2,6 +2,10 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('search_businesses')
 
 const BOGOTA_REGION_ID = 'fc6cc79b-dfd1-42c9-b35d-3d0df51c1c83'
 const BOGOTA_CITY_ID = 'c5861b80-bd05-48a9-9e24-d8c93e0d1d6b'
@@ -708,6 +712,8 @@ serve(async (req) => {
     return new Response(JSON.stringify({ businesses: paginated, total: totalOriginal, locationsCountMap, cityBusinessIds, cityLocationIds, cityNameMap, matchSourcesByBusinessId: matchSourcesReduced, ratingStatsByBusinessId }), { headers: corsHeaders })
   } catch (err) {
     console.error('search_businesses error', err)
+    captureEdgeFunctionError(err as Error, { functionName: 'search_businesses' })
+    await flushSentry()
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'content-type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'authorization, content-type, x-client-info, apikey' } })
   }
 })

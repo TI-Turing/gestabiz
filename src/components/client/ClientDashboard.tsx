@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import * as Sentry from '@sentry/react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Calendar, User as UserIcon, Plus, Clock, MapPin, Phone, Mail, FileText, List, CalendarDays, History, MessageCircle, X, Heart } from 'lucide-react'
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
@@ -325,6 +326,7 @@ export function ClientDashboard({
         toast.success(t('appointments.toasts.chatStarted'))
       }
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })
       console.error('Error al iniciar chat:', error)
       toast.error(t('appointments.toasts.chatFailed'))
     } finally {
@@ -357,6 +359,7 @@ export function ClientDashboard({
       // ✅ Refetch dashboard data (useClientDashboard automáticamente invalidará cache)
       refetchDashboard()
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })
       console.error('Error al cancelar cita:', error)
       toast.error(t('appointments.toasts.cancelFailed'))
     }

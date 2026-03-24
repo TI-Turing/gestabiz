@@ -9,6 +9,18 @@
       "destination": "/api/negocio/:slug"
     },
     {
+      "source": "/para/:vertical",
+      "destination": "/api/para/:vertical"
+    },
+    {
+      "source": "/blog",
+      "destination": "/api/blog/index"
+    },
+    {
+      "source": "/blog/:slug",
+      "destination": "/api/blog/:slug"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

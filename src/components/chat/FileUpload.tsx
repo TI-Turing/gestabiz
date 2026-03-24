@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import * as Sentry from '@sentry/react'
 import { Upload, X, File, Image as ImageIcon, FileText, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -197,6 +198,7 @@ export function FileUpload({
       setFiles([]);
       setUploadProgress({});
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'FileUpload' } })
       const message = error instanceof Error ? error.message : 'Error desconocido';
       onUploadError?.(message);
     } finally {

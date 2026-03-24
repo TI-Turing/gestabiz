@@ -1,4 +1,5 @@
 import React from 'react'
+import * as Sentry from '@sentry/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -64,6 +65,7 @@ export default function UnifiedSettings({ user, onUserUpdate, currentRole, busin
       onUserUpdate(updatedUser)
       toast.success(t('settings.preferences_saved'))
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UnifiedSettings' } })
       toast.error(t('common.messages.languageError'))
       throw error
     }

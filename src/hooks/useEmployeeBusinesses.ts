@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import QUERY_CONFIG from '@/lib/queryConfig';
+import { logger } from '@/lib/logger'
 
 interface Business {
   id: string;
@@ -86,6 +87,7 @@ export function useEmployeeBusinesses(
 
         return allBusinesses;
       } catch (err) {
+        void logger.error('useEmployeeBusinesses: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeBusinesses' })
         const errorMessage = err instanceof Error ? err.message : 'Error al cargar negocios';
         throw new Error(errorMessage);
       }

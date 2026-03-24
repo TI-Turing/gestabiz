@@ -2,6 +2,10 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendBrevoEmail, createBasicEmailTemplate } from '../_shared/brevo.ts'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('appointment-status-updater')
 
 serve(async (req) => {
   const corsPreFlight = handleCorsPreFlight(req)
@@ -82,6 +86,8 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in appointment status updater:', error)
     
+    captureEdgeFunctionError(error as Error, { functionName: 'appointment-status-updater' })
+    await flushSentry()
     return new Response(
       JSON.stringify({
         success: false,

@@ -8,6 +8,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts';
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('get-client-dashboard-data')
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -121,6 +125,8 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('[get-client-dashboard-data] Unexpected error:', error instanceof Error ? error.message : 'unknown');
+    captureEdgeFunctionError(error as Error, { functionName: 'get-client-dashboard-data' })
+    await flushSentry()
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

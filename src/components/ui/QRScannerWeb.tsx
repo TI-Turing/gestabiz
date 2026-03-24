@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import * as Sentry from '@sentry/react'
 import { X, Camera, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -57,6 +58,7 @@ export function QRScannerWeb({ onScan, onCancel, isOpen }: Readonly<QRScannerWeb
       setScanning(true)
       requestAnimationFrame(scanQRCode)
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'QRScannerWeb' } })
       console.error('Error accessing camera:', err)
       setHasPermission(false)
       setError('No se pudo acceder a la cámara. Por favor verifica los permisos.')

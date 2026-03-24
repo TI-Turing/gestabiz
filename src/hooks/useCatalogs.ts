@@ -3,6 +3,7 @@
  * Incluye caché en memoria para optimizar queries repetidas
  */
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabase';
 
 // =====================================================
@@ -92,6 +93,7 @@ export function useCountries() {
         setCountries(data || []);
       } catch (err) {
         console.error('Error fetching countries:', err);
+        void logger.error('useCatalogs: Error fetching countries:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
         setError(err instanceof Error ? err.message : 'Error al cargar países');
       } finally {
         setLoading(false);
@@ -145,6 +147,7 @@ export function useRegions(countryId?: string) {
         setRegions(data || []);
       } catch (err) {
         console.error('Error fetching regions:', err);
+        void logger.error('useCatalogs: Error fetching regions:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
         setError(err instanceof Error ? err.message : 'Error al cargar regiones');
       } finally {
         setLoading(false);
@@ -198,6 +201,7 @@ export function useCities(regionId?: string) {
         setCities(data || []);
       } catch (err) {
         console.error('Error fetching cities:', err);
+        void logger.error('useCatalogs: Error fetching cities:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
         setError(err instanceof Error ? err.message : 'Error al cargar ciudades');
       } finally {
         setLoading(false);
@@ -241,6 +245,7 @@ export function useGenders() {
         setGenders(data || []);
       } catch (err) {
         console.error('Error fetching genders:', err);
+        void logger.error('useCatalogs: Error fetching genders:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
         setError(err instanceof Error ? err.message : 'Error al cargar géneros');
       } finally {
         setLoading(false);
@@ -278,6 +283,7 @@ export function useDocumentTypes(countryId?: string, forCompany?: boolean) {
           setDocumentTypes(data || []);
         } catch (err) {
           console.error('Error fetching document types (fallback all):', err);
+          void logger.error('useCatalogs: Error fetching document types (fallback ', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
           setError(err instanceof Error ? err.message : 'Error al cargar tipos de documento');
         } finally {
           setLoading(false);
@@ -365,6 +371,7 @@ export function useDocumentTypes(countryId?: string, forCompany?: boolean) {
         setDocumentTypes(filteredData);
       } catch (err) {
         console.error('Error fetching document types:', err);
+        void logger.error('useCatalogs: Error fetching document types:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
         setError(err instanceof Error ? err.message : 'Error al cargar tipos de documento');
       } finally {
         setLoading(false);
@@ -408,6 +415,7 @@ export function useHealthInsurance() {
         setHealthInsurance(data || []);
       } catch (err) {
         console.error('Error fetching health insurance:', err);
+        void logger.error('useCatalogs: Error fetching health insurance:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
         setError(err instanceof Error ? err.message : 'Error al cargar EPS');
       } finally {
         setLoading(false);
@@ -436,6 +444,7 @@ export async function getColombiaId(): Promise<string | null> {
     return data?.id || null;
   } catch (err) {
     console.error('Error getting Colombia ID:', err);
+    void logger.error('useCatalogs: Error getting Colombia ID:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
     return null;
   }
 }
@@ -456,6 +465,7 @@ export async function getRegionName(regionId: string): Promise<string | null> {
     return data?.name || null;
   } catch (err) {
     console.error('Error getting region name:', err);
+    void logger.error('useCatalogs: Error getting region name:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
     return null;
   }
 }
@@ -484,6 +494,7 @@ export async function getCityName(cityId: string): Promise<string | null> {
     return data?.name || null;
   } catch (err) {
     console.error('Error getting city name:', err);
+    void logger.error('useCatalogs: Error getting city name:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
     return null;
   }
 }

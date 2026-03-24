@@ -17,6 +17,7 @@
  */
 
 import type { PostgrestError } from '@supabase/supabase-js'
+import * as Sentry from '@sentry/react'
 
 // ── Códigos de error conocidos de Supabase/PostgreSQL ───────────────────────
 export const SUPABASE_ERROR_CODES = {
@@ -106,5 +107,22 @@ export function throwIfError(
   code: string,
   message: string,
 ): void {
-  if (error) throw new ServiceError(code, message, error)
+  if (error) {
+    const serviceError = new ServiceError(code, message, error)
+    // Auto-capturar a Sentry todos los errores de servicio excepto "not found" esperados
+    if (error.code !== SUPABASE_ERROR_CODES.NOT_FOUND) {
+      Sentry.withScope((scope) => {
+        scope.setTag('service_error_code', code)
+        scope.setTag('pg_error_code', error.code ?? 'unknown')
+        scope.setContext('database_error', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+        })
+        Sentry.captureException(serviceError)
+      })
+    }
+    throw serviceError
+  }
 }

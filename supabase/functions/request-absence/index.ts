@@ -15,6 +15,10 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts';
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('request-absence')
 
 // corsHeaders se obtiene dinámicamente por request — ver uso abajo
 
@@ -349,6 +353,8 @@ serve(async (req) => {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('[request-absence] Error:', errorMessage);
+    captureEdgeFunctionError(error as Error, { functionName: 'request-absence', operation: 'processAbsenceRequest' })
+    await flushSentry()
 
     // Algunos errores son de negocio y pueden mostrarse al usuario (sin detalles internos)
     const isSafeMessage = typeof errorMessage === 'string' && (

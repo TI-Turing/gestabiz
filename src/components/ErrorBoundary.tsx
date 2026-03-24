@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { AlertCircle, RefreshCw, Home } from 'lucide-react'
+import * as Sentry from '@sentry/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -65,23 +66,22 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   /**
-   * Enviar error a servicio externo (placeholder)
+   * Enviar error a Sentry con contexto completo
    */
   private logErrorToService(error: Error, errorInfo: ErrorInfo) {
-    // Placeholder para integración futura con Sentry, LogRocket, etc.
-    const errorData = {
-      message: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack,
-      componentName: this.props.componentName,
-      errorId: this.state.errorId,
-      timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href
-    }
-    
-    // eslint-disable-next-line no-console
-    console.log('[ErrorBoundary] Would send to tracking service:', errorData)
+    Sentry.withScope((scope) => {
+      scope.setTag('component', this.props.componentName || 'unknown')
+      scope.setTag('error_id', this.state.errorId || 'unknown')
+      scope.setContext('component_info', {
+        componentName: this.props.componentName,
+        errorId: this.state.errorId,
+        componentStack: errorInfo.componentStack,
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+      })
+      Sentry.captureException(error)
+    })
   }
 
   handleReset = () => {

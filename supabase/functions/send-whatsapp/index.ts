@@ -2,6 +2,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 import { validatePhone } from '../_shared/validation.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('send-whatsapp')
 
 interface WhatsAppRequest {
   to: string
@@ -172,6 +176,8 @@ Si necesitas cancelar o reprogramar, por favor responde a este mensaje.
   } catch (error) {
     console.error('Error sending WhatsApp message:', error)
 
+    captureEdgeFunctionError(error as Error, { functionName: 'send-whatsapp' })
+    await flushSentry()
     return new Response(
       JSON.stringify({
         success: false,

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -100,6 +101,7 @@ export default function EmployeeManagement({ user, businessId }: Readonly<Employ
 
       toast.success(t('employee.approvalSuccess'))
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeManagementNew' } })
       toast.error(t('employee.approvalError'))
       throw error
     }
@@ -125,6 +127,7 @@ export default function EmployeeManagement({ user, businessId }: Readonly<Employ
       setRejectionReason('')
       setSelectedRequest(null)
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeManagementNew' } })
       toast.error(t('employee.rejectionError'))
       throw error
     }
@@ -148,6 +151,7 @@ export default function EmployeeManagement({ user, businessId }: Readonly<Employ
   localStorage.setItem('users', JSON.stringify(updatedUsers))
       toast.success(t('employee.removeSuccess'))
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeManagementNew' } })
       toast.error(t('employee.removeError'))
       throw error
     }
