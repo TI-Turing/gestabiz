@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { logger } from '@/lib/logger';
 import { User, Appointment, UserSettings, DashboardStats, UpcomingAppointment, isValidLanguage, isValidUserRole } from '@/types'
 import supabase from '@/lib/supabase'
 import { toast } from 'sonner'
@@ -184,6 +185,7 @@ export const useAuth = () => {
           setUser(null)
         }
       } catch (err) {
+        void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
         setError(err instanceof Error ? err.message : 'An error occurred')
       } finally {
         setLoading(false)
@@ -219,6 +221,7 @@ export const useAuth = () => {
       toast.success('Account created successfully! Please check your email to verify.')
       return data
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to create account'
       setError(message)
       toast.error(message)
@@ -237,6 +240,7 @@ export const useAuth = () => {
       toast.success('Signed in successfully!')
       return data
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to sign in'
       setError(message)
       toast.error(message)
@@ -254,6 +258,7 @@ export const useAuth = () => {
       if (error) throw new Error(error.message)
       return data
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to sign in with Google'
       setError(message)
       toast.error(message)
@@ -270,6 +275,7 @@ export const useAuth = () => {
       if (error) throw new Error(error.message)
       toast.success('Signed out successfully!')
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to sign out'
       toast.error(message)
       throw err
@@ -287,6 +293,7 @@ export const useAuth = () => {
       toast.success('Password reset email sent!')
       return data
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to send reset email'
       setError(message)
       toast.error(message)
@@ -333,6 +340,7 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
       if (error) throw new Error(error.message)
       setAppointments((data || []) as Appointment[])
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to fetch appointments'
       setError(message)
       toast.error(message)
@@ -513,6 +521,7 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
         console.log('✅ [NOTIFICATIONS] Proceso de notificaciones completado')
       } catch (notificationError) {
         console.error('❌ [NOTIFICATIONS] Error general enviando notificaciones:', notificationError)
+        void logger.error('useSupabase: notification send failed', notificationError instanceof Error ? notificationError : new Error(String(notificationError)), { component: 'useSupabase' })
         // No fallar la creación de cita si fallan las notificaciones
       }
       
@@ -520,6 +529,7 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
       // muestra su propio toast de éxito. No emitir otro aquí.
       return newAppointment
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to create appointment'
       toast.error(message)
       throw err
@@ -629,6 +639,7 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
       toast.success('Appointment updated successfully!')
       return updatedAppointment
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to update appointment'
       toast.error(message)
       throw err
@@ -698,6 +709,7 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
       
       toast.success('Appointment deleted successfully!')
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to delete appointment'
       toast.error(message)
       throw err
@@ -721,6 +733,7 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
       if (error) throw new Error(error.message)
       return (data || []) as Appointment[]
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
   const message = err instanceof Error ? err.message : 'Failed to fetch upcoming appointments'
   setError(message)
   return []
@@ -741,6 +754,7 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
       if (error) throw new Error(error.message)
       return (data || []) as Appointment[]
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
   const message = err instanceof Error ? err.message : 'Failed to fetch appointments by date range'
   setError(message)
   return []
@@ -837,6 +851,7 @@ export const useUserSettings = (userId?: string) => {
       if (error) throw new Error(error.message)
   setSettings(normalizeUserSettings(data as AnyRecord))
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to fetch settings'
       setError(message)
     } finally {
@@ -860,6 +875,7 @@ export const useUserSettings = (userId?: string) => {
       toast.success('Settings updated successfully!')
   return normalizeUserSettings(data as AnyRecord)
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to update settings'
       setError(message)
       toast.error(message)
@@ -925,6 +941,7 @@ export const useDashboardStats = (userId?: string) => {
       }
       setStats(statsCalc)
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to fetch dashboard stats'
       setError(message)
     } finally {
@@ -974,6 +991,7 @@ export const useBrowserExtensionData = () => {
       }, 5 * 60 * 1000)
       setUpcomingAppointments(mapped)
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       const message = err instanceof Error ? err.message : 'Failed to fetch upcoming appointments'
       setError(message)
     } finally {
@@ -1026,6 +1044,7 @@ export const useNotificationProcessor = (userId?: string) => {
         throw new Error('Failed to process notifications')
       }
     } catch (err) {
+      void logger.error('useSupabase: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
       setError(err instanceof Error ? err.message : 'Failed to process notifications')
     } finally {
       setProcessing(false)

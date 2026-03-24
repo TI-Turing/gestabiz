@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import * as Sentry from '@sentry/react'
 import { Briefcase, AlertCircle, Save } from 'lucide-react';
 import { Clock, Money, Check as CheckIcon } from '@phosphor-icons/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -251,6 +252,7 @@ export function ServiceSelector({
       }
 
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServiceSelector' } })
       console.error('Error saving services:', error);
       toast.error(t('common.messages.saveError'));
     } finally {

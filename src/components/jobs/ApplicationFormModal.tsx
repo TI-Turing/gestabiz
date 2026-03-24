@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as Sentry from '@sentry/react'
 import {
   Dialog,
   DialogContent,
@@ -90,6 +91,7 @@ export const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({
         const result = await checkConflict(workSchedule);
         setScheduleConflicts(result.conflicts);
       } catch (error) {
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ApplicationFormModal' } })
         // Error already handled by hook
         setScheduleConflicts([]);
       }
@@ -178,6 +180,7 @@ export const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({
         onSuccess?.();
       }
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ApplicationFormModal' } })
       const error = err as Error;
       toast.error(error.message || 'Error al enviar aplicación');
     }

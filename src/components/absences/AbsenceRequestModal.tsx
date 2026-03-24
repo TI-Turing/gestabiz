@@ -14,6 +14,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import * as Sentry from '@sentry/react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -123,6 +124,7 @@ export function AbsenceRequestModal({ isOpen, onClose, businessId }: Readonly<Ab
         );
         setHolidaysInRange(holidaysInDateRange.map((h) => h.holiday_date));
       } catch (error) {
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AbsenceRequestModal' } })
         // eslint-disable-next-line no-console
         console.warn('Error loading appointments:', error);
       } finally {

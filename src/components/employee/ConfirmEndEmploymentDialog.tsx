@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as Sentry from '@sentry/react'
 import { AlertTriangle, XCircle } from 'lucide-react';
 import {
   AlertDialog,
@@ -44,6 +45,7 @@ export function ConfirmEndEmploymentDialog({
       setConfirmed(false);
       onClose();
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ConfirmEndEmploymentDialog' } })
       setError(err instanceof Error ? err.message : 'Error al finalizar el empleo');
     } finally {
       setLoading(false);

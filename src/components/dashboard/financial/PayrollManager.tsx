@@ -4,6 +4,7 @@
 // ============================================================================
 
 import React, { useState, useEffect, useMemo } from 'react';
+import * as Sentry from '@sentry/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -193,6 +194,7 @@ export function PayrollManager({ businessId }: Readonly<PayrollManagerProps>) {
 
       setEmployees(formattedEmployees);
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'PayrollManager' } })
       toast.error(`Error al cargar empleados: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     } finally {
       setLoading(false);
@@ -215,6 +217,7 @@ export function PayrollManager({ businessId }: Readonly<PayrollManagerProps>) {
       });
       setPayrollConfigs(configsMap);
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'PayrollManager' } })
       toast.error(`Error al cargar configuraciones: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };
@@ -243,6 +246,7 @@ export function PayrollManager({ businessId }: Readonly<PayrollManagerProps>) {
 
       setPayrollPayments(formattedPayments);
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'PayrollManager' } })
       toast.error(`Error al cargar pagos: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     }
   };
@@ -366,6 +370,7 @@ export function PayrollManager({ businessId }: Readonly<PayrollManagerProps>) {
       setIsConfigDialogOpen(false);
       fetchPayrollConfigs();
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'PayrollManager' } })
       toast.error(`Error al guardar configuración: ${error instanceof Error ? error.message : 'Error desconocido'}`, { id: toastId });
     }
   };
@@ -442,6 +447,7 @@ export function PayrollManager({ businessId }: Readonly<PayrollManagerProps>) {
       setIsPaymentDialogOpen(false);
       fetchPayrollPayments();
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'PayrollManager' } })
       toast.error(`Error al crear pago: ${error instanceof Error ? error.message : 'Error desconocido'}`, { id: toastId });
     }
   };
@@ -463,6 +469,7 @@ export function PayrollManager({ businessId }: Readonly<PayrollManagerProps>) {
       toast.success('Pago marcado como pagado', { id: toastId });
       fetchPayrollPayments();
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'PayrollManager' } })
       toast.error(`Error al actualizar pago: ${error instanceof Error ? error.message : 'Error desconocido'}`, { id: toastId });
     }
   };

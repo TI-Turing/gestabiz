@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import supabase from '@/lib/supabase';
 import { LocationService } from '@/types/types';
 import { toast } from 'sonner';
@@ -33,6 +34,7 @@ export function useLocationServices(locationId?: string) {
       setServices(data || []);
     } catch (err) {
       const error = err as Error;
+      void logger.error('useLocationServices: operation failed', error, { component: 'useLocationServices' })
       setError(error);
       toast.error(`Error al cargar servicios de la sede: ${error.message}`);
     } finally {
@@ -60,6 +62,7 @@ export function useLocationServices(locationId?: string) {
       return data;
     } catch (err) {
       const error = err as Error;
+      void logger.error('useLocationServices: operation failed', error, { component: 'useLocationServices' })
       toast.error(`Error al agregar servicio: ${error.message}`);
       throw error;
     }
@@ -79,6 +82,7 @@ export function useLocationServices(locationId?: string) {
       if (locationId) fetchLocationServices(locationId);
     } catch (err) {
       const error = err as Error;
+      void logger.error('useLocationServices: operation failed', error, { component: 'useLocationServices' })
       toast.error(`Error al remover servicio: ${error.message}`);
       throw error;
     }
@@ -98,6 +102,7 @@ export function useLocationServices(locationId?: string) {
       if (locationId) fetchLocationServices(locationId);
     } catch (err) {
       const error = err as Error;
+      void logger.error('useLocationServices: operation failed', error, { component: 'useLocationServices' })
       toast.error(`Error al actualizar servicio: ${error.message}`);
       throw error;
     }

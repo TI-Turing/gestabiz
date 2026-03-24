@@ -5,6 +5,7 @@
  */
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import * as Sentry from '@sentry/react'
 import { googleCalendarService } from '@/lib/googleCalendar'
 import supabase from '@/lib/supabase'
 import { toast } from 'sonner'
@@ -60,6 +61,7 @@ export default function GoogleCalendarCallback() {
         setTimeout(() => navigate('/app'), 1500)
       } catch (err) {
         console.error('Google Calendar callback error:', err)
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'GoogleCalendarCallback', operation: 'oauthExchange' } })
         setStatus('error')
         toast.error('Error al conectar Google Calendar')
         setTimeout(() => navigate('/app'), 2500)

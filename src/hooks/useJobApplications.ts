@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger'
 
 export interface JobApplication {
   id: string;
@@ -121,6 +122,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
 
       setApplications(applicationsWithUsers);
     } catch (err: unknown) {
+      void logger.error('useJobApplications: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useJobApplications' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al cargar aplicaciones', {
@@ -259,6 +261,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
       await fetchApplications();
       return applicationWithUser as JobApplication;
     } catch (err: unknown) {
+      void logger.error('useJobApplications: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useJobApplications' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al enviar aplicación', {
@@ -297,6 +300,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
       await fetchApplications();
       return true;
     } catch (err: unknown) {
+      void logger.error('useJobApplications: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useJobApplications' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al actualizar estado', {
@@ -344,6 +348,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
 
       return true;
     } catch (err: unknown) {
+      void logger.error('useJobApplications: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useJobApplications' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al aceptar aplicación', {
@@ -386,6 +391,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
       await fetchApplications();
       return true;
     } catch (err: unknown) {
+      void logger.error('useJobApplications: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useJobApplications' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al retirar aplicación', {
@@ -481,6 +487,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
       await fetchApplications();
       return true;
     } catch (err: unknown) {
+      void logger.error('useJobApplications: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useJobApplications' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al iniciar proceso', {
@@ -663,6 +670,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
       await fetchApplications();
       return true;
     } catch (err: unknown) {
+      void logger.error('useJobApplications: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useJobApplications' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al seleccionar empleado', {

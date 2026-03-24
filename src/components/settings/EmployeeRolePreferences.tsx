@@ -2,6 +2,7 @@
  * Preferencias específicas del rol Empleado dentro de CompleteUnifiedSettings.
  */
 import React, { useState, useEffect } from 'react'
+import * as Sentry from '@sentry/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -132,6 +133,7 @@ export function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePref
           : t('settings.employeePrefs.messages.allowClientMessages.successDisabled'),
       )
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeRolePreferences' } })
       const err = error as Error
       toast.error(err.message || t('settings.employeePrefs.messages.allowClientMessages.error'))
       setAllowClientMessages(!newValue)
@@ -171,6 +173,7 @@ export function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePref
       })
       toast.success(t('settings.employeePrefs.profileUpdateSuccess'))
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeRolePreferences' } })
       const err = error as Error
       toast.error(err.message || t('settings.employeePrefs.profileUpdateError'))
     } finally {
@@ -184,7 +187,7 @@ export function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePref
       await addSpecialization(newSpecialization.trim())
       setNewSpecialization('')
       toast.success(t('settings.employeePrefs.specializations.successAdd'))
-    } catch (error) { toast.error((error as Error).message) }
+    } catch (error) { Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeRolePreferences' } }); toast.error((error as Error).message) }
   }
 
   const handleAddLanguage = async () => {
@@ -193,7 +196,7 @@ export function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePref
       await addLanguage(newLanguage.trim())
       setNewLanguage('')
       toast.success(t('settings.employeePrefs.languages.successAdd'))
-    } catch (error) { toast.error((error as Error).message) }
+    } catch (error) { Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeRolePreferences' } }); toast.error((error as Error).message) }
   }
 
   const handleAddCertification = async () => {
@@ -213,7 +216,7 @@ export function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePref
       setCertName(''); setCertIssuer(''); setCertIssueDate(''); setCertExpiryDate('')
       setCertCredentialId(''); setCertCredentialUrl(''); setShowCertificationForm(false)
       toast.success(t('settings.employeePrefs.certifications.successAdd'))
-    } catch (error) { toast.error((error as Error).message) }
+    } catch (error) { Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeRolePreferences' } }); toast.error((error as Error).message) }
   }
 
   const handleRemoveSpecialization = async (spec: string) => {

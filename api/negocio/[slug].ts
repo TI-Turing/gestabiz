@@ -134,15 +134,21 @@ export default async function handler(req: Request): Promise<Response> {
 
   if (business) {
     const metaHtml = buildMetaHtml(business, canonical)
-    // 1. Remove the generic <title>Gestabiz</title>
+    // 1. Remove the generic <title>
     html = html.replace(/<title>[^<]*<\/title>/, '')
-    // 2. Remove any existing generic description/og tags from index.html
+    // 2. Remove generic description/og/twitter/canonical/hreflang tags from index.html
     html = html
       .replace(/<meta name="description"[^>]*>/g, '')
       .replace(/<meta name="title"[^>]*>/g, '')
+      .replace(/<meta name="keywords"[^>]*>/g, '')
+      .replace(/<meta name="robots"[^>]*>/g, '')
       .replace(/<meta property="og:[^"]*"[^>]*>/g, '')
       .replace(/<meta name="twitter:[^"]*"[^>]*>/g, '')
-    // 3. Inject business-specific meta tags just before </head>
+      .replace(/<link rel="canonical"[^>]*>/g, '')
+      .replace(/<link rel="alternate"[^>]*>/g, '')
+    // 3. Remove landing-page JSON-LD schemas (business profiles have their own)
+    html = html.replace(/<script type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/g, '')
+    // 4. Inject business-specific meta tags just before </head>
     html = html.replace('</head>', `  ${metaHtml}\n</head>`)
   }
 

@@ -4,6 +4,7 @@
 // ============================================================================
 
 import React, { useState, useEffect, useMemo } from 'react';
+import * as Sentry from '@sentry/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -198,6 +199,7 @@ export function ExpenseManager({ businessId }: Readonly<ExpenseManagerProps>) {
       if (error) throw error;
       setRecurringExpenses(data || []);
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ExpenseManager' } })
       toast.error(`Error al cargar gastos recurrentes: ${error instanceof Error ? error.message : 'Error desconocido'}`);
     } finally {
       setLoading(false);
@@ -257,6 +259,7 @@ export function ExpenseManager({ businessId }: Readonly<ExpenseManagerProps>) {
       resetForm();
       fetchRecurringExpenses();
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ExpenseManager' } })
       toast.error(`Error al crear gasto: ${error instanceof Error ? error.message : 'Error desconocido'}`, { id: toastId });
     }
   };
@@ -288,6 +291,7 @@ export function ExpenseManager({ businessId }: Readonly<ExpenseManagerProps>) {
       resetForm();
       fetchRecurringExpenses();
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ExpenseManager' } })
       toast.error(`Error al actualizar gasto: ${error instanceof Error ? error.message : 'Error desconocido'}`, { id: toastId });
     }
   };
@@ -308,6 +312,7 @@ export function ExpenseManager({ businessId }: Readonly<ExpenseManagerProps>) {
       toast.success('Gasto recurrente eliminado exitosamente', { id: toastId });
       fetchRecurringExpenses();
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ExpenseManager' } })
       toast.error(`Error al eliminar gasto: ${error instanceof Error ? error.message : 'Error desconocido'}`, { id: toastId });
     }
   };
@@ -343,6 +348,7 @@ export function ExpenseManager({ businessId }: Readonly<ExpenseManagerProps>) {
       toast.success('Pago procesado exitosamente', { id: toastId });
       fetchRecurringExpenses();
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ExpenseManager' } })
       toast.error(`Error al procesar pago: ${error instanceof Error ? error.message : 'Error desconocido'}`, { id: toastId });
     }
   };

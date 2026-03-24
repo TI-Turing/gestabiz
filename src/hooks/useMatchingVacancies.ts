@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger'
 
 export interface MatchingVacancy {
   id: string;
@@ -110,6 +111,7 @@ export function useMatchingVacancies() {
 
       return filtered;
     } catch (err: unknown) {
+      void logger.error('useMatchingVacancies: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useMatchingVacancies' })
       const error = err as Error;
       setError(error.message);
       toast.error('Error al cargar vacantes', {

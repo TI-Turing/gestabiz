@@ -1,47 +1,55 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
 
+// Initialize Sentry
+initSentry('send-notification-reminders')
 
-  // Handle CORS preflight requests
-    // Initialize Supabase client
-   
+serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req.headers.get('origin'))
 
-      .
+  if (req.method === 'OPTIONS') {
+    return handleCorsPreFlight(req)
+  }
 
-      throw new Error(`Failed to fetch notifications:
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
+
+    // Fetch pending notifications
+    const { data: notifications, error: fetchError } = await supabase
+      .from('notifications')
+      .select('*, appointments(*)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+      .limit(50)
+
+    if (fetchError) {
+      throw new Error(`Failed to fetch notifications: ${fetchError.message}`)
+    }
+
+    if (!notifications || notifications.length === 0) {
+      return new Response(
+        JSON.stringify({ success: true, message: 'No pending notifications', processed: 0 }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      )
+    }
 
     let processed = 0
+    let failed = 0
+    const results = []
 
+    for (const notification of notifications) {
       try {
-
+        const appointment = notification.appointments
         let success = false
-        switch 
-          
-              const ema
-        
-                  message: not
-                  appointmentData: appointment
-              })
 
-            break
-          case 'whatsapp':
-     
-
-                  mess
-                }
-              
-
-
-           
-              body: {
-
-                appointmentData: appoin
-            })
-
-
-            // Browser 
+        switch (notification.delivery_method) {
+          case 'email':
             if (appointment?.client_email) {
-              // Send email notification
               const emailResponse = await supabase.functions.invoke('send-email', {
                 body: {
                   to: appointment.client_email,
@@ -51,14 +59,12 @@ import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
                   appointmentData: appointment
                 }
               })
-              
               success = emailResponse.error === null
             }
-            })
+            break
 
           case 'whatsapp':
             if (appointment?.client_whatsapp || appointment?.client_phone) {
-              // Send WhatsApp notification
               const whatsappResponse = await supabase.functions.invoke('send-whatsapp', {
                 body: {
                   to: appointment.client_whatsapp || appointment.client_phone,
@@ -66,13 +72,11 @@ import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
                   appointmentData: appointment
                 }
               })
-              
               success = whatsappResponse.error === null
             }
             break
 
           case 'push':
-            // Send push notification (if implemented)
             const pushResponse = await supabase.functions.invoke('send-push-notification', {
               body: {
                 userId: notification.user_id,
@@ -81,7 +85,6 @@ import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
                 appointmentData: appointment
               }
             })
-            
             success = pushResponse.error === null
             break
 
@@ -90,30 +93,22 @@ import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
             success = true
             break
 
-          type: no
+          default:
             console.warn(`Unknown delivery method: ${notification.delivery_method}`)
-          error: not
         }
 
         // Update notification status
-      JSON.stringify({
-          await supabase
-        processed,
-            .update({
-      }),
-              sent_at: new Date().toISOString()
-        status
-            .eq('id', notification.id)
-
-          processed++
-    return new R
+        if (success) {
           await supabase
             .from('notifications')
-            .update({
-              status: 'failed'
-            })
-    )
-          
+            .update({ status: 'sent', sent_at: new Date().toISOString() })
+            .eq('id', notification.id)
+          processed++
+        } else {
+          await supabase
+            .from('notifications')
+            .update({ status: 'failed' })
+            .eq('id', notification.id)
           failed++
         }
 
@@ -122,55 +117,45 @@ import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
           type: notification.type,
           method: notification.delivery_method,
           status: success ? 'sent' : 'failed'
-
-
-
+        })
+      } catch (notificationError) {
         console.error(`Error processing notification ${notification.id}:`, notificationError)
+        captureEdgeFunctionError(notificationError as Error, { functionName: 'send-notification-reminders', notificationId: notification.id })
 
-        // Mark as failed
-
+        await supabase
           .from('notifications')
-
-            status: 'failed'
-
+          .update({ status: 'failed' })
           .eq('id', notification.id)
 
         failed++
-
         results.push({
           id: notification.id,
           type: notification.type,
           method: notification.delivery_method,
           status: 'failed',
-
+          error: (notificationError as Error).message
         })
-
+      }
     }
 
+    await flushSentry()
     return new Response(
       JSON.stringify({
         success: true,
         message: `Processed ${processed + failed} notifications`,
         processed,
-
+        failed,
         results
-
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
-
   } catch (error) {
     console.error('Error processing notification reminders:', error)
+    captureEdgeFunctionError(error as Error, { functionName: 'send-notification-reminders' })
+    await flushSentry()
     return new Response(
-
-        success: false,
-        error: error.message
-      }),
-
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      }
-
+      JSON.stringify({ success: false, error: (error as Error).message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+    )
   }
+})

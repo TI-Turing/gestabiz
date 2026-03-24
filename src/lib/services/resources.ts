@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react'
 import supabase from '@/lib/supabase'
 import type { BusinessResource, ResourceService } from '@/types/types'
 
@@ -8,6 +9,12 @@ import type { BusinessResource, ResourceService } from '@/types/types'
  * Fecha: 21 de Octubre de 2025
  * Parte del sistema de Modelo de Negocio Flexible
  */
+
+// Helper: captura a Sentry y re-lanza el error de Supabase
+function throwResourceError(error: unknown, operation: string): never {
+  Sentry.captureException(error, { tags: { service: 'resources', operation } })
+  throw error
+}
 
 // ============================================================================
 // CRUD para business_resources
@@ -28,7 +35,7 @@ export const resourcesService = {
       .eq('is_active', true)
       .order('name')
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
     return (data || []) as BusinessResource[]
   },
 
@@ -43,7 +50,7 @@ export const resourcesService = {
       .eq('is_active', true)
       .order('name')
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
     return (data || []) as BusinessResource[]
   },
 
@@ -62,7 +69,7 @@ export const resourcesService = {
       .eq('is_active', true)
       .order('name')
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
     return (data || []) as BusinessResource[]
   },
 
@@ -82,7 +89,7 @@ export const resourcesService = {
       .eq('id', resourceId)
       .single()
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
     return data as BusinessResource
   },
 
@@ -98,7 +105,7 @@ export const resourcesService = {
       .select()
       .single()
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
     return data as BusinessResource
   },
 
@@ -116,7 +123,7 @@ export const resourcesService = {
       .select()
       .single()
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
     return data as BusinessResource
   },
 
@@ -129,7 +136,7 @@ export const resourcesService = {
       .update({ is_active: false })
       .eq('id', resourceId)
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
   },
 
   /**
@@ -142,7 +149,7 @@ export const resourcesService = {
       .delete()
       .eq('id', resourceId)
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
   },
 
   /**
@@ -162,7 +169,7 @@ export const resourcesService = {
       .lte('start_time', endDate.toISOString())
       .order('start_time')
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
     return data || []
   },
 
@@ -182,7 +189,7 @@ export const resourcesService = {
       p_exclude_appointment_id: excludeAppointmentId || null,
     })
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
     return data as boolean
   },
 
@@ -212,7 +219,7 @@ export const resourcesService = {
       .from('resource_services')
       .insert(records)
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
   },
 
   /**
@@ -228,7 +235,7 @@ export const resourcesService = {
       .eq('resource_id', resourceId)
       .eq('is_active', true)
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
     return (data || []) as ResourceService[]
   },
 
@@ -246,7 +253,7 @@ export const resourcesService = {
       p_resource_id: resourceId,
     })
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
     return data || {
       total_bookings: 0,
       upcoming_bookings: 0,
@@ -274,7 +281,7 @@ export const resourcesService = {
     
     const { data, error } = await query
     
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
     
     // Type assertion con unknown para evitar error de conversión
     type ResourceServiceRow = { resource: BusinessResource }
@@ -294,7 +301,7 @@ export const resourcesService = {
    */
   async refreshAvailability(): Promise<void> {
     const { error } = await supabase.rpc('refresh_resource_availability')
-    if (error) throw error
+    if (error) throwResourceError(error, "db_query")
   },
 }
 

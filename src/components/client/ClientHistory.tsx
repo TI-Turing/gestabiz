@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import * as Sentry from '@sentry/react'
 import { Calendar, Filter, X, Search, ChevronDown } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -309,6 +310,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
           .reduce((sum, a) => sum + (a.service?.price || a.price || 0), 0)
       }
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })
       console.error('[ClientHistory] Error computing stats:', error)
       throw error
     }
@@ -332,6 +334,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
       console.log('[ClientHistory] filteredBusinesses filtered, result count:', result.length)
       return result
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })
       console.error('[ClientHistory] Error in filteredBusinesses:', error)
       throw error
     }
@@ -356,6 +359,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
       console.log('[ClientHistory] filteredLocations after search:', result.length)
       return result
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })
       console.error('[ClientHistory] Error in filteredLocations:', error)
       throw error
     }
@@ -380,6 +384,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
       console.log('[ClientHistory] filteredServices after search:', result.length)
       return result
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })
       console.error('[ClientHistory] Error in filteredServices:', error)
       throw error
     }
@@ -398,6 +403,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
       console.log('[ClientHistory] filteredCategories after search:', result.length)
       return result
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })
       console.error('[ClientHistory] Error in filteredCategories:', error)
       throw error
     }
@@ -416,6 +422,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
       console.log('[ClientHistory] filteredEmployees after search:', result.length)
       return result
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })
       console.error('[ClientHistory] Error in filteredEmployees:', error)
       throw error
     }

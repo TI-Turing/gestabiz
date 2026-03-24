@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import * as Sentry from '@sentry/react'
 import { MapPin, Check, AlertCircle, ArrowRightLeft, Phone, Mail } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -132,6 +133,7 @@ export function LocationSelector({
         onLocationChanged();
       }
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'LocationSelector' } })
       console.error('Error al asignar sede:', error);
       toast.error('Error al asignar la sede de trabajo');
     } finally {

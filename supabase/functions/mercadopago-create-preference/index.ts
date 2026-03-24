@@ -23,6 +23,10 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('mercadopago-create-preference')
 
 // Prices por plan (COP - Pesos Colombianos)
 const PLAN_PRICES: Record<string, { monthly: number; yearly: number }> = {
@@ -206,6 +210,8 @@ Deno.serve(async (req) => {
     )
   } catch (error) {
     console.error('mercadopago-create-preference error:', error)
+    captureEdgeFunctionError(error as Error, { functionName: 'mercadopago-create-preference' })
+    await flushSentry()
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }

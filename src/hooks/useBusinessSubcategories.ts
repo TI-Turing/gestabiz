@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { logger } from '@/lib/logger'
 import { supabase } from '@/lib/supabase'
 import { BusinessSubcategory, BusinessCategory } from '@/types/types'
 
@@ -46,6 +47,7 @@ export function useBusinessSubcategories(
 
       setSubcategories(data || [])
     } catch (err) {
+      void logger.error('useBusinessSubcategories: fetchSubcategories failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBusinessSubcategories' })
       setError(err instanceof Error ? err.message : 'Error al cargar subcategorías')
     } finally {
       setIsLoading(false)
@@ -76,6 +78,7 @@ export function useBusinessSubcategories(
       await fetchSubcategories()
       return true
     } catch (err) {
+      void logger.error('useBusinessSubcategories: fetchSubcategories failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBusinessSubcategories' })
       setError(err instanceof Error ? err.message : 'Error al agregar subcategoría')
       return false
     }
@@ -98,6 +101,7 @@ export function useBusinessSubcategories(
       await fetchSubcategories()
       return true
     } catch (err) {
+      void logger.error('useBusinessSubcategories: fetchSubcategories failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBusinessSubcategories' })
       setError(err instanceof Error ? err.message : 'Error al eliminar subcategoría')
       return false
     }
@@ -149,6 +153,7 @@ export function useSubcategoriesByParent(parentId: string | null | undefined) {
 
         setSubcategories(data || [])
       } catch (err) {
+        void logger.error('useBusinessSubcategories: fetchSubcategories failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBusinessSubcategories' })
         setError(err instanceof Error ? err.message : 'Error al cargar subcategorías')
       } finally {
         setIsLoading(false)

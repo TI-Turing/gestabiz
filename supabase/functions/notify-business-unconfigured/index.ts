@@ -2,6 +2,10 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('notify-business-unconfigured')
 
 interface NotificationPayload {
   type: 'INSERT'
@@ -234,6 +238,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in notify-business-unconfigured:', error)
+    captureEdgeFunctionError(error as Error, { functionName: 'notify-business-unconfigured' })
+    await flushSentry()
     return new Response(JSON.stringify({ 
       error: 'Internal Server Error',
       message: error instanceof Error ? error.message : 'Unknown error'

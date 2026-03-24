@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import * as Sentry from '@sentry/react'
 import {
   DollarSign,
   TrendingUp,
@@ -166,6 +167,7 @@ export function EnhancedFinancialDashboard({
       exportToCSV(dataArray, `reporte_${period}`, { format: 'csv', delimiter: ';' });
       toast.success('Reporte CSV exportado exitosamente', { id: toastId });
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EnhancedFinancialDashboard' } })
       toast.error(`Error al exportar CSV: ${error instanceof Error ? error.message : 'Error desconocido'}`, { id: toastId });
     }
   };
@@ -191,6 +193,7 @@ export function EnhancedFinancialDashboard({
       exportToExcel(dataArray, `Reporte_Financiero_${period}`, 'Reporte');
       toast.success('Reporte Excel exportado exitosamente', { id: toastId });
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EnhancedFinancialDashboard' } })
       toast.error(`Error al exportar Excel: ${error instanceof Error ? error.message : 'Error desconocido'}`, { id: toastId });
     }
   };
@@ -202,6 +205,7 @@ export function EnhancedFinancialDashboard({
       exportToPDF(report, report.business_name, `reporte_${period}.pdf`);
       toast.success('Reporte PDF generado exitosamente', { id: toastId });
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EnhancedFinancialDashboard' } })
       toast.error(`Error al generar PDF: ${error instanceof Error ? error.message : 'Error desconocido'}`, { id: toastId });
     }
   };

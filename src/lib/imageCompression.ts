@@ -2,6 +2,7 @@
  * Utilidades para compresión de imágenes
  * Convierte imágenes a formatos optimizados y reduce tamaño automáticamente
  */
+import * as Sentry from '@sentry/react'
 
 export interface CompressionOptions {
   /** Calidad JPEG (0-1), por defecto 0.85 */
@@ -111,6 +112,7 @@ async function handleImageLoading(
         const result = await processImageCompression(canvas, quality, maxSizeMB)
         resolve(result)
       } catch (error) {
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'imageCompression' } })
         reject(error instanceof Error ? error : new Error(String(error)))
       }
     }

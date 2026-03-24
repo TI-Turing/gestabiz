@@ -8,6 +8,7 @@
  * Purpose: Provide type-safe interface to permission RPC functions
  */
 
+import * as Sentry from '@sentry/react';
 import { supabase } from '../supabase';
 
 /**
@@ -93,6 +94,10 @@ export class PermissionRPCService {
 
       if (error) {
         console.error('RPC Error (revoke_user_permission):', error);
+        Sentry.captureException(new Error(error.message), {
+          tags: { service: 'permissions', operation: 'revoke_permission' },
+          extra: { businessId, userId, permission },
+        });
         return {
           success: false,
           error: error.message,
@@ -103,6 +108,10 @@ export class PermissionRPCService {
       return data as RevokePermissionResponse;
     } catch (err) {
       console.error('Exception in revokePermission:', err);
+      Sentry.captureException(err, {
+        tags: { service: 'permissions', operation: 'revoke_permission' },
+        extra: { businessId, userId, permission },
+      });
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Unknown error',
@@ -150,6 +159,10 @@ export class PermissionRPCService {
 
       if (error) {
         console.error('RPC Error (assign_user_permission):', error);
+        Sentry.captureException(new Error(error.message), {
+          tags: { service: 'permissions', operation: 'assign_permission' },
+          extra: { businessId, userId, permission },
+        });
         return {
           success: false,
           error: error.message,
@@ -160,6 +173,10 @@ export class PermissionRPCService {
       return data as AssignPermissionResponse;
     } catch (err) {
       console.error('Exception in assignPermission:', err);
+      Sentry.captureException(err, {
+        tags: { service: 'permissions', operation: 'assign_permission' },
+        extra: { businessId, userId, permission },
+      });
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Unknown error',
@@ -205,6 +222,10 @@ export class PermissionRPCService {
 
       if (error) {
         console.error('RPC Error (bulk_assign_permissions_from_template):', error);
+        Sentry.captureException(new Error(error.message), {
+          tags: { service: 'permissions', operation: 'apply_template' },
+          extra: { businessId, userId, templateId },
+        });
         return {
           success: false,
           error: error.message,
@@ -215,6 +236,10 @@ export class PermissionRPCService {
       return data as BulkAssignResponse;
     } catch (err) {
       console.error('Exception in applyTemplate:', err);
+      Sentry.captureException(err, {
+        tags: { service: 'permissions', operation: 'apply_template' },
+        extra: { businessId, userId, templateId },
+      });
       return {
         success: false,
         error: err instanceof Error ? err.message : 'Unknown error',

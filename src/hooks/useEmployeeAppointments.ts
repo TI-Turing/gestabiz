@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 interface AppointmentWithRelations {
   id: string
@@ -126,6 +127,7 @@ export function useEmployeeAppointments(
       setAppointments(transformedAppointments)
     } catch (err) {
       // Error handling
+      void logger.error('useEmployeeAppointments: fetchAppointments failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeAppointments', employeeId, businessId })
       setError(err instanceof Error ? err : new Error('Error desconocido'))
     } finally {
       setLoading(false)

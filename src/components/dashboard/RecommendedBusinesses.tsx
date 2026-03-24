@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { Scissors, Hospital, Building2, Dumbbell, MapPin, Star, Clock, DollarSign } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useAuth } from '@/hooks/useAuth'
@@ -152,6 +153,7 @@ export default function RecommendedBusinesses() {
         
         setBusinesses(recommendedBusinesses)
       } catch (error) {
+        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'RecommendedBusinesses' } })
         // En caso de error, mostrar lista vacía
         setBusinesses([])
       } finally {

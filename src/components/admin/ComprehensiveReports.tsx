@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import * as Sentry from '@sentry/react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -251,6 +252,7 @@ export default function ComprehensiveReports(props: Readonly<ComprehensiveReport
 
       setAnalytics(analyticsData)
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ComprehensiveReports' } })
     toast.error(t('admin.comprehensiveReports.errors.generate_failed'))
       throw error
     } finally {

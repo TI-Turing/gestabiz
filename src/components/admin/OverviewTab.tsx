@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { supabase } from '@/lib/supabase'
 import {
   Calendar,
@@ -137,6 +138,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
         averageAppointmentValue,
       })
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'OverviewTab' } })
       console.error('Error fetching stats:', err)
     } finally {
       setIsLoading(false)
@@ -168,6 +170,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
     try {
       localStorage.setItem(`appointments-filters-${business.id}`, JSON.stringify(filters))
     } catch (e) {
+      Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'OverviewTab' } })
       console.warn('Failed to set appointment filters', e)
     }
     navigate('/app/admin/appointments')

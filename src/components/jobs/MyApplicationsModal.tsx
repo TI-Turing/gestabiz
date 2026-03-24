@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as Sentry from '@sentry/react'
 import {
   Dialog,
   DialogContent,
@@ -108,6 +109,7 @@ export const MyApplicationsModal: React.FC<MyApplicationsModalProps> = ({
       link.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'MyApplicationsModal' } })
       // Error handling
     }
   };

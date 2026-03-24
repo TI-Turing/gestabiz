@@ -1,6 +1,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('refresh-ratings-stats')
 
 interface RefreshStatsResponse {
   success: boolean
@@ -81,6 +85,8 @@ serve(async (req) => {
       error: error instanceof Error ? error.message : 'Error desconocido'
     }
 
+    captureEdgeFunctionError(error as Error, { functionName: 'refresh-ratings-stats' })
+    await flushSentry()
     return new Response(
       JSON.stringify(errorResponse),
       {

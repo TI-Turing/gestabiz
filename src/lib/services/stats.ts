@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react'
 import supabase from '@/lib/supabase'
 import type { DashboardStats } from '@/types'
 
@@ -21,7 +22,10 @@ export const statsService = {
           .from('businesses')
           .select('id')
           .eq('owner_id', q.ownerId)
-        if (error) throw error
+        if (error) {
+          Sentry.captureException(error, { tags: { service: 'stats', operation: 'resolve_business_ids_owner' } })
+          throw error
+        }
         return (data || []).map(b => b.id)
       }
       if (q.employeeId && !q.businessId) {
@@ -30,7 +34,10 @@ export const statsService = {
           .select('business_id')
           .eq('employee_id', q.employeeId)
           .eq('status', 'approved')
-        if (error) throw error
+        if (error) {
+          Sentry.captureException(error, { tags: { service: 'stats', operation: 'resolve_business_ids_employee' } })
+          throw error
+        }
         return (data || []).map(r => r.business_id)
       }
       return undefined
@@ -49,7 +56,10 @@ export const statsService = {
     }
 
     const { data: appointments, error: appointmentsError } = await buildAppointmentsQuery()
-    if (appointmentsError) throw appointmentsError
+    if (appointmentsError) {
+      Sentry.captureException(appointmentsError, { tags: { service: 'stats', operation: 'getDashboardStats' } })
+      throw appointmentsError
+    }
     const list = appointments || []
 
     const initStats = (): DashboardStats => ({

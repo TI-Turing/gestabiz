@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import * as Sentry from '@sentry/react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, Star, Calendar, Briefcase, MapPin, Award, Building2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -227,6 +228,7 @@ export default function UserProfile({
         expertise: [], // TODO: Implement expertise tracking
       });
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
       console.error('Error fetching user data:', error);
     } finally {
       setLoading(false);
@@ -276,6 +278,7 @@ export default function UserProfile({
         setSelectedBusinessId(null);
       }
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
       if (error instanceof Error) {
         console.error('Error checking review eligibility:', error.message);
       }
@@ -306,6 +309,7 @@ export default function UserProfile({
       // Refresh user data to update review count and rating
       fetchUserData();
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
       console.error('Error submitting review:', error);
     }
   };

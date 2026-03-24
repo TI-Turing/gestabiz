@@ -3,6 +3,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendBrevoEmail } from '../_shared/brevo.ts'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 import { escapeHtml } from '../_shared/html.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+
+// Initialize Sentry
+initSentry('send-bug-report-email')
 
 interface BugReportEmailRequest {
   bugReportId: string
@@ -353,6 +357,8 @@ Este email fue generado automaticamente por el sistema de reporte de bugs de Ges
 
   } catch (error) {
     console.error('Error sending bug report email:', error)
+    captureEdgeFunctionError(error as Error, { functionName: 'send-bug-report-email' })
+    await flushSentry()
     return new Response(
       JSON.stringify({ success: false, error: 'Internal server error' }),
       { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }, status: 500 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 import supabase from '@/lib/supabase';
 import { EmployeeService, EmployeeServiceFilters } from '@/types/types';
 import { toast } from 'sonner';
@@ -43,6 +44,7 @@ export function useEmployeeServices(filters?: EmployeeServiceFilters) {
       setServices(data || []);
     } catch (err) {
       const error = err as Error;
+      void logger.error('useEmployeeServices: fetchEmployeeServices failed', error, { component: 'useEmployeeServices' })
       setError(error);
       toast.error(`Error al cargar servicios del empleado: ${error.message}`);
     } finally {
@@ -93,6 +95,7 @@ export function useEmployeeServices(filters?: EmployeeServiceFilters) {
       return data;
     } catch (err) {
       const error = err as Error;
+      void logger.error('useEmployeeServices: addServiceToEmployee failed', error, { component: 'useEmployeeServices' })
       toast.error(`Error al asignar servicio: ${error.message}`);
       throw error;
     }
@@ -120,6 +123,7 @@ export function useEmployeeServices(filters?: EmployeeServiceFilters) {
       fetchEmployeeServices();
     } catch (err) {
       const error = err as Error;
+      void logger.error('useEmployeeServices: updateEmployeeService failed', error, { component: 'useEmployeeServices' })
       toast.error(`Error al actualizar servicio: ${error.message}`);
       throw error;
     }
@@ -139,6 +143,7 @@ export function useEmployeeServices(filters?: EmployeeServiceFilters) {
       fetchEmployeeServices();
     } catch (err) {
       const error = err as Error;
+      void logger.error('useEmployeeServices: removeServiceFromEmployee failed', error, { component: 'useEmployeeServices' })
       toast.error(`Error al remover servicio: ${error.message}`);
       throw error;
     }
@@ -163,6 +168,7 @@ export function useEmployeeServices(filters?: EmployeeServiceFilters) {
       return data || [];
     } catch (err) {
       const error = err as Error;
+      void logger.error('useEmployeeServices: getEmployeesForService failed', error, { component: 'useEmployeeServices' })
       toast.error(`Error al buscar empleados: ${error.message}`);
       throw error;
     }

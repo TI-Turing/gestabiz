@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as Sentry from '@sentry/react'
 import {
   Dialog,
   DialogContent,
@@ -194,6 +195,7 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
         // Si no hay reviews pendientes, simplemente no mostramos el modal (sin toast ni close)
         // El modal ya no debería estar abierto si llegamos aquí con 0 reviews
       } catch (err) {
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'MandatoryReviewModal' } })
         const error = err as Error;
         toast.error('Error al cargar reviews pendientes', {
           description: error.message,
@@ -263,6 +265,7 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
           setEmployeeRating(0);
         }
       } catch (err) {
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'MandatoryReviewModal' } })
         console.error('Error loading previous ratings:', err);
       }
     };
@@ -357,6 +360,7 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
         });
       }
     } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'MandatoryReviewModal' } })
       const error = err as Error;
       toast.error('Error al enviar review', {
         description: error.message,

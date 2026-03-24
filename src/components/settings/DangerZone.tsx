@@ -2,6 +2,7 @@
  * Sección de Zona Peligrosa: desactivación de cuenta con confirmación multi-paso.
  */
 import React, { useState } from 'react'
+import * as Sentry from '@sentry/react'
 import { Check, AlertTriangle } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -72,6 +73,7 @@ export function DangerZone({ user }: DangerZoneProps) {
       localStorage.clear()
       setTimeout(() => { window.location.href = '/login' }, 2000)
     } catch (error) {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'DangerZone' } })
       const errorMessage = error instanceof Error ? error.message : t('settings.dangerZone.delete.unknownError')
       toast.error(t('settings.dangerZone.delete.errorTitle'), { description: errorMessage })
       setIsDeleting(false)
