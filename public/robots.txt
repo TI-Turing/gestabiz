@@ -3,9 +3,12 @@
 
 User-agent: *
 
-# Permitir páginas públicas
+# Permitir páginas públicas indexables
 Allow: /
 Allow: /negocio/
+Allow: /para/
+Allow: /blog
+Allow: /blog/
 Allow: /sitemap.xml
 
 # Bloquear rutas privadas
@@ -13,6 +16,9 @@ Disallow: /app/
 Disallow: /login
 Disallow: /register
 Disallow: /reset-password
+Disallow: /confirmar-cita/
+Disallow: /cancelar-cita/
+Disallow: /auth/
 
 # Sitemap
 Sitemap: https://gestabiz.com/sitemap.xml
@@ -24,12 +30,20 @@ Crawl-delay: 1
 User-agent: Googlebot
 Allow: /
 Allow: /negocio/
+Allow: /para/
+Allow: /blog
+Allow: /blog/
 Disallow: /app/
+Disallow: /confirmar-cita/
+Disallow: /cancelar-cita/
 
 # Reglas específicas para Bing
 User-agent: Bingbot
 Allow: /
 Allow: /negocio/
+Allow: /para/
+Allow: /blog
+Allow: /blog/
 Disallow: /app/
 
 # Bloquear scrapers agresivos
