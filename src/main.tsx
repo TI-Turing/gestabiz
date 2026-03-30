@@ -1,8 +1,8 @@
 import { createRoot } from 'react-dom/client'
+import { useEffect } from 'react'
 import { ErrorBoundary } from "react-error-boundary";
 import * as Sentry from "@sentry/react";
 import {
-  useEffect,
   useLocation,
   useNavigationType,
   createRoutesFromChildren,
