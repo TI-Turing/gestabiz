@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import QUERY_CONFIG from '@/lib/queryConfig'
-import { useEffect, useRef, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useCallback, useMemo, useId } from 'react'
 import type { 
   InAppNotification, 
   NotificationStatus,
@@ -47,6 +47,8 @@ export function useInAppNotifications(
 
   const queryClient = useQueryClient()
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const instanceId = useId()
+  const refetchRef = useRef<(() => void) | null>(null)
 
   // ✅ Una única query cacheada para todas las notificaciones del usuario
   const { 
@@ -74,6 +76,12 @@ export function useInAppNotifications(
     enabled: !!userId && autoFetch,
   })
 
+  // Mantener refetchRef actualizado sin que sea dependencia del useEffect de Realtime
+  refetchRef.current = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_CONFIG.KEYS.IN_APP_NOTIFICATIONS(userId) })
+    refetchQuery()
+  }
+
   // ✅ Aplicar filtros localmente con useMemo (estable — solo recalcula cuando cambia la data o los filtros)
   const notifications = useMemo(() => {
     let filtered = baseNotifications
@@ -92,12 +100,14 @@ export function useInAppNotifications(
     [notifications],
   )
 
-  // ✅ Realtime subscription
+  // ✅ Realtime subscription — canal único por instancia para evitar duplicados
   useEffect(() => {
     if (!userId) return
 
+    // instanceId garantiza nombre único aunque el hook se use en múltiples componentes
+    const channelName = `notifications:${userId}:${instanceId.replace(/:/g, '')}`
     const channel = supabase
-      .channel(`notifications:${userId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -107,11 +117,8 @@ export function useInAppNotifications(
           filter: `user_id=eq.${userId}`
         },
         () => {
-          // Invalidar Y refetch para que el badge se actualice inmediatamente
-          queryClient.invalidateQueries({
-            queryKey: QUERY_CONFIG.KEYS.IN_APP_NOTIFICATIONS(userId)
-          })
-          refetchQuery() // ⭐ Forzar refetch para actualizar unreadCount
+          // Usar ref para evitar que refetchQuery sea dependencia del effect
+          refetchRef.current?.()
         }
       )
       .subscribe()
@@ -121,9 +128,11 @@ export function useInAppNotifications(
     return () => {
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current)
+        channelRef.current = null
       }
     }
-  }, [userId, queryClient, refetchQuery])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
 
   // ✅ Acciones
   const markAsRead = useCallback(async (notificationId: string) => {
