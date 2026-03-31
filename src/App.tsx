@@ -65,6 +65,10 @@ const PublicBusinessProfile = lazy(() => import('@/pages/PublicBusinessProfile')
 const AppointmentConfirmation = lazy(() => import('@/pages/AppointmentConfirmation'))
 const AppointmentCancellation = lazy(() => import('@/pages/AppointmentCancellation'))
 const GoogleCalendarCallback = lazy(() => import('@/pages/GoogleCalendarCallback'))
+// SEO: landing pages verticales y blog
+const VerticalLandingPage = lazy(() => import('@/pages/VerticalLandingPage'))
+const BlogIndexPage = lazy(() => import('@/pages/BlogIndexPage'))
+const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'))
 
 // Loading component
 function AppLoader() {
@@ -129,7 +133,14 @@ function AppRoutes() {
       
       {/* Perfil público de negocio - accesible sin autenticación */}
       <Route path="/negocio/:slug" element={<PublicBusinessProfile />} />
-      
+
+      {/* SEO: Landing pages por vertical de industria */}
+      <Route path="/para/:vertical" element={<VerticalLandingPage />} />
+
+      {/* SEO: Blog de contenidos */}
+      <Route path="/blog" element={<BlogIndexPage />} />
+      <Route path="/blog/:slug" element={<BlogPostPage />} />
+
       {/* Rutas públicas para confirmación de citas */}
       <Route path="/confirmar-cita/:token" element={<AppointmentConfirmation />} />
       <Route path="/cancelar-cita/:token" element={<AppointmentCancellation />} />

@@ -20,9 +20,102 @@ Gestabiz es una plataforma SaaS **todo-en-uno** para PyMEs de servicios (salones
 
 **Backend**: 100% Supabase Cloud (PostgreSQL 15+, RLS, Edge Functions Deno, Realtime, Storage)
 
-**MCP configurados en `.claude/mcp.json`**:
-- `supabase`: operaciones SQL directas, migraciones (project-ref DEV: `dkancockzvcqorqbwtyh` | PROD: `emknatoknbomvmyumqju`)
-- `chrome-devtools`: inspección de Network, Console, DOM en tiempo real
+**MCP configurados** (proyecto + global):
+
+| Servidor | Alcance | Propósito |
+|----------|---------|-----------|
+| `supabase` | Proyecto (`.claude/mcp.json`) | SQL directo, migraciones, Edge Functions. DEV: `dkancockzvcqorqbwtyh` / PROD: `emknatoknbomvmyumqju` |
+| `chrome-devtools` | Proyecto (`.claude/mcp.json`) | Inspección de Network, Console y DOM en tiempo real |
+| `pencil` | Global (`~/.claude/settings.json`) | Editor de diseño `.pen` — generar y editar pantallas UI/UX |
+| `claude-mem` | Global (plugin `claude-mem@thedotmack`) | Memoria persistente cross-sesión: `make-plan`, `do`, `mem-search`, `smart-explore` |
+| `vercel` | Local (`.claude/settings.local.json`) | Listar teams, proyectos y configuración de deploys |
+| `canva` | Global (Canva MCP) | Crear, editar y exportar diseños en Canva |
+| `sentry` | Global (Sentry MCP) | Buscar y analizar issues, errores y tracks en Sentry |
+
+---
+
+## SISTEMA DE MEMORIA EN CAPAS
+
+El proyecto usa **tres capas de persistencia** complementarias:
+
+| Capa | Ubicación | Para qué sirve |
+|------|-----------|----------------|
+| **Auto-Memory** | `~/.claude/projects/.../memory/` | Preferencias, feedback, contexto de usuario — cargado automáticamente al inicio de sesión |
+| **claude-mem MCP** | Índice semántico cross-sesión | Decisiones técnicas, trabajo anterior, búsqueda por `mem-search` |
+| **Vault Obsidian** | `Obsidian/Gestabiz/` en el repo | Notas legibles por humanos: decisiones, bugs, sesiones, features |
+
+### Vault Obsidian — Ruta y Estructura
+
+**Ruta absoluta**: `C:/Users/Usuario/source/repos/TI-Turing/gestabiz/Obsidian/Gestabiz/`
+
+```
+Obsidian/Gestabiz/
+├── Índice.md              # Guía del vault
+├── Decisiones/            # Decisiones arquitectónicas y trade-offs
+├── Bugs/                  # Bugs conocidos, gotchas, soluciones
+├── Sesiones Claude/       # Resúmenes de sesiones importantes
+├── Features/              # Specs de features en desarrollo o pendientes
+└── Contexto/              # Contexto de negocio, roadmap, usuarios
+```
+
+### Convención: "recuerda X" / "guarda una nota de X"
+
+Cuando el usuario diga **"recuerda X"**, **"guarda esto"**, **"toma nota de"** o similar:
+
+1. **Crear nota en Obsidian** en la carpeta apropiada:
+   - Decisión técnica → `Decisiones/`
+   - Bug o gotcha → `Bugs/`
+   - Feature o spec → `Features/`
+   - Contexto general → `Contexto/`
+   - Resumen de sesión → `Sesiones Claude/`
+
+2. **Guardar también en Auto-Memory** (`memory/` files) si es relevante para sesiones futuras
+
+3. **Formato de nota Obsidian**:
+```markdown
+---
+date: YYYY-MM-DD
+tags: [tag1, tag2]
+---
+
+# Título
+
+Contenido de la nota...
+```
+
+**Esta convención está siempre activa** — no necesita configuración adicional por sesión.
+
+---
+
+**Skills disponibles** (invocar con `/nombre` o `Skill tool`):
+
+| Skill | Cuándo usarlo |
+|-------|---------------|
+| `claude-mem:make-plan` | Planificar features o tareas multi-paso antes de implementar |
+| `claude-mem:do` | Ejecutar un plan generado por `make-plan` con subagentes |
+| `claude-mem:mem-search` | Buscar decisiones o trabajo de sesiones anteriores |
+| `claude-mem:smart-explore` | Explorar estructura de código con AST (más eficiente que leer archivos) |
+| `simplify` | Revisar código recién escrito para calidad y reutilización |
+| `update-config` | Configurar `settings.json`: hooks, permisos, variables de entorno |
+| `schedule` | Crear agentes programados con cron |
+| `loop` | Ejecutar un comando en intervalo recurrente |
+| `claude-api` | Construir integraciones con Claude API / Anthropic SDK |
+
+**Agentes especializados** (usan el `Agent tool` internamente):
+
+| Agente | Cuándo usarlo |
+|--------|---------------|
+| `supabase-agent` | Migraciones SQL, Edge Functions Deno, RLS, triggers, optimización de queries |
+| `qa-reviewer` | Revisar código antes de commit — detecta anti-patterns de Gestabiz |
+| `i18n-gestabiz` | Agregar/auditar claves de traducción ES/EN en los ~44 archivos de locales |
+| `launch-checker` | Verificar checklist de lanzamiento a producción |
+| `gtm-instagram-outreach` | Generar DMs de Instagram para outreach de Gestabiz en Colombia |
+| `marketing-agent` | Crear piezas visuales para redes sociales (Instagram, Facebook, TikTok) usando Canva MCP y Pencil MCP. Entrega diseño + caption + hashtags listos para publicar |
+| `Explore` | Exploración de codebase por patrón, keyword o pregunta arquitectónica |
+| `Plan` | Diseñar plan de implementación antes de codear |
+| `claude-code-guide` | Responder preguntas sobre Claude Code CLI, MCP servers, API de Anthropic |
+| `statusline-setup` | Configurar el status line de Claude Code en `settings.json` |
+| `general-purpose` | Investigación compleja, búsquedas multi-paso o tareas que no encajan en otros agentes |
 
 ---
 

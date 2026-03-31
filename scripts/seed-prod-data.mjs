@@ -8,7 +8,7 @@
 
 const DEV_REF   = 'dkancockzvcqorqbwtyh'
 const PROD_REF  = 'emknatoknbomvmyumqju'
-const TOKEN     = 'sbp_939fa09fd90a56950b2b2e6d4fbb8a8a2f743e19'
+const TOKEN     = process.env.SUPABASE_ACCESS_TOKEN
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
@@ -166,7 +166,7 @@ async function main() {
 
   // 5. Storage Buckets (via Storage API)
   console.log('\n📋 Storage buckets...')
-  const SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVta25hdG9rbmJvbXZteXVtcWp1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDI2NTQzOSwiZXhwIjoyMDg5ODQxNDM5fQ.8gwXS0H-iVDHqXFY9B4eA5nbufxsV7PiRyWqpzXAT_I'
+  const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
   const buckets = [
     { id: 'avatars',              name: 'avatars',              public: true  },
     { id: 'cvs',                  name: 'cvs',                  public: false },

@@ -6,6 +6,9 @@
  *
  * Genera public/sitemap.xml con:
  * - Landing page
+ * - Landing pages por vertical: /para/{slug}
+ * - Blog index: /blog
+ * - Artículos del blog: /blog/{slug}
  * - Todos los perfiles públicos: /negocio/{slug}
  */
 
@@ -13,6 +16,21 @@ import { createClient } from '@supabase/supabase-js'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { config } from 'dotenv'
+
+// Slugs de los verticales (sincronizado con src/data/verticals.ts)
+const VERTICAL_SLUGS = [
+  'salones', 'barberias', 'clinicas', 'gimnasios', 'spas',
+  'odontologos', 'psicologos', 'fisioterapeutas', 'entrenadores', 'coworkings',
+]
+
+// Slugs de artículos del blog (sincronizado con src/data/blog.ts)
+const BLOG_SLUGS = [
+  'como-reducir-ausencias-citas-whatsapp',
+  'software-salones-belleza-colombia-2026',
+  'gestabiz-vs-calendly-colombia',
+  'como-digitalizar-negocio-servicios-colombia',
+  'agenda-online-ventajas-para-negocios',
+]
 
 // Cargar variables de entorno desde .env.local en desarrollo
 config({ path: path.resolve(process.cwd(), '.env.local') })
@@ -71,6 +89,36 @@ async function generateSitemap() {
     xml += '    <priority>1.0</priority>\n'
     xml += '  </url>\n'
 
+    // Landing pages por vertical (prioridad alta, contenido estático)
+    for (const slug of VERTICAL_SLUGS) {
+      xml += '  <url>\n'
+      xml += `    <loc>${SITE_URL}/para/${slug}</loc>\n`
+      xml += `    <lastmod>${today}</lastmod>\n`
+      xml += '    <changefreq>monthly</changefreq>\n'
+      xml += '    <priority>0.9</priority>\n'
+      xml += '  </url>\n'
+    }
+    console.log(`✅ ${VERTICAL_SLUGS.length} landing pages verticales agregadas`)
+
+    // Blog index
+    xml += '  <url>\n'
+    xml += `    <loc>${SITE_URL}/blog</loc>\n`
+    xml += `    <lastmod>${today}</lastmod>\n`
+    xml += '    <changefreq>weekly</changefreq>\n'
+    xml += '    <priority>0.8</priority>\n'
+    xml += '  </url>\n'
+
+    // Artículos del blog
+    for (const slug of BLOG_SLUGS) {
+      xml += '  <url>\n'
+      xml += `    <loc>${SITE_URL}/blog/${slug}</loc>\n`
+      xml += `    <lastmod>${today}</lastmod>\n`
+      xml += '    <changefreq>monthly</changefreq>\n'
+      xml += '    <priority>0.7</priority>\n'
+      xml += '  </url>\n'
+    }
+    console.log(`✅ ${BLOG_SLUGS.length + 1} páginas del blog agregadas`)
+
     if (!businesses || businesses.length === 0) {
       console.warn('⚠️  No se encontraron negocios públicos')
     } else {
@@ -105,7 +153,7 @@ async function generateSitemap() {
     const sitemapPath = path.join(publicDir, 'sitemap.xml')
     fs.writeFileSync(sitemapPath, xml, 'utf-8')
 
-    const totalUrls = (businesses?.length ?? 0) + 1
+    const totalUrls = (businesses?.length ?? 0) + 1 + VERTICAL_SLUGS.length + BLOG_SLUGS.length + 1
     console.log(`✅ Sitemap generado: ${sitemapPath}`)
     console.log(`📊 Total URLs: ${totalUrls}`)
     console.log(`🔗 Ver en: ${SITE_URL}/sitemap.xml`)
