@@ -10,7 +10,7 @@ import fs from 'fs'
 import path from 'path'
 
 const PROJECT_REF = 'emknatoknbomvmyumqju'
-const ACCESS_TOKEN = 'sbp_939fa09fd90a56950b2b2e6d4fbb8a8a2f743e19'
+const ACCESS_TOKEN = process.env.SUPABASE_ACCESS_TOKEN
 const API = `https://api.supabase.com/v1/projects/${PROJECT_REF}/database/query`
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
