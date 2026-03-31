@@ -50,10 +50,12 @@ export function useServiceStatus() {
           supabaseStatus = 'degraded'
         })
 
-      // Check 2: Database access (simple query)
+      // Check 2: Database access
+      // A 401/403 response means the DB is reachable (RLS requires auth — expected before login).
+      // Only mark degraded/down on network errors or timeouts.
       if (authStatus === 'operational') {
         const dbPromise = supabase.from('profiles').select('count', { count: 'exact', head: true })
-        const dbTimeout = new Promise((_, reject) => 
+        const dbTimeout = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Database timeout')), 5000)
         )
 
@@ -61,7 +63,14 @@ export function useServiceStatus() {
           .then((result: unknown) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error: dbError } = result as any
-            if (dbError) {
+            // Auth errors (401/403/JWT) mean the service IS up — user just isn't logged in yet
+            const isAuthError = dbError && (
+              dbError.code === 'PGRST301' ||
+              dbError.message?.includes('JWT') ||
+              dbError.message?.includes('permission') ||
+              dbError.details?.includes('anon')
+            )
+            if (dbError && !isAuthError) {
               databaseStatus = 'degraded'
               supabaseStatus = 'degraded'
             } else {
@@ -69,17 +78,25 @@ export function useServiceStatus() {
             }
           })
           .catch(() => {
+            // Network error or timeout → service actually down
             databaseStatus = 'down'
             supabaseStatus = 'degraded'
           })
       }
 
       // Check 3: Storage access
+      // listBuckets() requires auth — a non-network error means storage is reachable.
       if (authStatus === 'operational') {
         try {
-          const { data: buckets } = await supabase.storage.listBuckets()
-          storageStatus = buckets ? 'operational' : 'degraded'
+          const { data: buckets, error: storageError } = await supabase.storage.listBuckets()
+          // If we got any response (even an auth error), storage is operational
+          if (buckets !== null || storageError !== null) {
+            storageStatus = 'operational'
+          } else {
+            storageStatus = 'degraded'
+          }
         } catch {
+          // Network-level failure
           storageStatus = 'degraded'
         }
       }
