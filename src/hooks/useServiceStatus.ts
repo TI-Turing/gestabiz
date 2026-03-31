@@ -50,38 +50,21 @@ export function useServiceStatus() {
           supabaseStatus = 'degraded'
         })
 
-      // Check 2: Database access
-      // A 401/403 response means the DB is reachable (RLS requires auth — expected before login).
-      // Only mark degraded/down on network errors or timeouts.
+      // Check 2: Database — cualquier respuesta HTTP (incluso 401 de RLS) = servicio activo.
+      // Solo falla si la promesa lanza (timeout o error de red).
       if (authStatus === 'operational') {
         const dbPromise = supabase.from('profiles').select('count', { count: 'exact', head: true })
         const dbTimeout = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Database timeout')), 5000)
         )
 
-        await Promise.race([dbPromise, dbTimeout])
-          .then((result: unknown) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { error: dbError } = result as any
-            // Auth errors (401/403/JWT) mean the service IS up — user just isn't logged in yet
-            const isAuthError = dbError && (
-              dbError.code === 'PGRST301' ||
-              dbError.message?.includes('JWT') ||
-              dbError.message?.includes('permission') ||
-              dbError.details?.includes('anon')
-            )
-            if (dbError && !isAuthError) {
-              databaseStatus = 'degraded'
-              supabaseStatus = 'degraded'
-            } else {
-              databaseStatus = 'operational'
-            }
-          })
-          .catch(() => {
-            // Network error or timeout → service actually down
-            databaseStatus = 'down'
-            supabaseStatus = 'degraded'
-          })
+        const dbResult = await Promise.race([dbPromise, dbTimeout]).catch(() => null)
+        if (dbResult === null) {
+          databaseStatus = 'down'
+          supabaseStatus = 'degraded'
+        } else {
+          databaseStatus = 'operational'
+        }
       }
 
       // Check 3: Storage access
