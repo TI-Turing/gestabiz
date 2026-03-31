@@ -111,8 +111,8 @@ async function generateSitemap() {
     console.log(`🔗 Ver en: ${SITE_URL}/sitemap.xml`)
 
   } catch (error) {
-    console.error('❌ Error generando sitemap:', error)
-    process.exit(1)
+    console.warn('⚠️  Sitemap no generado (continuando build):', error instanceof Error ? error.message : error)
+    // No bloquear el build — el sitemap es opcional en ambientes de preview/dev
   }
 }
 
