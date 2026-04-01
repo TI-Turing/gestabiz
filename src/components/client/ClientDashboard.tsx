@@ -319,9 +319,11 @@ export function ClientDashboard({
         // Cerrar modal de detalles
         setSelectedAppointment(null)
         
-        // Establecer la conversación activa para abrir el chat
-        // ✅ FIX: No resetear chatConversationId en onChatClose para evitar perder el estado
-        setChatConversationId(conversationId)
+        // Siempre pasar por null antes de setear el nuevo ID para garantizar que el
+        // useEffect de FloatingChatButton detecte el cambio incluso si es la misma
+        // conversación (ej: mismo profesional abierto dos veces)
+        setChatConversationId(null)
+        setTimeout(() => setChatConversationId(conversationId), 0)
         
         toast.success(t('appointments.toasts.chatStarted'))
       }
@@ -782,12 +784,7 @@ export function ClientDashboard({
         onSearchResultSelect={handleSearchResultSelect}
         onSearchViewMore={handleSearchViewMore}
         chatConversationId={chatConversationId}
-        onChatClose={() => {
-          // Delay para permitir que el chat se cierre completamente antes de resetear
-          setTimeout(() => {
-            setChatConversationId(null)
-          }, 300)
-        }}
+        onChatClose={() => setChatConversationId(null)}
       >
         <div className="flex flex-col min-h-full">
           <div className="flex-1">
