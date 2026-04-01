@@ -1,0 +1,37 @@
+<svg width="100%" viewBox="130 60 500 220" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    
+  </defs>
+
+  <!-- Pill background — removed -->
+
+  <!-- App icon background rounded square -->
+  <rect x="170" y="110" width="70" height="70" rx="15" fill="#6b42c8"/>
+
+  <!-- Custom G icon -->
+  <g transform="translate(205, 140) scale(0.22)">
+    <!-- Arco de la G: casi círculo completo, abierto a la derecha con corte recto -->
+    <path
+      d="
+        M  63, -37
+        A  94,95 0 1,0  95, 15
+        L  70, 25
+        A  65,65 0 1,1  47,-15
+        Z
+      "
+      fill="#f0eeff"
+    />
+    <!-- Brazo horizontal interior de la G -->
+    <rect x="" y="10" width="95" height="30" rx="4" fill="#f0eeff"/>
+  </g>
+
+  <!-- Teal dot accent -->
+  <circle cx="228" cy="122" r="6.5" fill="#3bbfa0"/>
+
+  <!-- Wordmark -->
+  <text x="276" y="145" font-size="65" font-weight="700" fill="#f0eeff" dominant-baseline="central" style="fill:rgb(240, 238, 255);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, sans-serif;font-size:65px;font-weight:700;text-anchor:start;dominant-baseline:central">Gesta</text>
+  <text x="456" y="145" font-size="65" font-weight="700" fill="#7c3aed" dominant-baseline="central" style="fill:rgb(124, 58, 237);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, sans-serif;font-size:65px;font-weight:700;text-anchor:start;dominant-baseline:central">biz</text>
+
+  <!-- Tagline -->
+  <text x="390" y="220" font-size="20" font-weight="400" fill="#3bbfa0" text-anchor="middle" letter-spacing="2.5" style="fill:rgb(59, 191, 160);stroke:none;color:rgb(255, 255, 255);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, sans-serif;font-size:20px;font-weight:400;text-anchor:middle;dominant-baseline:auto">AGENDA. GESTIONA. CRECE.</text>
+</svg>

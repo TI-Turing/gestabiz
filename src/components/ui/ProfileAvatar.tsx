@@ -62,16 +62,14 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
 
-  // Construir URL con cache busting
+  // Construir URL con cache busting (solo en reintentos)
   const buildImageUrl = useCallback((url: string, attempt: number = 0): string => {
     if (!url) return '';
-    
-    // Si la URL ya tiene parámetros, agregar timestamp como parámetro adicional
+    // Primer intento: URL original — permite que el browser use su caché
+    if (attempt === 0) return url;
+    // Reintentos: forzar descarga fresca añadiendo timestamp
     const separator = url.includes('?') ? '&' : '?';
-    const timestamp = Date.now();
-    const cacheBuster = attempt > 0 ? `${timestamp}_retry${attempt}` : timestamp;
-    
-    return `${url}${separator}t=${cacheBuster}`;
+    return `${url}${separator}t=${Date.now()}_retry${attempt}`;
   }, []);
 
   // Intentar cargar la imagen

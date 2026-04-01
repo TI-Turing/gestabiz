@@ -41,6 +41,7 @@ interface Service {
   duration_minutes: number;
   price: number;
   category?: string;
+  image_url?: string;
   is_active: boolean;
 }
 
