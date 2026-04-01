@@ -25,7 +25,6 @@ dist-ssr
 *.sln
 *.sw?
 
-.env
 **/agent-eval-report*
 packages
 pids
@@ -67,6 +66,7 @@ supabase/.branches/
 .env.production
 .env.development
 .env.staging
+.env.example
 
 # Claude
 .claude/

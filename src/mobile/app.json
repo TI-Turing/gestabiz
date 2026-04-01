@@ -40,20 +40,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-notifications",
-      [
-        "expo-calendar",
-        {
-          "calendarPermission": "The app needs to access your calendar to sync appointments."
-        }
-      ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "your-eas-project-id"
-      }
-    },
-    "scheme": "Gestabiz"
+    "plugins": [],
+    "scheme": "gestabiz"
   }
 }
