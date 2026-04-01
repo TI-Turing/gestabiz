@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useNavigate } from 'react-router-dom'
-import { APP_CONFIG } from '@/constants'
 import { 
   Calendar, 
   Clock, 
@@ -18,25 +17,21 @@ import {
   Zap,
   Star,
   ArrowRight,
-  Menu,
-  X
 } from 'lucide-react'
 import { PricingPlans } from './PricingPlans'
 import { LandingFooter } from './LandingFooter'
+import { PublicLayout } from './PublicLayout'
 import { useAnalytics } from '@/hooks/useAnalytics'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { usePageMeta } from '@/hooks/usePageMeta'
-import { LanguageToggle } from '@/components/ui/language-toggle'
 
 interface LandingPageProps {
   onNavigateToAuth: () => void
   onNavigateToRegister?: () => void
 }
 
-export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingPageProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
+export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: Readonly<LandingPageProps>) {
   const analytics = useAnalytics()
   const navigate = useNavigate()
   const { user, loading } = useAuth()
@@ -69,13 +64,7 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
     document.documentElement.classList.remove('dark')
     document.documentElement.classList.add('light')
     
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50)
-    }
-    window.addEventListener('scroll', handleScroll)
-    
     return () => {
-      window.removeEventListener('scroll', handleScroll)
       // Restaurar el tema original al desmontar
       const savedTheme = localStorage.getItem('theme')
       if (savedTheme === 'dark') {
@@ -86,100 +75,8 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        (mobileMenuOpen || scrolled) ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
-      }`}>
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="bg-purple-600 rounded-lg p-2">
-                <Calendar className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
-                Gestabiz
-              </span>
-            </div>
-
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">
-                {t('landing.nav.features')}
-              </a>
-              <a href="#benefits" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">
-                {t('landing.nav.benefits')}
-              </a>
-              <a href="#pricing" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">
-                {t('landing.nav.pricing')}
-              </a>
-              <a href="#testimonials" className="text-gray-700 hover:text-purple-600 transition-colors font-medium">
-                {t('landing.nav.testimonials')}
-              </a>
-              <LanguageToggle />
-              <Button 
-                variant="ghost" 
-                onClick={onNavigateToAuth}
-                className="text-gray-700 hover:text-purple-600"
-              >
-                {t('landing.nav.signIn')}
-              </Button>
-              <Button 
-                onClick={onNavigateToRegister ?? onNavigateToAuth}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                {t('landing.nav.getStarted')}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button 
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X /> : <Menu />}
-            </button>
-          </div>
-
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 space-y-4 border-t pt-4">
-              <a href="#features" className="block text-foreground/80 hover:text-purple-600 transition-colors">
-                {t('landing.nav.features')}
-              </a>
-              <a href="#benefits" className="block text-foreground/80 hover:text-purple-600 transition-colors">
-                {t('landing.nav.benefits')}
-              </a>
-              <a href="#pricing" className="block text-foreground/80 hover:text-purple-600 transition-colors">
-                {t('landing.nav.pricing')}
-              </a>
-              <a href="#testimonials" className="block text-foreground/80 hover:text-purple-600 transition-colors">
-                {t('landing.nav.testimonials')}
-              </a>
-              <div className="flex justify-center">
-                <LanguageToggle />
-              </div>
-              <Button 
-                variant="ghost" 
-                className="w-full"
-                onClick={onNavigateToAuth}
-              >
-                {t('landing.nav.signIn')}
-              </Button>
-              <Button 
-                className="w-full bg-primary hover:bg-primary/90"
-                onClick={onNavigateToRegister ?? onNavigateToAuth}
-              >
-                {t('landing.nav.getStarted')}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </div>
-      </nav>
-
-      {/* Hero Section */}
+    <PublicLayout>
+      <div className="bg-linear-to-b from-white to-gray-50">
       <section className="pt-32 pb-20 px-4">
         <div className="container mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -190,7 +87,7 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
               
               <h1 className="text-5xl lg:text-6xl font-bold leading-tight text-gray-900">
                 {t('landing.hero.title')}{' '}
-                <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   {t('landing.hero.titleHighlight')}
                 </span>
               </h1>
@@ -249,7 +146,7 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
 
             {/* Hero Image/Illustration */}
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-200 to-blue-200 blur-3xl rounded-full" />
+              <div className="absolute inset-0 bg-linear-to-r from-purple-200 to-blue-200 blur-3xl rounded-full" />
               <Card className="relative bg-white border-purple-200 shadow-2xl">
                 <CardContent className="p-8">
                   <div className="space-y-6">
@@ -380,9 +277,9 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
                 descKey: 'landing.features.list.security.description',
                 color: 'text-red-500'
               }
-            ].map((feature, index) => (
+            ].map((feature) => (
               <Card 
-                key={`feature-${index}`} 
+                key={feature.titleKey} 
                 className="bg-white border-gray-200 hover:border-purple-600/50 transition-all hover:shadow-lg"
               >
                 <CardContent className="p-6 space-y-4">
@@ -414,28 +311,32 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
               <div className="space-y-6">
                 {[
                   {
+                    id: 'no-shows',
                     stat: t('landing.benefits.stats.noShows.value'),
                     label: t('landing.benefits.stats.noShows.label'),
                     description: t('landing.benefits.stats.noShows.description')
                   },
                   {
+                    id: 'time-saved',
                     stat: t('landing.benefits.stats.timeSaved.value'),
                     label: t('landing.benefits.stats.timeSaved.label'),
                     description: t('landing.benefits.stats.timeSaved.description')
                   },
                   {
+                    id: 'bookings',
                     stat: t('landing.benefits.stats.bookings.value'),
                     label: t('landing.benefits.stats.bookings.label'),
                     description: t('landing.benefits.stats.bookings.description')
                   },
                   {
+                    id: 'roi',
                     stat: t('landing.benefits.stats.roi.value'),
                     label: t('landing.benefits.stats.roi.label'),
                     description: t('landing.benefits.stats.roi.description')
                   }
-                ].map((benefit, index) => (
-                  <div key={`benefit-${index}`} className="flex gap-3 md:gap-4 items-start">
-                    <div className="flex-shrink-0">
+                ].map((benefit) => (
+                  <div key={benefit.id} className="flex gap-3 md:gap-4 items-start">
+                    <div className="shrink-0">
                       <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-purple-100 flex items-center justify-center">
                         <span className="text-xl md:text-2xl font-bold text-purple-600 leading-tight">{benefit.stat}</span>
                       </div>
@@ -455,7 +356,7 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
             </div>
 
             <div className="relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-l from-purple-200 to-purple-100 blur-3xl rounded-full pointer-events-none" />
+              <div className="absolute inset-0 bg-linear-to-l from-purple-200 to-purple-100 blur-3xl rounded-full pointer-events-none" />
               <Card className="relative bg-white border-gray-200 shadow-xl max-w-md mx-auto md:max-w-none">
                 <CardContent className="p-6 md:p-8 space-y-6">
                   <div className="text-center">
@@ -555,12 +456,12 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
                 avatar: 'J',
                 rating: 5
               }
-            ].map((testimonial, index) => (
-              <Card key={`testimonial-${index}`} className="relative overflow-hidden bg-white border-gray-200 shadow-lg">
+            ].map((testimonial) => (
+              <Card key={testimonial.nameKey} className="relative overflow-hidden bg-white border-gray-200 shadow-lg">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center gap-1">
-                    {[...new Array(testimonial.rating)].map((_, i) => (
-                      <Star key={`star-${i}`} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                    {[1, 2, 3, 4, 5].slice(0, testimonial.rating).map(starNum => (
+                      <Star key={`star-${starNum}`} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                     ))}
                   </div>
                   
@@ -589,7 +490,7 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
       {/* CTA Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto">
-          <Card className="bg-gradient-to-r from-purple-600 to-purple-500 border-0 text-white">
+          <Card className="bg-linear-to-r from-purple-600 to-purple-500 border-0 text-white">
             <CardContent className="p-12 text-center space-y-6">
               <h2 className="text-4xl font-bold text-white">
                 {t('landing.cta.title')}
@@ -636,11 +537,8 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: LandingP
       </section>
 
       <LandingFooter />
-    </div>
+      </div>
+    </PublicLayout>
   )
 }
-
-
-
-
 

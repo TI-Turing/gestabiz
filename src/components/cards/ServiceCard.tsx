@@ -191,8 +191,8 @@ export function ServiceCard({
       {/* Información */}
       <div className="p-3 text-center bg-muted/50">
         <h3 className="text-base font-semibold text-foreground truncate">{service.name}</h3>
-        {duration > 0 && (
-          <p className="text-xs text-muted-foreground mt-1">{duration} min</p>
+        {service.description && (
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{service.description}</p>
         )}
         {service.price != null && (
           <p className="text-xs font-semibold text-primary mt-0.5">

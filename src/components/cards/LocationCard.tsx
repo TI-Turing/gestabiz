@@ -132,7 +132,8 @@ export function LocationCard({
   }
 
   // ── Default variant (wizard / selection) ──
-  const hasBanner = !!bannerUrl;
+  const effectiveBannerUrl = bannerUrl ?? location.banner_url;
+  const hasBanner = !!effectiveBannerUrl;
 
   return (
     <div
@@ -156,7 +157,7 @@ export function LocationCard({
       {hasBanner && (
         <>
           <img
-            src={bannerUrl}
+            src={effectiveBannerUrl}
             alt=""
             aria-hidden="true"
             className="absolute inset-0 w-full h-full object-cover"

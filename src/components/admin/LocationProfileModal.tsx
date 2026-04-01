@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LocationAddress } from '@/components/ui/LocationAddress'
-import { MapPin, Phone, Mail, Image as ImageIcon, Users, Briefcase, Clock, DollarSign, X } from 'lucide-react'
+import { MapPin, Phone, Mail, Image as ImageIcon, Users, Briefcase, Clock, DollarSign, X, Calendar } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useLocationEmployees } from '@/hooks/useLocationEmployees'
 import { useLocationServices } from '@/hooks/useLocationServices'
@@ -43,6 +43,9 @@ interface LocationProfileModalProps {
   location: Location
   bannerUrl?: string
   primaryVideoUrl?: string
+  /** Callback opcional: mostrar botón "Reservar" en el modal (solo para clientes).
+   *  Si se llama desde el perfil de un empleado, recibe el employeeId para preselección. */
+  onBook?: (employeeId?: string) => void
 }
 
 interface MediaRow {
@@ -56,7 +59,7 @@ interface MediaRow {
   created_at: string
 }
 
-export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, primaryVideoUrl }: LocationProfileModalProps) {
+export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, primaryVideoUrl, onBook }: LocationProfileModalProps) {
   const [otherMedia, setOtherMedia] = useState<MediaRow[]>([])
   const [isLoadingMedia, setIsLoadingMedia] = useState(true)
   const [banner, setBanner] = useState<string | undefined>(bannerUrl)
@@ -401,6 +404,16 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
             )}
           </div>
         </div>
+
+        {/* Reservar CTA */}
+        {onBook && (
+          <div className="shrink-0 border-t border-border bg-card px-6 py-4">
+            <Button onClick={() => onBook?.()} className="w-full" size="lg">
+              <Calendar className="w-4 h-4 mr-2" />
+              Reservar en esta sede
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
 
@@ -414,6 +427,13 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
       <UserProfile
         userId={selectedEmployeeId}
         onClose={() => setSelectedEmployeeId(null)}
+        hideBooking={!onBook}
+        onBookAppointment={onBook ? () => {
+          const empId = selectedEmployeeId
+          setSelectedEmployeeId(null)
+          onOpenChange(false)
+          onBook(empId)
+        } : undefined}
       />
     )}
     {/* Business Profile */}

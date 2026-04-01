@@ -138,6 +138,7 @@ export function AppointmentWizard({
           preselectedServiceId={preselectedServiceId}
           preselectedLocationId={preselectedLocationId}
           preselectedEmployeeId={preselectedEmployeeId}
+          filterByEmployeeId={preselectedEmployeeId}
           businessId={businessId}
           userId={userId}
           appointmentToEdit={appointmentToEdit}

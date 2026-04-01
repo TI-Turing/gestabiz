@@ -1,0 +1,33 @@
+<svg width="100%" height="100%" viewBox="150 60 360 360" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+
+  <!-- App icon background rounded square -->
+  <rect x="190" y="90" width="300" height="300" rx="64" fill="#6b42c8"/>
+
+  <!--
+    Custom G — construida con path vectorial.
+    Centro del ícono: 340, 242
+    Radio exterior ~95, trazo ~30px
+    Abertura: en la parte derecha, corte recto horizontal (no curvo como Google)
+    El brazo horizontal interior termina en el centro, no baja — más geométrico
+  -->
+  <g transform="translate(340, 210)">
+    <!-- Arco de la G: casi círculo completo, abierto a la derecha con corte recto -->
+    <!-- Usamos un path: arco desde ~350° hasta ~10° pasando por izquierda -->
+    <path
+      d="
+        M  63, -37
+        A  94,95 0 1,0  95, 15
+        L  70, 25
+        A  65,65 0 1,1  47,-15
+        Z
+      "
+      fill="#f0eeff"
+    />
+    <!-- Brazo horizontal interior de la G — va desde el centro hacia la derecha -->
+    <rect x="10" y="10" width="85" height="30" rx="4" fill="#f0eeff"/>
+  </g>
+
+  <!-- Teal dot accent — top right del cuadrado -->
+  <circle cx="442" cy="138" r="28" fill="#3bbfa0"/>
+
+</svg>
