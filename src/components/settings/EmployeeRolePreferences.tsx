@@ -30,6 +30,9 @@ import {
   CurrencyDollar as DollarSign,
   Calendar,
   Warning as AlertCircle,
+  ShareNetwork as Share2,
+  Copy,
+  ArrowSquareOut as ExternalLink,
 } from '@phosphor-icons/react'
 import { useEmployeeProfile, type Certification } from '@/hooks/useEmployeeProfile'
 import { supabase } from '@/lib/supabase'
@@ -245,6 +248,16 @@ export function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePref
     )
   }
 
+  const publicProfileUrl = `${window.location.origin}/profesional/${userId}`
+
+  const handleCopyProfileLink = () => {
+    navigator.clipboard.writeText(publicProfileUrl).then(() => {
+      toast.success('Enlace copiado al portapapeles')
+    }).catch(() => {
+      toast.error('No se pudo copiar el enlace')
+    })
+  }
+
   return (
     <div className="space-y-4">
       {validationError && (
@@ -253,6 +266,36 @@ export function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePref
           <AlertDescription>{validationError}</AlertDescription>
         </Alert>
       )}
+
+      {/* Perfil público compartible */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Share2 className="h-5 w-5" />
+            Tu perfil público
+          </CardTitle>
+          <CardDescription>
+            Comparte este enlace con tus clientes para que puedan ver tus servicios y reservar una cita contigo directamente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 p-3 bg-muted/40 rounded-lg border border-border">
+            <span className="flex-1 text-sm text-muted-foreground truncate">{publicProfileUrl}</span>
+            <Button variant="ghost" size="sm" onClick={handleCopyProfileLink} title="Copiar enlace" className="px-2 shrink-0">
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.open(publicProfileUrl, '_blank')}
+              title="Abrir perfil"
+              className="px-2 shrink-0"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Disponibilidad y Horarios */}
       <Card>
