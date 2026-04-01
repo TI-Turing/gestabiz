@@ -98,6 +98,18 @@ export const QUERY_CONFIG = {
       preferredCityName ?? 'all-cities',
       preferredRegionName ?? 'all-regions',
     ] as const,
+
+    // ── Wizard (Appointment Booking Flow) ────────────────────────────────
+    BUSINESS: (businessId: string) =>
+      ['business', businessId] as const,
+    WIZARD_DATA: (businessId: string) =>
+      ['wizard-data', businessId] as const,
+    WIZARD_EMPLOYEES: (businessId: string, serviceId?: string, locationId?: string) =>
+      ['wizard-employees', businessId, serviceId ?? 'all', locationId ?? 'all'] as const,
+    WIZARD_DATETIME_DAY: (assigneeId: string, assigneeType: 'employee' | 'resource', date: string) =>
+      ['wizard-datetime-day', assigneeId, assigneeType, date] as const,
+    WIZARD_DATETIME_MONTH: (assigneeId: string, assigneeType: 'employee' | 'resource', yearMonth: string) =>
+      ['wizard-datetime-month', assigneeId, assigneeType, yearMonth] as const,
   },
 }
 

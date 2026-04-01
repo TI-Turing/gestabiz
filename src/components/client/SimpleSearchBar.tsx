@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Search, Building2, Briefcase, Tag, User, ChevronDown } from 'lucide-react'
+import { Search, Building2, Briefcase, User, ChevronDown } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-export type SearchType = 'services' | 'businesses' | 'categories' | 'users'
+export type SearchType = 'services' | 'businesses' | 'users'
 
 interface SimpleSearchBarProps {
   onSearch: (searchTerm: string, searchType: SearchType) => void
@@ -20,7 +20,6 @@ interface SimpleSearchBarProps {
 const searchTypeIconConfig = {
   services: Briefcase,
   businesses: Building2,
-  categories: Tag,
   users: User
 }
 

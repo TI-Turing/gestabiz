@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { useEmployeeTransferAvailability } from '@/hooks/useEmployeeTransferAvailability';
 import { usePublicHolidays } from '@/hooks/usePublicHolidays';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useWizardDateTimeData } from '@/hooks/useWizardDateTimeData';
 
 interface DateTimeSelectionProps {
   readonly service: Service | null;

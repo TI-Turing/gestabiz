@@ -13,6 +13,7 @@ interface LocationSelectionProps {
   onSelectLocation: (location: Location) => void;
   preloadedLocations?: Location[]; // Datos pre-cargados para evitar consultas lentas
   isPreselected?: boolean; // Nueva prop para indicar si fue preseleccionado
+  filterByEmployeeId?: string; // cuando está presente, las sedes donde el empleado no trabaja se deshabilitan
 }
 
 export function LocationSelection({ 
@@ -20,12 +21,15 @@ export function LocationSelection({
   selectedLocationId, 
   onSelectLocation,
   preloadedLocations,
-  isPreselected = false
+  isPreselected = false,
+  filterByEmployeeId,
 }: Readonly<LocationSelectionProps>) {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(!preloadedLocations);
   const [locationBanners, setLocationBanners] = useState<Record<string, string>>({});
   const [profileLocation, setProfileLocation] = useState<Location | null>(null);
+  // undefined = sin filtro activo | null = empleado sin sede asignada | string = ubicationId del empleado
+  const [employeeLocationId, setEmployeeLocationId] = useState<string | null | undefined>(undefined);
 
   // Carga banners de sedes desde location_media
   const refreshLocationBanners = async (ids: string[]) => {
@@ -63,6 +67,26 @@ export function LocationSelection({
       // noop
     }
   };
+
+  // Fetch del location_id del empleado cuando filterByEmployeeId cambie
+  useEffect(() => {
+    if (!filterByEmployeeId) {
+      setEmployeeLocationId(undefined);
+      return;
+    }
+    supabase
+      .from('business_employees')
+      .select('location_id')
+      .eq('employee_id', filterByEmployeeId)
+      .eq('business_id', businessId)
+      .maybeSingle()
+      .then(({ data }) => {
+        setEmployeeLocationId(data?.location_id ?? null);
+      })
+      .catch(() => {
+        setEmployeeLocationId(null);
+      });
+  }, [filterByEmployeeId, businessId]);
 
   useEffect(() => {
     // Si ya tenemos datos pre-cargados, usarlos directamente (MÁS RÁPIDO)
@@ -194,17 +218,30 @@ export function LocationSelection({
         {locations.map((location) => {
           const isSelected = selectedLocationId === location.id;
           const wasPreselected = isPreselected && isSelected;
+          const isDisabled =
+            !!filterByEmployeeId &&
+            employeeLocationId !== undefined &&
+            location.id !== employeeLocationId;
 
           return (
-            <LocationCard
-              key={location.id}
-              location={location}
-              bannerUrl={locationBanners[location.id]}
-              isSelected={isSelected}
-              onSelect={onSelectLocation}
-              isPreselected={wasPreselected}
-              onViewProfile={(loc) => setProfileLocation(loc)}
-            />
+            <div key={location.id} className="relative">
+              <LocationCard
+                location={location}
+                bannerUrl={locationBanners[location.id]}
+                isSelected={isSelected}
+                onSelect={isDisabled ? undefined : onSelectLocation}
+                isPreselected={wasPreselected}
+                onViewProfile={(loc) => setProfileLocation(loc)}
+                className={isDisabled ? 'pointer-events-none opacity-50' : undefined}
+              />
+              {isDisabled && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/60 rounded-xl pointer-events-none">
+                  <p className="text-xs text-center text-muted-foreground px-3 font-medium leading-snug">
+                    El empleado seleccionado no trabaja en esta sede
+                  </p>
+                </div>
+              )}
+            </div>
           );
         })}
       </div>

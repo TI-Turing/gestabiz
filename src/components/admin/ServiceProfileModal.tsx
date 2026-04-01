@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { DollarSign, Clock, MapPin, X } from 'lucide-react'
+import { DollarSign, Clock, MapPin, X, Calendar } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -74,6 +74,9 @@ export interface ServiceProfileModalProps {
   onClose: () => void
   /** Callback opcional: se llama cuando el usuario quiere editar/asignar sedes. */
   onEditService?: (serviceId: string) => void
+  /** Callback opcional: mostrar botón "Reservar" en el modal (solo para clientes).
+   *  Si se llama desde el perfil de un empleado, recibe el employeeId para preselección. */
+  onBook?: (employeeId?: string) => void
 }
 
 // =====================================================
@@ -98,6 +101,7 @@ export function ServiceProfileModal({
   serviceId,
   onClose,
   onEditService,
+  onBook,
 }: Readonly<ServiceProfileModalProps>) {
   const [service, setService] = useState<ServiceData | null>(null)
   const [employees, setEmployees] = useState<EmployeeRow[]>([])
@@ -452,6 +456,16 @@ export function ServiceProfileModal({
             </Tabs>
           )}
         </div>
+
+        {/* Reservar CTA */}
+        {onBook && (
+          <div className="shrink-0 border-t border-border bg-card px-6 py-4">
+            <Button onClick={onBook} className="w-full" size="lg">
+              <Calendar className="w-4 h-4 mr-2" />
+              Reservar este servicio
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
 
@@ -468,6 +482,13 @@ export function ServiceProfileModal({
       <UserProfile
         userId={selectedEmployeeId}
         onClose={() => setSelectedEmployeeId(null)}
+        hideBooking={!onBook}
+        onBookAppointment={onBook ? () => {
+          const empId = selectedEmployeeId
+          setSelectedEmployeeId(null)
+          onClose()
+          onBook(empId)
+        } : undefined}
       />
     )}
     {/* Business Profile */}

@@ -8,7 +8,6 @@ import {
   Building2,
   Briefcase,
   User,
-  Tag,
   X,
   Loader2
 } from 'lucide-react'
@@ -275,30 +274,7 @@ export function SearchResults({
             break
           }
 
-          case 'categories': {
-            const { data: categoriesData, error } = await supabase
-              .from('business_categories')
-              .select(`
-                id,
-                name,
-                description,
-                created_at
-              `)
-              .ilike('name', `%${searchTerm}%`)
-              .eq('is_active', true)
-              .limit(50)
 
-            if (error) throw error
-
-            data = (categoriesData || []).map((category: any) => ({
-              id: category.id,
-              name: category.name,
-              type: 'categories' as SearchType,
-              description: category.description,
-              createdAt: category.created_at
-            }))
-            break
-          }
 
           case 'users': {
             // Usar función RPC optimizada
@@ -463,7 +439,6 @@ export function SearchResults({
     switch (type) {
       case 'services': return Briefcase
       case 'businesses': return Building2
-      case 'categories': return Tag
       case 'users': return User
       default: return Building2
     }
@@ -473,7 +448,6 @@ export function SearchResults({
     switch (type) {
       case 'services': return t('search.resultsPage.typeLabels.service')
       case 'businesses': return t('search.resultsPage.typeLabels.business')
-      case 'categories': return t('search.resultsPage.typeLabels.category')
       case 'users': return t('search.resultsPage.typeLabels.user')
       default: return type
     }
