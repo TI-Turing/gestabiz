@@ -1,8 +1,8 @@
 # Guía de Copilot para Gestabiz
 
 > **Sistema integral de gestión de citas y negocios** - FASE BETA COMPLETADA  
-> **Stack**: React 18 + TypeScript 5.7 + Vite 6 + Supabase + Tailwind 4  
-> **Última actualización**: Enero 2025  
+> **Stack**: React 19 + TypeScript 5.7 + Vite 6 + Supabase + Tailwind 4  
+> **Última actualización**: Marzo 2026  
 > **Estado del Proyecto**: ✅ Funcionalidad completa | 🐛 Solo bugs y optimizaciones
 
 ---
@@ -11,7 +11,7 @@
 
 **Gestabiz** es una plataforma omnicanal (web/móvil/extensión) para gestión de citas y negocios con:
 
-- **14 sistemas principales**: Edición de citas, Sede preferida, GA4, Landing page, Perfiles públicos, Navegación con roles, Configuraciones unificadas, Ventas rápidas, Preferencias de Mensajes para Empleados, Sistema de Ausencias y Vacaciones, Registración Automática de Owners, Tabla de Festivos Públicos, **Sistema de Modelo de Negocio Flexible** (Backend completo), **Sistema de Permisos Granulares** ⭐ NUEVO (Fase 5 COMPLETADA)
+- **14 sistemas principales**: Edición de citas, Sede preferida, GA4, Landing page, Perfiles públicos, Navegación con roles, Configuraciones unificadas, Ventas rápidas, Preferencias de Mensajes para Empleados, Sistema de Ausencias y Vacaciones, Registración Automática de Owners, Tabla de Festivos Públicos, **Sistema de Modelo de Negocio Flexible** (Backend completo), **Sistema de Permisos Granulares** ⭐ NUEVO (Fase 5 COMPLETADA) + **CRM Clientes**, **Historial de Ventas**, **Mis Clientes**, **Modal de Perfil** ⭐ (Mar 2026)
 - **40+ tablas en Supabase**: PostgreSQL 15+ con RLS, extensiones (pg_trgm, postgis), Edge Functions (Deno)
 - **30+ Edge Functions desplegadas**: Notificaciones multicanal, pagos (Stripe/PayU/MercadoPago), chat, reviews
 - **Arquitectura multi-rol**: Admin/Employee/Client calculados dinámicamente (NO guardados en BD)
@@ -27,7 +27,7 @@
 5. **Roles dinámicos** - Calculados en tiempo real, no persistidos
 6. **TypeScript strict** - Cero `any`, tipado completo
 7. **Proteger con PermissionGate** - TODOS los botones de acción deben estar protegidos con PermissionGate ⭐ NUEVO
-8. **Incrementar versión en cada commit** - Versión actual: **0.0.1**. Patrón: `MAJOR.MINOR.PATCH`. Cada commit aumenta PATCH (0.0.1 → 0.0.2 → 0.0.3...). MINOR se incrementa en releases planificadas. MAJOR para cambios disruptivos. Actualizar versión en `package.json`
+8. **Incrementar versión en cada commit** - Versión actual: **0.0.52**. Patrón: `MAJOR.MINOR.PATCH`. Cada commit aumenta PATCH (0.0.52 → 0.0.53...). MINOR se incrementa en releases planificadas. MAJOR para cambios disruptivos. Actualizar versión en `package.json`
 9. **Reutilización obligatoria de Card Components** ⭐ CRÍTICO - Ver sección "Sistema de Cards Reutilizables" más abajo
 
 ---
@@ -504,8 +504,54 @@
   - `docs/PLAN_DE_ACCION_POST_TESTING_COMPLETADO.md` ⭐ NUEVO (Resumen del plan ejecutado)
 - **Ver**: `docs/FASE_5_RESUMEN_FINAL_SESION_16NOV.md`, `docs/PLAN_DE_ACCION_POST_TESTING_COMPLETADO.md`
 
+### 22. CRM de Clientes (Admin) ⭐ COMPLETADO (Mar 2026)
+**Vista centralizada de todos los clientes del negocio con historial**
 
-## � SISTEMA DE CARDS REUTILIZABLES ⭐ CRÍTICO
+- **Componente**: `src/components/admin/ClientsManager.tsx`
+- **Acceso**: sidebar admin `id: 'clients'` → `/app/admin/clients`
+- **Scope**: a nivel de negocio — clientes con al menos una cita no cancelada en el negocio activo
+- **Datos**: query en dos pasos — `appointments` (client_id, start_time, status) → `profiles` (full_name, email, avatar_url)
+- **Agregación**: total de visitas, visitas completadas, última visita — calculadas en cliente
+- **Vista**: grid de cards con avatar de iniciales, email, contador de visitas, fecha última visita
+- **Acción**: click en cliente abre `ClientProfileModal` con historial completo
+- **Búsqueda**: filtro local por nombre o email
+- **GOTCHA CRÍTICO**: `appointments` NO tiene columnas `client_name`, `client_email` — siempre usar two-step query (appointments → profiles)
+
+### 23. Historial de Ventas (Admin) ⭐ COMPLETADO (Mar 2026)
+**Historial de citas completadas con resumen financiero**
+
+- **Componente**: `src/components/admin/SalesHistoryPage.tsx`
+- **Acceso**: sidebar admin `id: 'sales'` → `/app/admin/sales`
+- **Scope**: citas con `status = 'completed'` del negocio activo
+- **Filtro de rango**: últimos 7/30/90/365 días (default 30)
+- **Summary cards**: total de ventas completadas, ingresos totales, promedio por cita
+- **Tabla**: fecha, servicio, cliente (botón → abre `ClientProfileModal`), precio
+- **Datos**: query en dos pasos — `appointments` → `profiles` + `services` en batch
+- **GOTCHA**: `appointments` usa `service_id` (FK a `services`) — el nombre del servicio requiere join separado
+
+### 24. Mis Clientes (Empleado) ⭐ COMPLETADO (Mar 2026)
+**Clientes atendidos por el empleado con historial personal**
+
+- **Componente**: `src/components/employee/EmployeeClientsPage.tsx`
+- **Acceso**: sidebar empleado `id: 'my-clients'` → `/app/employee/my-clients`
+- **Scope**: filtra `employee_id = currentUser.id` en `appointments`
+- **Ordenamiento**: por cantidad de visitas completadas (más atendidos primero)
+- **Vista**: grid de cards — mismo visual que `ClientsManager` pero acotado al empleado
+- **Acción**: click abre `ClientProfileModal` (importado desde `src/components/admin/`)
+- **GOTCHA**: misma limitación — two-step query obligatorio (appointments → profiles)
+
+### 25. Modal de Perfil de Cliente ⭐ COMPLETADO (Mar 2026)
+**Modal compartido entre admin y empleado para ver historial de cliente**
+
+- **Componente**: `src/components/admin/ClientProfileModal.tsx`
+- **Usado por**: `ClientsManager`, `SalesHistoryPage`, `EmployeeClientsPage`
+- **Props**: `clientId`, `businessId`, `isOpen`, `onClose`
+- **Tabs**: "Información" (stats, fecha primer/última visita) y "Historial (N)" (lista de citas con servicio, fecha, estado, precio)
+- **Datos**: `profiles` (info de contacto) + `appointments` + `services` (two-step query)
+- **Patrón**: Radix UI Dialog + Tabs
+
+
+## 🃏 SISTEMA DE CARDS REUTILIZABLES ⭐ CRÍTICO
 
 ### Regla Fundamental
 **TODOS los cards de entidades DEBEN ser componentes independientes ubicados en `src/components/cards/`.**
@@ -1093,7 +1139,7 @@ Objetivo: que un agente pueda contribuir de inmediato entendiendo la arquitectur
   - Usar el **servidor MCP disponible** para consultas SQL directas, migraciones, y operaciones de base de datos complejas cuando sea más eficiente que el cliente JavaScript.
   - Para código de aplicación: sigue el patrón de `useSupabaseData.fetch*` construyendo la query base (`supabase.from('table')...`), filtra por rol/negocio, ordena, y mapea a los tipos de `src/types`.
   - **MCP Commands ejemplos**: `SELECT * FROM profiles WHERE role = 'client'`, `INSERT INTO businesses (name, owner_id) VALUES (?, ?)`, `UPDATE appointments SET status = ? WHERE id = ?`.
-  - **REGLA CRÍTICA**: Cada vez que hagas un push a Supabase, SIEMPRE agregar la bandera `--yes` al comando para evitar prompts interactivos: `npx supabase db push --yes`
+  - **REGLA CRÍTICA**: Cada vez que hagas un push a Supabase, SIEMPRE agregar `--dns-resolver https --yes`: `npx supabase db push --dns-resolver https --yes`
 - Realtime: para colecciones por usuario, suscribe con filtro `filter: user_id=eq.${userId}` y maneja `INSERT/UPDATE/DELETE` actualizando el estado local.
 - UI/estado: para operaciones que muestran feedback, envuelve con `useAsyncOperation().executeAsync(() => ..., 'clave-loading', { successMessage })` en vez de gestionar loading/toasts manualmente.
 - Permisos: valida acciones con `userHasPermission(role, permissions, 'write_appointments')` antes de mutaciones.
@@ -1112,6 +1158,9 @@ Objetivo: que un agente pueda contribuir de inmediato entendiendo la arquitectur
   - `const { t } = useLanguage(); t('dashboard.title')` y formatos `formatCurrency(amount, 'COP', 'es')`.
 
 ## Gotchas conocidas
+- **CRÍTICO - `appointments` NO tiene columnas de texto denormalizadas**: NO existen `client_name`, `client_email`, `title`, `service_name` en la tabla real. Siempre usar two-step query: fetch `client_id`/`service_id` de appointments → batch fetch `profiles`/`services` por separado. Las columnas falsas solo existen en el mock data (`src/lib/demoData.ts`).
+- **CRÍTICO - `services!inner` en joins oculta citas silenciosamente**: si el servicio fue eliminado, el INNER JOIN excluye la cita. Usar `services (...)` (LEFT JOIN) en calendarios y listados históricos.
+- **Hora de almuerzo no aplica a días pasados**: `isLunchBreak()` en `AppointmentsCalendar` retorna `false` para fechas anteriores a hoy, evitando ocultar citas históricas que se crearon con un horario de almuerzo distinto.
 - **CRÍTICO - Sincronización business_roles ↔ business_employees** (20 Oct 2025):
   - **Problema**: La RPC `get_business_hierarchy` busca en `business_roles`, pero empleados se registran en `business_employees`
   - **Síntoma**: Empleados no aparecen en gestión de empleados aunque estén en la BD
@@ -1251,11 +1300,23 @@ Objetivo: que un agente pueda contribuir de inmediato entendiendo la arquitectur
 **Desarrollo Web**:
 ```powershell
 npm run dev              # Iniciar servidor Vite (http://localhost:5173)
+npm run dev:owner        # Modo owner (vite.config.owner.ts)
+npm run dev:users        # Modo users (vite.config.users.ts)
 npm run build            # Build de producción
 npm run preview          # Preview del build
-npm run lint             # ESLint
+npm run lint             # ESLint con auto-fix
 npm run type-check       # TypeScript compiler check
+npm run analyze          # Bundle analyzer
 npm run generate-sitemap # Generar sitemap.xml
+npm run pre-deploy       # Checks pre-deploy
+```
+
+**Scripts de base de datos**:
+```powershell
+npm run db:seed          # Generar datos demo
+npm run db:clean         # Limpiar datos transaccionales (dry-run por default)
+npm run db:clean:force   # Limpiar sin confirmación
+npm run db:fix-appointments  # Fix ambigüedad en appointments
 ```
 
 **Desarrollo Móvil** (en `src/mobile/`):
@@ -1266,10 +1327,12 @@ npm run ios              # iOS simulator
 npm run web              # Expo web
 ```
 
-**Supabase** (siempre usar `npx supabase` + agregar `--yes` en push para evitar prompts):
+**Supabase** (siempre usar `npx supabase` + `--dns-resolver https` + `--yes` en push):
 ```powershell
-npx supabase start                                          # Iniciar Supabase local (NO DISPONIBLE)
-npx supabase db push --yes                                 # Aplicar migraciones en remoto (sin confirmar)
+npx supabase db push --dns-resolver https --yes            # Aplicar migraciones en remoto
+npx supabase migration list --dns-resolver https           # Listar migraciones
+npx supabase migration fetch --yes --dns-resolver https   # Sincronizar migraciones
+npx supabase migration repair --status reverted <version> # Revertir migración fallida
 npx supabase functions deploy <function-name>              # Desplegar Edge Function
 npx supabase gen types typescript --project-id <id> > src/types/supabase.ts  # Generar tipos
 ```
@@ -1297,7 +1360,7 @@ npm run test:coverage    # Cobertura de tests
 3. **Desplegar cambios en Supabase**:
    - Crear migración: `npx supabase migration new <nombre>`
    - Probar localmente (NO disponible, usar directamente remoto)
-   - **SIEMPRE agregar `--yes` al push**: `npx supabase db push --yes` (sin confirmar)
+   - **SIEMPRE usar**: `npx supabase db push --dns-resolver https --yes` (con dns-resolver y sin confirmar)
    - Actualizar tipos: `npx supabase gen types typescript...`
 
 4. **Agregar Edge Function**:
@@ -1335,10 +1398,15 @@ npm run test:coverage    # Cobertura de tests
 
 ### Variables de Entorno Requeridas
 
-**Web** (`.env`):
+**Web** (`.env`) — ver templates en `environments/`. Archivos gitignoreados:
+- `.env.development` → local/dev (apunta a proy. DEV `dkancockzvcqorqbwtyh`)
+- `.env.production` → build de prod (apunta a PROD `emknatoknbomvmyumqju`)
+
 ```bash
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGc...
+VITE_APP_URL=http://localhost:5173
+VITE_APP_NAME=Gestabiz
 VITE_GOOGLE_CLIENT_ID=123456789.apps.googleusercontent.com
 VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 
@@ -1351,6 +1419,8 @@ VITE_MERCADOPAGO_PUBLIC_KEY=...
 # Opcional
 VITE_DEMO_MODE=true  # Para modo demo sin Supabase real
 ```
+
+> **Seguridad**: Hay dos clientes Google OAuth distintos — DEV y PROD. **NUNCA** exponer `SUPABASE_SERVICE_ROLE_KEY` con prefijo `VITE_`. GitGuardian escanea todo el historial de PRs.
 
 **Móvil** (`src/mobile/.env`):
 ```bash
@@ -1496,5 +1566,5 @@ ON CONFLICT (business_id, user_id, permission) DO NOTHING;
 
 ---
 
-*Última actualización: Enero 2025*  
+*Última actualización: Marzo 2026*  
 *Mantenido por: TI-Turing Team*

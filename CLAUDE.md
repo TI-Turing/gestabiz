@@ -4,7 +4,7 @@
 
 > **Gestabiz** — Sistema SaaS de gestión de citas y negocios
 > **Stack**: React 19 + TypeScript 5.7 + Vite 6 + Supabase + Tailwind 4
-> **Versión actual**: 0.0.40 (incrementar PATCH en cada commit)
+> **Versión actual**: 0.0.52 (incrementar PATCH en cada commit)
 > **Estado**: BETA completada — solo bugs, optimizaciones y features puntuales
 
 ---
@@ -31,6 +31,7 @@ Gestabiz es una plataforma SaaS **todo-en-uno** para PyMEs de servicios (salones
 | `vercel` | Local (`.claude/settings.local.json`) | Listar teams, proyectos y configuración de deploys |
 | `canva` | Global (Canva MCP) | Crear, editar y exportar diseños en Canva |
 | `sentry` | Global (Sentry MCP) | Buscar y analizar issues, errores y tracks en Sentry |
+| `github` | Proyecto (`.claude/mcp.json`) | Gestión de PRs, issues, branch protection. Requiere GITHUB_PERSONAL_ACCESS_TOKEN |
 
 ---
 
@@ -891,6 +892,13 @@ VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 VITE_DEMO_MODE=true   # Cliente Supabase simulado
 ```
 
+**Vercel — variables por entorno** (configuradas vía API, no dashboard):
+- `VITE_GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_SECRET`:
+  - `production` → cliente PROD (`...7cqaibtabnrm7evqfv4ak2tri8f63us7`)
+  - `development` + `preview` → cliente DEV (`...qk668fv00cpto430petb79c3h4tkvla6`)
+- `VITE_SUPABASE_ANON_KEY`: usar formato nuevo `sb_publishable_*` (legacy JWTs siguen funcionando)
+- **NUNCA** exponer service role key con prefijo `VITE_` — solo en Edge Functions
+
 **Edge Functions (Supabase Secrets)**:
 ```bash
 BREVO_API_KEY, BREVO_SMTP_HOST, BREVO_SMTP_PORT, BREVO_SMTP_USER, BREVO_SMTP_PASSWORD
@@ -898,6 +906,9 @@ WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID
 STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
 AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION  # Para SMS
 SUPPORT_EMAIL
+# Scripts locales (NO commitear):
+SUPABASE_ACCESS_TOKEN   # sbp_* token de management API
+SUPABASE_SERVICE_ROLE_KEY  # Solo para scripts, nunca en frontend
 ```
 
 ---
@@ -925,8 +936,10 @@ SUPPORT_EMAIL
 
 ### Seguridad
 - **RLS en todas las tablas**: sin excepciones
-- **Variables privadas SOLO en Edge Functions**: nunca en frontend
+- **Variables privadas SOLO en Edge Functions**: nunca en frontend con prefijo `VITE_`
 - **Payment gateways**: reciben el cliente Supabase como parámetro del constructor
+- **Scripts con tokens**: usar `process.env.SUPABASE_ACCESS_TOKEN` y `process.env.SUPABASE_SERVICE_ROLE_KEY`, jamás hardcodear — GitGuardian escanea todo el historial de PRs
+- **Google OAuth**: dos clientes Google separados (DEV `...qk668...`, PROD `...7cqai...`). Supabase DEV tiene `site_url=https://dev.gestabiz.com`, PROD tiene `site_url=https://gestabiz.com`
 
 ### UI
 - **Tailwind 4**: variables CSS semánticas (`bg-background`, `text-foreground`, `border-border`, `bg-card`)
@@ -953,7 +966,7 @@ SUPPORT_EMAIL
 | **MercadoPago** | Pagos LATAM | MERCADOPAGO_* |
 | **AWS SNS** | SMS (opcional) | AWS_* |
 | **WhatsApp Business API** | Mensajes WhatsApp | WHATSAPP_* |
-| **Google Calendar API** | Sync de calendarios | VITE_GOOGLE_CLIENT_ID |
+| **Google OAuth / Calendar API** | Auth social + Sync calendarios | VITE_GOOGLE_CLIENT_ID, VITE_GOOGLE_CLIENT_SECRET (por entorno en Vercel) |
 | **Google Analytics 4** | Analytics GDPR-compliant | VITE_GA_MEASUREMENT_ID |
 | **Sentry** | Error tracking (plan gratuito) | Configurado en vite.config.ts |
 
@@ -967,9 +980,9 @@ SUPPORT_EMAIL
 - **Deploy**: Vercel (configurado en `vercel.json`)
 - **Supabase DEV**: `dkancockzvcqorqbwtyh` (proyecto original, data de prueba)
 - **Supabase PROD**: `emknatoknbomvmyumqju` (proyecto nuevo, limpio)
-- **Versión**: 0.0.51
+- **Versión**: 0.0.52
 - **Fase**: BETA completada — no se agregan nuevos flujos funcionales; solo bugs, optimizaciones y features puntuales solicitadas
 
 ---
 
-*Última actualización: Marzo 2026 — Claude Code*
+*Última actualización: 31 Mar 2026 — Claude Code*

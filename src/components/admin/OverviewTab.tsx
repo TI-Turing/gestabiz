@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Copy,
   ExternalLink,
+  QrCode,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { usePreferredLocation } from '@/hooks/usePreferredLocation'
 import PublicBusinessProfile from '@/pages/PublicBusinessProfile'
+import { BusinessQRModal } from './BusinessQRModal'
 import { toast } from 'sonner'
 
 interface OverviewTabProps {
@@ -46,6 +48,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
   const [stats, setStats] = useState<Stats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showPublicProfile, setShowPublicProfile] = useState(false)
+  const [showQRModal, setShowQRModal] = useState(false)
   const navigate = useNavigate()
   const { preferredLocationId } = usePreferredLocation(business.id)
 
@@ -553,6 +556,17 @@ export function OverviewTab({ business }: OverviewTabProps) {
                   <ExternalLink className="h-4 w-4" />
                 </Button>
               )}
+              {business.slug && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowQRModal(true)}
+                  className="gap-1.5"
+                >
+                  <QrCode className="h-4 w-4" />
+                  Generar QR
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -607,6 +621,12 @@ export function OverviewTab({ business }: OverviewTabProps) {
           </div>
         </CardContent>
       </Card>
+
+      <BusinessQRModal
+        business={business}
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+      />
     </div>
   )
 }

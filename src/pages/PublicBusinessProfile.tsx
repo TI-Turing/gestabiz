@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Phone, Mail, Globe, Star, MessageCircle, Sparkles, Heart, Dumbbell, BookOpen, Briefcase, Home, Car, UtensilsCrossed, PawPrint, Laptop, Palette, HardHat, MoreHorizontal } from 'lucide-react';
 import { useBusinessProfileData } from '@/hooks/useBusinessProfileData';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { ReviewList } from '@/components/reviews/ReviewList';
 import ChatWithAdminModal from '@/components/business/ChatWithAdminModal';
 import { useAnalytics } from '@/hooks/useAnalytics';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
 const categoryIconMap: Record<string, LucideIcon> = {
@@ -33,6 +33,9 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
   const routeParams = useParams<{ slug: string }>();
   const slug = slugProp ?? routeParams.slug;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const autoBook = searchParams.get('book') === 'true';
+  const autoEmployeeId = searchParams.get('employeeId') ?? undefined;
   const { user } = useAuth();
   const analytics = useAnalytics();
   const [showChatModal, setShowChatModal] = useState(false);
@@ -70,6 +73,17 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
     ogDescription: pageDescription,
     canonical: canonicalUrl,
   });
+
+  // Auto-open booking wizard when ?book=true (QR code flow)
+  const autoBookTriggered = useRef(false);
+  useEffect(() => {
+    if (autoBook && business && !isLoading && !autoBookTriggered.current) {
+      autoBookTriggered.current = true;
+      handleBookAppointment(undefined, undefined, autoEmployeeId);
+    }
+  // handleBookAppointment is stable within the render cycle; autoBook/business/isLoading are the real deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoBook, business, isLoading]);
 
   // Track profile view when business data loads
   useEffect(() => {
