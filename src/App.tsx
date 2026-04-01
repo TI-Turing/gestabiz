@@ -62,6 +62,7 @@ const LandingPage = lazy(() => import('@/components/landing/LandingPage').then(m
 const AuthScreen = lazy(() => import('@/components/auth/AuthScreen'))
 const MainApp = lazy(() => import('@/components/MainApp'))
 const PublicBusinessProfile = lazy(() => import('@/pages/PublicBusinessProfile'))
+const PublicEmployeeProfile = lazy(() => import('@/pages/PublicEmployeeProfile'))
 const AppointmentConfirmation = lazy(() => import('@/pages/AppointmentConfirmation'))
 const AppointmentCancellation = lazy(() => import('@/pages/AppointmentCancellation'))
 const GoogleCalendarCallback = lazy(() => import('@/pages/GoogleCalendarCallback'))
@@ -133,6 +134,7 @@ function AppRoutes() {
       
       {/* Perfil público de negocio - accesible sin autenticación */}
       <Route path="/negocio/:slug" element={<PublicBusinessProfile />} />
+      <Route path="/profesional/:employeeId" element={<PublicEmployeeProfile />} />
 
       {/* SEO: Landing pages por vertical de industria */}
       <Route path="/para/:vertical" element={<VerticalLandingPage />} />

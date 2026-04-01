@@ -18,6 +18,19 @@ Se usa junto con el sistema `claude-mem` (MCP) para persistencia cross-sesión d
 - [[Fase 2 - Contabilidad, DIAN y App Móvil]] — Módulo contable completo, facturación electrónica DIAN, app móvil
 - [[Fase 3 - IA, Automatización y Agentes]] — Agentes LLM, procesos automáticos, AI marketing assistant
 - [[Ideas Futuras - Social Media MCP y Marketing IA]] — MCP para redes sociales, publicación automática con IA
+- [[QR-con-branding-Gestabiz]] — QR con icono de Gestabiz centrado + logo y texto "Reserva tu próxima cita aquí"
+
+## Sesiones Claude
+
+- [[2026-03-31-infra-oauth-ci]] — Fix widget estado, secretos GitGuardian, CI, Google OAuth DEV/PROD, Vercel env vars
+
+## Decisiones Arquitectónicas
+
+- [[google-oauth-separacion-entornos]] — Dos clientes Google OAuth separados para DEV y PROD
+
+## Bugs Conocidos
+
+- [[secretos-en-scripts-gitguardian]] — Secretos en historial de git (acción pendiente: rotar PROD service role key)
 
 ## Cómo usar con Claude Code
 

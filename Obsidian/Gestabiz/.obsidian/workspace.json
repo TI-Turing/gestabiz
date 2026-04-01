@@ -20,13 +20,7 @@
               "icon": "lucide-file",
               "title": "Bienvenido"
             }
-          }
-        ]
-      },
-      {
-        "id": "c2f1a5970f975d52",
-        "type": "tabs",
-        "children": [
+          },
           {
             "id": "b98a0b193b599404",
             "type": "leaf",
@@ -37,7 +31,8 @@
               "title": "Vista gráfica"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -198,14 +193,17 @@
   },
   "active": "b98a0b193b599404",
   "lastOpenFiles": [
-    "Índice.md.tmp.7684.1774385592267",
+    "Bienvenido.md",
+    "cree un enlace.md",
+    "Features/QR-con-branding-Gestabiz.md",
     "Features/Ideas Futuras - Social Media MCP y Marketing IA.md",
+    "Índice.md.tmp.26608.1774534841419",
+    "Índice.md.tmp.7684.1774385592267",
     "Features/Fase 3 - IA, Automatización y Agentes.md",
     "Features/Fase 2 - Contabilidad, DIAN y App Móvil.md",
     "Features",
     "Índice.md",
     "Índice.md.tmp.7684.1774383963800",
-    "Bienvenido.md",
     "Bugs",
     "Decisiones",
     "Sesiones Claude"

@@ -286,8 +286,8 @@ export function UnifiedLayout({
 
   return (
     <div ref={rootRef} className="min-h-screen bg-background flex overflow-x-hidden">
-      {/* Sidebar - Full Height & Fixed - Collapsible - Admin only */}
-      {currentRole === 'admin' && <aside
+      {/* Sidebar - Full Height & Fixed - Collapsible */}
+      <aside
         className={cn(
           "fixed left-0 top-0 h-screen bg-card border-r border-border z-[100] transition-all duration-200 flex flex-col",
           sidebarCollapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W,
@@ -478,10 +478,10 @@ export function UnifiedLayout({
             <PanelLeftClose className="h-4 w-4" />
           )}
         </button>
-      </aside>}
+      </aside>
 
-      {/* Overlay for mobile sidebar - admin only */}
-      {currentRole === 'admin' && sidebarOpen && (
+      {/* Overlay for mobile sidebar */}
+      {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-[95] lg:hidden"
           onClick={() => setSidebarOpen(false)}
@@ -491,12 +491,12 @@ export function UnifiedLayout({
       {/* Right Side: Header + Content */}
       <div className={cn(
         "flex-1 flex flex-col min-h-screen overflow-y-auto transition-[margin] duration-200",
-        currentRole === 'admin' && (sidebarCollapsed ? SIDEBAR_COLLAPSED_ML : SIDEBAR_EXPANDED_ML)
+        sidebarCollapsed ? SIDEBAR_COLLAPSED_ML : SIDEBAR_EXPANDED_ML
       )}>
         {/* Header - Compact responsive height */}
         <header className={cn(
           "bg-card border-b border-border fixed inset-x-0 top-0 z-[90] sm:fixed sm:left-0 sm:right-0 sm:top-0 shrink-0 transition-[left] duration-200",
-          currentRole === 'admin' && (sidebarCollapsed ? SIDEBAR_COLLAPSED_LEFT : SIDEBAR_EXPANDED_LEFT)
+          sidebarCollapsed ? SIDEBAR_COLLAPSED_LEFT : SIDEBAR_EXPANDED_LEFT
         )}>
         {/* Mobile top bar: logo abre el menú izquierdo + botón menú derecho */}
         <div className="px-3 py-2 flex items-center justify-between sm:hidden min-h-[48px]">
