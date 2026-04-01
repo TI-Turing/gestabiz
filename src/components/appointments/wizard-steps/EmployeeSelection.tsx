@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import * as Sentry from '@sentry/react'
 import { Loader2, Users } from 'lucide-react';
-import supabase from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import UserProfile from '@/components/user/UserProfile';
 import { EmployeeCard } from '@/components/cards/EmployeeCard';
+import { useWizardEmployees } from '@/hooks/useWizardEmployees';
 
 interface Employee {
   id: string;
@@ -35,165 +35,59 @@ export function EmployeeSelection({
   onSelectEmployee,
   isPreselected = false
 }: Readonly<EmployeeSelectionProps>) {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
   const [profileEmployeeId, setProfileEmployeeId] = useState<string | null>(null);
   const { user } = useAuth(); // Usuario actual logueado
 
+  // ✅ Fase 3 COMPLETADA - EmployeeSelection Refactorizado:
+  // Antes: 4 queries separadas (employee_services, business_employees, business_roles, reviews)
+  // Ahora: 1 RPC consolidada vía useWizardEmployees hook (80% reducción)
+  // Hook carga: employees, expertise_level, setup_completed, supervisor_name, ratings
+  // useWizardEmployees hook consolida: employee_services, business_employees, business_roles, reviews en 1 RPC
+  const { employees: rpcEmployees, isLoading, error: hookError } = useWizardEmployees(
+    businessId,
+    serviceId,
+    locationId
+  );
+
+  // Filtro "bookable": empleados listos para recibir citas
+  // (setup_completed=true OR role IN (manager, owner) con supervisor asignado)
+  const employees = useMemo<Employee[]>(() => {
+    if (!rpcEmployees) return [];
+    
+    try {
+      return rpcEmployees
+        .filter(emp => {
+          // Solo empleados con setup completo O managers/owners (grandfathered)
+          const canBook = emp.setup_completed || ['manager', 'owner'].includes(emp.role);
+          // Solo empleados con supervisor asignado O si ya tiene supervisor_name
+          const hasSupervisor = emp.supervisor_name && emp.supervisor_name !== 'No asignado';
+          return canBook || hasSupervisor;
+        })
+        .map(emp => ({
+          id: emp.id,
+          email: emp.email,
+          full_name: emp.full_name,
+          role: emp.role,
+          avatar_url: emp.avatar_url,
+          expertise_level: emp.expertise_level,
+          average_rating: emp.avg_rating,
+          total_reviews: emp.total_reviews,
+        } as Employee));
+    } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { 
+        tags: { component: 'EmployeeSelection', location: 'useMemo filter' } 
+      });
+      return [];
+    }
+  }, [rpcEmployees]);
+
   useEffect(() => {
-    /**
-     * NUEVA LÓGICA: Filtrar empleados que:
-     * 1. Ofrezcan el servicio seleccionado (employee_services)
-     * 2. Estén asignados a la sede seleccionada o sin sede específica
-     * 3. Estén activos y aprobados
-     * 4. Incluir nivel de experiencia y calificaciones
-     */
-    const fetchEmployeesForService = async () => {
-      if (!businessId || !locationId || !serviceId) {
-        setEmployees([]);
-        setLoading(false);
-        return;
-      }
+    if (hookError) {
+      toast.error(`Error al cargar profesionales: ${hookError}`);
+    }
+  }, [hookError]);
 
-      setLoading(true);
-      try {
-        // Consulta de employee_services para obtener empleados que ofrecen el servicio
-        // en la sede seleccionada, ordenados por expertise_level (mayor primero)
-        const { data: employeeServices, error: servicesError } = await supabase
-          .from('employee_services')
-          .select(`
-            employee_id,
-            expertise_level,
-            employee:profiles!employee_services_employee_id_fkey(
-              id,
-              email,
-              full_name,
-              role,
-              avatar_url
-            )
-          `)
-          .eq('service_id', serviceId)
-          .eq('location_id', locationId)
-          .eq('business_id', businessId)
-          .eq('is_active', true)
-          .order('expertise_level', { ascending: false });
-
-        if (servicesError) {
-          toast.error(`Error al cargar profesionales: ${servicesError.message}`);
-          setEmployees([]);
-          return;
-        }
-
-        if (!employeeServices || employeeServices.length === 0) {
-          setEmployees([]);
-          return;
-        }
-
-        // Obtener IDs de empleados (usando 'any' para evitar conflictos de tipos con Supabase)
-        const employeeIds = employeeServices
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((es: any) => es.employee?.id)
-          .filter((id: string | undefined): id is string => id !== null && id !== undefined);
-
-        if (employeeIds.length === 0) {
-          setEmployees([]);
-          return;
-        }
-
-        // --- FILTRO DE CONFIGURACIÓN OBLIGATORIA ---
-        // Solo empleados con setup completo pueden recibir citas:
-        // 1. setup_completed = true  (se marca al asignar supervisor)
-        // 2. role IN (manager, owner)  (grandfathered / siempre listos)
-        // 3. tiene supervisor asignado en business_roles (reports_to IS NOT NULL)
-        // Tipo local para incluir el campo setup_completed (recién agregado a la BD)
-        interface BEWithSetup { employee_id: string | null; role: string | null; setup_completed: boolean }
-
-        const [{ data: beSetupRaw }, { data: brWithSupervisor }] = await Promise.all([
-          supabase
-            .from('business_employees')
-            .select('employee_id, role, setup_completed')
-            .eq('business_id', businessId)
-            .eq('is_active', true)
-            .in('employee_id', employeeIds),
-          supabase
-            .from('business_roles')
-            .select('user_id')
-            .eq('business_id', businessId)
-            .not('reports_to', 'is', null)
-            .in('user_id', employeeIds),
-        ]);
-
-        const beSetup = (beSetupRaw ?? []) as BEWithSetup[];
-        const withSupervisorSet = new Set(brWithSupervisor?.map(r => r.user_id) || []);
-        const bookableIds = new Set<string>([
-          ...beSetup
-            .filter(e => e.setup_completed || ['manager', 'owner'].includes(e.role || '') || withSupervisorSet.has(e.employee_id ?? ''))
-            .map(e => e.employee_id ?? '')
-            .filter(id => id !== ''),
-          ...Array.from(withSupervisorSet),
-        ]);
-
-        if (bookableIds.size === 0) {
-          setEmployees([]);
-          return;
-        }
-        // --- FIN FILTRO ---
-
-        // Obtener calificaciones promedio de reviews para cada empleado
-        const { data: reviews } = await supabase
-          .from('reviews')
-          .select('employee_id, rating')
-          .in('employee_id', employeeIds)
-          .eq('is_visible', true);
-
-        // Calcular rating promedio y total reviews por empleado
-        const reviewStats = reviews?.reduce((acc: Record<string, { avg: number; count: number }>, review) => {
-          const empId = review.employee_id;
-          if (!empId) return acc;
-          
-          if (!acc[empId]) {
-            acc[empId] = { avg: 0, count: 0 };
-          }
-          acc[empId].avg += review.rating;
-          acc[empId].count += 1;
-          return acc;
-        }, {} as Record<string, { avg: number; count: number }>);
-
-        // Mapear empleados con expertise y ratings
-        const mappedEmployees: Employee[] = employeeServices
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((es: any) => {
-            if (!es.employee) return null;
-            
-            const stats = reviewStats?.[es.employee_id];
-            return {
-              id: es.employee.id,
-              email: es.employee.email,
-              full_name: es.employee.full_name,
-              role: es.employee.role,
-              avatar_url: es.employee.avatar_url,
-              expertise_level: es.expertise_level,
-              average_rating: stats ? Math.round((stats.avg / stats.count) * 10) / 10 : 0,
-              total_reviews: stats?.count || 0,
-            } as Employee;
-          })
-          .filter((emp): emp is Employee => emp !== null && bookableIds.has(emp.id));
-
-        setEmployees(mappedEmployees);
-      } catch (error) {
-        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EmployeeSelection' } })
-        const message = error instanceof Error ? error.message : 'Error inesperado';
-        toast.error(`Error: ${message}`);
-        setEmployees([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEmployeesForService();
-  }, [businessId, serviceId, locationId]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
