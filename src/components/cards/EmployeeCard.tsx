@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Star, Check, Info, Ban } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -127,13 +127,6 @@ export function EmployeeCard({
       </div>
     );
   }
-  const initials = (employee.full_name || 'U')
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
   const rating = employee.average_rating ?? 5;
   const reviewCount = employee.total_reviews ?? 0;
 
@@ -177,14 +170,17 @@ export function EmployeeCard({
 
       {/* Avatar y nombre */}
       <div className="flex flex-col items-center mb-3">
-        <Avatar className={cn('w-20 h-20 mb-3 border-2', isSelected ? 'border-primary' : 'border-border')}>
-          <AvatarImage src={employee.avatar_url || undefined} alt={employee.full_name || 'Profesional'} />
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
+        <ProfileAvatar
+          src={employee.avatar_url}
+          alt={employee.full_name || 'Profesional'}
+          fallbackText={employee.full_name || undefined}
+          size="xl"
+          className={cn('mb-3 border-2', isSelected ? 'border-primary' : 'border-border')}
+        />
         <h4 className="text-lg font-semibold text-foreground text-center">
           {employee.full_name || 'Profesional'}
         </h4>
-        {employee.email && (
+        {!readOnly && employee.email && (
           <p className="text-xs text-muted-foreground text-center mt-0.5 truncate max-w-full">{employee.email}</p>
         )}
       </div>

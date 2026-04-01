@@ -5,10 +5,12 @@
  * y los handlers de navegación (next, back, close).
  */
 import React, { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useEmployeeBusinesses } from '@/hooks/useEmployeeBusinesses'
 import supabase from '@/lib/supabase'
+import { QUERY_CONFIG } from '@/lib/queryConfig'
 import { logger } from '@/lib/logger'
 import type { WizardData, WizardBusiness, WizardEmployee, AppointmentWizardProps } from './wizard-types'
 import type { Service, Location, Appointment } from '@/types/types'
@@ -113,25 +115,38 @@ export function useWizardState({
     notes: '',
   })
 
+  // ── updateWizardData (early definition for use in queries below) ────────────
+  const updateWizardData = React.useCallback((data: Partial<WizardData>) => {
+    setWizardData(prev => ({ ...prev, ...data }))
+  }, [])
+
   const { businesses: employeeBusinesses, isEmployeeOfAnyBusiness } = useEmployeeBusinesses(
     wizardData.employeeId,
     true,
   )
 
   // When wizard opens with a businessId prop but business object not yet loaded,
-  // fetch it so canProceed() can detect resource_model for resource-based businesses
+  // fetch it with React Query so canProceed() can detect resource_model for resource-based businesses
+  const { data: fetchedBusiness } = useQuery({
+    queryKey: QUERY_CONFIG.KEYS.BUSINESS(businessId || ''),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('businesses')
+        .select('id, name, description, resource_model')
+        .eq('id', businessId!)
+        .single();
+      return data as WizardBusiness | null;
+    },
+    enabled: !!businessId && !wizardData.business,
+    ...QUERY_CONFIG.STABLE,
+  });
+
+  // Update wizardData when business is fetched via React Query
   React.useEffect(() => {
-    if (!businessId || wizardData.business) return
-    supabase
-      .from('businesses')
-      .select('id, name, description, resource_model')
-      .eq('id', businessId)
-      .single()
-      .then(({ data }) => {
-        if (data) updateWizardData({ business: data as WizardBusiness })
-      })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [businessId])
+    if (fetchedBusiness && !wizardData.business) {
+      updateWizardData({ business: fetchedBusiness });
+    }
+  }, [fetchedBusiness, wizardData.business, updateWizardData])
 
   const initiatedFromEmployeeProfile = Boolean(preselectedEmployeeId)
   const needsEmployeeBusinessSelection =
@@ -253,11 +268,6 @@ export function useWizardState({
     if (currentStep === getStepNumber('confirmation')) return true
     return false
   }
-
-  // ── updateWizardData ────────────────────────────────────────────────────────
-  const updateWizardData = React.useCallback((data: Partial<WizardData>) => {
-    setWizardData(prev => ({ ...prev, ...data }))
-  }, [])
 
   // ── Navigation ──────────────────────────────────────────────────────────────
   const handleNext = async () => {

@@ -12,6 +12,8 @@ interface ServiceSelectionProps {
   readonly preloadedServices?: Service[]; // Datos pre-cargados
   readonly preselectedServiceId?: string | null; // ID real del servicio preseleccionado
   readonly isPreselected?: boolean; // Compatibilidad existente
+  /** Cuando está presente, solo muestra los servicios que ofrece este empleado */
+  readonly filterByEmployeeId?: string;
 }
 
 export function ServiceSelection({
@@ -21,6 +23,7 @@ export function ServiceSelection({
   preloadedServices,
   preselectedServiceId,
   isPreselected = false,
+  filterByEmployeeId,
 }: ServiceSelectionProps) {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(!preloadedServices);
@@ -28,35 +31,44 @@ export function ServiceSelection({
   const { t } = useLanguage();
 
   const loadServices = useCallback(async () => {
-    // Si ya tenemos datos pre-cargados, usarlos (MÁS RÁPIDO)
-    if (preloadedServices) {
-      setServices(preloadedServices);
-      setLoading(false);
-      return;
-    }
-
-    // Si no, hacer la consulta tradicional
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .eq('business_id', businessId)
-        .eq('is_active', true);
+      // Base services query
+      let allServices: Service[];
+      if (preloadedServices) {
+        allServices = preloadedServices;
+      } else {
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+          .eq('business_id', businessId)
+          .eq('is_active', true);
+        if (error) throw error;
+        allServices = ((data as unknown[] | null) || []).map((s: any) => ({
+          ...s,
+          duration: s?.duration ?? s?.duration_minutes ?? 0,
+        })) as Service[];
+      }
 
-      if (error) throw error;
-      // Normalizar duración para soportar esquemas con `duration_minutes`
-      const normalized = ((data as unknown[] | null) || []).map((s: any) => ({
-        ...s,
-        duration: s?.duration ?? s?.duration_minutes ?? 0,
-      })) as Service[];
-      setServices(normalized);
+      // If filtering by employee, restrict to services that employee offers
+      if (filterByEmployeeId) {
+        const { data: empSvcRows } = await supabase
+          .from('employee_services')
+          .select('service_id')
+          .eq('employee_id', filterByEmployeeId)
+          .eq('business_id', businessId)
+          .eq('is_active', true);
+        const allowedIds = new Set((empSvcRows ?? []).map((r: any) => r.service_id));
+        allServices = allServices.filter(s => allowedIds.has(s.id));
+      }
+
+      setServices(allServices);
     } catch {
       setServices([]);
     } finally {
       setLoading(false);
     }
-  }, [businessId, preloadedServices]);
+  }, [businessId, preloadedServices, filterByEmployeeId]);
 
   useEffect(() => {
     loadServices();

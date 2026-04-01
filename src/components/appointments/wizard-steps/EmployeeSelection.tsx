@@ -233,7 +233,16 @@ export function EmployeeSelection({
           return (
             <EmployeeCard
               key={employee.id}
-              employee={employee}
+              employeeId={employee.id}
+              initialData={{
+                id: employee.id,
+                full_name: employee.full_name,
+                email: employee.email,
+                role: employee.role,
+                avatar_url: employee.avatar_url,
+                average_rating: employee.average_rating,
+                total_reviews: employee.total_reviews,
+              }}
               isSelected={isSelected}
               onSelect={(emp) => {
                 if (isSelf) {
