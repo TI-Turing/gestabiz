@@ -25,6 +25,7 @@ interface WizardStepContentProps {
   preselectedServiceId?: string
   preselectedLocationId?: string
   preselectedEmployeeId?: string
+  filterByEmployeeId?: string
   businessId?: string
   userId?: string
   appointmentToEdit?: Appointment | null
@@ -48,6 +49,7 @@ export function WizardStepContent({
   preselectedServiceId,
   preselectedLocationId,
   preselectedEmployeeId,
+  filterByEmployeeId,
   businessId,
   userId,
   appointmentToEdit,
@@ -101,6 +103,7 @@ export function WizardStepContent({
           onSelectLocation={(location) => updateWizardData({ locationId: location.id, location })}
           preloadedLocations={dataCache.locations as Parameters<typeof LocationSelection>[0]['preloadedLocations']}
           isPreselected={!!preselectedLocationId}
+          filterByEmployeeId={filterByEmployeeId}
         />
       )}
 
@@ -113,6 +116,7 @@ export function WizardStepContent({
           preloadedServices={dataCache.services as Parameters<typeof ServiceSelection>[0]['preloadedServices']}
           isPreselected={!!preselectedServiceId}
           preselectedServiceId={preselectedServiceId}
+          filterByEmployeeId={filterByEmployeeId}
         />
       )}
 
