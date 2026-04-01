@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import * as Sentry from '@sentry/react'
-import { Search, Building2, Briefcase, Tag, User, ChevronDown, Loader2 } from 'lucide-react'
+import { Search, Building2, Briefcase, User, ChevronDown, Loader2 } from 'lucide-react'
 import { MapPin } from '@phosphor-icons/react'
 import {
   DropdownMenu,
@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useKV } from '@/lib/useKV'
 
-export type SearchType = 'services' | 'businesses' | 'categories' | 'users'
+export type SearchType = 'services' | 'businesses' | 'users'
 
 interface SearchResult {
   id: string
@@ -36,7 +36,6 @@ interface SearchBarProps {
 const searchTypeIconConfig = {
   services: Briefcase,
   businesses: Building2,
-  categories: Tag,
   users: User
 }
 
@@ -166,24 +165,7 @@ export function SearchBar({ onResultSelect, onViewMore, className, autoFocus }: 
           break
         }
 
-        case 'categories': {
-          const { data: categoriesData, error } = await supabase
-            .from('business_categories')
-            .select('id, name, description')
-            .ilike('name', `%${term}%`)
-            .eq('is_active', true)
-            .limit(5)
 
-          if (error) throw error
-
-          data = (categoriesData || []).map((category: any) => ({
-            id: category.id,
-            name: category.name,
-            type: 'categories' as SearchType,
-            subtitle: category.description || t('search.results.serviceCategory')
-          }))
-          break
-        }
 
         case 'users': {
           // Search for users who are employees (have services)
