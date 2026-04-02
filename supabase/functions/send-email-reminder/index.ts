@@ -5,6 +5,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 import { escapeHtml } from '../_shared/html.ts'
+import { sendBrevoEmail } from '../_shared/brevo.ts'
 import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
 
 // Initialize Sentry
@@ -40,9 +41,10 @@ serve(async (req) => {
     const { data: appointment, error: apptErr } = await supabase
       .from('appointments')
       .select(`
-        id, title, description, notes, start_time, business_id,
-        client:profiles!client_id(id, email, full_name),
-        location:locations(id, name, address)
+        id, notes, client_notes, start_time, business_id,
+        service:services!appointments_service_id_fkey(id, name),
+        client:profiles!appointments_client_id_fkey(id, email, full_name),
+        location:locations!appointments_location_id_fkey(id, name, address)
       `)
       .eq('id', appointmentId)
       .single()
@@ -87,9 +89,9 @@ serve(async (req) => {
     const formattedTime = appointmentDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
 
     // Escapar todos los datos de usuario antes de insertar en HTML
-    const safeTitle = escapeHtml(appointment.title ?? 'Tu cita')
+    const safeTitle = escapeHtml((appointment.service as any)?.name ?? 'Tu cita')
     const safeLocationName = escapeHtml(appointment.location?.name)
-    const safeDescription = escapeHtml(appointment.description)
+    const safeDescription = escapeHtml(appointment.client_notes ?? appointment.notes)
     const safeNotes = escapeHtml(appointment.notes)
 
     const emailSubject = `Recordatorio: ${safeTitle}`
@@ -127,33 +129,24 @@ serve(async (req) => {
       </html>
     `
 
-    const resendApiKey = Deno.env.get('RESEND_API_KEY')
-    if (!resendApiKey) throw new Error('RESEND_API_KEY not configured')
-
     const toEmail = appointment.client?.email
     if (!toEmail) throw new Error('Client email not available')
 
-    const emailResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Gestabiz <noreply@your-domain.com>',
-        to: [toEmail],
-        subject: emailSubject,
-        html: emailBody,
-      }),
+    const brevoResult = await sendBrevoEmail({
+      to: toEmail,
+      subject: emailSubject,
+      htmlBody: emailBody,
+      textBody: emailSubject,
+      fromEmail: Deno.env.get('FROM_EMAIL') || Deno.env.get('BREVO_SMTP_USER') || 'noreply@gestabiz.app',
+      fromName: 'Gestabiz',
     })
-    if (!emailResponse.ok) {
-      const errText = await emailResponse.text()
-      throw new Error(`Failed to send email: ${errText}`)
+    if (!brevoResult.success) {
+      throw new Error(`Failed to send email: ${brevoResult.error}`)
     }
 
     await supabase
       .from('notifications')
-      .update({ status: 'sent', sent_at: new Date().toISOString() })
+      .update({ status: 'sent', sent_via_email: true })
       .eq('id', notificationId)
 
     return new Response(JSON.stringify({ success: true }), {
@@ -178,7 +171,7 @@ serve(async (req) => {
     } catch (_) {}
 
     console.error('Error sending email reminder:', error)
-    captureEdgeFunctionError(_ as Error, { functionName: 'send-email-reminder' })
+    captureEdgeFunctionError(error as Error, { functionName: 'send-email-reminder' })
     await flushSentry()
     return new Response(JSON.stringify({ success: false, error: 'Internal server error' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -19,6 +19,22 @@ import { hasAnalyticsConsent } from '@/hooks/useAnalytics'
 import { CookieConsent } from '@/components/CookieConsent'
 import { AlertProvider } from '@/components/ui/custom-alert'
 
+const toSentryError = (error: unknown): Error => {
+  if (error instanceof Error) {
+    return error
+  }
+
+  if (typeof error === 'object' && error !== null) {
+    const maybeMessage = (error as { message?: unknown }).message
+    if (typeof maybeMessage === 'string' && maybeMessage.trim().length > 0) {
+      return new Error(maybeMessage)
+    }
+    return new Error(`Non-Error object captured: ${JSON.stringify(error)}`)
+  }
+
+  return new Error(String(error))
+}
+
 // Permission Testing Page (dev only - tree-shaken in production)
 const PermissionTestingPage = import.meta.env.DEV 
   ? lazy(() => import('@/components/admin/permissions/PermissionTestingPage').then(m => ({ default: m.PermissionTestingPage })))
@@ -33,18 +49,18 @@ const queryClient = new QueryClient({
       const errMsg = error instanceof Error ? error.message : String(error)
       const isExpected = errMsg.includes('JWT') || errMsg.includes('not authenticated') || errMsg.includes('PGRST116')
       if (!isExpected) {
-        Sentry.captureException(error, {
+        Sentry.captureException(toSentryError(error), {
           tags: { source: 'react-query', type: 'query' },
-          extra: { queryKey: JSON.stringify(query.queryKey) },
+          extra: { queryKey: JSON.stringify(query.queryKey), rawError: error },
         })
       }
     },
   }),
   mutationCache: new MutationCache({
     onError: (error, _variables, _context, mutation) => {
-      Sentry.captureException(error, {
+      Sentry.captureException(toSentryError(error), {
         tags: { source: 'react-query', type: 'mutation' },
-        extra: { mutationKey: JSON.stringify(mutation.options.mutationKey) },
+        extra: { mutationKey: JSON.stringify(mutation.options.mutationKey), rawError: error },
       })
     },
   }),

@@ -40,14 +40,14 @@ serve(async (req) => {
     const [{ data: appts24h, error: err24 }, { data: appts1h, error: err1 }] = await Promise.all([
       supabase
         .from('appointments')
-        .select('id, title, client_id, user_id')
-        .in('status', ['confirmed', 'scheduled'])
+        .select('id, client_id')
+        .in('status', ['confirmed', 'pending'])
         .gte('start_time', windowStart24h.toISOString())
         .lte('start_time', windowEnd24h.toISOString()),
       supabase
         .from('appointments')
-        .select('id, title, client_id, user_id')
-        .in('status', ['confirmed', 'scheduled'])
+        .select('id, client_id')
+        .in('status', ['confirmed', 'pending'])
         .gte('start_time', windowStart1h.toISOString())
         .lte('start_time', windowEnd1h.toISOString()),
     ])
@@ -111,8 +111,8 @@ serve(async (req) => {
 
     // Build notifications for 24h window
     for (const appt of appts24h ?? []) {
-      const userId = appt.client_id ?? appt.user_id ?? null
-      const msg = `Tu cita es mañana: ${appt.title ?? ''}`
+      const userId = appt.client_id ?? null
+      const msg = 'Tu cita es manana. Revisa los detalles en tu cuenta de Gestabiz.'
       addIfNew(appt.id, userId, 'reminder_24h', 'Recordatorio de cita (24h)', msg, 'email')
       if (whatsappConfigured) addIfNew(appt.id, userId, 'reminder_24h', 'Recordatorio de cita (24h)', msg, 'whatsapp')
       if (smsConfigured) addIfNew(appt.id, userId, 'reminder_24h', 'Recordatorio de cita (24h)', msg, 'sms')
@@ -120,8 +120,8 @@ serve(async (req) => {
 
     // Build notifications for 1h window
     for (const appt of appts1h ?? []) {
-      const userId = appt.client_id ?? appt.user_id ?? null
-      const msg = `Tu cita es en 1 hora: ${appt.title ?? ''}`
+      const userId = appt.client_id ?? null
+      const msg = 'Tu cita es en 1 hora. Revisa los detalles en tu cuenta de Gestabiz.'
       addIfNew(appt.id, userId, 'reminder_1h', 'Recordatorio de cita (1h)', msg, 'email')
       if (whatsappConfigured) addIfNew(appt.id, userId, 'reminder_1h', 'Recordatorio de cita (1h)', msg, 'whatsapp')
       if (smsConfigured) addIfNew(appt.id, userId, 'reminder_1h', 'Recordatorio de cita (1h)', msg, 'sms')

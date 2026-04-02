@@ -62,6 +62,26 @@ const catalogCache: {
   healthInsurance?: HealthInsurance[];
 } = {};
 
+const toErrorMessage = (err: unknown, fallback: string): string => {
+  if (err instanceof Error && err.message) {
+    return err.message;
+  }
+
+  if (typeof err === 'object' && err !== null) {
+    const candidate = (err as { message?: unknown }).message;
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      return candidate;
+    }
+    return JSON.stringify(err);
+  }
+
+  if (typeof err === 'string' && err.trim().length > 0) {
+    return err;
+  }
+
+  return fallback;
+};
+
 // =====================================================
 // HOOK: useCountries
 // =====================================================
@@ -93,8 +113,9 @@ export function useCountries() {
         setCountries(data || []);
       } catch (err) {
         console.error('Error fetching countries:', err);
-        void logger.error('useCatalogs: Error fetching countries:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
-        setError(err instanceof Error ? err.message : 'Error al cargar países');
+        const message = toErrorMessage(err, 'Error al cargar paises');
+        void logger.error('useCatalogs: Error fetching countries', err instanceof Error ? err : new Error(message), { component: 'useCatalogs' })
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -147,8 +168,9 @@ export function useRegions(countryId?: string) {
         setRegions(data || []);
       } catch (err) {
         console.error('Error fetching regions:', err);
-        void logger.error('useCatalogs: Error fetching regions:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
-        setError(err instanceof Error ? err.message : 'Error al cargar regiones');
+        const message = toErrorMessage(err, 'Error al cargar regiones');
+        void logger.error('useCatalogs: Error fetching regions', err instanceof Error ? err : new Error(message), { component: 'useCatalogs' })
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -201,8 +223,9 @@ export function useCities(regionId?: string) {
         setCities(data || []);
       } catch (err) {
         console.error('Error fetching cities:', err);
-        void logger.error('useCatalogs: Error fetching cities:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
-        setError(err instanceof Error ? err.message : 'Error al cargar ciudades');
+        const message = toErrorMessage(err, 'Error al cargar ciudades');
+        void logger.error('useCatalogs: Error fetching cities', err instanceof Error ? err : new Error(message), { component: 'useCatalogs' })
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -245,8 +268,9 @@ export function useGenders() {
         setGenders(data || []);
       } catch (err) {
         console.error('Error fetching genders:', err);
-        void logger.error('useCatalogs: Error fetching genders:', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
-        setError(err instanceof Error ? err.message : 'Error al cargar géneros');
+        const message = toErrorMessage(err, 'Error al cargar generos');
+        void logger.error('useCatalogs: Error fetching genders', err instanceof Error ? err : new Error(message), { component: 'useCatalogs' })
+        setError(message);
       } finally {
         setLoading(false);
       }
