@@ -81,11 +81,11 @@ $$ LANGUAGE plpgsql STABLE;
 -- - employee transfer info
 
 CREATE OR REPLACE FUNCTION public.get_datetime_selection_data(
-  p_employee_id UUID DEFAULT NULL,
-  p_resource_id UUID DEFAULT NULL,
   p_business_id UUID,
   p_location_id UUID,
   p_selected_date DATE,
+  p_employee_id UUID DEFAULT NULL,
+  p_resource_id UUID DEFAULT NULL,
   p_client_id UUID DEFAULT NULL
 )
 RETURNS JSONB AS $$

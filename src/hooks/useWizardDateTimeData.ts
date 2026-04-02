@@ -65,12 +65,12 @@ interface DateTimeSelectionData {
  * El RPC retorna data para ambos, pero React Query deduplicará si se llama en la misma sesión
  */
 export function useWizardDateTimeData(
-  employeeId: string | null,
-  resourceId: string | null,
-  businessId: string | null,
-  locationId: string | null,
-  selectedDate: Date | null,
-  clientId: string | null,
+  employeeId: string | null | undefined,
+  resourceId: string | null | undefined,
+  businessId: string | null | undefined,
+  locationId: string | null | undefined,
+  selectedDate: Date | null | undefined,
+  clientId: string | null | undefined,
 ) {
   const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
   const monthStr = selectedDate ? format(selectedDate, 'yyyy-MM') : null;

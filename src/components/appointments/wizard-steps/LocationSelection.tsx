@@ -109,7 +109,7 @@ export function LocationSelection({
       try {
         const { data, error } = await supabase
           .from('locations')
-          .select('*')
+          .select('id, business_id, name, address, city, city_name, state, country, postal_code, latitude, longitude, phone, email, description, images, business_hours, is_active, is_main, is_primary, created_at, updated_at, amenities, capacity')
           .eq('business_id', businessId)
           .eq('is_active', true)
           .order('name');
@@ -252,7 +252,7 @@ export function LocationSelection({
         <LocationProfileModal
           open={!!profileLocation}
           onOpenChange={(open) => { if (!open) setProfileLocation(null); }}
-          location={profileLocation}
+          location={profileLocation as unknown as Parameters<typeof LocationProfileModal>[0]['location']}
           bannerUrl={locationBanners[profileLocation.id]}
         />
       )}

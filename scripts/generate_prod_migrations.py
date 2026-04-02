@@ -11,7 +11,7 @@ MIGRATIONS_DIR = r"c:\Users\Usuario\source\repos\TI-Turing\gestabiz\supabase\mig
 
 DEV_REF = "dkancockzvcqorqbwtyh"
 PROD_REF = "emknatoknbomvmyumqju"
-PROD_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVta25hdG9rbmJvbXZteXVtcWp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNjU0MzksImV4cCI6MjA4OTg0MTQzOX0.d7gfIEqi7e53RpuHnGH6-kDEBsRgx3K-HKmqwJkNGQs"
+PROD_ANON_KEY = "REMOVED_SUPABASE_ANON_JWT"
 
 # --- File paths for raw data ---
 UTIL_FN_FILES = [

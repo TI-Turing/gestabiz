@@ -7,12 +7,12 @@ import { cn } from '@/lib/utils';
 import type { Service, Appointment } from '@/types/types';
 import { format, addMinutes, parse, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useEmployeeTransferAvailability } from '@/hooks/useEmployeeTransferAvailability';
 import { usePublicHolidays } from '@/hooks/usePublicHolidays';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWizardDateTimeData } from '@/hooks/useWizardDateTimeData';
+// Fase 2 COMPLETADA: DateTimeSelection refactorizada (9 queries → 1 RPC via useWizardDateTimeData)
 
 interface DateTimeSelectionProps {
   readonly service: Service | null;
@@ -118,166 +118,59 @@ export function DateTimeSelection({
   const dateLocale = language === 'es' ? es : enUS;
   const { isHoliday, getHolidayName, holidays } = usePublicHolidays('CO');
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [locationSchedule, setLocationSchedule] = useState<LocationSchedule | null>(null);
-  const [employeeSchedule, setEmployeeSchedule] = useState<EmployeeSchedule | null>(null);
-  const [existingAppointments, setExistingAppointments] = useState<ExistingAppointment[]>([]);
-  const [clientAppointments, setClientAppointments] = useState<ExistingAppointment[]>([]); // NUEVO: Citas del cliente
   const [monthAppointmentsMap, setMonthAppointmentsMap] = useState<Record<string, ExistingAppointment[]>>({});
   const [disabledDates, setDisabledDates] = useState<Set<string>>(new Set());
   const [disabledReasons, setDisabledReasons] = useState<Record<string, string>>({});
   const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
   const { validateAvailability } = useEmployeeTransferAvailability();
-  // Conjunto de días laborables del empleado (0=Dom, 6=Sáb). Fallback: Lunes-Viernes
-  const [employeeWorkingDays, setEmployeeWorkingDays] = useState<Set<number> | null>(null);
+  const serviceDuration = service?.duration || 60;
 
-  // Cargar horarios y disponibilidad base (sin requerir fecha).
-  // Las citas del día se cargan solo cuando hay selectedDate.
+  // Obtener todos los datos de DateTimeSelection con un solo hook (RPC consolidada)
+  const wizardDateTimeData = useWizardDateTimeData(
+    employeeId,
+    resourceId,
+    businessId,
+    locationId,
+    selectedDate,
+    clientId,
+  );
+
+  // Extraer datos del hook para acceso más limpio
+  const locationSchedule = wizardDateTimeData.day.locationSchedule;
+  const employeeSchedule = wizardDateTimeData.day.employeeSchedule;
+  const workSchedules = wizardDateTimeData.day.workSchedules;
+  const dayAppointments = wizardDateTimeData.day.dayAppointments;
+  const clientDayAppointments = wizardDateTimeData.day.clientDayAppointments;
+  const monthAppointments = wizardDateTimeData.month.monthAppointments;
+  const monthAbsences = wizardDateTimeData.month.monthAbsences;
+
+  // Calcular días laborables a partir de workSchedules
+  const employeeWorkingDays = React.useMemo(() => {
+    if (!workSchedules || workSchedules.length === 0) {
+      // Fallback: Lunes(1) a Viernes(5) si no hay datos
+      return new Set([1, 2, 3, 4, 5]);
+    }
+    const days = new Set<number>();
+    workSchedules.forEach((row) => {
+      if (row.is_working) days.add(row.day_of_week);
+    });
+    return days.size > 0 ? days : new Set([1, 2, 3, 4, 5]);
+  }, [workSchedules]);
+
+  // Sincronizar datos del hook cuando sea necesario
   useEffect(() => {
-    const loadScheduleData = async () => {
-      // Validar que haya employeeId O resourceId (al menos uno)
-      if ((!employeeId && !resourceId) || !locationId || !businessId) return;
-
-      setIsLoadingSchedule(true);
-
-      try {
-        // 1. Obtener horario de la sede
-        const { data: locationData } = await supabase
-          .from('locations')
-          .select('opens_at, closes_at')
-          .eq('id', locationId)
-          .single();
-
-        setLocationSchedule(locationData);
-
-        // 2. Obtener horario de almuerzo del empleado (solo si es empleado)
-        if (employeeId) {
-          const { data: employeeData } = await supabase
-            .from('business_employees')
-            .select('lunch_break_start, lunch_break_end, has_lunch_break')
-            .eq('employee_id', employeeId)
-            .eq('business_id', businessId)
-            .single();
-
-          setEmployeeSchedule(employeeData);
-
-          // 2.1. Intentar cargar días laborables semanales desde work_schedules
-          try {
-            const { data: wsData, error: wsError } = await supabase
-              .from('work_schedules')
-              .select('day_of_week, is_working')
-              .eq('employee_id', employeeId);
-
-            if (!wsError && wsData && wsData.length > 0) {
-              const days = new Set<number>();
-              wsData.forEach((row: { day_of_week: number; is_working: boolean }) => {
-                if (row.is_working) days.add(row.day_of_week);
-              });
-              setEmployeeWorkingDays(days);
-            } else {
-              // Fallback: Lunes(1) a Viernes(5) activos; fines de semana deshabilitados
-              setEmployeeWorkingDays(new Set([1, 2, 3, 4, 5]));
-            }
-          } catch {
-            // Si la tabla no existe o falla, usar fallback L-V
-            setEmployeeWorkingDays(new Set([1, 2, 3, 4, 5]));
-          }
-        } else {
-          // Si es recurso, no tiene lunch break
-          setEmployeeSchedule(null);
-          setEmployeeWorkingDays(null);
-        }
-
-        // 3. Definir rango del día si hay fecha seleccionada (usado por empleado/recurso Y cliente)
-        let dayStart: Date | undefined;
-        let dayEnd: Date | undefined;
-        
-        if (selectedDate) {
-          dayStart = new Date(selectedDate);
-          dayStart.setHours(0, 0, 0, 0);
-
-          dayEnd = new Date(selectedDate);
-          dayEnd.setHours(23, 59, 59, 999);
-        }
-
-        // 4. Obtener citas existentes del empleado/recurso
-        if (selectedDate && dayStart && dayEnd && employeeId) {
-          // Buscar citas del empleado directamente (no requiere business_employees)
-          const { data: appointments } = await supabase
-            .from('appointments')
-            .select('id, start_time, end_time')
-            .eq('employee_id', employeeId)
-            .gte('end_time', dayStart.toISOString())
-            .lte('start_time', dayEnd.toISOString())
-            .in('status', ['pending', 'confirmed'])
-            .order('start_time');
-
-          const filteredAppointments = appointmentToEdit
-            ? (appointments || []).filter((apt) => apt.id !== appointmentToEdit.id)
-            : (appointments || []);
-
-          console.log(`[DateTimeSelection] Citas del empleado ${employeeId} cargadas (${filteredAppointments.length}):`, filteredAppointments);
-          setExistingAppointments(filteredAppointments);
-        } else if (selectedDate && dayStart && dayEnd && resourceId) {
-          // Buscar reservas del recurso físico
-          const { data: appointments } = await supabase
-            .from('appointments')
-            .select('id, start_time, end_time')
-            .eq('resource_id', resourceId)
-            .gte('end_time', dayStart.toISOString())
-            .lte('start_time', dayEnd.toISOString())
-            .in('status', ['pending', 'confirmed'])
-            .order('start_time');
-
-          const filteredAppointments = appointmentToEdit
-            ? (appointments || []).filter((apt) => apt.id !== appointmentToEdit.id)
-            : (appointments || []);
-
-          setExistingAppointments(filteredAppointments);
-        } else {
-          // Limpiar citas existentes si no hay empleado ni recurso
-          setExistingAppointments([]);
-        }
-
-        // 5. IMPORTANTE: Obtener citas del cliente en el mismo día (para detectar conflictos)
-        if (selectedDate && dayStart && dayEnd && clientId) {
-          const { data: clientApts } = await supabase
-            .from('appointments')
-            .select('id, start_time, end_time, business_id')
-            .eq('client_id', clientId)
-            .gte('end_time', dayStart.toISOString())
-            .lte('start_time', dayEnd.toISOString())
-            .in('status', ['pending', 'confirmed'])
-            .order('start_time');
-
-          const filteredClientApts = appointmentToEdit
-            ? (clientApts || []).filter((apt) => apt.id !== appointmentToEdit.id)
-            : (clientApts || []);
-
-          console.log(`[DateTimeSelection] Citas del cliente ${clientId} cargadas (${filteredClientApts.length}):`, filteredClientApts);
-          setClientAppointments(filteredClientApts);
-        } else {
-          // Limpiar citas del cliente si no hay fecha o clientId
-          setClientAppointments([]);
-        }
-      } catch {
-        toast.error(t('appointments.toasts.availabilityError'));
-      } finally {
-        setIsLoadingSchedule(false);
-      }
-    };
-
-    loadScheduleData();
-  }, [employeeId, resourceId, locationId, businessId, selectedDate, appointmentToEdit, clientId]);
+    setIsLoadingSchedule(wizardDateTimeData.isLoading);
+  }, [wizardDateTimeData.isLoading]);
 
   const generateTimeSlots = React.useCallback(async () => {
-    if (!selectedDate || !employeeId || !locationId || !businessId) return;
+    if (!selectedDate || !service || !locationSchedule) return;
 
     const slots: TimeSlot[] = [];
     const popularTimes = new Set(['10:00 AM', '03:00 PM']);
-    const [openH, openM] = locationSchedule?.opens_at
+    const [openH, openM] = locationSchedule.opens_at
       ? locationSchedule.opens_at.split(':').map((v) => parseInt(v, 10))
       : [9, 0];
-    const [closeH, closeM] = locationSchedule?.closes_at
+    const [closeH, closeM] = locationSchedule.closes_at
       ? locationSchedule.closes_at.split(':').map((v) => parseInt(v, 10))
       : [17, 0];
     const openingTime = new Date(selectedDate);
@@ -286,26 +179,25 @@ export function DateTimeSelection({
     closingTime.setHours(closeH, closeM, 0, 0);
 
     // Validar disponibilidad por traslado
-    const transferValidation = await validateAvailability(employeeId, businessId, selectedDate, locationId);
+    const transferValidation = await validateAvailability(employeeId || resourceId || '', businessId || '', selectedDate, locationId || '');
 
     // Regla: si el día no es laborable para el empleado, no hay slots
     const dayOfWeek = selectedDate.getDay(); // 0=Dom, 6=Sáb
-    if (employeeWorkingDays && !employeeWorkingDays.has(dayOfWeek)) {
+    if (employeeId && employeeWorkingDays && !employeeWorkingDays.has(dayOfWeek)) {
       setTimeSlots([]);
       return;
     }
 
-    // Consultar una sola vez si el empleado está ausente en la fecha
+    // Validar ausencias: buscar en monthAbsences
+    let absenceData: any = undefined;
     const checkDate = format(selectedDate, 'yyyy-MM-dd');
-    const { data: absenceData } = await supabase
-      .from('employee_absences')
-      .select('id, absence_type')
-      .eq('employee_id', employeeId)
-      .eq('business_id', businessId)
-      .eq('status', 'approved')
-      .lte('start_date', checkDate)
-      .gte('end_date', checkDate)
-      .maybeSingle();
+    if (monthAbsences && monthAbsences.length > 0) {
+      absenceData = monthAbsences.find((abs) => {
+        const startDate = abs.start_date.substring(0, 10);
+        const endDate = abs.end_date.substring(0, 10);
+        return checkDate >= startDate && checkDate <= endDate && abs.status === 'approved';
+      });
+    }
 
     // Regla: 90 minutos de anticipación si es el mismo día
     const now = new Date();
@@ -318,7 +210,7 @@ export function DateTimeSelection({
       let isAvailable = true;
       let unavailableReason = '';
 
-      // Regla 1: Validar ausencias aprobadas (resultado reusado)
+      // Regla 1: Validar ausencias aprobadas
       if (absenceData) {
         isAvailable = false;
         const typeLabels: Record<string, string> = {
@@ -337,7 +229,7 @@ export function DateTimeSelection({
         unavailableReason = transferValidation.reason || 'Empleado en período de traslado';
       }
 
-      // Regla 3: Validar horario de almuerzo (minutos)
+      // Regla 3: Validar horario de almuerzo
       if (
         isAvailable &&
         isLunchBreakTime(
@@ -357,24 +249,34 @@ export function DateTimeSelection({
         unavailableReason = 'Selecciona con al menos 90 minutos de anticipación';
       }
 
-      // Regla 5: Validar citas existentes y cierre de sede
+      // Regla 5: Validar citas existentes del empleado/recurso Y cliente
       if (isAvailable && service) {
         const slotStartTime = new Date(current);
-        const slotEndTime = addMinutes(slotStartTime, service.duration || 60);
+        const slotEndTime = addMinutes(slotStartTime, serviceDuration);
 
         if (slotEndTime > closingTime) {
           isAvailable = false;
           unavailableReason = 'Fuera del horario de la sede';
-        } else if (isSlotOccupied(slotStartTime, slotEndTime, existingAppointments)) {
-          isAvailable = false;
-          // Diferenciar entre recurso y empleado en el mensaje
-          unavailableReason = resourceId ? 'Recurso Ocupado' : 'Ocupado';
-          console.log(`[DateTimeSelection] Slot ${time12h} ocupado por empleado/recurso`, { slotStartTime, slotEndTime, existingAppointments });
-        } else if (isSlotOccupied(slotStartTime, slotEndTime, clientAppointments)) {
-          // NUEVO: Validar conflictos con otras citas del cliente
-          isAvailable = false;
-          unavailableReason = 'Ya tienes una cita en este horario';
-          console.log(`[DateTimeSelection] Slot ${time12h} ocupado por cliente`, { slotStartTime, slotEndTime, clientAppointments });
+        } else {
+          // Filtrar citas del empleado/recurso (excluyendo la que se está editando)
+          const filteredDayAppointments = appointmentToEdit
+            ? dayAppointments.filter((apt: any) => apt.id !== appointmentToEdit.id)
+            : dayAppointments;
+
+          if (isSlotOccupied(slotStartTime, slotEndTime, filteredDayAppointments)) {
+            isAvailable = false;
+            unavailableReason = resourceId ? 'Recurso Ocupado' : 'Ocupado';
+          } else {
+            // Filtrar citas del cliente (excluyendo la que se está editando)
+            const filteredClientAppointments = appointmentToEdit
+              ? clientDayAppointments.filter((apt: any) => apt.id !== appointmentToEdit.id)
+              : clientDayAppointments;
+
+            if (isSlotOccupied(slotStartTime, slotEndTime, filteredClientAppointments)) {
+              isAvailable = false;
+              unavailableReason = 'Ya tienes una cita en este horario';
+            }
+          }
         }
       }
 
@@ -389,7 +291,7 @@ export function DateTimeSelection({
     }
 
     setTimeSlots(slots);
-  }, [selectedDate, service, locationSchedule, employeeSchedule, existingAppointments, clientAppointments, employeeId, resourceId, locationId, businessId, validateAvailability, employeeWorkingDays]);
+  }, [selectedDate, service, serviceDuration, locationSchedule, employeeSchedule, dayAppointments, clientDayAppointments, monthAbsences, employeeId, resourceId, locationId, businessId, validateAvailability, employeeWorkingDays, appointmentToEdit]);
 
   useEffect(() => {
     if (selectedDate && !isLoadingSchedule) {
@@ -406,14 +308,6 @@ export function DateTimeSelection({
       const start = startOfMonth(baseDate);
       const end = endOfMonth(baseDate);
 
-      // 1) Cargar todas las citas del mes para empleado/recurso
-      const { data: monthAppointments } = await supabase
-        .from('appointments')
-        .select('id, start_time, end_time, employee_id, resource_id, status')
-        .gte('start_time', start.toISOString())
-        .lte('start_time', end.toISOString())
-        .in('status', ['pending', 'confirmed']);
-
       const map: Record<string, ExistingAppointment[]> = {};
       (monthAppointments || [])
         .filter((apt) => (employeeId ? apt.employee_id === employeeId : resourceId ? apt.resource_id === resourceId : false))
@@ -424,19 +318,9 @@ export function DateTimeSelection({
         });
       setMonthAppointmentsMap(map);
 
-      // 2) Cargar ausencias en el rango
-      const { data: absences } = await supabase
-        .from('employee_absences')
-        .select('start_date, end_date, absence_type')
-        .eq('employee_id', employeeId)
-        .eq('business_id', businessId)
-        .eq('status', 'approved')
-        .lte('start_date', format(end, 'yyyy-MM-dd'))
-        .gte('end_date', format(start, 'yyyy-MM-dd'));
-
       const absenceDays = new Set<string>();
       const absenceReasons: Record<string, string> = {};
-      (absences || []).forEach((abs) => {
+      (monthAbsences || []).forEach((abs) => {
         const s = new Date(abs.start_date);
         const e = new Date(abs.end_date);
         const current = new Date(s);
@@ -541,7 +425,7 @@ export function DateTimeSelection({
             continue;
           }
 
-          const slotEnd = addMinutes(cursor, service?.duration || 60);
+          const slotEnd = addMinutes(cursor, serviceDuration);
           if (slotEnd > closingTime) break;
 
           const occupied = isSlotOccupied(cursor, slotEnd, dayAppointments);
@@ -567,17 +451,17 @@ export function DateTimeSelection({
 
     computeMonthDisabled();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [employeeId, locationId, businessId, selectedDate, locationSchedule, employeeSchedule, service, holidays]);
+  }, [employeeId, locationId, businessId, selectedDate, locationSchedule, employeeSchedule, serviceDuration, holidays, isHoliday, getHolidayName, employeeWorkingDays, validateAvailability, resourceId, monthAppointments, monthAbsences]);
 
-  const handleTimeSelect = (slot: TimeSlot) => {
+  const handleTimeSelect = React.useCallback((slot: TimeSlot) => {
     if (!slot.available) return;
 
     const startTimeParsed = parse(slot.time, 'hh:mm a', new Date());
-    const endTime = addMinutes(startTimeParsed, service?.duration || 60);
+    const endTime = addMinutes(startTimeParsed, serviceDuration);
     const endTimeFormatted = format(endTime, 'hh:mm a');
 
     onSelectTime(slot.time, endTimeFormatted);
-  };
+  }, [onSelectTime, serviceDuration]);
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">

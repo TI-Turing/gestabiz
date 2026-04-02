@@ -104,8 +104,6 @@ export function useCreateAppointment({
           .from('appointments')
           .update(appointmentData)
           .eq('id', appointmentToEdit.id)
-          .select()
-          .single()
 
         if (error) {
           toast.error(`${t('appointments.wizard_errors.errorModifying')}: ${error.message}`)
