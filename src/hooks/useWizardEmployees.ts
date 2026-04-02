@@ -52,11 +52,11 @@ export function useWizardEmployees(
         avatar_url: e.avatar_url,
         email: e.email,
         role: e.role,
-        expertise_level: e.expertise_level,
+        expertise_level: Number(e.expertise_level) || undefined,
         setup_completed: e.setup_completed,
         supervisor_name: e.supervisor_name,
         avg_rating: Number(e.avg_rating) || 0,
-        review_count: Number(e.review_count) || 0,
+        total_reviews: Number(e.review_count) || 0,
       })) as WizardEmployee[];
     },
     enabled: !!businessId && !!serviceId,

@@ -153,7 +153,7 @@ export function useWizardState({
     !!initiatedFromEmployeeProfile && !!wizardData.employeeId && employeeBusinesses.length > 1
 
   // ── Step order ──────────────────────────────────────────────────────────────
-  const getStepOrder = (): string[] => {
+  const stepOrder = React.useMemo<string[]>(() => {
     const base = businessId
       ? ['location', 'service', 'employee', 'dateTime', 'confirmation', 'success']
       : ['business', 'location', 'service', 'employee', 'dateTime', 'confirmation', 'success']
@@ -162,13 +162,15 @@ export function useWizardState({
       return [...base.slice(0, idx + 1), 'employeeBusiness', ...base.slice(idx + 1)]
     }
     return base
-  }
+  }, [businessId, needsEmployeeBusinessSelection])
 
-  const getTotalSteps = () => getStepOrder().length
+  const getStepOrder = React.useCallback((): string[] => stepOrder, [stepOrder])
 
-  const getStepNumber = (logicalStep: string): number => getStepOrder().indexOf(logicalStep)
+  const getTotalSteps = React.useCallback(() => stepOrder.length, [stepOrder])
 
-  const getInitialStepLogical = () => {
+  const getStepNumber = React.useCallback((logicalStep: string): number => stepOrder.indexOf(logicalStep), [stepOrder])
+
+  const getInitialStepLogical = React.useCallback(() => {
     if (preselectedDate || preselectedTime) return 'business'
     if (!businessId) return 'business'
     if (preselectedEmployeeId && preselectedServiceId) return 'dateTime'
@@ -176,14 +178,21 @@ export function useWizardState({
     if (preselectedServiceId && !preselectedEmployeeId) return 'location'
     if (preselectedLocationId) return 'service'
     return 'location'
-  }
+  }, [
+    preselectedDate,
+    preselectedTime,
+    businessId,
+    preselectedEmployeeId,
+    preselectedServiceId,
+    preselectedLocationId,
+  ])
 
   const [currentStep, setCurrentStep] = useState(() => getStepNumber(getInitialStepLogical()))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasTrackedStart, setHasTrackedStart] = React.useState(false)
 
   // ── Skippable / effective steps ─────────────────────────────────────────────
-  const getSkippableSteps = (): string[] => {
+  const getSkippableSteps = React.useCallback((): string[] => {
     const skippable: string[] = []
     if (!dataCache.locations || !dataCache.services) return skippable
 
@@ -201,26 +210,27 @@ export function useWizardState({
     }
 
     return skippable
-  }
+  }, [dataCache.locations, dataCache.services, wizardData.locationId])
 
-  const getDisplaySteps = (): string[] =>
-    getStepOrder().filter(s => s !== 'success' && s !== 'employeeBusiness')
+  const getDisplaySteps = React.useCallback((): string[] =>
+    stepOrder.filter(s => s !== 'success' && s !== 'employeeBusiness'),
+  [stepOrder])
 
-  const getEffectiveSteps = (): string[] => {
+  const getEffectiveSteps = React.useCallback((): string[] => {
     const allSteps = getDisplaySteps()
     const skippable = getSkippableSteps()
     return allSteps.filter(s => !skippable.includes(s))
-  }
+  }, [getDisplaySteps, getSkippableSteps])
 
-  const getEffectiveTotalSteps = (): number => getEffectiveSteps().length
+  const getEffectiveTotalSteps = React.useCallback((): number => getEffectiveSteps().length, [getEffectiveSteps])
 
-  const getEffectiveCurrentStep = (): number => {
+  const getEffectiveCurrentStep = React.useCallback((): number => {
     const effectiveSteps = getEffectiveSteps()
-    let currentStepName = getStepOrder()[currentStep]
+    let currentStepName = stepOrder[currentStep]
     if (currentStepName === 'employeeBusiness') currentStepName = 'employee'
     const idx = effectiveSteps.indexOf(currentStepName)
     if (idx >= 0) return idx
-    const allSteps = getStepOrder()
+    const allSteps = stepOrder
     for (let i = currentStep + 1; i < allSteps.length; i++) {
       let stepName = allSteps[i]
       if (stepName === 'employeeBusiness') stepName = 'employee'
@@ -228,9 +238,9 @@ export function useWizardState({
       if (effectiveIdx >= 0) return effectiveIdx
     }
     return Math.max(0, effectiveSteps.length - 1)
-  }
+  }, [currentStep, getEffectiveSteps, stepOrder])
 
-  const getCompletedSteps = (): number[] => {
+  const getCompletedSteps = React.useCallback((): number[] => {
     const completed: number[] = []
     const effectiveSteps = getEffectiveSteps()
 
@@ -251,10 +261,19 @@ export function useWizardState({
       completed.push(confirmationIndex)
 
     return completed.map(i => i + 1)
-  }
+  }, [
+    getEffectiveSteps,
+    wizardData.businessId,
+    wizardData.locationId,
+    wizardData.serviceId,
+    wizardData.employeeId,
+    wizardData.date,
+    wizardData.startTime,
+    getEffectiveCurrentStep,
+  ])
 
   // ── canProceed ──────────────────────────────────────────────────────────────
-  const canProceed = () => {
+  const canProceed = React.useCallback(() => {
     if (currentStep === getStepNumber('business')) return wizardData.businessId !== null
     if (currentStep === getStepNumber('location')) return wizardData.locationId !== null
     if (currentStep === getStepNumber('service')) return wizardData.serviceId !== null
@@ -267,10 +286,23 @@ export function useWizardState({
     if (currentStep === getStepNumber('dateTime')) return wizardData.date !== null && wizardData.startTime !== null
     if (currentStep === getStepNumber('confirmation')) return true
     return false
-  }
+  }, [
+    currentStep,
+    getStepNumber,
+    wizardData.businessId,
+    wizardData.locationId,
+    wizardData.serviceId,
+    wizardData.business?.resource_model,
+    wizardData.resourceId,
+    wizardData.employeeId,
+    isEmployeeOfAnyBusiness,
+    wizardData.employeeBusinessId,
+    wizardData.date,
+    wizardData.startTime,
+  ])
 
   // ── Navigation ──────────────────────────────────────────────────────────────
-  const handleNext = async () => {
+  const handleNext = React.useCallback(async () => {
     if (!dataCache.locations || !dataCache.services) {
       setCurrentStep(currentStep + 1)
       return
@@ -377,14 +409,38 @@ export function useWizardState({
 
     const maxStep = getTotalSteps() - 1
     if (currentStep < maxStep) setCurrentStep(prev => prev + 1)
-  }
+  }, [
+    dataCache.locations,
+    dataCache.services,
+    currentStep,
+    getStepNumber,
+    wizardData.date,
+    wizardData.startTime,
+    wizardData.businessId,
+    wizardData.business,
+    wizardData.serviceId,
+    wizardData.service,
+    wizardData.employeeId,
+    wizardData.employee,
+    wizardData.locationId,
+    wizardData.resourceId,
+    businessId,
+    analytics,
+    t,
+    updateWizardData,
+    needsEmployeeBusinessSelection,
+    isEmployeeOfAnyBusiness,
+    employeeBusinesses,
+    initiatedFromEmployeeProfile,
+    getTotalSteps,
+  ])
 
-  const handleBack = () => {
+  const handleBack = React.useCallback(() => {
     const minStep = businessId ? 1 : 0
     if (currentStep > minStep) setCurrentStep(prev => prev - 1)
-  }
+  }, [businessId, currentStep])
 
-  const handleClose = () => {
+  const handleClose = React.useCallback(() => {
     if (isSubmitting) return
 
     if (currentStep > 0 && currentStep < getTotalSteps() - 1) {
@@ -422,7 +478,26 @@ export function useWizardState({
       notes: '',
     })
     onClose()
-  }
+  }, [
+    isSubmitting,
+    currentStep,
+    getTotalSteps,
+    analytics,
+    wizardData.businessId,
+    wizardData.business,
+    wizardData.serviceId,
+    wizardData.service,
+    wizardData.employeeId,
+    wizardData.employee,
+    wizardData.locationId,
+    businessId,
+    getStepNumber,
+    getInitialStepLogical,
+    preselectedLocationId,
+    preselectedServiceId,
+    preselectedEmployeeId,
+    onClose,
+  ])
 
   // ── Edit mode hydration ─────────────────────────────────────────────────────
   const hasHydratedEditRef = React.useRef(false)

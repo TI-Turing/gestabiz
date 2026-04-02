@@ -30,6 +30,11 @@ export interface WizardEmployee {
   email: string
   role: string
   avatar_url?: string | null
+  expertise_level?: number
+  setup_completed?: boolean
+  supervisor_name?: string | null
+  avg_rating?: number
+  total_reviews?: number
 }
 
 export interface WizardData {
