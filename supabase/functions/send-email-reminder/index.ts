@@ -37,14 +37,15 @@ serve(async (req) => {
       .single()
     if (notifErr) throw new Error(`Failed to fetch notification: ${notifErr.message}`)
 
-    // Fetch appointment with client profile and business_id
+    // Fetch appointment with client profile, business and token
     const { data: appointment, error: apptErr } = await supabase
       .from('appointments')
       .select(`
-        id, notes, client_notes, start_time, business_id,
+        id, notes, client_notes, start_time, business_id, status, confirmation_token,
         service:services!appointments_service_id_fkey(id, name),
         client:profiles!appointments_client_id_fkey(id, email, full_name),
-        location:locations!appointments_location_id_fkey(id, name, address)
+        location:locations!appointments_location_id_fkey(id, name, address),
+        business:businesses!appointments_business_id_fkey(id, name)
       `)
       .eq('id', appointmentId)
       .single()
@@ -60,7 +61,7 @@ serve(async (req) => {
       // If settings missing, treat as disabled to be safe
       await supabase
         .from('notifications')
-        .update({ status: 'cancelled', error_message: 'Business settings not found for email channel' })
+        .update({ status: 'failed', error_message: 'Business settings not found for email channel' })
         .eq('id', notificationId)
       return new Response(JSON.stringify({ success: false, error: 'Business settings not found' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -74,7 +75,7 @@ serve(async (req) => {
     if (!emailAllowed) {
       await supabase
         .from('notifications')
-        .update({ status: 'cancelled', error_message: 'Email disabled by business settings' })
+        .update({ status: 'failed', error_message: 'Email disabled by business settings' })
         .eq('id', notificationId)
       return new Response(JSON.stringify({ success: false, error: 'Email disabled by business settings' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -83,17 +84,49 @@ serve(async (req) => {
     }
 
     const appointmentDate = new Date(appointment.start_time)
-    const formattedDate = appointmentDate.toLocaleDateString('es-ES', {
+    const DEFAULT_TIMEZONE = 'America/Bogota'
+    const formattedDate = new Intl.DateTimeFormat('es-CO', {
+      timeZone: DEFAULT_TIMEZONE,
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-    })
-    const formattedTime = appointmentDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+    }).format(appointmentDate)
+    const formattedTime = new Intl.DateTimeFormat('es-CO', {
+      timeZone: DEFAULT_TIMEZONE,
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(appointmentDate)
+
+    const APP_URL = (Deno.env.get('APP_URL') ?? 'https://gestabiz.com').replace(/\/$/, '')
+    const token: string = (appointment as any).confirmation_token ?? ''
+    const appointmentStatus: string = (appointment as any).status ?? 'pending'
+    const isConfirmed = appointmentStatus === 'confirmed'
+    const businessName = escapeHtml((appointment as any).business?.name ?? 'tu negocio')
+
+    // ── CTA Buttons based on status ───────────────────────────────────────────
+    const ctaButtonsHtml = token ? `
+            <div style="text-align:center;margin:28px 0 4px">
+              ${!isConfirmed ? `
+              <a href="${APP_URL}/confirmar-cita/${token}"
+                 style="display:inline-block;background:#6820F7;color:#ffffff;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:13px 28px;border-radius:10px;margin:6px 8px;letter-spacing:.3px;">
+                Confirmar asistencia
+              </a>` : ''}
+              <a href="${APP_URL}/cancelar-cita/${token}"
+                 style="display:inline-block;background:#ffffff;color:#dc2626;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:10px;border:2px solid #dc2626;margin:6px 8px;letter-spacing:.3px;">
+                Cancelar cita
+              </a>
+            </div>
+            <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:10px;margin-bottom:0;">
+              ${!isConfirmed
+                ? 'Tienes <strong>30 minutos</strong> desde este mensaje para confirmar o cancelar sin costo.'
+                : 'Si necesitas cancelar, puedes hacerlo durante los próximos <strong>30 minutos</strong>.'}
+            </p>` : ''
 
     // Escapar todos los datos de usuario antes de insertar en HTML
     const safeTitle = escapeHtml((appointment.service as any)?.name ?? 'Tu cita')
     const safeLocationName = escapeHtml(appointment.location?.name)
     const safeDescription = escapeHtml(appointment.client_notes ?? appointment.notes)
 
-    const emailSubject = `Recordatorio: ${safeTitle}`
+    const emailSubject = isConfirmed
+      ? `Tu cita está confirmada — ${safeTitle}`
+      : `Recordatorio: ${safeTitle}`
 
     // Location detail rows (rendered only when data is present)
     const locationRowHtml = safeLocationName ? `
@@ -200,9 +233,10 @@ serve(async (req) => {
                 ${clientNotesRowHtml}
             </div>
             <div class="divider"></div>
+            ${ctaButtonsHtml || `
             <div class="help-note">
-                <p>Si necesitas cancelar o reprogramar tu cita, por favor comunícate directamente con el negocio con suficiente anticipación.</p>
-            </div>
+                <p>Si necesitas cancelar o reprogramar tu cita, por favor comunícate directamente con <strong>${businessName}</strong> con suficiente anticipación.</p>
+            </div>`}
         </div>
         <div class="footer">
             <p class="footer-text">&copy; 2026 Gestabiz &mdash; Todos los derechos reservados.</p>

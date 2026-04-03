@@ -9,7 +9,7 @@ interface EmployeeDataFromRPC {
   avatar_url: string | null;
   email: string;
   role: string;
-  expertise_level: string;
+  expertise_level: number | null;
   setup_completed: boolean;
   supervisor_name: string | null;
   avg_rating: number;

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recordatorio de Cita - Gestabiz</title>
+    <title>Recordatorio / Confirmación de Cita - Gestabiz</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -401,12 +401,50 @@
             <!-- Separador -->
             <div class="divider"></div>
 
-            <!-- Nota de ayuda -->
-            <div class="help-note">
-                <p>
-                    Si necesitas cancelar o reprogramar tu cita, por favor comunícate directamente con el negocio con suficiente anticipación.
-                </p>
+            <!--
+            ====================================================================
+            CTA BUTTONS — generados dinámicamente según status de la cita
+            Lógica (ver send-email-reminder/index.ts):
+              - status = "pending"   → Confirmar asistencia  +  Cancelar cita
+              - status = "confirmed" → (solo) Cancelar cita
+              - Solo se renderizan si confirmation_token está presente
+            ====================================================================
+            -->
+
+            <!-- VARIANTE A: status = "pending" -->
+            <div style="text-align:center;margin:28px 0 4px">
+                <a href="https://gestabiz.com/confirmar-cita/TOKEN_PLACEHOLDER"
+                   style="display:inline-block;background:#6820F7;color:#ffffff;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:13px 28px;border-radius:10px;margin:6px 8px;letter-spacing:.3px;">
+                    Confirmar asistencia
+                </a>
+                <a href="https://gestabiz.com/cancelar-cita/TOKEN_PLACEHOLDER"
+                   style="display:inline-block;background:#ffffff;color:#dc2626;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:10px;border:2px solid #dc2626;margin:6px 8px;letter-spacing:.3px;">
+                    Cancelar cita
+                </a>
             </div>
+            <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:10px;margin-bottom:0;">
+                Tienes <strong>30 minutos</strong> desde este mensaje para confirmar o cancelar sin costo.
+            </p>
+
+            <!-- VARIANTE B: status = "confirmed" (sin botón de confirmar) -->
+            <!--
+            <div style="text-align:center;margin:28px 0 4px">
+                <a href="https://gestabiz.com/cancelar-cita/TOKEN_PLACEHOLDER"
+                   style="display:inline-block;background:#ffffff;color:#dc2626;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:10px;border:2px solid #dc2626;margin:6px 8px;letter-spacing:.3px;">
+                    Cancelar cita
+                </a>
+            </div>
+            <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:10px;margin-bottom:0;">
+                Si necesitas cancelar, puedes hacerlo durante los próximos <strong>30 minutos</strong>.
+            </p>
+            -->
+
+            <!-- FALLBACK: sin token (contacto directo) -->
+            <!--
+            <div class="help-note">
+                <p>Si necesitas cancelar o reprogramar tu cita, por favor comunícate directamente con <strong>Nombre del negocio</strong> con suficiente anticipación.</p>
+            </div>
+            -->
 
         </div>
 

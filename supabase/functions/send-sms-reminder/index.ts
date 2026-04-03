@@ -48,7 +48,7 @@ serve(async (req) => {
     if (bizErr) {
       await supabase
         .from('notifications')
-        .update({ status: 'cancelled', error_message: 'Business settings not found for SMS channel' })
+        .update({ status: 'failed', error_message: 'Business settings not found for SMS channel' })
         .eq('id', notificationId)
       return new Response(JSON.stringify({ success: false, error: 'Business settings not found' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
     }
@@ -59,7 +59,7 @@ serve(async (req) => {
     if (!smsAllowed) {
       await supabase
         .from('notifications')
-        .update({ status: 'cancelled', error_message: 'SMS disabled by business settings' })
+        .update({ status: 'failed', error_message: 'SMS disabled by business settings' })
         .eq('id', notificationId)
       return new Response(JSON.stringify({ success: false, error: 'SMS disabled by business settings' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
     }

@@ -110,6 +110,12 @@ export const QUERY_CONFIG = {
       ['wizard-datetime-day', assigneeId, assigneeType, date] as const,
     WIZARD_DATETIME_MONTH: (assigneeId: string, assigneeType: 'employee' | 'resource', yearMonth: string) =>
       ['wizard-datetime-month', assigneeId, assigneeType, yearMonth] as const,
+
+    // ── Días cerrados ─────────────────────────────────────────────────────
+    BUSINESS_CLOSED_DAYS: (businessId: string, yearMonth: string) =>
+      ['business-closed-days', businessId, yearMonth] as const,
+    HOLIDAY_POLICY: (businessId: string, locationId?: string | null) =>
+      ['holiday-policy', businessId, locationId ?? 'no-location'] as const,
   },
 }
 

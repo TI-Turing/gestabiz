@@ -40,7 +40,7 @@ export function ServiceSelection({
       } else {
         const { data, error } = await supabase
           .from('services')
-          .select('id, business_id, name, description, duration, duration_minutes, price, currency, category, is_active, created_at, updated_at, location_id, requires_preparation, online_available, max_participants, created_by, tags, color, image_url')
+          .select('id, business_id, name, description, duration_minutes, price, currency, category, is_active, created_at, updated_at, image_url')
           .eq('business_id', businessId)
           .eq('is_active', true);
         if (error) throw error;

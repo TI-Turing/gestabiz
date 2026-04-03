@@ -81,6 +81,7 @@ const PublicBusinessProfile = lazy(() => import('@/pages/PublicBusinessProfile')
 const PublicEmployeeProfile = lazy(() => import('@/pages/PublicEmployeeProfile'))
 const AppointmentConfirmation = lazy(() => import('@/pages/AppointmentConfirmation'))
 const AppointmentCancellation = lazy(() => import('@/pages/AppointmentCancellation'))
+const AppointmentReschedule = lazy(() => import('@/pages/AppointmentReschedule'))
 const GoogleCalendarCallback = lazy(() => import('@/pages/GoogleCalendarCallback'))
 // SEO: landing pages verticales y blog
 const VerticalLandingPage = lazy(() => import('@/pages/VerticalLandingPage'))
@@ -162,6 +163,7 @@ function AppRoutes() {
       {/* Rutas públicas para confirmación de citas */}
       <Route path="/confirmar-cita/:token" element={<AppointmentConfirmation />} />
       <Route path="/cancelar-cita/:token" element={<AppointmentCancellation />} />
+      <Route path="/reprogramar-cita/:token" element={<AppointmentReschedule />} />
 
       {/* OAuth callback para Google Calendar */}
       <Route path="/auth/google/callback" element={<GoogleCalendarCallback />} />

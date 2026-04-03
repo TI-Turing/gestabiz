@@ -76,11 +76,13 @@ const DIGITS_REGEX = /^\d{6,14}$/
 // ─────────────────────────────────────────────
 
 interface PhoneRequiredModalProps {
-  userId:   string
-  userName?: string
+  userId:      string
+  userName?:   string
+  roleName?:   string
+  description?: string
 }
 
-export function PhoneRequiredModal({ userId, userName }: Readonly<PhoneRequiredModalProps>) {
+export function PhoneRequiredModal({ userId, userName, roleName = 'Empleado', description }: Readonly<PhoneRequiredModalProps>) {
   const [countryIso, setCountryIso] = useState<string>('CO')
   const [number, setNumber]         = useState('')
   const [saving, setSaving]         = useState(false)
@@ -136,9 +138,9 @@ export function PhoneRequiredModal({ userId, userName }: Readonly<PhoneRequiredM
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {userName ? `Hola ${userName.split(' ')[0]}, para` : 'Para'} usar el rol{' '}
-            <strong>Empleado</strong> debes tener un número de teléfono registrado.
+            <strong>{roleName}</strong> debes tener un número de teléfono registrado.
             <br />
-            Los negocios lo utilizarán para contactarte.
+            {description ?? 'Los negocios lo utilizarán para contactarte.'}
           </p>
         </div>
 
