@@ -8,6 +8,8 @@ on:
       - 'supabase/functions/send-email-reminder/**'
       - 'supabase/functions/send-whatsapp-reminder/**'
       - 'supabase/functions/send-sms-reminder/**'
+      - 'supabase/functions/send-phone-otp/**'
+      - 'supabase/functions/verify-phone-otp/**'
       - 'package.json'
 
 jobs:
@@ -45,6 +47,16 @@ jobs:
         run: npx supabase functions deploy send-sms-reminder --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_ID }} --dns-resolver https
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy send-phone-otp to Production
+        run: npx supabase functions deploy send-phone-otp --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_ID }} --dns-resolver https
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy verify-phone-otp to Production
+        run: npx supabase functions deploy verify-phone-otp --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_ID }} --dns-resolver https
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       
       - name: Verify deployments
         run: npx supabase functions list --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_ID }}
@@ -53,8 +65,8 @@ jobs:
       
       - name: Deployment Success
         if: success()
-        run: echo "✅ All functions deployed successfully to Production"
+        run: echo "All functions deployed successfully to Production"
       
       - name: Deployment Failed
         if: failure()
-        run: echo "❌ Deployment to Production failed. Check logs above." && exit 1
+        run: echo "Deployment to Production failed. Check logs above." && exit 1

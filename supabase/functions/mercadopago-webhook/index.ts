@@ -235,9 +235,9 @@ Deno.serve(async (req) => {
     // Get plan limits
     const limits = PLAN_LIMITS[planType] || PLAN_LIMITS.free
 
-    // Upsert business_plan
+    // Upsert business_plans
     const { data: businessPlan, error: businessPlanError } = await supabase
-      .from('business_plan')
+      .from('business_plans')
       .upsert({
         business_id: businessId,
         plan_type: planType,

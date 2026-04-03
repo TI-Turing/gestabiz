@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
       case 'resume':
       case 'reactivate': {
         const { data, error } = await supabase
-          .from('business_plan')
+          .from('business_plans')
           .update({
             status: action === 'cancel' ? 'canceled' : action === 'pause' ? 'paused' : 'active',
             updated_at: new Date().toISOString(),
