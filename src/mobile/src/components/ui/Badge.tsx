@@ -1,6 +1,7 @@
 import React from 'react'
 import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native'
-import { colors, radius, spacing, typography } from '../../theme'
+import { radius, spacing, typography } from '../../theme'
+import { useTheme } from '../../contexts/ThemeContext'
 
 type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'default' | 'primary'
 type BadgeSize = 'sm' | 'md'
@@ -10,15 +11,6 @@ interface BadgeProps {
   variant?: BadgeVariant
   size?: BadgeSize
   style?: ViewStyle
-}
-
-const variantColors: Record<BadgeVariant, { bg: string; text: string }> = {
-  success: { bg: '#10b98120', text: colors.success },
-  warning: { bg: '#f59e0b20', text: colors.warning },
-  error: { bg: '#ef444420', text: colors.error },
-  info: { bg: '#3b82f620', text: colors.info },
-  default: { bg: colors.card, text: colors.textSecondary },
-  primary: { bg: '#6366f120', text: colors.primary },
 }
 
 const sizeStyles: Record<BadgeSize, { container: ViewStyle; text: TextStyle }> = {
@@ -41,6 +33,15 @@ const sizeStyles: Record<BadgeSize, { container: ViewStyle; text: TextStyle }> =
 }
 
 export default function Badge({ label, variant = 'default', size = 'md', style }: BadgeProps) {
+  const { theme } = useTheme()
+  const variantColors: Record<BadgeVariant, { bg: string; text: string }> = {
+    success: { bg: '#10b98120', text: theme.success },
+    warning: { bg: '#f59e0b20', text: theme.warning },
+    error: { bg: '#ef444420', text: theme.error },
+    info: { bg: '#3b82f620', text: theme.info },
+    default: { bg: theme.card, text: theme.textSecondary },
+    primary: { bg: '#6820F720', text: theme.primary },
+  }
   const vc = variantColors[variant]
   const ss = sizeStyles[size]
 

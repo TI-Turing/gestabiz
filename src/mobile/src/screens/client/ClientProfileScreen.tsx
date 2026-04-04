@@ -10,9 +10,17 @@ import Avatar from '../../components/ui/Avatar'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
+import { Ionicons } from '@expo/vector-icons'
 import { QUERY_CONFIG, QUERY_KEYS } from '../../lib/queryClient'
 
-export default function ClientProfileScreen() {
+const NAV_ITEMS: { label: string; icon: keyof typeof Ionicons.glyphMap; screen: string }[] = [
+  { label: 'Mis favoritos', icon: 'heart-outline', screen: 'Favoritos' },
+  { label: 'Mensajes', icon: 'chatbubble-outline', screen: 'ConversacionList' },
+  { label: 'Notificaciones', icon: 'notifications-outline', screen: 'Notificaciones' },
+  { label: 'Ajustes de cuenta', icon: 'settings-outline', screen: 'Ajustes' },
+]
+
+export default function ClientProfileScreen({ navigation }: { navigation: { navigate: (s: string) => void } }) {
   const { user, signOut } = useAuth()
   const { roles, activeRole, activeBusiness, switchRole } = useUserRoles(user)
   const qc = useQueryClient()
@@ -68,6 +76,18 @@ export default function ClientProfileScreen() {
 
       <Button title="Guardar cambios" onPress={() => saveMutation.mutate()} loading={saveMutation.isPending} style={styles.saveBtn} />
 
+      <Text style={styles.sectionTitle}>Accesos rápidos</Text>
+      {NAV_ITEMS.map((item) => (
+        <Button
+          key={item.screen}
+          title={item.label}
+          icon={item.icon}
+          onPress={() => navigation.navigate(item.screen)}
+          variant="secondary"
+          style={styles.navBtn}
+        />
+      ))}
+
       {otherRoles.length > 0 && (
         <>
           <Text style={styles.sectionTitle}>Cambiar rol</Text>
@@ -105,4 +125,5 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: typography.lg, fontWeight: '700', color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
   saveBtn: { marginTop: spacing.sm },
   roleBtn: { marginBottom: spacing.sm },
+  navBtn: { marginBottom: spacing.sm },
 })

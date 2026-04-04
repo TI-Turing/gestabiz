@@ -1,7 +1,15 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { Session, User } from '@supabase/supabase-js'
 import * as WebBrowser from 'expo-web-browser'
+import * as SecureStore from 'expo-secure-store'
 import { supabase } from '../lib/supabase'
+import {
+  registerForPushNotifications,
+  savePushToken,
+  removePushToken,
+} from '../lib/push-notifications'
+
+const PUSH_TOKEN_KEY = '@gestabiz:push_token'
 
 // Necesario para expo-auth-session con OAuth
 WebBrowser.maybeCompleteAuthSession()
@@ -10,6 +18,7 @@ interface AuthContextValue {
   user: User | null
   session: Session | null
   loading: boolean
+  pushToken: string | null
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
@@ -26,6 +35,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [pushToken, setPushToken] = useState<string | null>(null)
 
   useEffect(() => {
     // Obtener sesión inicial
@@ -42,6 +52,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setSession(newSession)
       setUser(newSession?.user ?? null)
       setLoading(false)
+
+      // Registrar push token al autenticarse
+      if (newSession?.user && _event === 'SIGNED_IN') {
+        registerForPushNotifications().then(async (token) => {
+          if (token) {
+            setPushToken(token)
+            await SecureStore.setItemAsync(PUSH_TOKEN_KEY, token)
+            await savePushToken(newSession.user.id, token)
+          }
+        })
+      }
     })
 
     return () => {
@@ -66,6 +87,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const signOut = async () => {
+    try {
+      const savedToken = await SecureStore.getItemAsync(PUSH_TOKEN_KEY)
+      if (savedToken) {
+        await removePushToken(savedToken)
+        await SecureStore.deleteItemAsync(PUSH_TOKEN_KEY)
+        setPushToken(null)
+      }
+    } catch {
+      // No bloquear el logout si falla la limpieza del token
+    }
     await supabase.auth.signOut()
   }
 
@@ -83,6 +114,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     session,
     loading,
+    pushToken,
     signIn,
     signUp,
     signOut,

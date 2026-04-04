@@ -9,7 +9,7 @@ import {
   RefreshControlProps,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { colors } from '../../theme'
+import { useTheme } from '../../contexts/ThemeContext'
 
 interface ScreenProps {
   children: ReactNode
@@ -30,11 +30,13 @@ export default function Screen({
   noPadding = false,
   refreshControl,
 }: ScreenProps) {
+  const { theme } = useTheme()
   const paddingStyle = noPadding ? undefined : styles.padding
+  const safeAreaStyle = [{ flex: 1, backgroundColor: theme.background }, style]
 
   if (scrollable) {
     return (
-      <SafeAreaView style={[styles.safeArea, style]}>
+      <SafeAreaView style={safeAreaStyle}>
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -54,17 +56,13 @@ export default function Screen({
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, style]}>
+    <SafeAreaView style={safeAreaStyle}>
       <View style={[styles.flex, paddingStyle, contentStyle]}>{children}</View>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   flex: {
     flex: 1,
   },
