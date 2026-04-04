@@ -71,7 +71,7 @@ serve(async (req) => {
 
       const array = new Uint32Array(1)
       crypto.getRandomValues(array)
-      const devCode = String(100000 + (array[0] % 900000))
+      const devCode = String(1000 + (array[0] % 9000))
 
       // Guardar en DB para que verify-phone-otp pueda validarlo en modo DEV
       await supabase.from('profiles').update({
@@ -119,7 +119,10 @@ serve(async (req) => {
     )
 
   } catch (err) {
-    await captureEdgeFunctionError(err, 'send-phone-otp')
+    captureEdgeFunctionError(err as Error, {
+      functionName: 'send-phone-otp',
+      operation: 'sendOtp',
+    })
     await flushSentry()
     return new Response(
       JSON.stringify({ success: false, error: err instanceof Error ? err.message : String(err) }),

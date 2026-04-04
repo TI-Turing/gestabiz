@@ -65,7 +65,7 @@ function flagUrl(iso: string): string {
 }
 
 const LOCAL_DIGITS_REGEX = /^\d{6,14}$/
-const OTP_LENGTH = 6
+const OTP_LENGTH = 4
 const RESEND_COOLDOWN_SEC = 60
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -230,7 +230,7 @@ export function PhoneVerificationModal({
   const handleVerify = async () => {
     const code = otpDigits.join('')
     if (code.length < OTP_LENGTH) {
-      setOtpError('Ingresa los 6 dígitos del código.')
+      setOtpError('Ingresa los 4 dígitos del código.')
       return
     }
 

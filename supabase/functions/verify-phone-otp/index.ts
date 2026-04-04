@@ -165,7 +165,10 @@ serve(async (req) => {
     }
 
   } catch (err) {
-    await captureEdgeFunctionError(err, 'verify-phone-otp')
+    captureEdgeFunctionError(err as Error, {
+      functionName: 'verify-phone-otp',
+      operation: 'verifyOtp',
+    })
     await flushSentry()
     return new Response(
       JSON.stringify({ success: false, error: err instanceof Error ? err.message : String(err) }),
