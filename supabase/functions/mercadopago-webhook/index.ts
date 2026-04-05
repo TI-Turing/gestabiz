@@ -5,6 +5,13 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// Mapeo frontend → BD (el frontend usa 'basico'/'pro', la BD usa 'inicio'/'profesional')
+const PLAN_TYPE_MAPPING: Record<string, string> = {
+  basico: 'inicio',
+  pro: 'profesional',
+  free: 'inicio',
+}
+
 const STATUS_MAPPING: Record<string, string> = {
   approved: 'active',
   pending: 'trialing',
@@ -84,13 +91,17 @@ Deno.serve(async (req) => {
       metadata: payment.metadata,
     })
 
-    // Extract metadata
-    const businessId = payment.metadata?.business_id
-    const planType = payment.metadata?.plan_type || 'basico'
-    const billingCycle = payment.metadata?.billing_cycle || 'monthly'
+    // Extraer businessId/plan desde external_reference (confiable) con fallback a metadata
+    // external_reference formato: "{businessId}::{planType}::{billingCycle}"
+    const refParts = (payment.external_reference || '').split('::')
+    const businessId = payment.metadata?.business_id || refParts[0] || null
+    const planType = payment.metadata?.plan_type || refParts[1] || 'basico'
+    const billingCycle = payment.metadata?.billing_cycle || refParts[2] || 'monthly'
+
+    console.log('[mercadopago-webhook] Extracted:', { businessId, planType, billingCycle, external_reference: payment.external_reference })
 
     if (!businessId) {
-      console.error('[mercadopago-webhook] Missing business_id in metadata')
+      console.error('[mercadopago-webhook] Missing business_id in both metadata and external_reference')
       return new Response(JSON.stringify({ status: 'ok' }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -109,15 +120,18 @@ Deno.serve(async (req) => {
       end.setFullYear(end.getFullYear() + 1)
     }
 
+    // Mapear plan_type del frontend al valor que espera la BD
+    const dbPlanType = PLAN_TYPE_MAPPING[planType] || planType
+
     // Update business_plans
-    console.log('[mercadopago-webhook] Updating plan:', { businessId, planType, subscriptionStatus })
+    console.log('[mercadopago-webhook] Updating plan:', { businessId, planType, dbPlanType, subscriptionStatus })
 
     const { error } = await supabase
       .from('business_plans')
       .upsert(
         {
           business_id: businessId,
-          plan_type: planType,
+          plan_type: dbPlanType,
           status: subscriptionStatus,
           start_date: now.toISOString(),
           end_date: end.toISOString(),

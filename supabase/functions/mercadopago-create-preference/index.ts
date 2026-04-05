@@ -115,8 +115,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Generate unique reference code
-    const referenceCode = `MP-${businessId.substring(0, 8)}-${Date.now()}`
+    // external_reference es el único campo que MP propaga Preference→Payment de forma confiable
+    const referenceCode = `${businessId}::${planType}::${billingCycle}`
 
     // Get MercadoPago Access Token
     const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')
