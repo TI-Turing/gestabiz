@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowRight, Menu, X } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageToggle } from '@/components/ui/language-toggle'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 interface PublicLayoutProps {
   children: React.ReactNode
@@ -32,7 +33,7 @@ export function PublicLayout({ children }: Readonly<PublicLayoutProps>) {
       <nav
         className={`fixed top-0 w-full z-50 transition-all duration-300 ${
           mobileMenuOpen || scrolled
-            ? 'bg-white/95 backdrop-blur-md shadow-lg'
+            ? 'bg-background/95 backdrop-blur-md shadow-lg border-b border-border'
             : 'bg-transparent'
         }`}
       >
@@ -59,35 +60,36 @@ export function PublicLayout({ children }: Readonly<PublicLayoutProps>) {
                 <>
                   <a
                     href="#features"
-                    className="text-gray-700 hover:text-purple-600 transition-colors font-medium"
+                    className="text-foreground/70 hover:text-purple-600 transition-colors font-medium"
                   >
                     {t('landing.nav.features')}
                   </a>
                   <a
                     href="#benefits"
-                    className="text-gray-700 hover:text-purple-600 transition-colors font-medium"
+                    className="text-foreground/70 hover:text-purple-600 transition-colors font-medium"
                   >
                     {t('landing.nav.benefits')}
                   </a>
                   <a
                     href="#pricing"
-                    className="text-gray-700 hover:text-purple-600 transition-colors font-medium"
+                    className="text-foreground/70 hover:text-purple-600 transition-colors font-medium"
                   >
                     {t('landing.nav.pricing')}
                   </a>
                   <a
                     href="#testimonials"
-                    className="text-gray-700 hover:text-purple-600 transition-colors font-medium"
+                    className="text-foreground/70 hover:text-purple-600 transition-colors font-medium"
                   >
                     {t('landing.nav.testimonials')}
                   </a>
                 </>
               )}
               <LanguageToggle />
+              <ThemeToggle />
               <Button
                 variant="ghost"
                 onClick={() => navigate('/login')}
-                className="text-gray-700 hover:text-purple-600"
+                className="text-foreground/70 hover:text-purple-600"
               >
                 {t('landing.nav.signIn')}
               </Button>
@@ -144,8 +146,9 @@ export function PublicLayout({ children }: Readonly<PublicLayoutProps>) {
                   </a>
                 </>
               )}
-              <div className="flex justify-center">
+              <div className="flex justify-center gap-2">
                 <LanguageToggle />
+                <ThemeToggle />
               </div>
               <Button
                 variant="ghost"
