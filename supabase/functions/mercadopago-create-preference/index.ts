@@ -179,16 +179,15 @@ Deno.serve(async (req) => {
       .from('subscription_payments')
       .insert({
         business_id: businessId,
-        plan_type: planType,
-        billing_cycle: billingCycle,
         amount: finalPrice,
         currency: 'COP',
         status: 'pending',
-        payment_method: 'mercadopago',
-        transaction_id: preferenceData.id,
         metadata: {
           preference_id: preferenceData.id,
           init_point: preferenceData.init_point,
+          plan_type: planType,
+          billing_cycle: billingCycle,
+          payment_method: 'mercadopago',
           discount_code: discountCode,
           discount_amount: discountAmount,
         },
