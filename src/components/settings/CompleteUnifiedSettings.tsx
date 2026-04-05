@@ -96,8 +96,12 @@ export default function CompleteUnifiedSettings({
   const tabs = [
     { value: 'general', label: t('settings.tabs.general'), icon: <Palette className="h-4 w-4" /> },
     { value: 'profile', label: t('settings.tabs.profile'), icon: <UserIcon className="h-4 w-4" /> },
-    { value: 'notifications', label: t('settings.tabs.notifications'), icon: <Bell className="h-4 w-4" /> },
   ]
+
+  if (currentRole !== 'client') {
+    tabs.push({ value: 'notifications', label: t('settings.tabs.notifications'), icon: <Bell className="h-4 w-4" /> })
+  }
+
   const roleTab = getRoleSpecificTab()
   if (roleTab) tabs.push(roleTab)
   tabs.push({ value: 'danger-zone', label: t('settings.tabs.dangerZone'), icon: <AlertCircle className="h-4 w-4" /> })
@@ -208,9 +212,11 @@ export default function CompleteUnifiedSettings({
         </TabsContent>
 
         {/* Notifications */}
-        <TabsContent value="notifications" className="space-y-4">
-          <NotificationSettings userId={user.id} />
-        </TabsContent>
+        {currentRole !== 'client' && (
+          <TabsContent value="notifications" className="space-y-4">
+            <NotificationSettings userId={user.id} />
+          </TabsContent>
+        )}
 
         {/* Role-specific */}
         <TabsContent value="role-specific" className="space-y-4">

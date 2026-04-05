@@ -83,10 +83,11 @@ const AppointmentConfirmation = lazy(() => import('@/pages/AppointmentConfirmati
 const AppointmentCancellation = lazy(() => import('@/pages/AppointmentCancellation'))
 const AppointmentReschedule = lazy(() => import('@/pages/AppointmentReschedule'))
 const GoogleCalendarCallback = lazy(() => import('@/pages/GoogleCalendarCallback'))
-// SEO: landing pages verticales y blog
+// SEO: landing pages verticales, blog y directorio
 const VerticalLandingPage = lazy(() => import('@/pages/VerticalLandingPage'))
 const BlogIndexPage = lazy(() => import('@/pages/BlogIndexPage'))
 const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'))
+const DirectoryPage = lazy(() => import('@/pages/DirectoryPage'))
 
 // Loading component
 function AppLoader() {
@@ -159,6 +160,9 @@ function AppRoutes() {
       {/* SEO: Blog de contenidos */}
       <Route path="/blog" element={<BlogIndexPage />} />
       <Route path="/blog/:slug" element={<BlogPostPage />} />
+
+      {/* SEO: Directorio por categoría + ciudad */}
+      <Route path="/directorio/:categoria/:ciudad" element={<DirectoryPage />} />
 
       {/* Rutas públicas para confirmación de citas */}
       <Route path="/confirmar-cita/:token" element={<AppointmentConfirmation />} />

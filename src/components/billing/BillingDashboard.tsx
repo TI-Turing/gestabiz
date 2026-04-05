@@ -13,7 +13,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
-  CreditCard,
   Calendar,
   TrendingUp,
   AlertCircle,
@@ -60,18 +59,18 @@ function formatDateLong(dateStr: string): string {
 
 function getStatusBadge(status: string) {
   if (status === 'active' || status === 'trialing') {
-    return <Badge className="bg-green-500 text-white">Activo</Badge>
+    return <Badge className="bg-emerald-500 text-white">Activo</Badge>
   }
   if (status === 'canceled') {
-    return <Badge className="bg-red-500 text-white">Cancelado</Badge>
+    return <Badge className="bg-destructive text-white">Cancelado</Badge>
   }
   if (status === 'expired') {
-    return <Badge className="bg-gray-500 text-white">Expirado</Badge>
+    return <Badge className="bg-muted text-foreground">Expirado</Badge>
   }
   if (status === 'past_due') {
-    return <Badge className="bg-yellow-500 text-white">Pago vencido</Badge>
+    return <Badge className="bg-amber-500 text-black">Pago vencido</Badge>
   }
-  return <Badge>{status}</Badge>
+  return <Badge className="bg-muted text-foreground">{status}</Badge>
 }
 
 export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>) {
@@ -149,10 +148,10 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
         </div>
 
         {/* Current plan: Free */}
-        <Card className="border-2 border-primary/20">
+        <Card className="border border-primary/20 shadow-sm bg-card/95">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-primary" />
               Plan Free — Activo
             </CardTitle>
             <CardDescription>{freePlan.description}</CardDescription>
@@ -165,7 +164,7 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
                   .filter((f) => f.included)
                   .map((f, i) => (
                     <li key={i} className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-primary shrink-0" />
                       {f.name}
                     </li>
                   ))}
@@ -177,9 +176,9 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
         {/* Plan comparison */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Plan Básico */}
-          <Card className="relative border-primary">
+          <Card className="relative border border-border/70 bg-card/95 shadow-sm">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
+              <span className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full shadow-sm">
                 Más Popular
               </span>
             </div>
@@ -191,7 +190,7 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
                   ${basicoPlan.price.toLocaleString('es-CO')}
                 </span>
                 <span className="text-muted-foreground text-sm">/mes</span>
-                <p className="text-xs text-green-600 mt-1">
+                <p className="text-xs text-primary/80 mt-1">
                   ${basicoPlan.priceAnnual.toLocaleString('es-CO')}/año (2 meses gratis)
                 </p>
               </div>
@@ -208,7 +207,7 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
                         f.highlight ? 'font-semibold text-primary' : 'text-muted-foreground'
                       }`}
                     >
-                      <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                      <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                       {f.name}
                     </li>
                   ))}
@@ -220,7 +219,7 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
           </Card>
 
           {/* Plan Pro */}
-          <Card>
+          <Card className="border border-border/70 bg-card/95 shadow-sm">
             <CardHeader>
               <CardTitle>{proPlan.name}</CardTitle>
               <CardDescription>{proPlan.description}</CardDescription>
@@ -229,7 +228,7 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
                   ${proPlan.price.toLocaleString('es-CO')}
                 </span>
                 <span className="text-muted-foreground text-sm">/mes</span>
-                <p className="text-xs text-green-600 mt-1">
+                <p className="text-xs text-primary/80 mt-1">
                   ${proPlan.priceAnnual.toLocaleString('es-CO')}/año (2 meses gratis)
                 </p>
               </div>
@@ -246,7 +245,7 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
                         f.highlight ? 'font-semibold text-primary' : 'text-muted-foreground'
                       }`}
                     >
-                      <CheckCircle className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                      <CheckCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                       {f.name}
                     </li>
                   ))}
@@ -274,18 +273,18 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
           <p className="text-muted-foreground">Administra tu suscripción y métodos de pago</p>
         </div>
 
-        <Card className="border-2 border-red-200">
+        <Card className="border border-destructive/30 bg-card/95 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-500" />
+              <XCircle className="h-5 w-5 text-destructive" />
               {getPlanDisplayName(plan.plan_type)}
               <span className="ml-2">{getStatusBadge(plan.status)}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg bg-orange-50 border border-orange-200 p-4 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-orange-800">
+            <div className="rounded-2xl bg-destructive/10 border border-destructive/20 p-4 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <p className="text-sm text-foreground/80">
                 Plan cancelado — acceso hasta{' '}
                 <strong>{formatDateLong(plan.end_date)}</strong>
               </p>
@@ -328,9 +327,9 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
 
   const planBorderColor =
     plan.status === 'active'
-      ? 'border-green-300'
+      ? 'border-emerald-400/70'
       : plan.status === 'trialing'
-        ? 'border-blue-300'
+        ? 'border-primary/30'
         : 'border-border'
 
   return (
@@ -342,7 +341,7 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
       </div>
 
       {/* Main plan card */}
-      <Card className={`border-2 ${planBorderColor}`}>
+      <Card className={`border-2 ${planBorderColor} bg-card/95 shadow-sm`}>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-center gap-3">
@@ -360,9 +359,9 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
         <CardContent className="space-y-4">
           {/* Canceled alert */}
           {plan.canceled_at && (
-            <div className="rounded-lg bg-orange-50 border border-orange-200 p-4 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-orange-800">
+            <div className="rounded-2xl bg-accent/10 border border-accent/20 p-4 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+              <p className="text-sm text-foreground/80">
                 Plan cancelado — acceso hasta{' '}
                 <strong>{formatDateLong(plan.end_date)}</strong>
               </p>
@@ -416,7 +415,7 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
 
       {/* Usage stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border border-border/70 bg-card/95">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Citas este período</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -431,7 +430,7 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border border-border/70 bg-card/95">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Recordatorios por email</CardTitle>
             <Mail className="h-4 w-4 text-muted-foreground" />
@@ -444,7 +443,7 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border border-border/70 bg-card/95">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Recordatorios WhatsApp</CardTitle>
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
@@ -459,7 +458,7 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
       </div>
 
       {/* Payment history */}
-      <Card>
+      <Card className="border border-border/70 bg-card/95">
         <CardHeader>
           <CardTitle>Historial de pagos</CardTitle>
           <CardDescription>Tus últimos 10 pagos registrados</CardDescription>
@@ -477,7 +476,7 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b">
+                  <tr className="border-b border-border/60">
                     <th className="text-left pb-2 pr-4 font-medium text-muted-foreground">Fecha</th>
                     <th className="text-left pb-2 pr-4 font-medium text-muted-foreground">Monto</th>
                     <th className="text-left pb-2 pr-4 font-medium text-muted-foreground">Estado</th>
@@ -499,17 +498,17 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
                       </td>
                       <td className="py-3 pr-4">
                         {payment.status === 'completed' ? (
-                          <span className="flex items-center gap-1.5 text-green-600">
+                          <span className="flex items-center gap-1.5 text-emerald-500">
                             <CheckCircle className="h-4 w-4" />
                             Completado
                           </span>
                         ) : payment.status === 'failed' ? (
-                          <span className="flex items-center gap-1.5 text-red-600">
+                          <span className="flex items-center gap-1.5 text-destructive">
                             <XCircle className="h-4 w-4" />
                             Fallido
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1.5 text-yellow-600">
+                          <span className="flex items-center gap-1.5 text-amber-500">
                             <Clock className="h-4 w-4" />
                             Pendiente
                           </span>
