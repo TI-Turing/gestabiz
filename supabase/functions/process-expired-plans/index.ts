@@ -26,6 +26,7 @@ Deno.serve(async (_req) => {
   const now = new Date().toISOString()
 
   // Find all active plans that have passed their end_date and are not canceled
+  // ── 1. Planes activos con end_date vencida ────────────────────────────────
   const { data: expiredPlans, error: fetchError } = await supabase
     .from('business_plans')
     .select('id, business_id, plan_type, end_date')
@@ -41,16 +42,34 @@ Deno.serve(async (_req) => {
     })
   }
 
-  if (!expiredPlans || expiredPlans.length === 0) {
+  // ── 2. Planes trialing con trial_ends_at vencida ──────────────────────────
+  const { data: expiredTrials, error: trialFetchError } = await supabase
+    .from('business_plans')
+    .select('id, business_id, plan_type, trial_ends_at')
+    .eq('status', 'trialing')
+    .not('trial_ends_at', 'is', null)
+    .lt('trial_ends_at', now)
+
+  if (trialFetchError) {
+    console.error('[process-expired-plans] Error fetching expired trials:', trialFetchError)
+    return new Response(JSON.stringify({ error: trialFetchError.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const allExpired = [...(expiredPlans ?? []), ...(expiredTrials ?? [])]
+
+  if (allExpired.length === 0) {
     console.log('[process-expired-plans] No expired plans found')
     return new Response(JSON.stringify({ success: true, updated: 0 }), {
       headers: { 'Content-Type': 'application/json' },
     })
   }
 
-  console.log(`[process-expired-plans] Found ${expiredPlans.length} expired plan(s)`)
+  console.log(`[process-expired-plans] Found ${allExpired.length} expired plan(s) (${expiredPlans?.length ?? 0} active, ${expiredTrials?.length ?? 0} trialing)`)
 
-  const expiredIds = expiredPlans.map((p) => p.id)
+  const expiredIds = allExpired.map((p) => p.id)
 
   const { data: updatedRows, error: updateError } = await supabase
     .from('business_plans')
@@ -72,11 +91,34 @@ Deno.serve(async (_req) => {
   const updatedCount = updatedRows?.length ?? 0
   console.log(`[process-expired-plans] Marked ${updatedCount} plan(s) as expired`)
 
+  // Registrar eventos trial_ended para los trials vencidos
+  if (expiredTrials && expiredTrials.length > 0) {
+    const trialEvents = expiredTrials.map((t) => ({
+      business_id: t.business_id,
+      plan_id: t.id,
+      event_type: 'trial_ended',
+      triggered_by: 'system',
+      metadata: { trial_ends_at: t.trial_ends_at, processed_at: now },
+    }))
+
+    const { error: eventsError } = await supabase
+      .from('subscription_events')
+      .insert(trialEvents)
+
+    if (eventsError) {
+      console.error('[process-expired-plans] Error inserting trial_ended events:', eventsError)
+    } else {
+      console.log(`[process-expired-plans] Inserted ${trialEvents.length} trial_ended event(s)`)
+    }
+  }
+
   return new Response(
     JSON.stringify({
       success: true,
       updated: updatedCount,
       plan_ids: expiredIds,
+      expired_active: expiredPlans?.length ?? 0,
+      expired_trials: expiredTrials?.length ?? 0,
     }),
     { headers: { 'Content-Type': 'application/json' } }
   )

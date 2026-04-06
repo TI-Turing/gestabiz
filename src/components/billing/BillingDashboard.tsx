@@ -9,6 +9,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useBillingPlan } from '@/hooks/useBillingPlan'
+import { useFreeTrial } from '@/hooks/useFreeTrial'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -22,12 +23,15 @@ import {
   ArrowLeft,
   Mail,
   MessageSquare,
+  Gift,
+  Loader2,
 } from 'lucide-react'
 import { PricingPage } from '@/pages/PricingPage'
 import { PRICING_PLANS } from '@/lib/pricingPlans'
 
 interface BillingDashboardProps {
   businessId: string
+  ownerId: string
 }
 
 interface RecentPayment {
@@ -73,8 +77,9 @@ function getStatusBadge(status: string) {
   return <Badge className="bg-muted text-foreground">{status}</Badge>
 }
 
-export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>) {
+export function BillingDashboard({ businessId, ownerId }: Readonly<BillingDashboardProps>) {
   const { plan, usage, isLoading, cancelPlan, refetch } = useBillingPlan(businessId)
+  const trial = useFreeTrial(businessId, ownerId, refetch, plan)
   const [showPricingPage, setShowPricingPage] = useState(false)
   const [recentPayments, setRecentPayments] = useState<RecentPayment[]>([])
   const [paymentsLoading, setPaymentsLoading] = useState(false)
@@ -146,6 +151,34 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Facturación</h2>
           <p className="text-muted-foreground">Administra tu suscripción y métodos de pago</p>
         </div>
+
+        {/* Free trial banner */}
+        {trial.isEligible && (
+          <Card className="border-2 border-primary bg-primary/5 shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-primary">
+                <Gift className="h-5 w-5" />
+                1 Mes Gratis — Plan Básico
+              </CardTitle>
+              <CardDescription>
+                Prueba todas las funciones del Plan Básico sin costo. Disponible una sola vez por usuario.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {trial.error && (
+                <p className="text-sm text-destructive">{trial.error}</p>
+              )}
+              <Button
+                onClick={trial.activateFreeTrial}
+                disabled={trial.isActivating}
+                className="w-full sm:w-auto"
+              >
+                {trial.isActivating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Activar Mes Gratis
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Current plan: Free */}
         <Card className="border border-primary/20 shadow-sm bg-card/95">
@@ -357,6 +390,29 @@ export function BillingDashboard({ businessId }: Readonly<BillingDashboardProps>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Trial active alert */}
+          {plan.status === 'trialing' && (
+            <div className="rounded-2xl bg-primary/10 border border-primary/20 p-4 flex items-start gap-3">
+              <Clock className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <div className="flex-1 space-y-1.5">
+                <p className="text-sm font-medium">Mes gratuito activo</p>
+                <p className="text-sm text-foreground/80">
+                  Tu período gratuito vence el{' '}
+                  <strong>{formatDateLong(plan.end_date)}</strong>
+                  {trial.daysRemaining !== null && (
+                    <span className="ml-1 text-primary font-semibold">
+                      ({trial.daysRemaining} {trial.daysRemaining === 1 ? 'día' : 'días'} restantes)
+                    </span>
+                  )}
+                  . Activa un plan de pago para no perder el acceso.
+                </p>
+                <Button size="sm" className="mt-1" onClick={() => setShowPricingPage(true)}>
+                  Activar Plan Básico
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Canceled alert */}
           {plan.canceled_at && (
             <div className="rounded-2xl bg-accent/10 border border-accent/20 p-4 flex items-start gap-3">

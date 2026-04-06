@@ -13,7 +13,8 @@ import {
   ConfirmationStep,
   SuccessStep,
 } from './wizard-steps'
-import { ResourceSelection } from './ResourceSelection'
+// TODO: Reimportar ResourceSelection cuando se implemente la selección de recursos en el wizard
+// import { ResourceSelection } from './ResourceSelection'
 import type { WizardData, WizardBusiness } from './wizard-types'
 import type { Appointment } from '@/types/types'
 
@@ -120,45 +121,30 @@ export function WizardStepContent({
         />
       )}
 
-      {/* Employee or Resource selection */}
+      {/* Employee selection */}
+      {/* TODO: Implementar selección de recursos (ResourceSelection) para negocios con
+          resource_model = 'physical_resource' | 'group_class'. Por ahora siempre se
+          muestran profesionales independientemente del resource_model del negocio. */}
       {currentStep === getStepNumber('employee') && (
-        <>
-          {(!wizardData.business?.resource_model ||
-            wizardData.business.resource_model === 'professional') && (
-            <EmployeeSelection
-              businessId={effectiveBusiness}
-              locationId={wizardData.locationId || ''}
-              serviceId={wizardData.serviceId || ''}
-              selectedEmployeeId={wizardData.employeeId}
-              onSelectEmployee={(employee) => {
-                updateWizardData({ employeeId: employee.id, employee, resourceId: null })
-                if (!initiatedFromEmployeeProfile) {
-                  const contextBusinessId = wizardData.businessId || businessId || null
-                  if (contextBusinessId) {
-                    updateWizardData({
-                      employeeBusinessId: contextBusinessId,
-                      employeeBusiness: wizardData.business || null,
-                    })
-                  }
-                }
-              }}
-              isPreselected={!!preselectedEmployeeId}
-            />
-          )}
-
-          {wizardData.business?.resource_model &&
-            wizardData.business.resource_model !== 'professional' && (
-              <ResourceSelection
-                businessId={effectiveBusiness}
-                serviceId={wizardData.serviceId || ''}
-                locationId={wizardData.locationId || ''}
-                selectedResourceId={wizardData.resourceId || undefined}
-                onSelect={(resourceId) =>
-                  updateWizardData({ resourceId, employeeId: null, employee: null })
-                }
-              />
-            )}
-        </>
+        <EmployeeSelection
+          businessId={effectiveBusiness}
+          locationId={wizardData.locationId || ''}
+          serviceId={wizardData.serviceId || ''}
+          selectedEmployeeId={wizardData.employeeId}
+          onSelectEmployee={(employee) => {
+            updateWizardData({ employeeId: employee.id, employee, resourceId: null })
+            if (!initiatedFromEmployeeProfile) {
+              const contextBusinessId = wizardData.businessId || businessId || null
+              if (contextBusinessId) {
+                updateWizardData({
+                  employeeBusinessId: contextBusinessId,
+                  employeeBusiness: wizardData.business || null,
+                })
+              }
+            }
+          }}
+          isPreselected={!!preselectedEmployeeId}
+        />
       )}
 
       {/* Employee business selection */}
