@@ -9,7 +9,7 @@ import type { PostgrestError } from '@supabase/supabase-js'
 
 // Tabla de permisos por rol (sistema legacy usado solo en este hook)
 // Para permisos granulares de negocio ver src/lib/permissions-v2.ts
-const LEGACY_ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+const LEGACY_ROLE_PERMISSIONS: Record<UserRole | 'owner', Permission[]> = {
   admin: [
     'read_appointments', 'write_appointments', 'delete_appointments',
     'read_clients', 'write_clients', 'delete_clients',

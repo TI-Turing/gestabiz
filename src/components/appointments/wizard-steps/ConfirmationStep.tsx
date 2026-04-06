@@ -9,7 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 interface WizardData {
   serviceId: string | null;
-  service: { name: string; duration: number; price?: number } | null;
+  service: { name: string; duration: number; duration_minutes?: number; price?: number } | null;
   date: Date | null;
   startTime: string | null;
   endTime: string | null;

@@ -240,8 +240,7 @@ export function EmployeeOccupancyModal({
         start_time: r.start_time,
         status: r.status as AppointmentRow['status'],
         service_id: r.service_id ?? null,
-        // @ts-expect-error — Supabase join returns array or object depending on relation
-        service_name: Array.isArray(r.services) ? r.services[0]?.name : r.services?.name ?? null,
+        service_name: Array.isArray(r.services) ? (r.services[0] as { name?: string } | undefined)?.name ?? null : (r.services as { name?: string } | null)?.name ?? null,
       }))
     },
     enabled: isOpen && !!employeeId && !!businessId,
@@ -272,8 +271,7 @@ export function EmployeeOccupancyModal({
         start_time: r.start_time,
         status: r.status as AppointmentRow['status'],
         service_id: r.service_id ?? null,
-        // @ts-expect-error — Supabase join
-        service_name: Array.isArray(r.services) ? r.services[0]?.name : r.services?.name ?? null,
+        service_name: Array.isArray(r.services) ? (r.services[0] as { name?: string } | undefined)?.name ?? null : (r.services as { name?: string } | null)?.name ?? null,
       }))
     },
     enabled: isOpen && !!employeeId && !!businessId,

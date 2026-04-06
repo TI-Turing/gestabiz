@@ -196,7 +196,7 @@ export function ServiceProfileModal({
 
           if (!cancelled) {
             // Construir mapa de profiles
-            const profileMap = new Map(
+            const profileMap = new Map<string, { full_name: string; email: string; avatar_url: string | null | undefined }>(
               (profilesData ?? []).map((p) => [
                 p.id,
                 { full_name: p.full_name ?? 'Sin nombre', email: p.email ?? '', avatar_url: p.avatar_url },
@@ -204,7 +204,7 @@ export function ServiceProfileModal({
             )
 
             // Construir mapa de business_employees
-            const beMap = new Map(
+            const beMap = new Map<string, { role: string | null; job_title: string | null; offers_services: boolean | null }>(
               (beData ?? []).map((be) => [
                 be.employee_id,
                 { role: be.role, job_title: be.job_title, offers_services: be.offers_services },
@@ -460,7 +460,7 @@ export function ServiceProfileModal({
         {/* Reservar CTA */}
         {onBook && (
           <div className="shrink-0 border-t border-border bg-card px-6 py-4">
-            <Button onClick={onBook} className="w-full" size="lg">
+            <Button onClick={() => onBook?.()} className="w-full" size="lg">
               <Calendar className="w-4 h-4 mr-2" />
               Reservar este servicio
             </Button>

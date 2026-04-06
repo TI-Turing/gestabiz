@@ -66,7 +66,7 @@ export function BusinessSuggestions({
         description: options?.highlight ? undefined : business.description,
         logo_url: business.logo_url,
         city: business.city,
-        average_rating: business.average_rating,
+        average_rating: business.average_rating ?? undefined,
         total_reviews: business.total_reviews,
       }}
       compact
