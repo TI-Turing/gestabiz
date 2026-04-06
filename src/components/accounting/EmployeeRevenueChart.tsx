@@ -24,25 +24,25 @@ export const EmployeeRevenueChart: React.FC<EmployeeRevenueChartProps> = ({
   data,
   height = 400,
 }) => {
-  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: EmployeeRevenue }> }) => {
     if (active && payload && payload.length) {
-      const empData = payload[0].payload as EmployeeRevenue;
+      const empData = payload[0].payload;
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold text-foreground mb-2">
-            {empData.employee}
+            {empData.employee_name}
           </p>
           <p className="text-sm text-chart-1">
-            Ingresos generados: {formatCOP(empData.income)}
+            Ingresos generados: {formatCOP(empData.total_revenue)}
           </p>
-          {empData.appointments !== undefined && (
+          {empData.completed_appointments !== undefined && (
             <p className="text-xs text-muted-foreground mt-1">
-              {empData.appointments} citas completadas
+              {empData.completed_appointments} citas completadas
             </p>
           )}
-          {empData.avgPerAppointment !== undefined && (
+          {empData.average_per_appointment !== undefined && (
             <p className="text-xs text-muted-foreground">
-              Promedio por cita: {formatCOP(empData.avgPerAppointment)}
+              Promedio por cita: {formatCOP(empData.average_per_appointment)}
             </p>
           )}
         </div>
@@ -77,7 +77,7 @@ export const EmployeeRevenueChart: React.FC<EmployeeRevenueChartProps> = ({
           formatter={() => 'Ingresos Generados'}
         />
         <Bar
-          dataKey="income"
+          dataKey="total_revenue"
           name="Ingresos"
           radius={[8, 8, 0, 0]}
         >

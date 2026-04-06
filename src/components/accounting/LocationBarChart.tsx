@@ -24,28 +24,28 @@ export const LocationBarChart: React.FC<LocationBarChartProps> = ({
   height = 400,
   horizontal = false,
 }) => {
-  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: LocationComparison }> }) => {
     if (active && payload && payload.length) {
-      const locationData = payload[0].payload as LocationComparison;
+      const locationData = payload[0].payload;
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
           <p className="text-sm font-semibold text-foreground mb-2">
-            {locationData.location}
+            {locationData.location_name}
           </p>
           <p className="text-sm text-chart-1">
             Ingresos: {formatCOP(locationData.income)}
           </p>
           <p className="text-sm text-chart-2">
-            Egresos: {formatCOP(locationData.expense)}
+            Egresos: {formatCOP(locationData.expenses)}
           </p>
           {locationData.profit !== undefined && (
             <p className="text-sm font-semibold text-foreground mt-2 pt-2 border-t border-border">
               Ganancia: {formatCOP(locationData.profit)}
             </p>
           )}
-          {locationData.transactionCount !== undefined && (
+          {locationData.transaction_count !== undefined && (
             <p className="text-xs text-muted-foreground mt-1">
-              {locationData.transactionCount} {locationData.transactionCount === 1 ? 'transacción' : 'transacciones'}
+              {locationData.transaction_count} {locationData.transaction_count === 1 ? 'transacción' : 'transacciones'}
             </p>
           )}
         </div>
@@ -71,7 +71,7 @@ export const LocationBarChart: React.FC<LocationBarChartProps> = ({
           />
           <YAxis
             type="category"
-            dataKey="location"
+            dataKey="location_name"
             className="text-muted-foreground"
             tick={{ fill: 'currentColor' }}
           />
@@ -84,7 +84,7 @@ export const LocationBarChart: React.FC<LocationBarChartProps> = ({
             radius={[0, 8, 8, 0]}
           />
           <Bar
-            dataKey="expense"
+            dataKey="expenses"
             name="Egresos"
             fill="#ef4444"
             radius={[0, 8, 8, 0]}
@@ -102,7 +102,7 @@ export const LocationBarChart: React.FC<LocationBarChartProps> = ({
       >
         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
         <XAxis
-          dataKey="location"
+          dataKey="location_name"
           className="text-muted-foreground"
           tick={{ fill: 'currentColor' }}
           angle={-45}

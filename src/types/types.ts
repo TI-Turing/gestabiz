@@ -522,6 +522,7 @@ export interface Location {
   updated_at: string
   amenities?: string[]
   capacity?: number
+  banner_url?: string | null
   // NUEVO: Override de festivos por sede (2026-04-03)
   // null/undefined = hereda business.work_on_holidays | true = abre en festivos | false = cierra
   work_on_holidays?: boolean | null

@@ -593,7 +593,7 @@ export const recurring_expenses = [
 
 // ─── IN-APP NOTIFICATIONS ────────────────────────────────────
 export const in_app_notifications = [
-  { id: mockUUID(), user_id: OWNER_ID, type: 'appointment_confirmed', title: 'Cita confirmada', message: 'Mariana López confirmó su cita de Masaje Relajante para hoy a las 2:00 PM.', data: { appointmentId: appointments[3]?.id, businessId: BUSINESS_ID }, status: 'unread', priority: 1, created_at: todayAt(7, 30) },
+  { id: mockUUID(), user_id: OWNER_ID, type: 'appointment_confirmed', title: 'Cita confirmada', message: 'Mariana López confirmó su cita de Masaje Relajante para hoy a las 2:00 PM.', data: { appointmentId: (appointments as unknown as Array<{ id: string }>)[3]?.id, businessId: BUSINESS_ID }, status: 'unread', priority: 1, created_at: todayAt(7, 30) },
   { id: mockUUID(), user_id: OWNER_ID, type: 'new_review', title: 'Nueva reseña ★★★★★', message: 'Sofía Hernández dejó una reseña de 5 estrellas: "Increíble experiencia, el servicio fue excepcional..."', data: { businessId: BUSINESS_ID, rating: 5 }, status: 'unread', priority: 1, created_at: todayAt(6, 45) },
   { id: mockUUID(), user_id: OWNER_ID, type: 'absence_request', title: 'Solicitud de ausencia', message: 'Camila Ríos solicita vacaciones del 15 al 19 de este mes.', data: { businessId: BUSINESS_ID, employeeId: EMP.CAMILA }, status: 'unread', priority: 2, created_at: daysAgo(1) },
   { id: mockUUID(), user_id: OWNER_ID, type: 'new_application', title: 'Nueva aplicación a vacante', message: 'María Fernanda Gómez aplicó al puesto de Estilista Senior.', data: { businessId: BUSINESS_ID, vacancyId: VACANCY_IDS.ESTILISTA }, status: 'unread', priority: 1, created_at: daysAgo(1) },

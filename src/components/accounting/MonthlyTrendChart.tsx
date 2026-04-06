@@ -27,7 +27,7 @@ export const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
   height = 400,
   showArea = false,
 }) => {
-  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: ChartDataPoint; value?: number; name?: string; color?: string }> }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
@@ -40,7 +40,7 @@ export const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
               className="text-sm"
               style={{ color: entry.color }}
             >
-              {entry.name}: {formatCOP(entry.value)}
+              {entry.name}: {formatCOP(entry.value ?? 0)}
             </p>
           ))}
         </div>

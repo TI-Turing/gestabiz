@@ -161,7 +161,8 @@ export default function BusinessProfile({
         .eq('business_id', businessId);
       if (error) throw error;
       const seen = new Set<string>();
-      return (data ?? []).reduce<Array<{
+      type ProfRow = { employee_id: string; profiles: unknown }
+      return ((data ?? []) as ProfRow[]).reduce<Array<{
         id: string;
         full_name: string | null;
         avatar_url?: string | null;

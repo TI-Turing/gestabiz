@@ -98,9 +98,9 @@ export function useEmployeeAppointments(
 
       // Transform data to match interface
       const transformedAppointments: AppointmentWithRelations[] = (data || []).map(apt => {
-        const client = clientMap.get(apt.client_id)
-        const service = apt.service_id ? serviceMap.get(apt.service_id) : null
-        const location = apt.location_id ? locationMap.get(apt.location_id) : null
+        const client = clientMap.get(apt.client_id) as { full_name?: string | null; phone?: string | null; email?: string | null } | undefined
+        const service = apt.service_id ? serviceMap.get(apt.service_id) as { name?: string | null } | undefined : null
+        const location = apt.location_id ? locationMap.get(apt.location_id) as { name?: string | null; address?: string | null } | undefined : null
 
         return {
           id: apt.id,
