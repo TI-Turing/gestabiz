@@ -16,8 +16,8 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { getCorsHeaders, handleCorsPreFlight } from './_shared/cors.ts'
-import { initSentry, captureEdgeFunctionError, flushSentry } from './_shared/sentry.ts'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
+import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
 
 initSentry('activate-free-trial')
 
