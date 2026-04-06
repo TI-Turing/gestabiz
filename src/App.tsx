@@ -88,6 +88,9 @@ const VerticalLandingPage = lazy(() => import('@/pages/VerticalLandingPage'))
 const BlogIndexPage = lazy(() => import('@/pages/BlogIndexPage'))
 const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'))
 const DirectoryPage = lazy(() => import('@/pages/DirectoryPage'))
+// Páginas públicas: legal y contacto
+const LegalPage = lazy(() => import('@/pages/LegalPage'))
+const ContactPage = lazy(() => import('@/pages/ContactPage'))
 
 // Loading component
 function AppLoader() {
@@ -163,6 +166,12 @@ function AppRoutes() {
 
       {/* SEO: Directorio por categoría + ciudad */}
       <Route path="/directorio/:categoria/:ciudad" element={<DirectoryPage />} />
+
+      {/* Páginas informativas públicas */}
+      <Route path="/terminos"   element={<LegalPage />} />
+      <Route path="/privacidad" element={<LegalPage />} />
+      <Route path="/cookies"    element={<LegalPage />} />
+      <Route path="/contacto"   element={<ContactPage />} />
 
       {/* Rutas públicas para confirmación de citas */}
       <Route path="/confirmar-cita/:token" element={<AppointmentConfirmation />} />

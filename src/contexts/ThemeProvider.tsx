@@ -2,7 +2,25 @@ import React, { useEffect, useMemo } from 'react'
 import { useKV } from '@/lib/useKV'
 import { ThemeContext, Theme } from './theme-core'
 
+let darkModeCleaned = false
+
 export function ThemeProvider({ children }: Readonly<{ children: React.ReactNode }>) {
+  // CRITICAL FIX: Force light mode initialization and cleanup (only once)
+  if (!darkModeCleaned && typeof window !== 'undefined') {
+    darkModeCleaned = true
+    try {
+      // Always force light mode on init
+      window.localStorage.setItem('theme-preference', '"light"')
+      // Force remove dark class immediately
+      document.documentElement.classList.remove('dark')
+      document.body.classList.remove('dark')
+      document.documentElement.dataset.theme = 'light'
+      document.body.dataset.theme = 'light'
+    } catch {
+      // noop
+    }
+  }
+
   const [theme, setTheme] = useKV<Theme>('theme-preference', 'light')
 
   // Calculate effective theme
