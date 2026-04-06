@@ -34,6 +34,7 @@ import { usePreferredCity } from '@/hooks/usePreferredCity'
 import { useClientDashboard, type AppointmentWithRelations as ClientDashboardAppointment } from '@/hooks/useClientDashboard'
 import type { UserRole, User } from '@/types/types'
 import type { SearchType } from '@/components/client/SearchBar'
+import { PhoneRequiredModal } from '@/components/employee/PhoneRequiredModal'
 import supabase from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -142,6 +143,10 @@ export function ClientDashboard({
   const [locationBanners, setLocationBanners] = useState<Record<string, string>>({})
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithRelations | null>(null)
   const [currentUser, setCurrentUser] = useState(user)
+  // 'checking': no sabemos aún (perfil cargando) | 'found': tiene tel | 'missing': confirmado sin tel
+  const [phoneStatus, setPhoneStatus] = useState<'checking' | 'found' | 'missing'>(() =>
+    currentUser.phone?.trim() ? 'found' : 'checking'
+  )
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list')
   const [preselectedDate, setPreselectedDate] = useState<Date | undefined>(undefined)
   const [preselectedTime, setPreselectedTime] = useState<string | undefined>(undefined)
@@ -241,6 +246,52 @@ export function ClientDashboard({
       globalThis.history.replaceState({}, '', globalThis.location.pathname)
     }
   }, [])
+
+  // Detectar reprogramación pendiente desde AppointmentReschedule (vía sessionStorage)
+  useEffect(() => {
+    const pendingId = sessionStorage.getItem('reschedule_appointment_id')
+    if (!pendingId || !user?.id) return
+
+    sessionStorage.removeItem('reschedule_appointment_id')
+
+    const triggerReschedule = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('appointments')
+          .select(`
+            id, business_id, location_id, service_id, employee_id,
+            start_time, end_time, status, notes, price, currency,
+            created_at, updated_at, client_id,
+            businesses (id, name, description, logo_url, banner_url, average_rating, total_reviews, city, state),
+            locations (id, name, address, city, state, postal_code, country, latitude, longitude, google_maps_url),
+            employees:profiles!appointments_employee_id_fkey (id, full_name, email, avatar_url),
+            services (id, name, duration, price, category)
+          `)
+          .eq('id', pendingId)
+          .eq('client_id', user.id)
+          .single()
+
+        if (error || !data) return
+
+        const apt = {
+          ...data,
+          business: Array.isArray(data.businesses) ? data.businesses[0] : data.businesses,
+          location: Array.isArray(data.locations) ? data.locations[0] : data.locations,
+          employee: Array.isArray(data.employees) ? data.employees[0] : data.employees,
+          service: Array.isArray(data.services) ? data.services[0] : data.services,
+        } as unknown as AppointmentWithRelations
+
+        handleRescheduleAppointment(apt)
+        setActivePage('appointments')
+      } catch (err) {
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), {
+          tags: { component: 'ClientDashboard.reschedule' },
+        })
+      }
+    }
+
+    triggerReschedule()
+  }, [user?.id])
 
   // Handle search result selection (from quick search)
   const handleSearchResultSelect = useCallback((result: SearchResult) => {
@@ -424,6 +475,27 @@ export function ClientDashboard({
     setCurrentUser(user)
   }, [user])
 
+  // Verificar teléfono contra la BD para evitar falso positivo durante carga del perfil
+  useEffect(() => {
+    if (currentUser.phone?.trim()) {
+      setPhoneStatus('found')
+      return
+    }
+    // phone es falsy — puede ser carga lenta; confirmar con la BD antes de bloquear
+    let cancelled = false
+    supabase
+      .from('profiles')
+      .select('phone')
+      .eq('id', currentUser.id)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled) {
+          setPhoneStatus(data?.phone?.trim() ? 'found' : 'missing')
+        }
+      })
+    return () => { cancelled = true }
+  }, [currentUser.id, currentUser.phone])
+
   // Cargar imágenes de servicios y banners de sedes (OPTIMIZADO - sin cacheBust, queries consolidadas)
   useEffect(() => {
     const loadImages = async () => {
@@ -572,6 +644,21 @@ export function ClientDashboard({
   }
 
   const renderContent = () => {
+    // Mientras verificamos contra la BD, no mostrar nada (evita falso positivo por carga lenta)
+    if (phoneStatus === 'checking') return null
+
+    // Teléfono confirmado como ausente en BD → bloquear acceso
+    if (phoneStatus === 'missing') {
+      return (
+        <PhoneRequiredModal
+          userId={currentUser.id}
+          userName={currentUser.name}
+          roleName="Cliente"
+          description="Lo utilizaremos para confirmaciones y recordatorios de tus citas."
+        />
+      )
+    }
+
     switch (activePage) {
       case 'appointments':
         return (

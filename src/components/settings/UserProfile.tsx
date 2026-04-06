@@ -18,6 +18,7 @@ import { useFileUpload } from '@/hooks/useFileUpload'
 import { supabase } from '@/lib/supabase'
 import { ImageCropper } from './ImageCropper'
 import { useQueryClient } from '@tanstack/react-query'
+import { PhoneVerificationModal } from '@/components/ui/PhoneVerificationModal'
 
 interface UserProfileProps {
   user: UserType
@@ -31,6 +32,7 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
   const [isUpdating, setIsUpdating] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const { uploadFile, deleteFile } = useFileUpload('user-avatars')
+  const [pendingPhoneVerification, setPendingPhoneVerification] = useState(false)
   
   // Image cropper states
   const [showCropper, setShowCropper] = useState(false)
@@ -179,6 +181,16 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
   }
 
   const handleSaveProfile = async () => {
+    // Si el teléfono cambió, activar verificación OTP antes de guardar
+    const newPhone = formData.phone?.trim() ?? ''
+    const currentPhone = user.phone?.trim() ?? ''
+
+    const phoneChanged = newPhone !== currentPhone && newPhone !== ''
+    if (phoneChanged) {
+      setPendingPhoneVerification(true)
+      return
+    }
+
     setIsUpdating(true)
     
     try {
@@ -403,6 +415,64 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
               {isUpdating ? 'Guardando...' : t('profile.save_changes')}
             </Button>
           </div>
+
+          {/* Verificación OTP inline cuando el teléfono cambia */}
+          {pendingPhoneVerification && (
+            <div className="mt-4 border border-border rounded-lg p-5 bg-muted/30">
+              <p className="text-sm font-medium mb-4 text-center">
+                Verifica tu nuevo número de teléfono
+              </p>
+              <PhoneVerificationModal
+                userId={user.id}
+                initialPhone={formData.phone?.trim()}
+                submitLabel="Enviar código de verificación"
+                onSuccess={async (verifiedPhone) => {
+                  // La edge function ya guardó el teléfono en la BD; solo actualizamos el resto
+                  setPendingPhoneVerification(false)
+                  setIsUpdating(true)
+                  try {
+                    const { error: dbError } = await supabase
+                      .from('profiles')
+                      .update({
+                        full_name: formData.name,
+                        updated_at: new Date().toISOString(),
+                      })
+                      .eq('id', user.id)
+
+                    if (dbError) {
+                      toast.error(dbError.message || t('profile.error'))
+                      return
+                    }
+
+                    const updatedUser = {
+                      ...user,
+                      name: formData.name,
+                      username: formData.username?.toLowerCase(),
+                      email: formData.email,
+                      phone: verifiedPhone,
+                      avatar_url: formData.avatar_url,
+                      updated_at: new Date().toISOString(),
+                    }
+
+                    await setUsers(prev => prev.map(u => u.id === user.id ? updatedUser : u))
+                    onUserUpdate(updatedUser)
+                    try { window.localStorage.setItem('current-user', JSON.stringify(updatedUser)) } catch { /* noop */ }
+
+                    await queryClient.invalidateQueries({ queryKey: ['nearby-businesses'] })
+                    await queryClient.invalidateQueries({ queryKey: ['client-dashboard-data'] })
+
+                    toast.success(t('profile.success'))
+                  } catch (error) {
+                    Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
+                    toast.error(t('profile.error'))
+                  } finally {
+                    setIsUpdating(false)
+                  }
+                }}
+                onCancel={() => setPendingPhoneVerification(false)}
+              />
+            </div>
+          )}
         </div>
       </div>
 

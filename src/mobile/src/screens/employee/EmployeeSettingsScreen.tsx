@@ -10,6 +10,7 @@ import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import Avatar from '../../components/ui/Avatar'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
+import { Ionicons } from '@expo/vector-icons'
 import { QUERY_CONFIG, QUERY_KEYS } from '../../lib/queryClient'
 
 interface ProfileForm {
@@ -17,7 +18,17 @@ interface ProfileForm {
   phone: string
 }
 
-export default function EmployeeSettingsScreen() {
+const NAV_ITEMS: { label: string; icon: keyof typeof Ionicons.glyphMap; screen: string }[] = [
+  { label: 'Mi calendario', icon: 'calendar-outline', screen: 'MiCalendario' },
+  { label: 'Mis empleos', icon: 'briefcase-outline', screen: 'MisEmpleos' },
+  { label: 'Perfil profesional', icon: 'person-circle-outline', screen: 'MiPerfil' },
+  { label: 'Vacantes disponibles', icon: 'search-outline', screen: 'Vacantes' },
+  { label: 'Mensajes', icon: 'chatbubble-outline', screen: 'ConversacionList' },
+  { label: 'Notificaciones', icon: 'notifications-outline', screen: 'Notificaciones' },
+  { label: 'Ajustes de cuenta', icon: 'settings-outline', screen: 'Ajustes' },
+]
+
+export default function EmployeeSettingsScreen({ navigation }: { navigation: { navigate: (s: string) => void } }) {
   const { user, signOut } = useAuth()
   const { roles, activeRole, activeBusiness, switchRole } = useUserRoles(user)
   const qc = useQueryClient()
@@ -101,6 +112,18 @@ export default function EmployeeSettingsScreen() {
 
       <Button title="Guardar cambios" onPress={() => saveMutation.mutate()} loading={saveMutation.isPending} style={styles.saveBtn} />
 
+      <Text style={styles.sectionTitle}>Accesos rápidos</Text>
+      {NAV_ITEMS.map((item) => (
+        <Button
+          key={item.screen}
+          title={item.label}
+          icon={item.icon}
+          onPress={() => navigation.navigate(item.screen)}
+          variant="secondary"
+          style={styles.navBtn}
+        />
+      ))}
+
       {otherRoles.length > 0 && (
         <>
           <Text style={styles.sectionTitle}>Cambiar rol</Text>
@@ -128,4 +151,5 @@ const styles = StyleSheet.create({
   switchDesc: { fontSize: typography.sm, color: colors.textSecondary, marginTop: 2 },
   saveBtn: { marginTop: spacing.sm },
   roleBtn: { marginBottom: spacing.sm },
+  navBtn: { marginBottom: spacing.sm },
 })

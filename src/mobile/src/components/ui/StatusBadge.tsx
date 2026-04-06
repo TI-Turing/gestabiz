@@ -1,10 +1,10 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { AppointmentStatus } from '../../types'
-import { colors, radius, spacing, typography } from '../../theme'
+import { radius, spacing, typography } from '../../theme'
 
 const STATUS_CONFIG: Record<AppointmentStatus, { label: string; bg: string; text: string }> = {
-  scheduled: { label: 'Programada', bg: '#1e1b4b', text: colors.primaryLight },
+  scheduled: { label: 'Programada', bg: '#1e1b4b', text: '#8B4FFF' },
   confirmed: { label: 'Confirmada', bg: '#064e3b', text: '#34d399' },
   cancelled: { label: 'Cancelada', bg: '#450a0a', text: '#f87171' },
   completed: { label: 'Completada', bg: '#1f2937', text: '#9ca3af' },

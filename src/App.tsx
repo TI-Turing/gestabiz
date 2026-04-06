@@ -19,6 +19,22 @@ import { hasAnalyticsConsent } from '@/hooks/useAnalytics'
 import { CookieConsent } from '@/components/CookieConsent'
 import { AlertProvider } from '@/components/ui/custom-alert'
 
+const toSentryError = (error: unknown): Error => {
+  if (error instanceof Error) {
+    return error
+  }
+
+  if (typeof error === 'object' && error !== null) {
+    const maybeMessage = (error as { message?: unknown }).message
+    if (typeof maybeMessage === 'string' && maybeMessage.trim().length > 0) {
+      return new Error(maybeMessage)
+    }
+    return new Error(`Non-Error object captured: ${JSON.stringify(error)}`)
+  }
+
+  return new Error(String(error))
+}
+
 // Permission Testing Page (dev only - tree-shaken in production)
 const PermissionTestingPage = import.meta.env.DEV 
   ? lazy(() => import('@/components/admin/permissions/PermissionTestingPage').then(m => ({ default: m.PermissionTestingPage })))
@@ -33,18 +49,18 @@ const queryClient = new QueryClient({
       const errMsg = error instanceof Error ? error.message : String(error)
       const isExpected = errMsg.includes('JWT') || errMsg.includes('not authenticated') || errMsg.includes('PGRST116')
       if (!isExpected) {
-        Sentry.captureException(error, {
+        Sentry.captureException(toSentryError(error), {
           tags: { source: 'react-query', type: 'query' },
-          extra: { queryKey: JSON.stringify(query.queryKey) },
+          extra: { queryKey: JSON.stringify(query.queryKey), rawError: error },
         })
       }
     },
   }),
   mutationCache: new MutationCache({
     onError: (error, _variables, _context, mutation) => {
-      Sentry.captureException(error, {
+      Sentry.captureException(toSentryError(error), {
         tags: { source: 'react-query', type: 'mutation' },
-        extra: { mutationKey: JSON.stringify(mutation.options.mutationKey) },
+        extra: { mutationKey: JSON.stringify(mutation.options.mutationKey), rawError: error },
       })
     },
   }),
@@ -65,11 +81,16 @@ const PublicBusinessProfile = lazy(() => import('@/pages/PublicBusinessProfile')
 const PublicEmployeeProfile = lazy(() => import('@/pages/PublicEmployeeProfile'))
 const AppointmentConfirmation = lazy(() => import('@/pages/AppointmentConfirmation'))
 const AppointmentCancellation = lazy(() => import('@/pages/AppointmentCancellation'))
+const AppointmentReschedule = lazy(() => import('@/pages/AppointmentReschedule'))
 const GoogleCalendarCallback = lazy(() => import('@/pages/GoogleCalendarCallback'))
-// SEO: landing pages verticales y blog
+// SEO: landing pages verticales, blog y directorio
 const VerticalLandingPage = lazy(() => import('@/pages/VerticalLandingPage'))
 const BlogIndexPage = lazy(() => import('@/pages/BlogIndexPage'))
 const BlogPostPage = lazy(() => import('@/pages/BlogPostPage'))
+const DirectoryPage = lazy(() => import('@/pages/DirectoryPage'))
+// Páginas públicas: legal y contacto
+const LegalPage = lazy(() => import('@/pages/LegalPage'))
+const ContactPage = lazy(() => import('@/pages/ContactPage'))
 
 // Loading component
 function AppLoader() {
@@ -143,9 +164,19 @@ function AppRoutes() {
       <Route path="/blog" element={<BlogIndexPage />} />
       <Route path="/blog/:slug" element={<BlogPostPage />} />
 
+      {/* SEO: Directorio por categoría + ciudad */}
+      <Route path="/directorio/:categoria/:ciudad" element={<DirectoryPage />} />
+
+      {/* Páginas informativas públicas */}
+      <Route path="/terminos"   element={<LegalPage />} />
+      <Route path="/privacidad" element={<LegalPage />} />
+      <Route path="/cookies"    element={<LegalPage />} />
+      <Route path="/contacto"   element={<ContactPage />} />
+
       {/* Rutas públicas para confirmación de citas */}
       <Route path="/confirmar-cita/:token" element={<AppointmentConfirmation />} />
       <Route path="/cancelar-cita/:token" element={<AppointmentCancellation />} />
+      <Route path="/reprogramar-cita/:token" element={<AppointmentReschedule />} />
 
       {/* OAuth callback para Google Calendar */}
       <Route path="/auth/google/callback" element={<GoogleCalendarCallback />} />

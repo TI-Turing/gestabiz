@@ -22,7 +22,7 @@ interface UseTaxCalculationReturn {
   updateConfig: ReturnType<typeof useBusinessTaxConfig>['updateConfig'];
 }
 
-export function useTaxCalculation(businessId: string): UseTaxCalculationReturn {
+export function useTaxCalculation(businessId?: string): UseTaxCalculationReturn {
   // Usar hook con caché (1 hora TTL)
   const { config, loading, error, updateConfig } = useBusinessTaxConfig(businessId);
 

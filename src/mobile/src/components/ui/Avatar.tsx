@@ -1,6 +1,6 @@
 import React from 'react'
-import { View, Text, Image, StyleSheet, ViewStyle, ImageStyle } from 'react-native'
-import { colors } from '../../theme'
+import { View, Text, Image, ViewStyle, ImageStyle } from 'react-native'
+import { useTheme } from '../../contexts/ThemeContext'
 
 interface AvatarProps {
   uri?: string | null
@@ -18,6 +18,7 @@ function getInitials(name: string): string {
 }
 
 export default function Avatar({ uri, name, size = 40, style }: AvatarProps) {
+  const { theme } = useTheme()
   const circleStyle: ViewStyle = {
     width: size,
     height: size,
@@ -43,23 +44,17 @@ export default function Avatar({ uri, name, size = 40, style }: AvatarProps) {
 
   const initials = name ? getInitials(name) : '?'
   const fontSize = Math.max(10, Math.round(size * 0.4))
+  const placeholderStyle: ViewStyle = {
+    backgroundColor: theme.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  }
 
   return (
-    <View style={[styles.placeholder, circleStyle, style]}>
-      <Text style={[styles.initials, { fontSize }]}>{initials}</Text>
+    <View style={[placeholderStyle, circleStyle, style]}>
+      <Text style={{ color: theme.primaryForeground, fontWeight: '700', letterSpacing: 0.5, fontSize }}>
+        {initials}
+      </Text>
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  placeholder: {
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  initials: {
-    color: colors.text,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-})

@@ -1,4 +1,4 @@
-// Supabase Edge Function: Send WhatsApp Reminders
+// Supabase Edge Function: Send WhatsApp Reminders via Twilio Content Templates
 // Deploy with: npx supabase functions deploy send-whatsapp-reminder
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
@@ -9,116 +9,254 @@ import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/se
 // Initialize Sentry
 initSentry('send-whatsapp-reminder')
 
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+const DEFAULT_TIMEZONE = 'America/Bogota'
+
+/** Format a date as "DD de MMMM de YYYY" in Spanish */
+function formatDateEs(d: Date): string {
+  return new Intl.DateTimeFormat('es-CO', {
+    timeZone: DEFAULT_TIMEZONE,
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(d)
+}
+
+/** Format a date as "HH:MM" */
+function formatTime(d: Date): string {
+  return new Intl.DateTimeFormat('es-CO', {
+    timeZone: DEFAULT_TIMEZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(d)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 serve(async (req) => {
   const corsPreFlight = handleCorsPreFlight(req)
   if (corsPreFlight) return corsPreFlight
   const corsHeaders = getCorsHeaders(req)
 
+  let notificationId: string | undefined
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-    }
+    if (!supabaseUrl || !supabaseKey) throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const { notificationId, appointmentId } = await req.json()
-    if (!notificationId || !appointmentId) {
-      throw new Error('notificationId and appointmentId are required')
-    }
+    // type may be 'reminder_24h' | 'reminder_2h'
+    const body = await req.json()
+    notificationId = body.notificationId
+    const appointmentId: string = body.appointmentId
+    const reminderType: string = body.type ?? 'reminder_2h'
+    const requestRuntimeEnv: string = (body.runtimeEnv ?? '').toString().toLowerCase()
+    const requestTemplateVariant: string = (body.templateVariant ?? '').toString().toLowerCase()
 
-    // Fetch appointment with client contact and business_id
+    if (!notificationId || !appointmentId) throw new Error('notificationId and appointmentId are required')
+
+    // ── 1. Fetch appointment with all related data ───────────────────────────
     const { data: appointment, error: apptErr } = await supabase
       .from('appointments')
       .select(`
-        id, title, start_time, business_id,
-        client:profiles!client_id(id, full_name, phone, whatsapp)
+        id, start_time, status, business_id, confirmation_token,
+        client:profiles!appointments_client_id_fkey (id, full_name, phone),
+        service:services!appointments_service_id_fkey (name),
+        location:locations!appointments_location_id_fkey (name, address, city),
+        business:businesses!appointments_business_id_fkey (name, logo_url)
       `)
       .eq('id', appointmentId)
       .single()
+
     if (apptErr || !appointment) throw new Error('Appointment not found')
 
-    // Business-level channel gating
+    // ── 2. Business channel gating ──────────────────────────────────────────
     const { data: bizSettings, error: bizErr } = await supabase
       .from('business_notification_settings')
-      .select('*')
+      .select('whatsapp_enabled, notification_types')
       .eq('business_id', appointment.business_id)
       .single()
 
     if (bizErr) {
-      await supabase
-        .from('notifications')
-        .update({ status: 'cancelled', error_message: 'Business settings not found for WhatsApp channel' })
+      await supabase.from('notifications')
+        .update({ status: 'failed', error_message: 'Business settings not found' })
         .eq('id', notificationId)
-      return new Response(JSON.stringify({ success: false, error: 'Business settings not found' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 })
+      return new Response(JSON.stringify({ success: false, error: 'Business settings not found' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400,
+      })
     }
 
     const notifTypes = (bizSettings?.notification_types ?? {}) as Record<string, { enabled?: boolean; channels?: string[] }>
-    const reminderCfg = notifTypes['appointment_reminder'] || { enabled: true, channels: ['email', 'whatsapp'] }
-    const waAllowed = Boolean(bizSettings?.whatsapp_enabled) && Boolean(reminderCfg.enabled) && (reminderCfg.channels || []).includes('whatsapp')
+    const reminderCfg = notifTypes['appointment_reminder'] ?? { enabled: true, channels: ['email', 'whatsapp'] }
+    const waAllowed =
+      Boolean(bizSettings?.whatsapp_enabled) &&
+      Boolean(reminderCfg.enabled) &&
+      (reminderCfg.channels ?? []).includes('whatsapp')
+
     if (!waAllowed) {
-      await supabase
-        .from('notifications')
-        .update({ status: 'cancelled', error_message: 'WhatsApp disabled by business settings' })
+      await supabase.from('notifications')
+        .update({ status: 'failed', error_message: 'WhatsApp disabled by business settings' })
         .eq('id', notificationId)
-      return new Response(JSON.stringify({ success: false, error: 'WhatsApp disabled by business settings' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
+      return new Response(JSON.stringify({ success: false, error: 'WhatsApp disabled' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200,
+      })
     }
 
-    const phoneRaw = appointment.client?.whatsapp ?? appointment.client?.phone ?? ''
+    // ── 3. Resolve phone number ──────────────────────────────────────────────
+    const client = appointment.client as { id: string; full_name: string; phone?: string } | null
+    const phoneRaw = client?.phone ?? ''
     const phoneDigits = String(phoneRaw).replace(/\D/g, '')
     if (!phoneDigits) throw new Error('Client phone/WhatsApp not available')
 
-    const msg = `Hola ${appointment.client?.full_name ?? ''}, te recordamos tu cita a las ${new Date(appointment.start_time).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}.`
-
-    // Example integration with Twilio WhatsApp if configured
+    // ── 4. Resolve Twilio env vars ───────────────────────────────────────────
     const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID')
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN')
     const TWILIO_WHATSAPP_NUMBER = Deno.env.get('TWILIO_WHATSAPP_NUMBER')
+    const TEMPLATE_SID_24H_PENDING = Deno.env.get('TWILIO_TEMPLATE_SID_24H_PENDING')
+    const TEMPLATE_SID_24H_CONFIRMED = Deno.env.get('TWILIO_TEMPLATE_SID_24H_CONFIRMED')
+    const TEMPLATE_SID_2H_PENDING = Deno.env.get('TWILIO_TEMPLATE_SID_2H_PENDING')
+    const TEMPLATE_SID_2H_CONFIRMED = Deno.env.get('TWILIO_TEMPLATE_SID_2H_CONFIRMED')
+    const TEMPLATE_SID_DEV_24H_PENDING = Deno.env.get('TWILIO_TEMPLATE_SID_DEV_24H_PENDING')
+    const TEMPLATE_SID_DEV_24H_CONFIRMED = Deno.env.get('TWILIO_TEMPLATE_SID_DEV_24H_CONFIRMED')
+    const TEMPLATE_SID_DEV_2H_PENDING = Deno.env.get('TWILIO_TEMPLATE_SID_DEV_2H_PENDING')
+    const TEMPLATE_SID_DEV_2H_CONFIRMED = Deno.env.get('TWILIO_TEMPLATE_SID_DEV_2H_CONFIRMED')
+    const WHATSAPP_TEMPLATE_VARIANT = (Deno.env.get('WHATSAPP_TEMPLATE_VARIANT') ?? '').toLowerCase()
+    const APP_URL = Deno.env.get('APP_URL') ?? 'https://gestabiz.com'
 
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_WHATSAPP_NUMBER) {
-      throw new Error('WhatsApp provider not configured')
+      throw new Error('WhatsApp provider not configured (missing TWILIO_* secrets)')
     }
+
+    // ── 5. Build message params ──────────────────────────────────────────────
+    const startDate = new Date(appointment.start_time)
+    const clientName: string = client?.full_name ?? 'Cliente'
+    const serviceName: string = (appointment.service as { name: string } | null)?.name ?? 'tu servicio'
+    const business = appointment.business as { name: string; logo_url?: string | null } | null
+    const businessName: string = business?.name ?? 'tu negocio'
+    const location = appointment.location as { name?: string; address?: string; city?: string } | null
+    const sedeLabel: string = location?.name ?? location?.city ?? businessName
+    const logoUrl: string = business?.logo_url ?? ''
+    const token: string = (appointment as { confirmation_token?: string }).confirmation_token ?? ''
 
     const to = `whatsapp:+${phoneDigits}`
     const from = `whatsapp:${TWILIO_WHATSAPP_NUMBER}`
-
-    // Twilio API call
     const auth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
-    const resp = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
-      method: 'POST',
-      headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ To: to, From: from, Body: msg })
-    })
-    if (!resp.ok) {
-      const txt = await resp.text()
-      throw new Error(`Failed to send WhatsApp: ${txt}`)
+    const messagesUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`
+
+    const is24h = reminderType === 'reminder_24h'
+    const isConfirmed = appointment.status === 'confirmed'
+    const isDevRuntime = requestTemplateVariant === 'dev'
+      || requestRuntimeEnv === 'development'
+      || requestRuntimeEnv === 'local'
+      || WHATSAPP_TEMPLATE_VARIANT === 'dev'
+      || APP_URL.includes('localhost')
+      || APP_URL.includes('127.0.0.1')
+
+    const templateSid = isDevRuntime
+      ? (is24h
+          ? (isConfirmed ? TEMPLATE_SID_DEV_24H_CONFIRMED : TEMPLATE_SID_DEV_24H_PENDING)
+          : (isConfirmed ? TEMPLATE_SID_DEV_2H_CONFIRMED : TEMPLATE_SID_DEV_2H_PENDING))
+      : (is24h
+          ? (isConfirmed ? TEMPLATE_SID_24H_CONFIRMED : TEMPLATE_SID_24H_PENDING)
+          : (isConfirmed ? TEMPLATE_SID_2H_CONFIRMED : TEMPLATE_SID_2H_PENDING))
+    // Template requires logo: if business has no logo, fall through to free-text fallback
+    const hasTemplate = !!templateSid && !!token && !!logoUrl
+
+    const timeLabel = formatTime(startDate)
+    const fallbackMsg = is24h
+      ? `*Recordatorio de cita · ${businessName}*\n\nHola ${clientName}, te recordamos tu cita mañana (${formatDateEs(startDate)}) a las ${timeLabel} para ${serviceName} en ${sedeLabel}. ${isConfirmed ? 'Tu cita ya está confirmada.' : `Confirma aquí: ${APP_URL}/confirmar-cita/${token}. `}Si necesitas cancelar o reprogramar, hazlo desde la app: ${APP_URL}/app/client`
+      : `*Recordatorio de cita · ${businessName}*\n\nHola ${clientName}, tu cita de ${serviceName} en ${sedeLabel} es en 2 horas (${timeLabel}). ${isConfirmed ? 'Tu cita ya está confirmada.' : `Confirma aquí: ${APP_URL}/confirmar-cita/${token}. `}Puedes cancelar o reprogramar en los próximos 30 minutos desde: ${APP_URL}/app/client`
+
+    let messageParams: Record<string, string>
+
+    if (hasTemplate) {
+      // ── Template message ─────────────────────────────────────────────────
+      const contentVariables: Record<string, string> = is24h
+        ? {
+            '1': logoUrl,
+            '2': businessName,
+            '3': clientName,
+            '4': formatDateEs(startDate),
+            '5': formatTime(startDate),
+            '6': sedeLabel,
+            '7': serviceName,
+            '8': token,
+          }
+        : {
+            '1': logoUrl,
+            '2': businessName,
+            '3': clientName,
+            '4': formatTime(startDate),
+            '5': sedeLabel,
+            '6': serviceName,
+            '7': token,
+          }
+
+      messageParams = {
+        To: to,
+        From: from,
+        ContentSid: templateSid!,
+        ContentVariables: JSON.stringify(contentVariables),
+      }
+    } else {
+      // ── Fallback: free-form text (used while templates are pending approval) ─
+      messageParams = { To: to, From: from, Body: fallbackMsg }
     }
 
-    await supabase
-      .from('notifications')
-      .update({ status: 'sent', sent_at: new Date().toISOString() })
+    // ── 6. Send via Twilio ───────────────────────────────────────────────────
+    const resp = await fetch(messagesUrl, {
+      method: 'POST',
+      headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(messageParams),
+    })
+
+    if (!resp.ok) {
+      const txt = await resp.text()
+
+      if (hasTemplate) {
+        const fallbackResp = await fetch(messagesUrl, {
+          method: 'POST',
+          headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ To: to, From: from, Body: fallbackMsg }),
+        })
+
+        if (!fallbackResp.ok) {
+          const fallbackTxt = await fallbackResp.text()
+          throw new Error(`Twilio error: ${txt}; fallback error: ${fallbackTxt}`)
+        }
+      } else {
+        throw new Error(`Twilio error: ${txt}`)
+      }
+    }
+
+    await supabase.from('notifications')
+      .update({ status: 'sent' })
       .eq('id', notificationId)
 
-    return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 })
+    return new Response(JSON.stringify({ success: true, template: hasTemplate }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200,
+    })
+
   } catch (error) {
-    // Best-effort failure mark
-    try {
-      const cloned = await req.clone().json().catch(() => null)
-      const nid = cloned?.notificationId
-      if (nid) {
+    if (notificationId) {
+      try {
         const supabase = createClient(
           Deno.env.get('SUPABASE_URL') ?? '',
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         )
-        await supabase
-          .from('notifications')
+        await supabase.from('notifications')
           .update({ status: 'failed', error_message: String(error) })
-          .eq('id', nid)
-      }
-    } catch (_) {}
+          .eq('id', notificationId)
+      } catch (_) { /* best-effort */ }
+    }
 
-    captureEdgeFunctionError(_ as Error, { functionName: 'send-whatsapp-reminder' })
+    captureEdgeFunctionError(error as Error, { functionName: 'send-whatsapp-reminder' })
     await flushSentry()
-    return new Response(JSON.stringify({ success: false, error: String(error) }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 })
+    return new Response(JSON.stringify({ success: false, error: String(error) }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500,
+    })
   }
 })

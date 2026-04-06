@@ -1,8 +1,8 @@
 name: Deploy DEV
 
 on:
-  # Deshabilitado: Vercel maneja el deploy de DEV automaticamente via git push.
-  # Activar manualmente si se necesita deploy desde CI/CD.
+  push:
+    branches: [dev]
   workflow_dispatch:
 
 jobs:

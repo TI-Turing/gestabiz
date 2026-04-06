@@ -10,7 +10,8 @@ import {
 } from 'react-native'
 import * as Haptics from 'expo-haptics'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, radius, spacing, typography } from '../../theme'
+import { radius, spacing, typography } from '../../theme'
+import { useTheme } from '../../contexts/ThemeContext'
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
 type Size = 'sm' | 'md' | 'lg'
@@ -25,29 +26,6 @@ interface ButtonProps {
   size?: Size
   style?: ViewStyle
   textStyle?: TextStyle
-}
-
-const variantStyles: Record<Variant, { container: ViewStyle; text: TextStyle }> = {
-  primary: {
-    container: { backgroundColor: colors.primary },
-    text: { color: colors.text },
-  },
-  secondary: {
-    container: {
-      backgroundColor: colors.card,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    text: { color: colors.text },
-  },
-  ghost: {
-    container: { backgroundColor: 'transparent' },
-    text: { color: colors.primary },
-  },
-  danger: {
-    container: { backgroundColor: colors.error },
-    text: { color: colors.text },
-  },
 }
 
 const sizeStyles: Record<Size, { container: ViewStyle; text: TextStyle; iconSize: number }> = {
@@ -91,6 +69,28 @@ export default function Button({
   style,
   textStyle,
 }: ButtonProps) {
+  const { theme } = useTheme()
+  const variantStyles = React.useMemo<Record<Variant, { container: ViewStyle; text: TextStyle }>>(
+    () => ({
+      primary: {
+        container: { backgroundColor: theme.primary },
+        text: { color: theme.primaryForeground },
+      },
+      secondary: {
+        container: { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border },
+        text: { color: theme.text },
+      },
+      ghost: {
+        container: { backgroundColor: 'transparent' },
+        text: { color: theme.primary },
+      },
+      danger: {
+        container: { backgroundColor: theme.error },
+        text: { color: '#FFFFFF' },
+      },
+    }),
+    [theme]
+  )
   const isDisabled = disabled || loading
 
   const handlePress = async () => {
@@ -105,7 +105,10 @@ export default function Button({
 
   const vs = variantStyles[variant]
   const ss = sizeStyles[size]
-  const iconColor = variant === 'ghost' ? colors.primary : colors.text
+  const iconColor =
+    variant === 'ghost' ? theme.primary
+    : variant === 'secondary' ? theme.text
+    : theme.primaryForeground
 
   return (
     <TouchableOpacity
@@ -123,7 +126,7 @@ export default function Button({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'ghost' ? colors.primary : colors.text}
+          color={iconColor}
         />
       ) : (
         <View style={styles.inner}>

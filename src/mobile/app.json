@@ -19,13 +19,17 @@
       "bundleIdentifier": "com.Gestabiz.mobile",
       "infoPlist": {
         "NSCalendarsUsageDescription": "This app needs access to calendar to sync appointments.",
-        "NSRemindersUsageDescription": "This app needs access to reminders to create appointment reminders."
+        "NSRemindersUsageDescription": "This app needs access to reminders to create appointment reminders.",
+        "NSCameraUsageDescription": "Gestabiz necesita acceso a la cámara para tomar fotos de perfil y negocios.",
+        "NSPhotoLibraryUsageDescription": "Gestabiz necesita acceso a tu galería para seleccionar imágenes.",
+        "NSLocationWhenInUseUsageDescription": "Gestabiz usa tu ubicación para mostrarte negocios cercanos.",
+        "NSUserNotificationsUsageDescription": "Recibe recordatorios de tus citas y mensajes importantes."
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FFFFFF"
+        "backgroundColor": "#6820F7"
       },
       "package": "com.Gestabiz.mobile",
       "permissions": [
@@ -34,13 +38,48 @@
         "READ_CALENDAR",
         "VIBRATE",
         "RECEIVE_BOOT_COMPLETED",
-        "SCHEDULE_EXACT_ALARM"
+        "SCHEDULE_EXACT_ALARM",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "POST_NOTIFICATIONS"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [],
-    "scheme": "gestabiz"
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#6820F7",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Gestabiz necesita acceso a la cámara para tomar fotos de perfil."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Gestabiz necesita acceso a tu galería para seleccionar imágenes."
+        }
+      ],
+      "expo-secure-store",
+      "expo-location"
+    ],
+    "scheme": "gestabiz",
+    "extra": {
+      "supabaseUrl": "",
+      "supabaseAnonKey": "",
+      "webAppUrl": "https://gestabiz.com",
+      "webAppUrlDev": "http://localhost:5173"
+    }
   }
 }

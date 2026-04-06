@@ -4,7 +4,7 @@
 
 > **Gestabiz** — Sistema SaaS de gestión de citas y negocios
 > **Stack**: React 19 + TypeScript 5.7 + Vite 6 + Supabase + Tailwind 4
-> **Versión actual**: 0.0.52 (incrementar PATCH en cada commit)
+> **Versión actual**: 0.0.69 (incrementar PATCH en cada commit)
 > **Estado**: BETA completada — solo bugs, optimizaciones y features puntuales
 
 ---
@@ -896,8 +896,14 @@ VITE_DEMO_MODE=true   # Cliente Supabase simulado
 - `VITE_GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_SECRET`:
   - `production` → cliente PROD (`...7cqaibtabnrm7evqfv4ak2tri8f63us7`)
   - `development` + `preview` → cliente DEV (`...qk668fv00cpto430petb79c3h4tkvla6`)
-- `VITE_SUPABASE_ANON_KEY`: usar formato nuevo `sb_publishable_*` (legacy JWTs siguen funcionando)
+- `VITE_SUPABASE_ANON_KEY`: usar formato nuevo `sb_publishable_*` (**los JWT legacy `eyJ...` están deshabilitados desde Abr 2026**)
 - **NUNCA** exponer service role key con prefijo `VITE_` — solo en Edge Functions
+
+**Móvil** (`src/mobile/.env`):
+```bash
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...   # NUEVO formato obligatorio
+```
 
 **Edge Functions (Supabase Secrets)**:
 ```bash
@@ -980,9 +986,40 @@ SUPABASE_SERVICE_ROLE_KEY  # Solo para scripts, nunca en frontend
 - **Deploy**: Vercel (configurado en `vercel.json`)
 - **Supabase DEV**: `dkancockzvcqorqbwtyh` (proyecto original, data de prueba)
 - **Supabase PROD**: `emknatoknbomvmyumqju` (proyecto nuevo, limpio)
-- **Versión**: 0.0.52
+- **Versión**: 0.0.69
 - **Fase**: BETA completada — no se agregan nuevos flujos funcionales; solo bugs, optimizaciones y features puntuales solicitadas
 
 ---
 
-*Última actualización: 31 Mar 2026 — Claude Code*
+### Sesión 4 Abr 2026 — Migración React Native (navigator + linking)
+
+**App.tsx (`src/mobile/`)** — Navigator expandido a 59 registros:
+- `AdminMoreStack`: 6 → 21 screens (todos los módulos admin accesibles)
+- `EmployeeMoreStack`: 2 → 11 screens
+- `ClientSearchStack`: nuevo (Buscar + BusinessProfile)
+- `ClientAppointmentsStack`: nuevo (MisCitasList + HistorialCitas + Calendario)
+- `ClientProfileStack`: 1 → 7 screens
+- `ClientTabs`: 4 → 5 tabs (añadido tab Buscar)
+
+**Pantallas actualizadas**:
+- `MoreScreen.tsx`: menú admin 6 → 17 ítems
+- `EmployeeSettingsScreen.tsx`: añadido `navigation` prop + sección "Accesos rápidos" (7 ítems)
+- `ClientProfileScreen.tsx`: añadido `navigation` prop + sección "Accesos rápidos" (4 ítems)
+
+**linking.ts** — Reescrito con nombres reales del navigator:
+- Eliminados `AdminTabs`/`EmployeeTabs`/`ClientTabs` (nunca existieron como screens nombrados)
+- 40+ rutas mapeadas (ver `src/mobile/src/lib/linking.ts`)
+
+**Correcciones de nombres de ruta**:
+- `FavoritesScreen`: `'Search'` → `'Buscar'`
+- `NotificationBell`: `'Notifications'` → `'Notificaciones'`
+
+**app.json**: eliminado `googleServicesFile` (archivo no existe; solo necesario para EAS Build con FCM nativo)
+
+**mobile `.env`**: clave Supabase actualizada a formato `sb_publishable_*` — los JWT legacy (`eyJ...`) están deshabilitados. **CRÍTICO**: `EXPO_PUBLIC_SUPABASE_ANON_KEY` debe usar el nuevo formato o la app mostrará "Legacy API keys are disabled".
+
+**Bundle**: 1744 módulos, 0 errores, `tsc --noEmit` limpio.
+
+---
+
+*Última actualización: 4 Abr 2026 — Claude Code*

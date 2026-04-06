@@ -2,10 +2,10 @@ import React, { ReactNode } from 'react'
 import {
   View,
   TouchableOpacity,
-  StyleSheet,
   ViewStyle,
 } from 'react-native'
-import { colors, radius, shadows, spacing } from '../../theme'
+import { radius, shadows, spacing } from '../../theme'
+import { useTheme } from '../../contexts/ThemeContext'
 
 interface CardProps {
   children: ReactNode
@@ -16,14 +16,20 @@ interface CardProps {
 }
 
 export default function Card({ children, style, onPress, padding = true }: CardProps) {
-  const inner = (
-    <View style={[styles.card, padding && styles.padding, style]}>{children}</View>
-  )
+  const { theme } = useTheme()
+  const cardBase: ViewStyle = {
+    backgroundColor: theme.card,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: theme.cardBorder,
+    ...shadows.sm,
+  }
+  const paddingStyle: ViewStyle | undefined = padding ? { padding: spacing.base } : undefined
 
   if (onPress) {
     return (
       <TouchableOpacity
-        style={[styles.card, padding && styles.padding, style]}
+        style={[cardBase, paddingStyle, style]}
         onPress={onPress}
         activeOpacity={0.8}
       >
@@ -32,18 +38,5 @@ export default function Card({ children, style, onPress, padding = true }: CardP
     )
   }
 
-  return inner
+  return <View style={[cardBase, paddingStyle, style]}>{children}</View>
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    ...shadows.sm,
-  },
-  padding: {
-    padding: spacing.base,
-  },
-})

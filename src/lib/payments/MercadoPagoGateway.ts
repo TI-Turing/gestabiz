@@ -71,8 +71,10 @@ export class MercadoPagoGateway implements IPaymentGateway {
         body: params,
       })
       if (error) throw new PaymentGatewayError(error.message, 'checkout_error')
+      // En sandbox (clave TEST-...) usar sandbox_init_point; en producción usar init_point
+      const isSandbox = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY?.startsWith('TEST-')
       return {
-        sessionUrl: data.init_point,
+        sessionUrl: isSandbox ? data.sandbox_init_point : data.init_point,
         sessionId: data.preference_id,
       }
     } catch (error) {

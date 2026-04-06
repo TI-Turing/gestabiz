@@ -39,13 +39,13 @@ async function fetchWizardBusinessData(
   const [locationsResult, servicesResult] = await Promise.all([
     supabase
       .from('locations')
-      .select('id, name, address, city, opens_at, closes_at, is_active, lat, lng')
+      .select('id, name, address, city, opens_at, closes_at, is_active, latitude, longitude')
       .eq('business_id', businessId)
       .eq('is_active', true)
       .order('name'),
     supabase
       .from('services')
-      .select('id, name, description, price, duration, duration_minutes, category, image_url, is_active')
+      .select('id, name, description, price, duration_minutes, category, image_url, is_active')
       .eq('business_id', businessId)
       .eq('is_active', true)
       .order('name'),

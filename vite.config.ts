@@ -42,4 +42,8 @@ export default defineConfig({
     // Evita que atacantes puedan ver el código fuente de producción
     sourcemap: 'hidden',
   },
+  server: {
+    // Permite acceso desde túneles externos (ngrok, etc.)
+    allowedHosts: true,
+  },
 });

@@ -109,7 +109,7 @@ export function LocationSelection({
       try {
         const { data, error } = await supabase
           .from('locations')
-          .select('id, business_id, name, address, city, city_name, state, country, postal_code, latitude, longitude, phone, email, description, images, business_hours, is_active, is_main, is_primary, created_at, updated_at, amenities, capacity')
+          .select('id, business_id, name, address, city, state, country, postal_code, latitude, longitude, phone, email, description, images, business_hours, is_active, is_primary, opens_at, closes_at, created_at, updated_at')
           .eq('business_id', businessId)
           .eq('is_active', true)
           .order('name');

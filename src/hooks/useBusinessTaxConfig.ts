@@ -24,8 +24,10 @@ const STALE_TIME = 30 * 60 * 1000; // 30 minutos
  * @param businessId - ID del negocio
  * @returns Configuración fiscal con caché, loading, error y funciones de actualización
  */
-export function useBusinessTaxConfig(businessId: string): UseBusinessTaxConfigReturn {
+export function useBusinessTaxConfig(businessId?: string): UseBusinessTaxConfigReturn {
   const queryClient = useQueryClient();
+  const normalizedBusinessId = businessId?.trim() || '';
+  const hasBusinessId = normalizedBusinessId.length > 0;
 
   // Query con caché
   const {
@@ -34,12 +36,16 @@ export function useBusinessTaxConfig(businessId: string): UseBusinessTaxConfigRe
     error,
     refetch,
   } = useQuery<TaxConfiguration | null, Error>({
-    queryKey: ['tax-config', businessId],
+    queryKey: ['tax-config', normalizedBusinessId],
     queryFn: async () => {
+      if (!hasBusinessId) {
+        return null;
+      }
+
       const { data, error: fetchError } = await supabase
         .from('tax_configurations')
         .select('*')
-        .eq('business_id', businessId)
+        .eq('business_id', normalizedBusinessId)
         .maybeSingle();
 
       if (fetchError) {
@@ -52,16 +58,21 @@ export function useBusinessTaxConfig(businessId: string): UseBusinessTaxConfigRe
     staleTime: STALE_TIME, // Tiempo antes de considerar datos obsoletos
     refetchOnWindowFocus: false, // No refetch al enfocar ventana
     refetchOnMount: false, // No refetch al montar componente si hay caché
-    retry: 2, // Reintentar 2 veces en caso de error
+    retry: hasBusinessId ? 2 : 0, // Evitar retries cuando no hay businessId valido
+    enabled: hasBusinessId,
   });
 
   // Mutation para actualizar configuración
   const mutation = useMutation({
     mutationFn: async (updates: Partial<TaxConfiguration>) => {
+      if (!hasBusinessId) {
+        throw new Error('businessId is required to update tax configuration');
+      }
+
       const { error: updateError } = await supabase
         .from('tax_configurations')
         .upsert({
-          business_id: businessId,
+          business_id: normalizedBusinessId,
           ...updates,
           updated_at: new Date().toISOString(),
         });
@@ -72,7 +83,7 @@ export function useBusinessTaxConfig(businessId: string): UseBusinessTaxConfigRe
     },
     onSuccess: () => {
       // Invalidar caché para refetch automático
-      queryClient.invalidateQueries({ queryKey: ['tax-config', businessId] });
+      queryClient.invalidateQueries({ queryKey: ['tax-config', normalizedBusinessId] });
     },
   });
 
@@ -83,7 +94,7 @@ export function useBusinessTaxConfig(businessId: string): UseBusinessTaxConfigRe
   return {
     config: config ?? null,
     loading,
-    error: error as Error | null,
+    error,
     refetch,
     updateConfig,
   };

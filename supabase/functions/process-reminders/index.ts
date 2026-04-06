@@ -1,6 +1,6 @@
 // Supabase Edge Function: process-reminders
-// Runs hourly to send 24h and 1h appointment reminders.
-// Windowing accounts for half-hour slots: [24h, 24.5h] and [1h, 1.5h].
+// Runs hourly to send 24h and 2h appointment reminders.
+// Windowing accounts for half-hour slots: [24h, 24.5h] and [2h, 2.5h].
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -33,34 +33,34 @@ serve(async (req) => {
     const windowStart24h = addMinutes(now, 24 * 60)
     const windowEnd24h = addMinutes(now, 24 * 60 + 30)
 
-    const windowStart1h = addMinutes(now, 60)
-    const windowEnd1h = addMinutes(now, 60 + 30)
+    const windowStart2h = addMinutes(now, 120)
+    const windowEnd2h = addMinutes(now, 120 + 30)
 
     // Fetch appointments in both windows
-    const [{ data: appts24h, error: err24 }, { data: appts1h, error: err1 }] = await Promise.all([
+    const [{ data: appts24h, error: err24 }, { data: appts2h, error: err2 }] = await Promise.all([
       supabase
         .from('appointments')
-        .select('id, title, client_id, user_id')
-        .in('status', ['confirmed', 'scheduled'])
+        .select('id, client_id')
+        .in('status', ['confirmed', 'pending'])
         .gte('start_time', windowStart24h.toISOString())
         .lte('start_time', windowEnd24h.toISOString()),
       supabase
         .from('appointments')
-        .select('id, title, client_id, user_id')
-        .in('status', ['confirmed', 'scheduled'])
-        .gte('start_time', windowStart1h.toISOString())
-        .lte('start_time', windowEnd1h.toISOString()),
+        .select('id, client_id')
+        .in('status', ['confirmed', 'pending'])
+        .gte('start_time', windowStart2h.toISOString())
+        .lte('start_time', windowEnd2h.toISOString()),
     ])
 
     if (err24) throw new Error(`Failed to fetch 24h window appointments: ${err24.message}`)
-    if (err1) throw new Error(`Failed to fetch 1h window appointments: ${err1.message}`)
+    if (err2) throw new Error(`Failed to fetch 2h window appointments: ${err2.message}`)
 
     const whatsappConfigured = !!(Deno.env.get('TWILIO_ACCOUNT_SID') && Deno.env.get('TWILIO_AUTH_TOKEN') && Deno.env.get('TWILIO_WHATSAPP_NUMBER'))
     const smsConfigured = !!(Deno.env.get('TWILIO_ACCOUNT_SID') && Deno.env.get('TWILIO_AUTH_TOKEN') && Deno.env.get('TWILIO_SMS_NUMBER'))
 
     const allApptIds = [
       ...(appts24h ?? []).map(a => a.id),
-      ...(appts1h ?? []).map(a => a.id),
+      ...(appts2h ?? []).map(a => a.id),
     ]
 
     // ✅ Batch-fetch all existing notifications for these appointments in ONE query
@@ -71,7 +71,7 @@ serve(async (req) => {
         .from('notifications')
         .select('appointment_id, type, delivery_method')
         .in('appointment_id', allApptIds)
-        .in('type', ['reminder_24h', 'reminder_1h'])
+        .in('type', ['reminder_24h', 'reminder_2h'])
 
       for (const n of existingNotifs ?? []) {
         existingNotifSet.add(`${n.appointment_id}:${n.type}:${n.delivery_method}`)
@@ -81,7 +81,7 @@ serve(async (req) => {
     const notificationsToCreate: Array<{
       appointment_id: string
       user_id: string | null
-      type: 'reminder_24h' | 'reminder_1h'
+      type: 'reminder_24h' | 'reminder_2h'
       title: string
       message: string
       scheduled_for: string
@@ -91,7 +91,7 @@ serve(async (req) => {
     const addIfNew = (
       apptId: string,
       userId: string | null,
-      type: 'reminder_24h' | 'reminder_1h',
+      type: 'reminder_24h' | 'reminder_2h',
       title: string,
       message: string,
       delivery: 'email' | 'whatsapp' | 'sms',
@@ -111,20 +111,20 @@ serve(async (req) => {
 
     // Build notifications for 24h window
     for (const appt of appts24h ?? []) {
-      const userId = appt.client_id ?? appt.user_id ?? null
-      const msg = `Tu cita es mañana: ${appt.title ?? ''}`
+      const userId = appt.client_id ?? null
+      const msg = 'Tu cita es manana. Revisa los detalles en tu cuenta de Gestabiz.'
       addIfNew(appt.id, userId, 'reminder_24h', 'Recordatorio de cita (24h)', msg, 'email')
       if (whatsappConfigured) addIfNew(appt.id, userId, 'reminder_24h', 'Recordatorio de cita (24h)', msg, 'whatsapp')
       if (smsConfigured) addIfNew(appt.id, userId, 'reminder_24h', 'Recordatorio de cita (24h)', msg, 'sms')
     }
 
-    // Build notifications for 1h window
-    for (const appt of appts1h ?? []) {
-      const userId = appt.client_id ?? appt.user_id ?? null
-      const msg = `Tu cita es en 1 hora: ${appt.title ?? ''}`
-      addIfNew(appt.id, userId, 'reminder_1h', 'Recordatorio de cita (1h)', msg, 'email')
-      if (whatsappConfigured) addIfNew(appt.id, userId, 'reminder_1h', 'Recordatorio de cita (1h)', msg, 'whatsapp')
-      if (smsConfigured) addIfNew(appt.id, userId, 'reminder_1h', 'Recordatorio de cita (1h)', msg, 'sms')
+    // Build notifications for 2h window
+    for (const appt of appts2h ?? []) {
+      const userId = appt.client_id ?? null
+      const msg = 'Tu cita es en 2 horas. Revisa los detalles en tu cuenta de Gestabiz.'
+      addIfNew(appt.id, userId, 'reminder_2h', 'Recordatorio de cita (2h)', msg, 'email')
+      if (whatsappConfigured) addIfNew(appt.id, userId, 'reminder_2h', 'Recordatorio de cita (2h)', msg, 'whatsapp')
+      if (smsConfigured) addIfNew(appt.id, userId, 'reminder_2h', 'Recordatorio de cita (2h)', msg, 'sms')
     }
 
     let created: any[] = []
@@ -172,7 +172,7 @@ serve(async (req) => {
         success: true,
         summary: {
           window24h: { start: windowStart24h.toISOString(), end: windowEnd24h.toISOString(), count: (appts24h ?? []).length },
-          window1h: { start: windowStart1h.toISOString(), end: windowEnd1h.toISOString(), count: (appts1h ?? []).length },
+          window2h: { start: windowStart2h.toISOString(), end: windowEnd2h.toISOString(), count: (appts2h ?? []).length },
           created: created.length,
         },
       }),

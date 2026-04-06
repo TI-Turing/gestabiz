@@ -2,7 +2,27 @@ import React, { useEffect, useMemo } from 'react'
 import { useKV } from '@/lib/useKV'
 import { ThemeContext, Theme } from './theme-core'
 
+let darkModeCleaned = false
+
 export function ThemeProvider({ children }: Readonly<{ children: React.ReactNode }>) {
+  // CRITICAL FIX: Force light mode initialization and cleanup (only once)
+  if (!darkModeCleaned && typeof window !== 'undefined') {
+    darkModeCleaned = true
+    try {
+      // Always force light mode on init
+      window.localStorage.setItem('theme-preference', '"light"')
+      // Force remove dark attributes immediately
+      document.documentElement.classList.remove('dark')
+      document.body.classList.remove('dark')
+      document.documentElement.removeAttribute('data-appearance')
+      document.body.removeAttribute('data-appearance')
+      document.documentElement.dataset.theme = 'light'
+      document.body.dataset.theme = 'light'
+    } catch {
+      // noop
+    }
+  }
+
   const [theme, setTheme] = useKV<Theme>('theme-preference', 'light')
 
   // Calculate effective theme
@@ -15,21 +35,21 @@ export function ThemeProvider({ children }: Readonly<{ children: React.ReactNode
   // Apply theme to document
   useEffect(() => {
     const root = document.documentElement
-    root.dataset.theme = effectiveTheme
-    
-    // Also add class for compatibility
+
+    // Set data-appearance attribute for Tailwind (tailwind.config.js uses [data-appearance="dark"])
     if (effectiveTheme === 'dark') {
-      root.classList.add('dark')
+      root.setAttribute('data-appearance', 'dark')
+      document.body.setAttribute('data-appearance', 'dark')
     } else {
-      root.classList.remove('dark')
+      root.removeAttribute('data-appearance')
+      document.body.removeAttribute('data-appearance')
     }
 
-    // Also apply to body for portals (like sonner)
+    // Also keep data-theme for backwards compatibility
+    root.dataset.theme = effectiveTheme
     if (effectiveTheme === 'dark') {
-      document.body.classList.add('dark')
       document.body.dataset.theme = 'dark'
     } else {
-      document.body.classList.remove('dark')
       delete document.body.dataset.theme
     }
   }, [effectiveTheme])
@@ -42,14 +62,14 @@ export function ThemeProvider({ children }: Readonly<{ children: React.ReactNode
     const handleChange = () => {
       const systemTheme = mediaQuery.matches ? 'dark' : 'light'
       document.documentElement.dataset.theme = systemTheme
-      
+
       if (systemTheme === 'dark') {
-        document.documentElement.classList.add('dark')
-        document.body.classList.add('dark')
+        document.documentElement.setAttribute('data-appearance', 'dark')
+        document.body.setAttribute('data-appearance', 'dark')
         document.body.dataset.theme = 'dark'
       } else {
-        document.documentElement.classList.remove('dark')
-        document.body.classList.remove('dark')
+        document.documentElement.removeAttribute('data-appearance')
+        document.body.removeAttribute('data-appearance')
         delete document.body.dataset.theme
       }
     }

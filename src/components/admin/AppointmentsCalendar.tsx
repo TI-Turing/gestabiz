@@ -515,7 +515,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   // Obtener la configuración de sede preferida
   const [currentBusinessId, setCurrentBusinessId] = useState<string | undefined>(undefined);
   const { preferredLocationId } = usePreferredLocation(currentBusinessId);
-  const { calculateTaxes } = useTaxCalculation(currentBusinessId || '');
+  const { calculateTaxes } = useTaxCalculation(currentBusinessId);
 
   const formatFiscalPeriod = (date: Date) => {
     const year = date.getUTCFullYear();

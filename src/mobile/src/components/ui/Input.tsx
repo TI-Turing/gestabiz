@@ -9,7 +9,8 @@ import {
   TouchableOpacity,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, radius, spacing, typography } from '../../theme'
+import { radius, spacing, typography } from '../../theme'
+import { useTheme } from '../../contexts/ThemeContext'
 
 interface InputProps {
   label?: string
@@ -48,6 +49,7 @@ export default function Input({
   editable = true,
   autoFocus = false,
 }: InputProps) {
+  const { theme } = useTheme()
   const [focused, setFocused] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
@@ -56,11 +58,12 @@ export default function Input({
 
   return (
     <View style={[styles.container, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, { color: theme.textSecondary }]}>{label}</Text>}
       <View
         style={[
           styles.inputWrapper,
-          focused && styles.inputFocused,
+          { backgroundColor: theme.inputBg, borderColor: theme.inputBorder },
+          focused && { borderColor: theme.inputFocusBorder },
           !!error && styles.inputError,
           !editable && styles.inputDisabled,
         ]}
@@ -69,13 +72,14 @@ export default function Input({
           <Ionicons
             name={leftIcon}
             size={18}
-            color={focused ? colors.primary : colors.textSecondary}
+            color={focused ? theme.primary : theme.textSecondary}
             style={styles.leftIcon}
           />
         )}
         <TextInput
           style={[
             styles.input,
+            { color: theme.text },
             leftIcon ? styles.inputWithLeftIcon : undefined,
             (rightIcon || isPassword) ? styles.inputWithRightIcon : undefined,
             multiline && styles.multilineInput,
@@ -83,7 +87,7 @@ export default function Input({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={theme.textMuted}
           secureTextEntry={actualSecure}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
@@ -104,7 +108,7 @@ export default function Input({
             <Ionicons
               name={showPassword ? 'eye-off-outline' : 'eye-outline'}
               size={18}
-              color={colors.textSecondary}
+              color={theme.textSecondary}
             />
           </TouchableOpacity>
         )}
@@ -115,11 +119,11 @@ export default function Input({
             disabled={!onRightIconPress}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name={rightIcon} size={18} color={colors.textSecondary} />
+            <Ionicons name={rightIcon} size={18} color={theme.textSecondary} />
           </TouchableOpacity>
         )}
       </View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && <Text style={[styles.errorText, { color: theme.error }]}>{error}</Text>}
     </View>
   )
 }
@@ -130,24 +134,18 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: typography.sm,
-    color: colors.textSecondary,
     marginBottom: spacing.xs,
     fontWeight: '500',
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.inputBg,
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radius.md,
     minHeight: 46,
   },
-  inputFocused: {
-    borderColor: colors.primary,
-  },
   inputError: {
-    borderColor: colors.error,
+    borderColor: '#EF4444',
   },
   inputDisabled: {
     opacity: 0.5,
@@ -155,7 +153,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: typography.base,
-    color: colors.text,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 2,
   },
@@ -177,7 +174,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: typography.xs,
-    color: colors.error,
     marginTop: spacing.xs,
   },
 })

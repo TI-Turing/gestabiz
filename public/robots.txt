@@ -9,6 +9,7 @@ Allow: /negocio/
 Allow: /para/
 Allow: /blog
 Allow: /blog/
+Allow: /directorio/
 Allow: /sitemap.xml
 
 # Bloquear rutas privadas
@@ -33,6 +34,7 @@ Allow: /negocio/
 Allow: /para/
 Allow: /blog
 Allow: /blog/
+Allow: /directorio/
 Disallow: /app/
 Disallow: /confirmar-cita/
 Disallow: /cancelar-cita/
@@ -44,6 +46,7 @@ Allow: /negocio/
 Allow: /para/
 Allow: /blog
 Allow: /blog/
+Allow: /directorio/
 Disallow: /app/
 
 # Bloquear scrapers agresivos

@@ -1223,8 +1223,8 @@ async function sendInAppNotification(
       p_user_id: request.recipient_user_id,
       p_type: inAppType,
       p_title: content.subject,
-      p_body: content.message, // ✅ CORREGIDO: Era p_message, ahora es p_body
-      p_data: notificationData,
+        p_message: content.message,
+        p_metadata: notificationData,
       p_business_id: request.business_id || null,
       p_priority: request.priority ?? 0,
       p_action_url: request.action_url || null

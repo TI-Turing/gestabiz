@@ -1,0 +1,73 @@
+PROPRIETARY SOFTWARE LICENSE
+
+Copyright (c) 2024–2026 Ti Turing. All Rights Reserved.
+
+TERMS AND CONDITIONS
+
+1. OWNERSHIP
+   This software, Gestabiz, including all source code, design assets, documentation,
+   database schemas, edge functions, and related materials (collectively, the "Software"),
+   is the exclusive intellectual property of Ti Turing (hereinafter "the Owner").
+
+2. RESTRICTIONS
+   This Software is PROPRIETARY and CONFIDENTIAL. No part of this Software may be:
+
+   a) Copied, reproduced, or duplicated in any form or by any means;
+   b) Modified, adapted, translated, or derived from;
+   c) Distributed, published, transmitted, or made available to any third party;
+   d) Sublicensed, sold, rented, leased, or otherwise transferred;
+   e) Used for any commercial or non-commercial purpose;
+   f) Reverse engineered, decompiled, or disassembled;
+
+   without the express prior written permission of Ti Turing.
+
+3. AUTHORIZED CONTRIBUTORS
+   Access to this repository is granted solely to individuals explicitly authorized in
+   writing by Ti Turing for the purpose of contributing to the development of the
+   Software. Such access does not constitute a license to use, copy, distribute, or
+   sublicense the Software beyond the scope of the authorized contribution.
+
+4. REPOSITORY VISIBILITY
+   The public availability of this repository (if applicable) does not constitute a
+   grant of any rights or permissions. Visibility of the source code does not imply
+   that any use, copying, or distribution is permitted.
+
+5. NO OPEN SOURCE
+   This Software is NOT open source. It is NOT licensed under any open source license,
+   including but not limited to MIT, Apache 2.0, GPL, LGPL, BSD, or Creative Commons.
+
+6. CONFIDENTIALITY
+   Any person who obtains access to this Software, whether authorized or not, is bound
+   to treat it as confidential information of Ti Turing and must not disclose it to
+   any third party.
+
+7. INFRINGEMENT
+   Unauthorized use, copying, distribution, or modification of this Software constitutes
+   copyright infringement and may result in civil and criminal penalties under applicable
+   Colombian law (Law 23 of 1982, Law 44 of 1993, and Decision 351 of the Cartagena
+   Agreement) and international intellectual property law.
+
+8. DISCLAIMER
+   THE SOFTWARE IS PROVIDED "AS IS" TO AUTHORIZED USERS ONLY. TI TURING MAKES NO
+   WARRANTIES, EXPRESS OR IMPLIED, REGARDING THE SOFTWARE, INCLUDING BUT NOT LIMITED
+   TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR
+   NON-INFRINGEMENT.
+
+9. GOVERNING LAW
+   This license is governed by the laws of the Republic of Colombia. Any disputes
+   arising under this license shall be subject to the exclusive jurisdiction of the
+   courts of Bogotá, Colombia.
+
+10. CONTACT
+    For licensing inquiries or permissions, contact:
+    Ti Turing — jlap.11@hotmail.com
+    https://github.com/TI-Turing
+
+---
+
+AVISO EN ESPAÑOL
+
+Este software, Gestabiz, es propiedad exclusiva de Ti Turing. Todos los derechos
+reservados. Queda estrictamente prohibida la copia, distribución, modificación o
+uso de este software sin autorización escrita previa de Ti Turing. La visibilidad
+pública de este repositorio no otorga ningún derecho de uso sobre el código fuente.
