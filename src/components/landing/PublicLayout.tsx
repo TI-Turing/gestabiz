@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowRight, Menu, X } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageToggle } from '@/components/ui/language-toggle'
+// import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 interface PublicLayoutProps {
   children: React.ReactNode
@@ -26,13 +27,14 @@ export function PublicLayout({ children }: Readonly<PublicLayoutProps>) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+
   return (
     <>
       {/* Navegación compartida */}
       <nav
         className={`fixed top-0 w-full z-50 transition-all duration-300 ${
           mobileMenuOpen || scrolled
-            ? 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-md shadow-lg border-b border-gray-200 dark:border-gray-800'
+            ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200'
             : 'bg-transparent'
         }`}
       >
@@ -59,35 +61,36 @@ export function PublicLayout({ children }: Readonly<PublicLayoutProps>) {
                 <>
                   <a
                     href="#features"
-                    className="text-gray-700/70 dark:text-gray-300/70 hover:text-purple-600 transition-colors font-medium"
+                    className="text-gray-700/70 hover:text-purple-600 transition-colors font-medium"
                   >
                     {t('landing.nav.features')}
                   </a>
                   <a
                     href="#benefits"
-                    className="text-gray-700/70 dark:text-gray-300/70 hover:text-purple-600 transition-colors font-medium"
+                    className="text-gray-700/70 hover:text-purple-600 transition-colors font-medium"
                   >
                     {t('landing.nav.benefits')}
                   </a>
                   <a
                     href="#pricing"
-                    className="text-gray-700/70 dark:text-gray-300/70 hover:text-purple-600 transition-colors font-medium"
+                    className="text-gray-700/70 hover:text-purple-600 transition-colors font-medium"
                   >
                     {t('landing.nav.pricing')}
                   </a>
                   <a
                     href="#testimonials"
-                    className="text-gray-700/70 dark:text-gray-300/70 hover:text-purple-600 transition-colors font-medium"
+                    className="text-gray-700/70 hover:text-purple-600 transition-colors font-medium"
                   >
                     {t('landing.nav.testimonials')}
                   </a>
                 </>
               )}
               <LanguageToggle />
+              {/* <ThemeToggle /> */}
               <Button
                 variant="ghost"
                 onClick={() => navigate('/login')}
-                className="text-gray-700/70 dark:text-gray-300/70 hover:text-purple-600"
+                className="text-gray-700/70 hover:text-purple-600"
               >
                 {t('landing.nav.signIn')}
               </Button>
@@ -102,7 +105,7 @@ export function PublicLayout({ children }: Readonly<PublicLayoutProps>) {
 
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden text-gray-700 dark:text-gray-300"
+              className="md:hidden text-gray-700"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X /> : <Menu />}
@@ -111,33 +114,33 @@ export function PublicLayout({ children }: Readonly<PublicLayoutProps>) {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="md:hidden mt-4 pb-4 space-y-4 border-t border-gray-200 pt-4">
               {isLandingPage && (
                 <>
                   <a
                     href="#features"
-                    className="block text-gray-600 dark:text-gray-400 hover:text-purple-600 transition-colors"
+                    className="block text-gray-600 hover:text-purple-600 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {t('landing.nav.features')}
                   </a>
                   <a
                     href="#benefits"
-                    className="block text-gray-600 dark:text-gray-400 hover:text-purple-600 transition-colors"
+                    className="block text-gray-600 hover:text-purple-600 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {t('landing.nav.benefits')}
                   </a>
                   <a
                     href="#pricing"
-                    className="block text-gray-600 dark:text-gray-400 hover:text-purple-600 transition-colors"
+                    className="block text-gray-600 hover:text-purple-600 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {t('landing.nav.pricing')}
                   </a>
                   <a
                     href="#testimonials"
-                    className="block text-gray-600 dark:text-gray-400 hover:text-purple-600 transition-colors"
+                    className="block text-gray-600 hover:text-purple-600 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {t('landing.nav.testimonials')}
@@ -146,6 +149,7 @@ export function PublicLayout({ children }: Readonly<PublicLayoutProps>) {
               )}
               <div className="flex justify-center gap-2">
                 <LanguageToggle />
+                {/* <ThemeToggle /> */}
               </div>
               <Button
                 variant="ghost"
