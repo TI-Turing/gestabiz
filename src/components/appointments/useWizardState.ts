@@ -278,7 +278,9 @@ export function useWizardState({
     if (currentStep === getStepNumber('location')) return wizardData.locationId !== null
     if (currentStep === getStepNumber('service')) return wizardData.serviceId !== null
     if (currentStep === getStepNumber('employee')) {
-      if (wizardData.business?.resource_model && wizardData.business.resource_model !== 'professional')
+      if (wizardData.business?.resource_model &&
+          (wizardData.business.resource_model === 'physical_resource' ||
+           wizardData.business.resource_model === 'group_class'))
         return wizardData.resourceId !== null
       return wizardData.employeeId !== null && isEmployeeOfAnyBusiness
     }

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Menu, X } from 'lucide-react'
+import { ArrowRight, Menu, X, LayoutDashboard } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { LanguageToggle } from '@/components/ui/language-toggle'
+import { useAuth } from '@/hooks/useAuth'
 // import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 interface PublicLayoutProps {
@@ -16,6 +17,7 @@ export function PublicLayout({ children }: Readonly<PublicLayoutProps>) {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useLanguage()
+  const { user } = useAuth()
 
   const isLandingPage = location.pathname === '/'
 
@@ -87,20 +89,32 @@ export function PublicLayout({ children }: Readonly<PublicLayoutProps>) {
               )}
               <LanguageToggle />
               {/* <ThemeToggle /> */}
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/login')}
-                className="text-gray-700/70 hover:text-purple-600"
-              >
-                {t('landing.nav.signIn')}
-              </Button>
-              <Button
-                onClick={() => navigate('/register')}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                {t('landing.nav.getStarted')}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              {user ? (
+                <Button
+                  onClick={() => navigate('/app')}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Ir a la app
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => navigate('/login')}
+                    className="text-gray-700/70 hover:text-purple-600"
+                  >
+                    {t('landing.nav.signIn')}
+                  </Button>
+                  <Button
+                    onClick={() => navigate('/register')}
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    {t('landing.nav.getStarted')}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -151,26 +165,41 @@ export function PublicLayout({ children }: Readonly<PublicLayoutProps>) {
                 <LanguageToggle />
                 {/* <ThemeToggle /> */}
               </div>
-              <Button
-                variant="ghost"
-                className="w-full"
-                onClick={() => {
-                  setMobileMenuOpen(false)
-                  navigate('/login')
-                }}
-              >
-                {t('landing.nav.signIn')}
-              </Button>
-              <Button
-                className="w-full bg-primary hover:bg-primary/90"
-                onClick={() => {
-                  setMobileMenuOpen(false)
-                  navigate('/register')
-                }}
-              >
-                {t('landing.nav.getStarted')}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              {user ? (
+                <Button
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    navigate('/app')
+                  }}
+                >
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Ir a la app
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      navigate('/login')
+                    }}
+                  >
+                    {t('landing.nav.signIn')}
+                  </Button>
+                  <Button
+                    className="w-full bg-primary hover:bg-primary/90"
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      navigate('/register')
+                    }}
+                  >
+                    {t('landing.nav.getStarted')}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </div>

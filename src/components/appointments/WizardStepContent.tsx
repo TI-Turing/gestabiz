@@ -124,7 +124,8 @@ export function WizardStepContent({
       {currentStep === getStepNumber('employee') && (
         <>
           {(!wizardData.business?.resource_model ||
-            wizardData.business.resource_model === 'professional') && (
+            wizardData.business.resource_model === 'professional' ||
+            wizardData.business.resource_model === 'hybrid') && (
             <EmployeeSelection
               businessId={effectiveBusiness}
               locationId={wizardData.locationId || ''}
@@ -147,7 +148,8 @@ export function WizardStepContent({
           )}
 
           {wizardData.business?.resource_model &&
-            wizardData.business.resource_model !== 'professional' && (
+            (wizardData.business.resource_model === 'physical_resource' ||
+              wizardData.business.resource_model === 'group_class') && (
               <ResourceSelection
                 businessId={effectiveBusiness}
                 serviceId={wizardData.serviceId || ''}

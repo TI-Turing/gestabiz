@@ -344,6 +344,10 @@ export interface User {
   deactivated_at?: string  // Timestamp when account was deactivated
   last_login?: string
   accountInactive?: boolean  // Flag indicating account needs reactivation
+  // Free trial tracking (per user, not per business)
+  has_used_free_trial?: boolean
+  free_trial_used_at?: string
+  free_trial_business_id?: string
 }
 
 // Legacy interface for backward compatibility

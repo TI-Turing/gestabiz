@@ -30,6 +30,10 @@ interface PlanUpgradeModalProps {
   currentCycle: BillingCycle
   onClose: () => void
   onSuccess: () => void
+  /** Si el usuario aún no ha usado su mes gratuito y es owner */
+  isTrialEligible?: boolean
+  /** Callback para activar el trial (provisto por useFreeTrial) */
+  onActivateTrial?: () => Promise<void>
 }
 
 const PLANS = {
@@ -59,6 +63,8 @@ export function PlanUpgradeModal({
   currentCycle,
   onClose,
   onSuccess,
+  isTrialEligible = false,
+  onActivateTrial,
 }: PlanUpgradeModalProps) {
   const [selectedPlan, setSelectedPlan] = useState<PlanType>(currentPlan)
   const [selectedCycle, setSelectedCycle] = useState<BillingCycle>(currentCycle)
@@ -73,6 +79,8 @@ export function PlanUpgradeModal({
     return formatCurrency(amount)
   }
 
+  const isTrialAction = isTrialEligible && selectedPlan === 'basico' && onActivateTrial != null
+
   const handleSubmit = async () => {
     if (selectedPlan === currentPlan && selectedCycle === currentCycle) {
       return
@@ -80,6 +88,13 @@ export function PlanUpgradeModal({
 
     setIsSubmitting(true)
     try {
+      // Si aplica trial gratuito, activarlo directamente
+      if (isTrialAction) {
+        await onActivateTrial!()
+        onSuccess()
+        return
+      }
+
       // Aplicar código de descuento si existe
       if (discountCode) {
         const amount = PLANS[selectedPlan]?.[selectedCycle] ?? 0
@@ -160,6 +175,11 @@ export function PlanUpgradeModal({
                   )}
                   
                   <h3 className="text-lg font-semibold mb-2">{plan.name}</h3>
+                  {isTrialEligible && planKey === 'basico' && (
+                    <div className="mb-3 rounded-md bg-primary/10 border border-primary/20 px-2 py-1.5 text-xs font-semibold text-primary">
+                      Primer mes GRATIS — sin tarjeta de crédito
+                    </div>
+                  )}
                   <div className="text-2xl font-bold mb-4">
                     {getPrice(planKey, selectedCycle)}
                     {PLANS[planKey].monthly > 0 && (
@@ -215,18 +235,20 @@ export function PlanUpgradeModal({
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </Button>
-          <Button 
-            onClick={handleSubmit} 
+          <Button
+            onClick={handleSubmit}
             disabled={
-              isSubmitting || 
+              isSubmitting ||
               (selectedPlan === currentPlan && selectedCycle === currentCycle)
             }
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Actualizando...
+                {isTrialAction ? 'Activando...' : 'Actualizando...'}
               </>
+            ) : isTrialAction ? (
+              'Activar Mes Gratis'
             ) : (
               'Confirmar Cambio'
             )}
