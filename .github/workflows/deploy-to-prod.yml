@@ -16,7 +16,8 @@ jobs:
   deploy-functions:
     name: Deploy Edge Functions to Production
     runs-on: ubuntu-latest
-    
+    environment: Production
+
     permissions:
       contents: read
     
