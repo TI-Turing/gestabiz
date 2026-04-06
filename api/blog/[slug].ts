@@ -130,6 +130,67 @@ const BLOG_POSTS: Record<string, BlogPostSeoData> = {
     authorName: 'Equipo Gestabiz',
     category: 'negocios',
   },
+  // ── Nuevos posts Abr 2026 ─────────────────────────────────────────────────
+  'gestabiz-vs-agendapro-colombia': {
+    slug: 'gestabiz-vs-agendapro-colombia',
+    title: 'Gestabiz vs AgendaPro: ¿Cuál es Mejor para Negocios en Colombia? (2026)',
+    metaTitle: 'Gestabiz vs AgendaPro para Negocios Colombia 2026',
+    metaDescription: 'Comparativa Gestabiz vs AgendaPro para negocios en Colombia. Precio en COP, WhatsApp, DIAN, soporte local. Descubre cuál es mejor para tu negocio colombiano.',
+    metaKeywords: ['gestabiz vs agendapro', 'alternativa agendapro colombia', 'agendapro colombia precios', 'mejor software citas colombia 2026'],
+    ogImage: 'https://gestabiz.com/og-image.png',
+    canonicalPath: '/blog/gestabiz-vs-agendapro-colombia',
+    publishedAt: '2026-04-05',
+    authorName: 'Equipo Gestabiz',
+    category: 'comparativas',
+  },
+  'gestabiz-vs-fresha-colombia': {
+    slug: 'gestabiz-vs-fresha-colombia',
+    title: 'Gestabiz vs Fresha: Comparativa Completa para Salones y Clínicas en Colombia (2026)',
+    metaTitle: 'Gestabiz vs Fresha para Salones Colombia 2026',
+    metaDescription: 'Gestabiz vs Fresha: comparativa para salones y clínicas en Colombia. Comisiones, pagos en COP, WhatsApp, contabilidad DIAN. ¿Cuál te conviene más?',
+    metaKeywords: ['gestabiz vs fresha', 'alternativa fresha colombia', 'fresha colombia comisiones', 'software salones gratis colombia'],
+    ogImage: 'https://gestabiz.com/og-image.png',
+    canonicalPath: '/blog/gestabiz-vs-fresha-colombia',
+    publishedAt: '2026-04-05',
+    authorName: 'Equipo Gestabiz',
+    category: 'comparativas',
+  },
+  'software-citas-medicas-colombia-2026': {
+    slug: 'software-citas-medicas-colombia-2026',
+    title: 'Los 5 Mejores Software de Citas Médicas en Colombia (2026): Guía Completa',
+    metaTitle: 'Top 5 Software Citas Médicas Colombia 2026',
+    metaDescription: 'Los 5 mejores software de citas médicas en Colombia en 2026. Comparativa: DIAN, historia clínica, WhatsApp, precios COP. Guía para médicos y clínicas.',
+    metaKeywords: ['software citas médicas colombia', 'sistema agendamiento médico colombia', 'agenda médica online colombia', 'app citas médicas colombia'],
+    ogImage: 'https://gestabiz.com/og-image.png',
+    canonicalPath: '/blog/software-citas-medicas-colombia-2026',
+    publishedAt: '2026-04-05',
+    authorName: 'Equipo Gestabiz',
+    category: 'comparativas',
+  },
+  'software-barberias-colombia-2026': {
+    slug: 'software-barberias-colombia-2026',
+    title: 'Software para Barberías en Colombia: Los 5 Mejores en 2026',
+    metaTitle: 'Top 5 Software para Barberías Colombia 2026',
+    metaDescription: 'Los 5 mejores software para barberías en Colombia en 2026. Agenda por barbero, WhatsApp, pagos COP, comisiones. Guía completa para barbershops.',
+    metaKeywords: ['software barberías colombia', 'app barbería colombia', 'sistema citas barbería', 'software barbershop colombia 2026'],
+    ogImage: 'https://gestabiz.com/og-image.png',
+    canonicalPath: '/blog/software-barberias-colombia-2026',
+    publishedAt: '2026-04-05',
+    authorName: 'Equipo Gestabiz',
+    category: 'comparativas',
+  },
+  'como-elegir-software-agendamiento-citas': {
+    slug: 'como-elegir-software-agendamiento-citas',
+    title: 'Cómo Elegir el Mejor Software de Agendamiento de Citas para tu Negocio en Colombia',
+    metaTitle: 'Cómo Elegir Software de Agendamiento de Citas Colombia',
+    metaDescription: 'Guía para elegir el mejor software de agendamiento de citas en Colombia. 10 criterios clave: precio COP, WhatsApp, DIAN, soporte español, escalabilidad.',
+    metaKeywords: ['cómo elegir software agendamiento citas', 'mejor software citas colombia', 'software de agendamiento de citas', 'comparar software reservas online'],
+    ogImage: 'https://gestabiz.com/og-image.png',
+    canonicalPath: '/blog/como-elegir-software-agendamiento-citas',
+    publishedAt: '2026-04-05',
+    authorName: 'Equipo Gestabiz',
+    category: 'guias',
+  },
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -207,6 +268,16 @@ function buildBlogMetaHtml(post: BlogPostSeoData, canonical: string): string {
     `<link rel="canonical" href="${esc(canonical)}" />`,
     // JSON-LD Article schema
     `<script type="application/ld+json">${jsonLd}</script>`,
+    // JSON-LD BreadcrumbList — improves SERP navigation display
+    `<script type="application/ld+json">${JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://gestabiz.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://gestabiz.com/blog' },
+        { '@type': 'ListItem', position: 3, name: post.title, item: canonical },
+      ],
+    })}</script>`,
   ].join('\n  ')
 }
 

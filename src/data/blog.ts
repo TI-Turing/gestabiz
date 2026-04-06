@@ -188,6 +188,152 @@ export const BLOG_POSTS: BlogPost[] = [
     featured: false,
     published: true,
   },
+  // ── Nuevos posts Abr 2026 — comparativas competidores + guías por industria ──
+  {
+    slug: 'gestabiz-vs-agendapro-colombia',
+    title:
+      'Gestabiz vs AgendaPro: ¿Cuál es Mejor para Negocios en Colombia? (2026)',
+    excerpt:
+      'AgendaPro es el líder en Chile pero ¿funciona igual de bien en Colombia? Comparamos precios en COP, soporte local, WhatsApp, DIAN y más. Descubre cuál conviene para tu negocio.',
+    metaTitle: 'Gestabiz vs AgendaPro para Negocios Colombia 2026',
+    metaDescription:
+      'Comparativa Gestabiz vs AgendaPro para negocios en Colombia. Precio en COP, WhatsApp, DIAN, soporte local. Descubre cuál es mejor para tu negocio colombiano.',
+    metaKeywords: [
+      'gestabiz vs agendapro',
+      'alternativa agendapro colombia',
+      'agendapro colombia precios',
+      'mejor software citas colombia 2026',
+      'agendapro vs gestabiz comparativa',
+      'software agendamiento colombia',
+    ],
+    ogImage: OG_IMAGE,
+    canonicalPath: '/blog/gestabiz-vs-agendapro-colombia',
+    publishedAt: '2026-04-05',
+    updatedAt: '2026-04-05',
+    author: GESTABIZ_AUTHOR,
+    category: 'comparativas',
+    readingTimeMinutes: 9,
+    tags: ['agendapro', 'comparativa', 'software citas', 'colombia'],
+    relatedVerticals: ['salones', 'barberias', 'clinicas', 'spas'],
+    featured: true,
+    published: true,
+  },
+  {
+    slug: 'gestabiz-vs-fresha-colombia',
+    title:
+      'Gestabiz vs Fresha: Comparativa Completa para Salones y Clínicas en Colombia (2026)',
+    excerpt:
+      'Fresha es gratis pero cobra comisiones por cada reserva online. Gestabiz tiene tarifa fija sin comisiones. Comparamos ambas plataformas para el mercado colombiano.',
+    metaTitle: 'Gestabiz vs Fresha para Salones Colombia 2026',
+    metaDescription:
+      'Gestabiz vs Fresha: comparativa para salones y clínicas en Colombia. Comisiones, pagos en COP, WhatsApp, contabilidad DIAN. ¿Cuál te conviene más?',
+    metaKeywords: [
+      'gestabiz vs fresha',
+      'alternativa fresha colombia',
+      'fresha colombia comisiones',
+      'software salones gratis colombia',
+      'fresha vs gestabiz comparativa',
+      'mejor app salones colombia',
+    ],
+    ogImage: OG_IMAGE,
+    canonicalPath: '/blog/gestabiz-vs-fresha-colombia',
+    publishedAt: '2026-04-05',
+    updatedAt: '2026-04-05',
+    author: GESTABIZ_AUTHOR,
+    category: 'comparativas',
+    readingTimeMinutes: 8,
+    tags: ['fresha', 'comparativa', 'salones', 'comisiones', 'colombia'],
+    relatedVerticals: ['salones', 'barberias', 'spas'],
+    featured: true,
+    published: true,
+  },
+  {
+    slug: 'software-citas-medicas-colombia-2026',
+    title:
+      'Los 5 Mejores Software de Citas Médicas en Colombia (2026): Guía Completa',
+    excerpt:
+      'Comparamos los mejores software de agendamiento de citas médicas en Colombia: cumplimiento DIAN, historia clínica, recordatorios WhatsApp y precios en COP.',
+    metaTitle: 'Top 5 Software Citas Médicas Colombia 2026',
+    metaDescription:
+      'Los 5 mejores software de citas médicas en Colombia en 2026. Comparativa: DIAN, historia clínica, WhatsApp, precios COP. Guía para médicos y clínicas.',
+    metaKeywords: [
+      'software citas médicas colombia',
+      'sistema agendamiento médico colombia',
+      'agenda médica online colombia',
+      'software consultorio médico colombia 2026',
+      'app citas médicas colombia',
+      'software clínica dental colombia',
+    ],
+    ogImage: OG_IMAGE,
+    canonicalPath: '/blog/software-citas-medicas-colombia-2026',
+    publishedAt: '2026-04-05',
+    updatedAt: '2026-04-05',
+    author: GESTABIZ_AUTHOR,
+    category: 'comparativas',
+    readingTimeMinutes: 10,
+    tags: ['software médico', 'clínicas', 'citas médicas', 'colombia'],
+    relatedVerticals: ['clinicas', 'odontologos', 'psicologos', 'fisioterapeutas'],
+    featured: false,
+    published: true,
+  },
+  {
+    slug: 'software-barberias-colombia-2026',
+    title:
+      'Software para Barberías en Colombia: Los 5 Mejores en 2026',
+    excerpt:
+      'Las barberías colombianas están creciendo rápido. Comparamos los 5 mejores software con agenda por barbero, recordatorios WhatsApp, pagos en COP y control de comisiones.',
+    metaTitle: 'Top 5 Software para Barberías Colombia 2026',
+    metaDescription:
+      'Los 5 mejores software para barberías en Colombia en 2026. Agenda por barbero, WhatsApp, pagos COP, comisiones. Guía completa para barbershops.',
+    metaKeywords: [
+      'software barberías colombia',
+      'app barbería colombia',
+      'sistema citas barbería',
+      'software barbershop colombia 2026',
+      'agenda barberos online',
+      'programa para barbería colombia',
+    ],
+    ogImage: OG_IMAGE,
+    canonicalPath: '/blog/software-barberias-colombia-2026',
+    publishedAt: '2026-04-05',
+    updatedAt: '2026-04-05',
+    author: GESTABIZ_AUTHOR,
+    category: 'comparativas',
+    readingTimeMinutes: 8,
+    tags: ['barberías', 'barbershop', 'software', 'colombia'],
+    relatedVerticals: ['barberias', 'salones'],
+    featured: false,
+    published: true,
+  },
+  {
+    slug: 'como-elegir-software-agendamiento-citas',
+    title:
+      'Cómo Elegir el Mejor Software de Agendamiento de Citas para tu Negocio en Colombia',
+    excerpt:
+      'No todos los software de citas son iguales. Te damos los 10 criterios que debes evaluar antes de elegir: precio, WhatsApp, pagos locales, soporte, escalabilidad y más.',
+    metaTitle: 'Cómo Elegir Software de Agendamiento de Citas Colombia',
+    metaDescription:
+      'Guía para elegir el mejor software de agendamiento de citas en Colombia. 10 criterios clave: precio COP, WhatsApp, DIAN, soporte español, escalabilidad.',
+    metaKeywords: [
+      'cómo elegir software agendamiento citas',
+      'mejor software citas colombia',
+      'software de agendamiento de citas',
+      'qué buscar en software de citas',
+      'comparar software reservas online',
+      'sistema agendamiento citas colombia',
+    ],
+    ogImage: OG_IMAGE,
+    canonicalPath: '/blog/como-elegir-software-agendamiento-citas',
+    publishedAt: '2026-04-05',
+    updatedAt: '2026-04-05',
+    author: GESTABIZ_AUTHOR,
+    category: 'guias',
+    readingTimeMinutes: 7,
+    tags: ['guía de compra', 'software citas', 'agendamiento', 'colombia'],
+    relatedVerticals: ['salones', 'clinicas', 'barberias', 'gimnasios'],
+    featured: false,
+    published: true,
+  },
 ]
 
 // ─── Map for O(1) lookup by slug ──────────────────────────────────────────────

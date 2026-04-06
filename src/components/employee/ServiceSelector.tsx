@@ -94,10 +94,10 @@ export function ServiceSelector({
       setServices(servicesWithEmployeeInfo);
 
       // Inicializar selección y detalles
-      const selected = new Set(
+      const selected = new Set<string>(
         servicesWithEmployeeInfo
           .filter(s => s.is_offering)
-          .map(s => s.id)
+          .map(s => s.id as string)
       );
       setSelectedServices(selected);
 

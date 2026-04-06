@@ -61,11 +61,27 @@ export default async function handler(_req: Request): Promise<Response> {
     urlEntry('https://gestabiz.com/para/nutricionistas', today, 'monthly', '0.9'),
     urlEntry('https://gestabiz.com/para/entrenadores', today, 'monthly', '0.9'),
     urlEntry('https://gestabiz.com/blog', today, 'weekly', '0.8'),
+    // Blog posts — high-value SEO content
+    urlEntry('https://gestabiz.com/blog/como-reducir-ausencias-citas-whatsapp', '2026-03-15', 'monthly', '0.8'),
+    urlEntry('https://gestabiz.com/blog/software-salones-belleza-colombia-2026', '2026-03-15', 'monthly', '0.8'),
+    urlEntry('https://gestabiz.com/blog/gestabiz-vs-calendly-colombia', '2026-03-15', 'monthly', '0.8'),
+    urlEntry('https://gestabiz.com/blog/como-digitalizar-negocio-servicios-colombia', '2026-03-15', 'monthly', '0.8'),
+    urlEntry('https://gestabiz.com/blog/agenda-online-ventajas-para-negocios', '2026-03-15', 'monthly', '0.8'),
+    // New comparison/industry posts (Apr 2026)
+    urlEntry('https://gestabiz.com/blog/gestabiz-vs-agendapro-colombia', '2026-04-05', 'monthly', '0.8'),
+    urlEntry('https://gestabiz.com/blog/gestabiz-vs-fresha-colombia', '2026-04-05', 'monthly', '0.8'),
+    urlEntry('https://gestabiz.com/blog/software-citas-medicas-colombia-2026', '2026-04-05', 'monthly', '0.8'),
+    urlEntry('https://gestabiz.com/blog/software-barberias-colombia-2026', '2026-04-05', 'monthly', '0.8'),
+    urlEntry('https://gestabiz.com/blog/como-elegir-software-agendamiento-citas', '2026-04-05', 'monthly', '0.8'),
+    // Legal and contact pages
+    urlEntry('https://gestabiz.com/terminos', today, 'yearly', '0.3'),
+    urlEntry('https://gestabiz.com/privacidad', today, 'yearly', '0.3'),
+    urlEntry('https://gestabiz.com/contacto', today, 'monthly', '0.5'),
   ]
 
   // ─── Directorios (categoría × ciudad) ──────────────────────────────────────
   // Las combinaciones más relevantes del mercado colombiano
-  const categorySlugs = ['barberias', 'salones', 'clinicas', 'spas', 'gimnasios', 'odontologos', 'psicologos', 'fisioterapeutas', 'nutricionistas']
+  const categorySlugs = ['barberias', 'salones', 'clinicas', 'spas', 'gimnasios', 'odontologos', 'psicologos', 'fisioterapeutas', 'nutricionistas', 'entrenadores']
   const citySlugs = ['bogota', 'medellin', 'cali', 'barranquilla', 'cartagena', 'bucaramanga', 'pereira', 'manizales']
 
   const directoryPages = categorySlugs.flatMap(cat =>

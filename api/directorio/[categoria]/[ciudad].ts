@@ -218,7 +218,20 @@ function buildJsonLd(
     itemListElement: items,
   }
 
-  return `<script type="application/ld+json">${JSON.stringify(schema)}</script>`
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: categoriaLabel, item: `${baseUrl}/para/${categoriaLabel.toLowerCase().replace(/ /g, '-')}` },
+      { '@type': 'ListItem', position: 3, name: `${categoriaLabel} en ${ciudadNombre}`, item: `${baseUrl}/directorio/${categoriaLabel.toLowerCase().replace(/ /g, '-')}/${ciudadNombre.toLowerCase()}` },
+    ],
+  }
+
+  return [
+    `<script type="application/ld+json">${JSON.stringify(schema)}</script>`,
+    `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>`,
+  ].join('\n  ')
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────

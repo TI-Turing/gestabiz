@@ -30,6 +30,19 @@ interface Business {
   meta_description: string | null
   meta_keywords: string[] | null
   og_image_url: string | null
+  average_rating: number | null
+  review_count: number | null
+  slug: string
+}
+
+interface Location {
+  address: string | null
+  city: string | null
+  region: string | null
+  lat: number | null
+  lng: number | null
+  opens_at: string | null
+  closes_at: string | null
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -58,7 +71,7 @@ async function fetchBusiness(slug: string): Promise<Business | null> {
 
   try {
     const res = await fetch(
-      `${supabaseUrl}/rest/v1/businesses?slug=eq.${encodeURIComponent(slug)}&is_public=eq.true&select=id,name,description,phone,email,banner_url,logo_url,meta_title,meta_description,meta_keywords,og_image_url&limit=1`,
+      `${supabaseUrl}/rest/v1/businesses?slug=eq.${encodeURIComponent(slug)}&is_public=eq.true&select=id,name,slug,description,phone,email,banner_url,logo_url,meta_title,meta_description,meta_keywords,og_image_url,average_rating,review_count&limit=1`,
       {
         headers: {
           'apikey': supabaseKey,
@@ -72,6 +85,30 @@ async function fetchBusiness(slug: string): Promise<Business | null> {
     )
     if (!res.ok) return null
     const data = await res.json() as Business[]
+    return data[0] ?? null
+  } catch {
+    return null
+  }
+}
+
+async function fetchPrimaryLocation(businessId: string): Promise<Location | null> {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !supabaseKey) return null
+
+  try {
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/locations?business_id=eq.${businessId}&is_active=eq.true&select=address,city,region,lat,lng,opens_at,closes_at&order=created_at.asc&limit=1`,
+      {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Accept': 'application/json',
+        },
+      }
+    )
+    if (!res.ok) return null
+    const data = await res.json() as Location[]
     return data[0] ?? null
   } catch {
     return null
@@ -110,6 +147,117 @@ function buildMetaHtml(business: Business, canonical: string): string {
   ].filter(Boolean).join('\n  ')
 }
 
+// ─── JSON-LD Schemas ─────────────────────────────────────────────────────────
+
+function buildJsonLd(business: Business, location: Location | null, canonical: string): string {
+  const img = business.og_image_url || business.banner_url || business.logo_url || ''
+
+  // 1. LocalBusiness schema — enables Google rich snippets with address, hours, reviews
+  const localBusiness: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    '@id': canonical,
+    'name': business.name,
+    'url': canonical,
+    ...(business.description ? { description: trunc(business.description, 250) } : {}),
+    ...(img ? { image: img } : {}),
+    ...(business.phone ? { telephone: business.phone } : {}),
+    ...(business.email ? { email: business.email } : {}),
+    'priceRange': '$$',
+    'currenciesAccepted': 'COP',
+    'paymentAccepted': 'Efectivo, Tarjeta de crédito, Tarjeta de débito, Transferencia',
+  }
+
+  // Address from primary location
+  if (location?.address || location?.city) {
+    localBusiness.address = {
+      '@type': 'PostalAddress',
+      ...(location.address ? { streetAddress: location.address } : {}),
+      ...(location.city ? { addressLocality: location.city } : {}),
+      ...(location.region ? { addressRegion: location.region } : {}),
+      addressCountry: 'CO',
+    }
+  }
+
+  // Geo coordinates
+  if (location?.lat && location?.lng) {
+    localBusiness.geo = {
+      '@type': 'GeoCoordinates',
+      latitude: location.lat,
+      longitude: location.lng,
+    }
+  }
+
+  // Opening hours (from primary location)
+  if (location?.opens_at && location?.closes_at) {
+    localBusiness.openingHoursSpecification = {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+      opens: location.opens_at,
+      closes: location.closes_at,
+    }
+  }
+
+  // AggregateRating — only if real reviews exist
+  if (business.average_rating && business.review_count && business.review_count > 0) {
+    localBusiness.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: business.average_rating,
+      bestRating: 5,
+      worstRating: 1,
+      reviewCount: business.review_count,
+    }
+  }
+
+  // 2. ReserveAction — enables "Reserve" button in Google search results
+  localBusiness.potentialAction = {
+    '@type': 'ReserveAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: canonical,
+      actionPlatform: [
+        'http://schema.org/DesktopWebPlatform',
+        'http://schema.org/MobileWebPlatform',
+      ],
+    },
+    result: {
+      '@type': 'Reservation',
+      name: `Reservar cita en ${business.name}`,
+    },
+  }
+
+  // 3. BreadcrumbList — improves SERP navigation display
+  const breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Inicio',
+        item: 'https://gestabiz.com/',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Negocios',
+        item: 'https://gestabiz.com/directorio/salones/bogota',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: business.name,
+        item: canonical,
+      },
+    ],
+  }
+
+  return [
+    `<script type="application/ld+json">${JSON.stringify(localBusiness)}</script>`,
+    `<script type="application/ld+json">${JSON.stringify(breadcrumb)}</script>`,
+  ].join('\n  ')
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────────
 
 export default async function handler(req: Request): Promise<Response> {
@@ -133,7 +281,11 @@ export default async function handler(req: Request): Promise<Response> {
   let html = await indexRes.text()
 
   if (business) {
+    // Fetch location data (after we have the business ID)
+    const location = await fetchPrimaryLocation(business.id)
+
     const metaHtml = buildMetaHtml(business, canonical)
+    const jsonLd = buildJsonLd(business, location, canonical)
     // 1. Remove the generic <title>
     html = html.replace(/<title>[^<]*<\/title>/, '')
     // 2. Remove generic description/og/twitter/canonical/hreflang tags from index.html
@@ -148,8 +300,8 @@ export default async function handler(req: Request): Promise<Response> {
       .replace(/<link rel="alternate"[^>]*>/g, '')
     // 3. Remove landing-page JSON-LD schemas (business profiles have their own)
     html = html.replace(/<script type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/g, '')
-    // 4. Inject business-specific meta tags just before </head>
-    html = html.replace('</head>', `  ${metaHtml}\n</head>`)
+    // 4. Inject business-specific meta tags + JSON-LD just before </head>
+    html = html.replace('</head>', `  ${metaHtml}\n  ${jsonLd}\n</head>`)
   }
 
   return new Response(html, {

@@ -57,7 +57,7 @@ export const CategoryPieChart: React.FC<CategoryPieChartProps> = ({
     );
   };
 
-  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: CategoryDistribution }> }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload as CategoryDistribution;
       return (
