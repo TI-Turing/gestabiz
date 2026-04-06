@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useIsMobile } from '@/hooks/use-mobile'
 import {
   Settings,
   Menu,
@@ -181,6 +182,10 @@ export function UnifiedLayout({
     })
   }, [])
 
+  // En móvil el drawer siempre muestra texto + iconos (nunca colapsado)
+  const isMobile = useIsMobile()
+  const isCollapsed = sidebarCollapsed && !isMobile
+
   // Close location menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -290,16 +295,16 @@ export function UnifiedLayout({
       <aside
         className={cn(
           "fixed left-0 top-0 h-screen bg-card border-r border-border z-[100] transition-all duration-200 flex flex-col",
-          sidebarCollapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W,
+          isCollapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W,
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >
         {/* Logo/Brand */}
         <div className={cn(
           "border-b border-border flex-shrink-0 flex items-center",
-          sidebarCollapsed ? "justify-center" : ""
+          isCollapsed ? "justify-center" : ""
         )}>
-          {sidebarCollapsed ? (
+          {isCollapsed ? (
             <img 
               src={logoGestabizIcon} 
               alt="Gestabiz" 
@@ -317,7 +322,7 @@ export function UnifiedLayout({
         {/* Navigation - Scrollable */}
         <nav className={cn(
           "flex-1 space-y-0.5 overflow-y-auto",
-          sidebarCollapsed ? "p-2" : "p-3"
+          isCollapsed ? "p-2" : "p-3"
         )}>
           {sidebarItems.map((item) => {
             const isLocked = item.locked === true
@@ -338,7 +343,7 @@ export function UnifiedLayout({
                 title={isLocked && item.lockedPlan ? `Requiere Plan ${item.lockedPlan}` : undefined}
                 className={cn(
                   "w-full flex items-center rounded-lg transition-colors text-left",
-                  sidebarCollapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
+                  isCollapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
                   isLocked
                     ? "opacity-50 cursor-pointer hover:bg-muted hover:opacity-70"
                     : activePage === item.id
@@ -347,7 +352,7 @@ export function UnifiedLayout({
                 )}
               >
                 <span className="shrink-0">{item.icon}</span>
-                {!sidebarCollapsed && (
+                {!isCollapsed && (
                   <>
                     <span className="flex-1 text-sm">{item.label}</span>
                     {/* Candado de plan (prioridad sobre badge de notificaciones) */}
@@ -369,7 +374,7 @@ export function UnifiedLayout({
                   </>
                 )}
                 {/* Badge de notificaciones en modo colapsado (solo si no bloqueado) */}
-                {sidebarCollapsed && !isLocked && item.badge !== undefined && item.badge > 0 && (
+                {isCollapsed && !isLocked && item.badge !== undefined && item.badge > 0 && (
                   <Badge
                     variant={activePage === item.id ? "secondary" : "default"}
                     className="absolute -top-1 -right-1 text-[10px] h-4 min-w-4 px-1"
@@ -378,7 +383,7 @@ export function UnifiedLayout({
                   </Badge>
                 )}
                 {/* Indicador de candado en modo colapsado */}
-                {sidebarCollapsed && isLocked && (
+                {isCollapsed && isLocked && (
                   <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-500 flex items-center justify-center">
                     <Lock className="h-2.5 w-2.5 text-white" />
                   </span>
@@ -386,7 +391,7 @@ export function UnifiedLayout({
               </button>
             )
 
-            if (sidebarCollapsed) {
+            if (isCollapsed) {
               return (
                 <Tooltip key={item.id}>
                   <TooltipTrigger asChild>
@@ -411,9 +416,9 @@ export function UnifiedLayout({
         {/* Bottom Menu - Bug Report, Logout & Collapse Toggle */}
         <div className={cn(
           "border-t border-border flex-shrink-0",
-          sidebarCollapsed ? "p-2 space-y-0.5" : "p-3 space-y-0.5"
+          isCollapsed ? "p-2 space-y-0.5" : "p-3 space-y-0.5"
         )}>
-          {sidebarCollapsed ? (
+          {isCollapsed ? (
             <>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -470,9 +475,9 @@ export function UnifiedLayout({
         <button
           onClick={toggleSidebarCollapsed}
           className="hidden lg:flex absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-7 h-14 rounded-r-lg bg-card border border-l-0 border-border shadow-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {sidebarCollapsed ? (
+          {isCollapsed ? (
             <PanelLeftOpen className="h-4 w-4" />
           ) : (
             <PanelLeftClose className="h-4 w-4" />
