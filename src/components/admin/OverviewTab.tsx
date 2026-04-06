@@ -545,7 +545,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
                   <ExternalLink className="h-4 w-4" />
                 </Button>
               )}
-              {business.slug && (
+              {business.slug && business.is_configured && (
                 <Button
                   variant="outline"
                   size="sm"

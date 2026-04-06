@@ -278,8 +278,8 @@ export function useWizardState({
     if (currentStep === getStepNumber('location')) return wizardData.locationId !== null
     if (currentStep === getStepNumber('service')) return wizardData.serviceId !== null
     if (currentStep === getStepNumber('employee')) {
-      if (wizardData.business?.resource_model && wizardData.business.resource_model !== 'professional')
-        return wizardData.resourceId !== null
+      // TODO: Cuando se implemente ResourceSelection, volver a distinguir por resource_model
+      // para retornar wizardData.resourceId !== null en physical_resource / group_class
       return wizardData.employeeId !== null && isEmployeeOfAnyBusiness
     }
     if (currentStep === getStepNumber('employeeBusiness')) return wizardData.employeeBusinessId !== null

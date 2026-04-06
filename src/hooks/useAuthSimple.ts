@@ -76,7 +76,10 @@ const buildUserFromSession = (sessionUser: SupabaseUser, profile?: ProfileRow | 
     is_active: isActive,
     deactivated_at: profile?.deactivated_at || undefined,
     last_login: undefined,
-    accountInactive: profile ? profile.is_active === false : undefined
+    accountInactive: profile ? profile.is_active === false : undefined,
+    has_used_free_trial: profile?.has_used_free_trial ?? false,
+    free_trial_used_at: profile?.free_trial_used_at ?? undefined,
+    free_trial_business_id: profile?.free_trial_business_id ?? undefined,
   }
 }
 

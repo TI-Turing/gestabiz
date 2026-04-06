@@ -267,7 +267,7 @@ export function AdminDashboard({
       case 'reports':
         return planWrap('reports', <ReportsPage businessId={business.id} user={user} />)
       case 'billing':
-        return wrap(<BillingDashboard businessId={business.id} />)
+        return wrap(<BillingDashboard businessId={business.id} ownerId={business.owner_id} />)
       case 'permissions':
         return planWrap('permissions',
           <PermissionsManager
