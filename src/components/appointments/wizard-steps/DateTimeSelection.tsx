@@ -8,10 +8,14 @@ import type { Service, Appointment } from '@/types/types';
 import { format, addMinutes, parse, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 import { useEmployeeTransferAvailability } from '@/hooks/useEmployeeTransferAvailability';
 import { usePublicHolidays } from '@/hooks/usePublicHolidays';
+import { useBusinessClosedDays } from '@/hooks/useBusinessClosedDays';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWizardDateTimeData } from '@/hooks/useWizardDateTimeData';
+import { supabase } from '@/lib/supabase';
+import { QUERY_CONFIG } from '@/lib/queryConfig';
 // Fase 2 COMPLETADA: DateTimeSelection refactorizada (9 queries → 1 RPC via useWizardDateTimeData)
 
 interface DateTimeSelectionProps {
@@ -117,6 +121,39 @@ export function DateTimeSelection({
   const { t, language } = useLanguage();
   const dateLocale = language === 'es' ? es : enUS;
   const { isHoliday, getHolidayName, holidays } = usePublicHolidays('CO');
+
+  // Política de festivos: negocio + override de sede (NULL en location = heredar del negocio)
+  const { data: holidayPolicy } = useQuery({
+    queryKey: QUERY_CONFIG.KEYS.HOLIDAY_POLICY(businessId ?? '', locationId),
+    queryFn: async () => {
+      if (!businessId) return { work_on_holidays: false };
+      const { data: biz } = await supabase
+        .from('businesses')
+        .select('work_on_holidays')
+        .eq('id', businessId)
+        .single();
+      let locationOverride: boolean | null = null;
+      if (locationId) {
+        const { data: loc } = await supabase
+          .from('locations')
+          .select('work_on_holidays')
+          .eq('id', locationId)
+          .single();
+        if (loc) locationOverride = (loc as any).work_on_holidays ?? null;
+      }
+      const effective = locationOverride ?? biz?.work_on_holidays ?? false;
+      return { work_on_holidays: effective };
+    },
+    enabled: !!businessId,
+    ...QUERY_CONFIG.STABLE,
+  });
+
+  // Días cerrados programados por el negocio/sede
+  const { isClosedDay, getClosedDayReason } = useBusinessClosedDays(
+    businessId,
+    locationId,
+    selectedDate || new Date(),
+  );
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [monthAppointmentsMap, setMonthAppointmentsMap] = useState<Record<string, ExistingAppointment[]>>({});
   const [disabledDates, setDisabledDates] = useState<Set<string>>(new Set());
@@ -365,10 +402,22 @@ export function DateTimeSelection({
           continue;
         }
 
-        // Festivo público
+        // Festivo público — respeta la política del negocio/sede
         if (isHoliday(dateStr)) {
+          const workOnHolidays = holidayPolicy?.work_on_holidays ?? false;
+          if (!workOnHolidays) {
+            disabledSet.add(dateStr);
+            disabledTitle[dateStr] = getHolidayName(dateStr) || 'Festivo público';
+            dayCursor.setDate(dayCursor.getDate() + 1);
+            continue;
+          }
+          // work_on_holidays = true → procesar normalmente
+        }
+
+        // Día cerrado programado
+        if (isClosedDay(dateStr, locationId)) {
           disabledSet.add(dateStr);
-          disabledTitle[dateStr] = getHolidayName(dateStr) || 'Festivo público';
+          disabledTitle[dateStr] = getClosedDayReason(dateStr, locationId) || 'Día cerrado';
           dayCursor.setDate(dayCursor.getDate() + 1);
           continue;
         }
@@ -451,7 +500,7 @@ export function DateTimeSelection({
 
     computeMonthDisabled();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [employeeId, locationId, businessId, selectedDate, locationSchedule, employeeSchedule, serviceDuration, holidays, isHoliday, getHolidayName, employeeWorkingDays, validateAvailability, resourceId, monthAppointments, monthAbsences]);
+  }, [employeeId, locationId, businessId, selectedDate, locationSchedule, employeeSchedule, serviceDuration, holidays, isHoliday, getHolidayName, employeeWorkingDays, validateAvailability, resourceId, monthAppointments, monthAbsences, holidayPolicy, isClosedDay, getClosedDayReason]);
 
   const handleTimeSelect = React.useCallback((slot: TimeSlot) => {
     if (!slot.available) return;

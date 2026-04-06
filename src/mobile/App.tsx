@@ -10,8 +10,13 @@ import { Platform, View, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 
 // Foundation
+import { ToastContainer } from './src/components/ui/Toast'
 import { queryClient } from './src/lib/queryClient'
+import { navigationRef } from './src/lib/navigationRef'
 import { AuthProvider, useAuth } from './src/contexts/AuthContext'
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext'
+import { NotificationProvider } from './src/contexts/NotificationContext'
+import { linking } from './src/lib/linking'
 import { useUserRoles } from './src/hooks/useUserRoles'
 import { colors } from './src/theme'
 
@@ -36,6 +41,10 @@ import EmployeeAppointmentsScreen from './src/screens/employee/EmployeeAppointme
 import EmployeeClientsScreen from './src/screens/employee/EmployeeClientsScreen'
 import EmployeeSettingsScreen from './src/screens/employee/EmployeeSettingsScreen'
 import AbsenceRequestScreen from './src/screens/employee/AbsenceRequestScreen'
+import EmployeeCalendarScreen from './src/screens/employee/EmployeeCalendarScreen'
+import MyEmploymentsScreen from './src/screens/employee/MyEmploymentsScreen'
+import ProfessionalProfileScreen from './src/screens/employee/ProfessionalProfileScreen'
+import VacanciesMarketplaceScreen from './src/screens/employee/VacanciesMarketplaceScreen'
 
 // Client screens
 import ClientDashboardScreen from './src/screens/client/ClientDashboardScreen'
@@ -43,6 +52,28 @@ import BookingScreen from './src/screens/client/BookingScreen'
 import ClientAppointmentsScreen from './src/screens/client/ClientAppointmentsScreen'
 import ClientProfileScreen from './src/screens/client/ClientProfileScreen'
 import BusinessProfileScreen from './src/screens/client/BusinessProfileScreen'
+import AppointmentHistoryScreen from './src/screens/client/AppointmentHistoryScreen'
+import CalendarScreen from './src/screens/client/CalendarScreen'
+import FavoritesScreen from './src/screens/client/FavoritesScreen'
+import SearchScreen from './src/screens/client/SearchScreen'
+
+// Admin additional screens
+import AppointmentsCalendarScreen from './src/screens/admin/AppointmentsCalendarScreen'
+import BillingScreen from './src/screens/admin/BillingScreen'
+import BusinessQRScreen from './src/screens/admin/BusinessQRScreen'
+import ExpensesScreen from './src/screens/admin/ExpensesScreen'
+import NotificationSettingsScreen from './src/screens/admin/NotificationSettingsScreen'
+import PermissionsScreen from './src/screens/admin/PermissionsScreen'
+import QuickSaleScreen from './src/screens/admin/QuickSaleScreen'
+import RecruitmentScreen from './src/screens/admin/RecruitmentScreen'
+import ReportsScreen from './src/screens/admin/ReportsScreen'
+import ResourcesScreen from './src/screens/admin/ResourcesScreen'
+
+// Notifications, Chat, Settings
+import NotificationsScreen from './src/screens/notifications/NotificationsScreen'
+import ChatScreen from './src/screens/chat/ChatScreen'
+import ConversationListScreen from './src/screens/chat/ConversationListScreen'
+import SettingsScreen from './src/screens/settings/SettingsScreen'
 
 // ─── Configuración de notificaciones ─────────────────────────────────────────
 
@@ -90,7 +121,21 @@ function AdminMoreStack() {
       <Stack.Screen name="Sedes" component={LocationsScreen} options={{ title: 'Sedes' }} />
       <Stack.Screen name="Ausencias" component={AbsencesScreen} options={{ title: 'Ausencias' }} />
       <Stack.Screen name="Ventas" component={SalesScreen} options={{ title: 'Historial de ventas' }} />
-      <Stack.Screen name="Configuracion" component={BusinessSettingsScreen} options={{ title: 'Configuración' }} />
+      <Stack.Screen name="Configuracion" component={BusinessSettingsScreen} options={{ title: 'Config. del negocio' }} />
+      <Stack.Screen name="Recursos" component={ResourcesScreen} options={{ title: 'Recursos' }} />
+      <Stack.Screen name="Reclutamiento" component={RecruitmentScreen} options={{ title: 'Reclutamiento' }} />
+      <Stack.Screen name="Gastos" component={ExpensesScreen} options={{ title: 'Gastos' }} />
+      <Stack.Screen name="Reportes" component={ReportsScreen} options={{ title: 'Reportes' }} />
+      <Stack.Screen name="Facturacion" component={BillingScreen} options={{ title: 'Facturación' }} />
+      <Stack.Screen name="CalendarioCitas" component={AppointmentsCalendarScreen} options={{ title: 'Calendario' }} />
+      <Stack.Screen name="ConfigNotificaciones" component={NotificationSettingsScreen} options={{ title: 'Config. notificaciones' }} />
+      <Stack.Screen name="Permisos" component={PermissionsScreen} options={{ title: 'Permisos' }} />
+      <Stack.Screen name="VentasRapidas" component={QuickSaleScreen} options={{ title: 'Venta rápida' }} />
+      <Stack.Screen name="QR" component={BusinessQRScreen} options={{ title: 'Código QR' }} />
+      <Stack.Screen name="Notificaciones" component={NotificationsScreen} options={{ title: 'Notificaciones' }} />
+      <Stack.Screen name="ConversacionList" component={ConversationListScreen} options={{ title: 'Mensajes' }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: '' }} />
+      <Stack.Screen name="Ajustes" component={SettingsScreen} options={{ title: 'Ajustes de cuenta' }} />
     </Stack.Navigator>
   )
 }
@@ -132,6 +177,14 @@ function EmployeeMoreStack() {
     <Stack.Navigator screenOptions={{ ...STACK_HEADER_STYLE }}>
       <Stack.Screen name="EmployeeSettings" component={EmployeeSettingsScreen} options={{ title: 'Mi perfil' }} />
       <Stack.Screen name="SolicitudAusencia" component={AbsenceRequestScreen} options={{ title: 'Solicitar ausencia' }} />
+      <Stack.Screen name="MiCalendario" component={EmployeeCalendarScreen} options={{ title: 'Mi calendario' }} />
+      <Stack.Screen name="MisEmpleos" component={MyEmploymentsScreen} options={{ title: 'Mis empleos' }} />
+      <Stack.Screen name="MiPerfil" component={ProfessionalProfileScreen} options={{ title: 'Perfil profesional' }} />
+      <Stack.Screen name="Vacantes" component={VacanciesMarketplaceScreen} options={{ title: 'Vacantes disponibles' }} />
+      <Stack.Screen name="Notificaciones" component={NotificationsScreen} options={{ title: 'Notificaciones' }} />
+      <Stack.Screen name="ConversacionList" component={ConversationListScreen} options={{ title: 'Mensajes' }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: '' }} />
+      <Stack.Screen name="Ajustes" component={SettingsScreen} options={{ title: 'Ajustes de cuenta' }} />
     </Stack.Navigator>
   )
 }
@@ -166,10 +219,35 @@ function EmployeeTabs() {
 
 // ─── Client Tabs ──────────────────────────────────────────────────────────────
 
+function ClientSearchStack() {
+  return (
+    <Stack.Navigator screenOptions={{ ...STACK_HEADER_STYLE }}>
+      <Stack.Screen name="Buscar" component={SearchScreen} options={{ title: 'Buscar', headerShown: false }} />
+      <Stack.Screen name="BusinessProfile" component={BusinessProfileScreen} options={{ title: 'Negocio' }} />
+    </Stack.Navigator>
+  )
+}
+
+function ClientAppointmentsStack() {
+  return (
+    <Stack.Navigator screenOptions={{ ...STACK_HEADER_STYLE }}>
+      <Stack.Screen name="MisCitasList" component={ClientAppointmentsScreen} options={{ title: 'Mis Citas', headerShown: false }} />
+      <Stack.Screen name="HistorialCitas" component={AppointmentHistoryScreen} options={{ title: 'Historial' }} />
+      <Stack.Screen name="Calendario" component={CalendarScreen} options={{ title: 'Calendario' }} />
+    </Stack.Navigator>
+  )
+}
+
 function ClientProfileStack() {
   return (
     <Stack.Navigator screenOptions={{ ...STACK_HEADER_STYLE }}>
       <Stack.Screen name="ClientProfile" component={ClientProfileScreen} options={{ title: 'Mi perfil' }} />
+      <Stack.Screen name="Favoritos" component={FavoritesScreen} options={{ title: 'Favoritos' }} />
+      <Stack.Screen name="BusinessProfile" component={BusinessProfileScreen} options={{ title: 'Negocio' }} />
+      <Stack.Screen name="Notificaciones" component={NotificationsScreen} options={{ title: 'Notificaciones' }} />
+      <Stack.Screen name="ConversacionList" component={ConversationListScreen} options={{ title: 'Mensajes' }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: '' }} />
+      <Stack.Screen name="Ajustes" component={SettingsScreen} options={{ title: 'Ajustes' }} />
     </Stack.Navigator>
   )
 }
@@ -194,6 +272,7 @@ function ClientTabs() {
         tabBarIcon: ({ focused, color, size }) => {
           const icons: Record<string, [string, string]> = {
             Inicio: ['home', 'home-outline'],
+            Buscar: ['search', 'search-outline'],
             Reservar: ['add-circle', 'add-circle-outline'],
             MisCitas: ['calendar', 'calendar-outline'],
             Perfil: ['person', 'person-outline'],
@@ -204,8 +283,9 @@ function ClientTabs() {
       })}
     >
       <Tab.Screen name="Inicio" component={ClientDashboardScreen} options={{ title: 'Inicio' }} />
+      <Tab.Screen name="Buscar" component={ClientSearchStack} options={{ title: 'Buscar' }} />
       <Tab.Screen name="Reservar" component={ClientBookingStack} options={{ title: 'Reservar' }} />
-      <Tab.Screen name="MisCitas" component={ClientAppointmentsScreen} options={{ title: 'Mis Citas' }} />
+      <Tab.Screen name="MisCitas" component={ClientAppointmentsStack} options={{ title: 'Mis Citas' }} />
       <Tab.Screen name="Perfil" component={ClientProfileStack} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   )
@@ -216,6 +296,7 @@ function ClientTabs() {
 function AppNavigator() {
   const { user, loading: authLoading } = useAuth()
   const { activeRole, isLoading: rolesLoading } = useUserRoles(user)
+  const { theme } = useTheme()
   const [splashHidden, setSplashHidden] = useState(false)
 
   const isLoading = authLoading || (!!user && rolesLoading)
@@ -228,23 +309,25 @@ function AppNavigator() {
 
   if (isLoading || !splashHidden) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={{ flex: 1, backgroundColor: theme.background, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     )
   }
 
   return (
-    <NavigationContainer>
-      {!user ? (
-        <AuthStack />
-      ) : activeRole === 'admin' ? (
-        <AdminTabs />
-      ) : activeRole === 'employee' ? (
-        <EmployeeTabs />
-      ) : (
-        <ClientTabs />
-      )}
+    <NavigationContainer ref={navigationRef} linking={linking}>
+      <NotificationProvider>
+        {!user ? (
+          <AuthStack />
+        ) : activeRole === 'admin' ? (
+          <AdminTabs />
+        ) : activeRole === 'employee' ? (
+          <EmployeeTabs />
+        ) : (
+          <ClientTabs />
+        )}
+      </NotificationProvider>
     </NavigationContainer>
   )
 }
@@ -255,10 +338,13 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <AppNavigator />
-          <StatusBar style="light" />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <AppNavigator />
+            <ToastContainer />
+            <StatusBar style="auto" />
+          </AuthProvider>
+        </ThemeProvider>
       </SafeAreaProvider>
     </QueryClientProvider>
   )

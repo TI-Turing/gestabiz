@@ -492,6 +492,9 @@ export interface Business {
   resource_model?: ResourceModel    // Tipo de recurso que ofrece el negocio
   resources?: BusinessResource[]   // Recursos físicos disponibles (computed)
   resource_count?: number          // Cantidad de recursos activos (computed)
+
+  // NUEVO: Política de festivos (2026-04-03)
+  work_on_holidays?: boolean        // Si TRUE, el negocio atiende en festivos. Default: false.
 }
 
 // Business locations (branches/offices)
@@ -519,6 +522,21 @@ export interface Location {
   updated_at: string
   amenities?: string[]
   capacity?: number
+  // NUEVO: Override de festivos por sede (2026-04-03)
+  // null/undefined = hereda business.work_on_holidays | true = abre en festivos | false = cierra
+  work_on_holidays?: boolean | null
+}
+
+// Día específico cerrado (negocio o sede) — tabla business_closed_days
+export interface BusinessClosedDay {
+  id: string
+  business_id: string
+  location_id: string | null   // null = aplica a todas las sedes
+  closed_date: string           // formato YYYY-MM-DD
+  reason?: string | null
+  created_by?: string | null
+  created_at: string
+  updated_at: string
 }
 
 // Services offered by the business

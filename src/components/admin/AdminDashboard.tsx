@@ -14,6 +14,7 @@ import { OverviewTab } from './OverviewTab'
 import { MyProfilePage } from '@/components/profile/MyProfilePage'
 import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary'
 import { usePendingNavigation } from '@/hooks/usePendingNavigation'
+import { lazyWithRetry } from '@/lib/lazyWithRetry'
 import type { Business, UserRole, User, EmployeeHierarchy } from '@/types/types'
 import logoTiTuring from '@/assets/images/tt/1.png'
 
@@ -30,7 +31,10 @@ const AppointmentsCalendar = lazy(() => import('./AppointmentsCalendar').then(m 
 const AbsencesTab = lazy(() => import('./AbsencesTab').then(m => ({ default: m.AbsencesTab })))
 const ResourcesManager = lazy(() => import('./ResourcesManager').then(m => ({ default: m.ResourcesManager })))
 const ExpensesManagementPage = lazy(() => import('./expenses/ExpensesManagementPage').then(m => ({ default: m.ExpensesManagementPage })))
-const ClientsManager = lazy(() => import('./ClientsManager').then(m => ({ default: m.ClientsManager })))
+const ClientsManager = lazy(() => lazyWithRetry(
+  () => import('./ClientsManager').then(m => ({ default: m.ClientsManager })),
+  'admin-clients-manager'
+))
 const SalesHistoryPage = lazy(() => import('./SalesHistoryPage').then(m => ({ default: m.SalesHistoryPage })))
 const CompleteUnifiedSettings = lazy(() => import('@/components/settings/CompleteUnifiedSettings'))
 

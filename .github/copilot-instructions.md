@@ -27,7 +27,7 @@
 5. **Roles dinámicos** - Calculados en tiempo real, no persistidos
 6. **TypeScript strict** - Cero `any`, tipado completo
 7. **Proteger con PermissionGate** - TODOS los botones de acción deben estar protegidos con PermissionGate ⭐ NUEVO
-8. **Incrementar versión en cada commit** - Versión actual: **0.0.52**. Patrón: `MAJOR.MINOR.PATCH`. Cada commit aumenta PATCH (0.0.52 → 0.0.53...). MINOR se incrementa en releases planificadas. MAJOR para cambios disruptivos. Actualizar versión en `package.json`
+8. **Incrementar versión en cada commit** - Versión actual: **0.0.69**. Patrón: `MAJOR.MINOR.PATCH`. Cada commit aumenta PATCH (0.0.69 → 0.0.70...). MINOR se incrementa en releases planificadas. MAJOR para cambios disruptivos. Actualizar versión en `package.json`
 9. **Reutilización obligatoria de Card Components** ⭐ CRÍTICO - Ver sección "Sistema de Cards Reutilizables" más abajo
 
 ---
@@ -713,7 +713,17 @@ export function ServiceCard({ serviceId, initialData, readOnly, onSelect, render
   - Variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, opcional `VITE_DEMO_MODE=true` para usar cliente Supabase simulado.
 - Móvil (Expo): `src/mobile/` tiene su `package.json`
   - `npm run start|android|ios|web`, builds con EAS `build:*` y `submit:*`.
-  - Env: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+  - Env: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` (formato `sb_publishable_*` — los JWT legacy están deshabilitados).
+  - **Sesión Abr 4 2026**: Migración React Native completada — navigator expandido a 59 registros, linking.ts reescrito, bundle 1744 módulos sin errores.
+  - **Navigator structure** (`src/mobile/App.tsx`):
+    - `AdminMoreStack`: 21 screens (MoreList, Servicios, Empleados, Sedes, Recursos, Ausencias, Reclutamiento, Ventas, VentasRapidas, Gastos, Reportes, Facturacion, CalendarioCitas, ConfigNotificaciones, Permisos, QR, Notificaciones, ConversacionList, Chat, Configuracion, Ajustes)
+    - `EmployeeMoreStack`: 11 screens (EmployeeSettings, SolicitudAusencia, MiCalendario, MisEmpleos, MiPerfil, Vacantes, Notificaciones, ConversacionList, Chat, Ajustes)
+    - `ClientSearchStack`: 2 screens (Buscar, BusinessProfile)
+    - `ClientAppointmentsStack`: 3 screens (MisCitasList, HistorialCitas, Calendario)
+    - `ClientProfileStack`: 7 screens (ClientProfile, Favoritos, BusinessProfile, Notificaciones, ConversacionList, Chat, Ajustes)
+    - `ClientTabs`: 5 tabs (Inicio, Buscar, Reservar, MisCitas, Perfil)
+  - `src/mobile/src/lib/linking.ts`: deep linking con nombres reales del navigator (sin AdminTabs/EmployeeTabs ficticios)
+  - `src/mobile/app.json`: `googleServicesFile` removido (archivo no existe; requerido solo para EAS Build con FCM)
 - Extensión: `extension/` y `src/browser-extension/`
   - `npm run build` (copia/zip), `npm run dev` para servidor estático local; carga "unpacked" en Chrome.
 - **Supabase**: SOLO en la nube (no hay instancia local). Ver `SUPABASE_INTEGRATION_GUIDE.md`, `src/docs/deployment-guide.md` y `supabase/functions/README.md` para CLI, Edge Functions y cron.
@@ -1425,7 +1435,7 @@ VITE_DEMO_MODE=true  # Para modo demo sin Supabase real
 **Móvil** (`src/mobile/.env`):
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
+EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...   # NUEVO formato — los JWT legacy (eyJ...) están deshabilitados por Supabase
 ```
 
 **Edge Functions** (Supabase Secrets):

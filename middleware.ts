@@ -3,6 +3,7 @@
  *
  * Only requests coming from IPs listed in DEV_ALLOWED_IPS (comma-separated
  * env var, set in Vercel for Preview environments) can access the dev URL.
+ * Use '*' as a value to allow all IPs (open access).
  * All other environments (production) pass through without any check.
  */
 
@@ -26,6 +27,11 @@ export default function middleware(request: Request): Response | undefined {
   // If no IPs are configured, block everyone (fail closed)
   if (allowedIPs.length === 0) {
     return forbidden()
+  }
+
+  // Wildcard '*' allows all IPs
+  if (allowedIPs.includes('*')) {
+    return undefined // pass through
   }
 
   // Vercel sets x-real-ip to the real client IP (already de-proxied)

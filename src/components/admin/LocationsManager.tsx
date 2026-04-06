@@ -66,6 +66,7 @@ interface Location {
   images?: string[]
   is_active: boolean
   is_primary?: boolean
+  work_on_holidays?: boolean | null
   created_at: string
   updated_at: string
 }
@@ -88,6 +89,7 @@ const initialFormData: Omit<Location, 'id' | 'created_at' | 'updated_at' | 'busi
   images: [],
   is_active: true,
   is_primary: false,
+  work_on_holidays: null,
 }
 
 export function LocationsManager({ businessId }: LocationsManagerProps) {
@@ -257,6 +259,7 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
         images: location.images || [],
         is_active: location.is_active,
         is_primary: location.is_primary || false,
+        work_on_holidays: location.work_on_holidays ?? null,
       })
       // Cargar multimedia existente
       loadExistingMedia(location.id)
@@ -413,6 +416,7 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
         images: formData.images || [],
         is_active: formData.is_active,
         is_primary: formData.is_primary || false,
+        work_on_holidays: (formData as any).work_on_holidays ?? null,
         updated_at: new Date().toISOString(),
       }
 
@@ -1377,6 +1381,38 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Política de festivos */}
+            <div className="space-y-1.5">
+              <Label htmlFor="work-on-holidays">Festivos públicos</Label>
+              <Select
+                value={
+                  (formData as any).work_on_holidays === true
+                    ? 'true'
+                    : (formData as any).work_on_holidays === false
+                    ? 'false'
+                    : 'null'
+                }
+                onValueChange={(v) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    work_on_holidays: v === 'true' ? true : v === 'false' ? false : null,
+                  }))
+                }
+              >
+                <SelectTrigger id="work-on-holidays">
+                  <SelectValue placeholder="Heredar del negocio" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="null">Heredar del negocio</SelectItem>
+                  <SelectItem value="true">Esta sede abre en festivos</SelectItem>
+                  <SelectItem value="false">Esta sede cierra en festivos</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                "Heredar" usa la configuración global del negocio (Ajustes → Calendario).
+              </p>
             </div>
 
             <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">

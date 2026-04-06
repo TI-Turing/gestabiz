@@ -1,7 +1,8 @@
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors, spacing, typography, radius } from '../../theme'
+import { spacing, typography, radius } from '../../theme'
+import { useTheme } from '../../contexts/ThemeContext'
 import Button from './Button'
 
 interface EmptyStateProps {
@@ -15,13 +16,14 @@ interface EmptyStateProps {
 }
 
 export default function EmptyState({ icon, title, message, action }: EmptyStateProps) {
+  const { theme } = useTheme()
   return (
     <View style={styles.container}>
-      <View style={styles.iconWrapper}>
-        <Ionicons name={icon} size={40} color={colors.textMuted} />
+      <View style={[styles.iconWrapper, { backgroundColor: theme.card }]}>
+        <Ionicons name={icon} size={40} color={theme.textMuted} />
       </View>
-      <Text style={styles.title}>{title}</Text>
-      {message && <Text style={styles.message}>{message}</Text>}
+      <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
+      {message && <Text style={[styles.message, { color: theme.textSecondary }]}>{message}</Text>}
       {action && (
         <Button
           title={action.label}
@@ -46,7 +48,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: radius.full,
-    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.base,
@@ -54,13 +55,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: typography.lg,
     fontWeight: '600',
-    color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   message: {
     fontSize: typography.base,
-    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: spacing.lg,

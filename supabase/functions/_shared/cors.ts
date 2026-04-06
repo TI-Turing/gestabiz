@@ -6,6 +6,7 @@
 const ALLOWED_ORIGINS = [
   'https://gestabiz.com',
   'https://www.gestabiz.com',
+  'https://dev.gestabiz.com',
   'https://gestabiz.vercel.app',
   // Development
   'http://localhost:5173',
