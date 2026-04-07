@@ -165,6 +165,5 @@ export const AlertProvider: React.FC<AlertProviderProps> = ({ children }) => {
 // Helper function to replace window.alert
 export const customAlert = (message: string, title?: string, type?: AlertConfig['type']) => {
   // This will be used as a fallback when the context is not available
-  console.warn('CustomAlert context not available, falling back to native alert');
   window.alert(message);
 };

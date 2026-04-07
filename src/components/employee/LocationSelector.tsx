@@ -133,9 +133,7 @@ export function LocationSelector({
         onLocationChanged();
       }
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'LocationSelector' } })
-      console.error('Error al asignar sede:', error);
-      toast.error('Error al asignar la sede de trabajo');
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'LocationSelector' } })      toast.error('Error al asignar la sede de trabajo');
     } finally {
       setLoading(false);
     }

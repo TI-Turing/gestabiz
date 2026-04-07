@@ -188,9 +188,7 @@ export const ExpensesManagementPage: React.FC<ExpensesManagementPageProps> = ({ 
           .reduce((sum, t) => sum + (t.amount || 0), 0)
       );
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Error al calcular estadísticas de egresos:', err);
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ExpensesManagementPage' } })
+      // eslint-disable-next-line no-console      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ExpensesManagementPage' } })
     }
   };
 

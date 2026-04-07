@@ -134,7 +134,6 @@ export function useMessages(
         })
       } catch (err: any) {
         void logger.error('useMessages: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useMessages' })
-        console.error('Error fetching messages:', err)
         setError(err.message || 'Error al cargar mensajes')
         toast.error('Error al cargar mensajes')
       } finally {
@@ -221,9 +220,7 @@ export function useMessages(
 
         // El mensaje real llegará via Realtime
         // Actualizar rate limit info si está disponible
-        if (data.rate_limit) {
-          console.log('Rate limit:', data.rate_limit)
-        }
+        if (data.rate_limit) {        }
 
         // Track analytics
         trackChatEvent(ChatEvents.MESSAGE_SENT, {
@@ -234,7 +231,6 @@ export function useMessages(
         })
       } catch (err: any) {
         void logger.error('useMessages: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useMessages' })
-        console.error('Error sending message:', err)
         toast.error(err.message || 'Error al enviar mensaje')
 
         // Marcar mensaje temporal como fallido
@@ -290,7 +286,6 @@ export function useMessages(
         })
       } catch (err: any) {
         void logger.error('useMessages: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useMessages' })
-        console.error('Error editing message:', err)
         toast.error('Error al editar mensaje')
       }
     },
@@ -344,7 +339,6 @@ export function useMessages(
         })
       } catch (err: any) {
         void logger.error('useMessages: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useMessages' })
-        console.error('Error deleting message:', err)
         toast.error('Error al eliminar mensaje')
       }
     },
@@ -387,7 +381,6 @@ export function useMessages(
         toast.success(pin ? 'Mensaje fijado' : 'Mensaje desfijado')
       } catch (err: any) {
         void logger.error('useMessages: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useMessages' })
-        console.error('Error pinning message:', err)
         toast.error('Error al fijar mensaje')
       }
     },
@@ -421,7 +414,6 @@ export function useMessages(
         return (data || []) as MessageWithSender[]
       } catch (err: any) {
         void logger.error('useMessages: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useMessages' })
-        console.error('Error searching messages:', err)
         toast.error('Error al buscar mensajes')
         return []
       }

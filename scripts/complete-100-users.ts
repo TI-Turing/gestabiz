@@ -38,10 +38,7 @@ function generateEmail(firstName: string, lastName: string, index: number): stri
   return `${cleanFirst}.${cleanLast}${index}@gestabiz.demo`;
 }
 
-async function createBatchUsers(startIndex: number, count: number) {
-  console.log(`\n📝 Creando usuarios ${startIndex} al ${startIndex + count - 1}...`);
-  
-  const createdUsers = [];
+async function createBatchUsers(startIndex: number, count: number) {  const createdUsers = [];
   const password = 'Demo2025!';
 
   for (let i = startIndex; i < startIndex + count; i++) {
@@ -61,12 +58,8 @@ async function createBatchUsers(startIndex: number, count: number) {
       });
 
       if (authError) {
-        if (authError.message.includes('already')) {
-          console.log(`   ⏭️  ${email} ya existe, saltando...`);
-          continue;
-        }
-        console.error(`   ❌ ${email}:`, authError.message);
-        continue;
+        if (authError.message.includes('already')) {          continue;
+        }        continue;
       }
 
       const userId = authData.user.id;
@@ -82,59 +75,34 @@ async function createBatchUsers(startIndex: number, count: number) {
           is_active: true,
         });
 
-      if (profileError && !profileError.message.includes('duplicate')) {
-        console.error(`   ❌ Error perfil ${email}:`, profileError.message);
-      }
+      if (profileError && !profileError.message.includes('duplicate')) {      }
 
       createdUsers.push({ id: userId, email, password, full_name: fullName, phone });
       
-      if ((i - startIndex + 1) % 10 === 0) {
-        console.log(`   ✓ ${i - startIndex + 1}/${count} completados`);
-      }
+      if ((i - startIndex + 1) % 10 === 0) {      }
 
       // Pequeña pausa para no exceder rate limits
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error(`   ❌ Error en usuario ${i}:`, error.message);
-      }
+      if (error instanceof Error) {      }
     }
-  }
-
-  console.log(`   ✅ ${createdUsers.length} usuarios creados en este lote`);
-  return createdUsers;
+  }  return createdUsers;
 }
 
-async function main() {
-  console.log('🚀 Completando generación de 100 usuarios...\n');
-  
-  // Verificar cuántos usuarios existen
-  const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-  console.log(`📊 Usuarios actuales: ${count || 0}`);
-  
-  if ((count || 0) >= 100) {
-    console.log('✅ Ya hay 100+ usuarios. No se requiere acción.');
-    return;
+async function main() {  // Verificar cuántos usuarios existen
+  const { count } = await supabase.from('profiles').select('*', { count: 'exact', head: true });  if ((count || 0) >= 100) {    return;
   }
 
-  const remaining = 100 - (count || 0);
-  console.log(`📝 Creando ${remaining} usuarios adicionales...\n`);
-
-  // Crear en lotes de 20
+  const remaining = 100 - (count || 0);  // Crear en lotes de 20
   const batchSize = 20;
   const batches = Math.ceil(remaining / batchSize);
   
   for (let batch = 0; batch < batches; batch++) {
     const startIndex = (count || 0) + (batch * batchSize) + 1;
-    const batchCount = Math.min(batchSize, remaining - (batch * batchSize));
-    
-    console.log(`\n📦 Lote ${batch + 1}/${batches}`);
-    await createBatchUsers(startIndex, batchCount);
+    const batchCount = Math.min(batchSize, remaining - (batch * batchSize));    await createBatchUsers(startIndex, batchCount);
   }
 
   // Verificar total final
-  const { count: finalCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-  console.log(`\n✅ Total final de usuarios: ${finalCount}`);
-}
+  const { count: finalCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });}
 
 await main();

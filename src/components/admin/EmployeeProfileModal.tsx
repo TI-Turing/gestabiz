@@ -222,12 +222,7 @@ export function EmployeeProfileModal({
       await queryClient.invalidateQueries({ queryKey: ['businessHierarchy', employee.business_id] })
       setEditingCargo(false)
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'EmployeeProfileModal' } })
-      console.error('[handleSaveCargo] Error al guardar cargo:', err, {
-        employee_id: employee.user_id,
-        business_id: employee.business_id,
-      })
-      toast.error(t('employeeProfile.modal.cargo.updateError'))
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'EmployeeProfileModal' } })      toast.error(t('employeeProfile.modal.cargo.updateError'))
     } finally {
       setSavingCargo(false)
     }

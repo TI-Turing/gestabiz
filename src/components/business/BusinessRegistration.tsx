@@ -101,16 +101,7 @@ export default function BusinessRegistration({ user, onBusinessCreated, onCancel
         return
       }
 
-      // ⚠️ TEMPORAL DEBUG - Ver qué datos se están enviando
-      console.log('🔍 DEBUG - formData antes de crear negocio:', {
-        category_id: formData.category_id,
-        country_id: formData.country_id,
-        region_id: formData.region_id,
-        city_id: formData.city_id,
-        formDataCompleto: formData
-      })
-
-      // Create business in Supabase
+      // ⚠️ TEMPORAL DEBUG - Ver qué datos se están enviando      // Create business in Supabase
       // ⚠️ FIX: Convertir strings vacíos a undefined para evitar error 400 de UUID inválido
       const createdBusiness = await businessesService.create({
         name: formData.name,

@@ -31,9 +31,7 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || '';
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('❌ Error: VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY son requeridas');
-  process.exit(1);
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {  process.exit(1);
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -80,10 +78,7 @@ async function measureTime<T>(
 // PASO 1: SETUP - Crear usuarios y conversación de prueba
 // ============================================================================
 
-async function setupTestData() {
-  console.log('\n📋 PASO 1: Setup - Creando datos de prueba\n');
-
-  // Nota: En producción necesitarías crear usuarios reales con auth.
+async function setupTestData() {  // Nota: En producción necesitarías crear usuarios reales con auth.
   // Para testing, asumimos que ya existen usuarios de prueba.
   
   // Obtener usuarios existentes (tomar primeros 5)
@@ -92,14 +87,8 @@ async function setupTestData() {
     .select('id, full_name, email')
     .limit(TEST_CONFIG.numParticipants);
 
-  if (usersError || !users || users.length < 2) {
-    console.error('❌ Error: Se necesitan al menos 2 usuarios en la base de datos');
-    console.error('   Crea usuarios de prueba primero con el sistema de auth');
-    process.exit(1);
-  }
-
-  console.log(`✅ Encontrados ${users.length} usuarios para testing`);
-  users.forEach((u, i) => {
+  if (usersError || !users || users.length < 2) {    process.exit(1);
+  }  users.forEach((u, i) => {
     console.log(`   ${i + 1}. ${u.full_name || u.email} (${u.id})`);
   });
 
@@ -121,11 +110,7 @@ async function setupTestData() {
       if (error) throw error;
       return data;
     }
-  );
-
-  console.log(`✅ Conversación creada: ${conversation.id}`);
-
-  // Agregar participantes
+  );  // Agregar participantes
   const participantInserts = users.map((user) => ({
     conversation_id: conversation.id,
     user_id: user.id,
@@ -142,11 +127,7 @@ async function setupTestData() {
       if (error) throw error;
       return true;
     }
-  );
-
-  console.log(`✅ ${users.length} participantes agregados\n`);
-
-  return {
+  );  return {
     conversation,
     users,
     stats: {
@@ -160,10 +141,7 @@ async function setupTestData() {
 // PASO 2: GENERACIÓN - Insertar 1000 mensajes
 // ============================================================================
 
-async function generateMessages(conversationId: string, userIds: string[]) {
-  console.log('\n📨 PASO 2: Generación - Insertando mensajes\n');
-
-  const batches = Math.ceil(TEST_CONFIG.numMessages / TEST_CONFIG.batchSize);
+async function generateMessages(conversationId: string, userIds: string[]) {  const batches = Math.ceil(TEST_CONFIG.numMessages / TEST_CONFIG.batchSize);
   const stats = {
     totalMessages: 0,
     totalTime: 0,
@@ -211,11 +189,7 @@ async function generateMessages(conversationId: string, userIds: string[]) {
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
-  stats.avgBatchTime = stats.totalTime / batches;
-
-  console.log('\n📊 Estadísticas de Generación:');
-  console.log(`   Total mensajes: ${stats.totalMessages}`);
-  console.log(`   Tiempo total: ${stats.totalTime.toFixed(2)}ms`);
+  stats.avgBatchTime = stats.totalTime / batches;  console.log(`   Tiempo total: ${stats.totalTime.toFixed(2)}ms`);
   console.log(`   Avg batch: ${stats.avgBatchTime.toFixed(2)}ms`);
   console.log(`   Min batch: ${stats.minBatchTime.toFixed(2)}ms`);
   console.log(`   Max batch: ${stats.maxBatchTime.toFixed(2)}ms`);
@@ -228,10 +202,7 @@ async function generateMessages(conversationId: string, userIds: string[]) {
 // PASO 3: QUERIES - Medir performance de lectura
 // ============================================================================
 
-async function testQueryPerformance(conversationId: string) {
-  console.log('\n🔍 PASO 3: Queries - Midiendo performance de lectura\n');
-
-  const results: Record<string, number> = {};
+async function testQueryPerformance(conversationId: string) {  const results: Record<string, number> = {};
 
   // Test 1: Fetch últimos 50 mensajes (caso típico)
   const { duration: d1 } = await measureTime(
@@ -316,16 +287,10 @@ async function testQueryPerformance(conversationId: string) {
       return data;
     }
   );
-  results.withJoin = d5;
-
-  console.log('\n📊 Resumen de Query Performance:');
-  Object.entries(results).forEach(([key, duration]) => {
+  results.withJoin = d5;  Object.entries(results).forEach(([key, duration]) => {
     const status = duration < 100 ? '✅' : duration < 500 ? '⚠️' : '❌';
     console.log(`   ${status} ${key}: ${duration.toFixed(2)}ms`);
-  });
-  console.log();
-
-  return results;
+  });  return results;
 }
 
 // ============================================================================
@@ -336,10 +301,7 @@ function analyzeResults(
   setupStats: any,
   generateStats: any,
   queryStats: Record<string, number>
-) {
-  console.log('\n📈 PASO 4: Análisis y Recomendaciones\n');
-
-  const recommendations: string[] = [];
+) {  const recommendations: string[] = [];
   const warnings: string[] = [];
   const criticals: string[] = [];
 
@@ -383,47 +345,25 @@ function analyzeResults(
   // Print results
   if (criticals.length > 0) {
     console.log('🔴 CRÍTICOS (Requieren atención inmediata):');
-    criticals.forEach((c) => console.log(`   - ${c}`));
-    console.log();
-  }
+    criticals.forEach((c) => console.log(`   - ${c}`));  }
 
   if (warnings.length > 0) {
     console.log('⚠️  ADVERTENCIAS (Mejoras recomendadas):');
-    warnings.forEach((w) => console.log(`   - ${w}`));
-    console.log();
-  }
+    warnings.forEach((w) => console.log(`   - ${w}`));  }
 
   if (recommendations.length > 0) {
     console.log('💡 RECOMENDACIONES (Optimizaciones opcionales):');
-    recommendations.forEach((r) => console.log(`   - ${r}`));
-    console.log();
-  }
+    recommendations.forEach((r) => console.log(`   - ${r}`));  }
 
-  if (criticals.length === 0 && warnings.length === 0) {
-    console.log('✅ ¡Performance excelente! No se encontraron problemas críticos.\n');
-  }
+  if (criticals.length === 0 && warnings.length === 0) {  }
 
-  // Best practices
-  console.log('📚 Best Practices Sugeridas:');
-  console.log('   1. Implementar Virtual Scrolling (react-window o react-virtuoso)');
-  console.log('   2. Pagination: Cargar 50 mensajes por página');
-  console.log('   3. Infinite Scroll: Cargar más al hacer scroll to top');
-  console.log('   4. Cache de usuarios: Guardar profiles en Map/WeakMap');
-  console.log('   5. Debounce en search: 300ms delay antes de query');
-  console.log('   6. Optimistic updates: Mostrar mensaje antes de DB confirm');
-  console.log('   7. Image lazy loading: Solo cargar images visibles');
-  console.log('   8. Message batching: Agrupar múltiples mensajes en 1 render');
-  console.log();
-}
+  // Best practices  console.log('   1. Implementar Virtual Scrolling (react-window o react-virtuoso)');}
 
 // ============================================================================
 // PASO 5: CLEANUP - Eliminar datos de prueba
 // ============================================================================
 
-async function cleanup(conversationId: string) {
-  console.log('\n🧹 PASO 5: Cleanup - Eliminando datos de prueba\n');
-
-  const { duration } = await measureTime(
+async function cleanup(conversationId: string) {  const { duration } = await measureTime(
     'Eliminar conversación y mensajes',
     async () => {
       // Supabase CASCADE delete eliminará mensajes, participantes, etc.
@@ -444,17 +384,7 @@ async function cleanup(conversationId: string) {
 // MAIN
 // ============================================================================
 
-async function main() {
-  console.log('╔═══════════════════════════════════════════════════════════╗');
-  console.log('║                                                           ║');
-  console.log('║     🧪 PERFORMANCE TESTING - CHAT SYSTEM                 ║');
-  console.log('║                                                           ║');
-  console.log('║     Testing con 1000+ mensajes                           ║');
-  console.log('║     Gestabiz v1.0.0                               ║');
-  console.log('║                                                           ║');
-  console.log('╚═══════════════════════════════════════════════════════════╝');
-
-  try {
+async function main() {  try {
     // Paso 1: Setup
     const { conversation, users, stats: setupStats } = await setupTestData();
 
@@ -471,16 +401,7 @@ async function main() {
     analyzeResults(setupStats, generateStats, queryStats);
 
     // Paso 5: Cleanup
-    await cleanup(conversation.id);
-
-    console.log('╔═══════════════════════════════════════════════════════════╗');
-    console.log('║                                                           ║');
-    console.log('║     ✅ TESTING COMPLETADO EXITOSAMENTE                   ║');
-    console.log('║                                                           ║');
-    console.log('╚═══════════════════════════════════════════════════════════╝\n');
-  } catch (error) {
-    console.error('\n❌ Error durante testing:', error);
-    process.exit(1);
+    await cleanup(conversation.id);  } catch (error) {    process.exit(1);
   }
 }
 

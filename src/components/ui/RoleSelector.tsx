@@ -55,25 +55,14 @@ export function RoleSelector({
   // Group roles by type
   const adminRoles = roles.filter(r => r.role === 'admin')
   const employeeRoles = roles.filter(r => r.role === 'employee')
-  const clientRoles = roles.filter(r => r.role === 'client')
-
-  console.log('[RoleSelector] Render - roles:', roles)
-  console.log('[RoleSelector] Render - activeRole:', activeRole)
-  console.log('[RoleSelector] Render - adminRoles:', adminRoles.length, 'employeeRoles:', employeeRoles.length, 'clientRoles:', clientRoles.length)
-
-  const handleRoleSelect = (roleAssignment: UserRoleAssignment) => {
-    console.log('[RoleSelector] handleRoleSelect called with:', roleAssignment)
-    console.log('[RoleSelector] Calling onRoleChange with:', roleAssignment.role, roleAssignment.business_id || undefined)
-    onRoleChange(roleAssignment.role, roleAssignment.business_id || undefined)
+  const clientRoles = roles.filter(r => r.role === 'client')  const handleRoleSelect = (roleAssignment: UserRoleAssignment) => {    onRoleChange(roleAssignment.role, roleAssignment.business_id || undefined)
     setIsOpen(false)
   }
 
   return (
     <DropdownMenu 
       open={isOpen} 
-      onOpenChange={(open) => {
-        console.log('[RoleSelector] Dropdown state changed:', open)
-        setIsOpen(open)
+      onOpenChange={(open) => {        setIsOpen(open)
       }}
     >
       <DropdownMenuTrigger asChild>

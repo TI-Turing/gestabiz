@@ -389,7 +389,6 @@ export function BillingDashboard({ businessId, ownerId }: Readonly<BillingDashbo
       await cancelPlan()
       refetch()
     } catch (err) {
-      console.error('[BillingDashboard] Error canceling plan:', err)
       window.alert('Error al cancelar el plan. Por favor intenta de nuevo.')
     }
   }

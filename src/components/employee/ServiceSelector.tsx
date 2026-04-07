@@ -252,9 +252,7 @@ export function ServiceSelector({
       }
 
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServiceSelector' } })
-      console.error('Error saving services:', error);
-      toast.error(t('common.messages.saveError'));
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServiceSelector' } })      toast.error(t('common.messages.saveError'));
     } finally {
       setSaving(false);
     }

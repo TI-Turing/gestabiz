@@ -250,14 +250,14 @@ export function useBusinessHierarchy(businessId: string | null, initialFilters?:
     // Filtro por sede/ubicación
     if (filters.location_id) {
       result = result.filter(
-        emp => emp.location_id === filters.location_id || emp.role === 'owner'
+        emp => emp.location_id === filters.location_id || emp.role === 'owner' || !emp.location_id
       );
     }
 
     // Filtro por ubicación (departmentId - legacy)
     if (filters.departmentId) {
       result = result.filter(
-        emp => emp.location_id === filters.departmentId || emp.role === 'owner'
+        emp => emp.location_id === filters.departmentId || emp.role === 'owner' || !emp.location_id
       );
     }
 

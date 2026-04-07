@@ -141,9 +141,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
         averageAppointmentValue,
       })
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'OverviewTab' } })
-      console.error('Error fetching stats:', err)
-    } finally {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'OverviewTab' } })    } finally {
       setIsLoading(false)
     }
   }, [business.id])
@@ -173,9 +171,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
     try {
       localStorage.setItem(`appointments-filters-${business.id}`, JSON.stringify(filters))
     } catch (e) {
-      Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'OverviewTab' } })
-      console.warn('Failed to set appointment filters', e)
-    }
+      Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'OverviewTab' } })    }
     navigate('/app/admin/appointments')
   }
 

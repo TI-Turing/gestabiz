@@ -105,7 +105,7 @@ export default function JoinBusiness({ userId, onRequestSent }: Readonly<JoinBus
   const handleClaimCode = async () => {
     if (!inviteCode.trim()) return
     try {
-      const result = await claimCode.mutateAsync(inviteCode.trim())
+      const result = await claimCode.mutateAsync(inviteCode.trim().toUpperCase())
       toast.success('Código aplicado. Tu solicitud está pendiente de aprobación.')
       setInviteCode('')
       onRequestSent?.()
@@ -278,7 +278,9 @@ export default function JoinBusiness({ userId, onRequestSent }: Readonly<JoinBus
                   <Input
                     id="invite-code"
                     value={inviteCode}
-                    onChange={e => setInviteCode(e.target.value.toUpperCase())}
+                    onChange={e => setInviteCode(
+                      e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)
+                    )}
                     placeholder="Ej: ABC123"
                     maxLength={6}
                     className="font-mono text-lg tracking-widest uppercase"

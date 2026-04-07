@@ -20,14 +20,12 @@ import { useTheme } from '@/contexts'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { toast } from 'sonner'
 import UserProfile from './UserProfile'
-import { NotificationSettings } from './NotificationSettings'
 import { AdminRolePreferences } from './AdminRolePreferences'
 import { EmployeeRolePreferences } from './EmployeeRolePreferences'
 import { ClientRolePreferences } from './ClientRolePreferences'
 import { DangerZone } from './DangerZone'
 import {
   User as UserIcon,
-  Bell,
   Palette,
   Globe,
   Moon,
@@ -97,10 +95,6 @@ export default function CompleteUnifiedSettings({
     { value: 'general', label: t('settings.tabs.general'), icon: <Palette className="h-4 w-4" /> },
     { value: 'profile', label: t('settings.tabs.profile'), icon: <UserIcon className="h-4 w-4" /> },
   ]
-
-  if (currentRole !== 'client') {
-    tabs.push({ value: 'notifications', label: t('settings.tabs.notifications'), icon: <Bell className="h-4 w-4" /> })
-  }
 
   const roleTab = getRoleSpecificTab()
   if (roleTab) tabs.push(roleTab)
@@ -184,19 +178,13 @@ export default function CompleteUnifiedSettings({
                   {t('settings.language')}
                 </Label>
                 <p className="text-sm text-muted-foreground mb-3">{t('settings.languageSection.description')}</p>
-                <Select value={language} onValueChange={handleLanguageChange}>
+                <Select value="es" disabled>
                   <SelectTrigger className="w-full md:w-64"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="es">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-bold bg-muted px-1.5 py-0.5 rounded">ES</span>
                         <span>{t('settings.spanish')}</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="en">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold bg-muted px-1.5 py-0.5 rounded">EN</span>
-                        <span>{t('settings.english')}</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -210,13 +198,6 @@ export default function CompleteUnifiedSettings({
         <TabsContent value="profile">
           <UserProfile user={user} onUserUpdate={onUserUpdate} />
         </TabsContent>
-
-        {/* Notifications */}
-        {currentRole !== 'client' && (
-          <TabsContent value="notifications" className="space-y-4">
-            <NotificationSettings userId={user.id} />
-          </TabsContent>
-        )}
 
         {/* Role-specific */}
         <TabsContent value="role-specific" className="space-y-4">

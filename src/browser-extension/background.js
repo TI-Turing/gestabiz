@@ -54,9 +54,7 @@ class BackgroundService {
   setupNotifications() {
     // Request notification permission
     chrome.notifications.getPermissionLevel((level) => {
-      if (level !== 'granted') {
-        console.log('Notification permission not granted')
-      }
+      if (level !== 'granted') {      }
     })
   }
 
@@ -97,9 +95,7 @@ class BackgroundService {
         default:
           sendResponse({ success: false, error: 'Unknown action' })
       }
-    } catch (error) {
-      console.error('Error handling message:', error)
-      sendResponse({ success: false, error: error.message })
+    } catch (error) {      sendResponse({ success: false, error: error.message })
     }
   }
 
@@ -127,14 +123,10 @@ class BackgroundService {
   }
 
   async saveUserSession(session) {
-    await chrome.storage.local.set({ userSession: session })
-    console.log('User session saved')
-  }
+    await chrome.storage.local.set({ userSession: session })  }
 
   async clearUserSession() {
-    await chrome.storage.local.remove(['userSession'])
-    console.log('User session cleared')
-  }
+    await chrome.storage.local.remove(['userSession'])  }
 
   async checkUpcomingAppointments() {
     try {
@@ -193,9 +185,7 @@ class BackgroundService {
 
       return appointments
 
-    } catch (error) {
-      console.error('Error checking appointments:', error)
-      return []
+    } catch (error) {      return []
     }
   }
 
@@ -219,9 +209,7 @@ class BackgroundService {
     const notificationId = `appointment-${appointment.id}`
     
     return new Promise((resolve) => {
-      chrome.notifications.create(notificationId, notificationOptions, (id) => {
-        console.log('Notification created:', id)
-        resolve(id)
+      chrome.notifications.create(notificationId, notificationOptions, (id) => {        resolve(id)
       })
     })
   }
@@ -260,11 +248,7 @@ class BackgroundService {
 const backgroundService = new BackgroundService()
 
 // Keep service worker alive
-chrome.runtime.onSuspend.addListener(() => {
-  console.log('Extension is being suspended')
-})
+chrome.runtime.onSuspend.addListener(() => {})
 
 // Handle extension startup
-chrome.runtime.onStartup.addListener(() => {
-  console.log('Extension started')
-})
+chrome.runtime.onStartup.addListener(() => {})

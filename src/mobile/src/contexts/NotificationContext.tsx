@@ -56,9 +56,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         isChatOpenRef.current &&
         typeof data?.conversationId === 'string' &&
         data.conversationId === activeConvIdRef.current
-      ) {
-        console.log('[Notifications] Suprimida: chat activo para conversación', data.conversationId)
-        return
+      ) {        return
       }
 
       setBadgeCount(1)
@@ -144,9 +142,7 @@ function handleNotificationNavigation(type: string, data: Record<string, unknown
       navigate('Dashboard')
       break
 
-    default:
-      console.log('[Notifications] Tipo desconocido, no se navega:', type)
-  }
+    default:  }
 }
 
 export function useNotificationContext(): NotificationContextType {

@@ -155,9 +155,7 @@ export function useConversations(
           count: filtered.length,
           ...(businessId ? { business_id: businessId } : {}),
         })
-      } catch (err: any) {
-        console.error('Error fetching conversations:', err)  
-        logger.error('Failed to fetch conversations', err, {
+      } catch (err: any) {        logger.error('Failed to fetch conversations', err, {
           component: 'useConversations',
           operation: 'fetchConversations',
           businessId,
@@ -211,9 +209,7 @@ export function useConversations(
 
         toast.success('Conversación creada')
         return conversationId
-      } catch (err: any) {
-        console.error('Error creating direct conversation:', err)
-        logger.error('Failed to create direct conversation', err, {
+      } catch (err: any) {        logger.error('Failed to create direct conversation', err, {
           component: 'useConversations',
           operation: 'createDirectConversation',
           userId,
@@ -306,9 +302,7 @@ export function useConversations(
 
         toast.success('Grupo creado exitosamente')
         return conversation.id
-      } catch (err: any) {
-        console.error('Error creating group conversation:', err)
-        toast.error('Error al crear grupo')
+      } catch (err: any) {        toast.error('Error al crear grupo')
         return null
       }
     },
@@ -345,9 +339,7 @@ export function useConversations(
         trackChatEvent(ChatEvents.CONVERSATION_READ, {
           conversation_id: conversationId,
         })
-      } catch (err: any) {
-        console.error('Error marking conversation read:', err)
-      }
+      } catch (err: any) {      }
     },
     [userId]
   )
@@ -382,9 +374,7 @@ export function useConversations(
           archive ? ChatEvents.CONVERSATION_ARCHIVED : ChatEvents.CONVERSATION_UNARCHIVED,
           { conversation_id: conversationId }
         )
-      } catch (err: any) {
-        console.error('Error archiving conversation:', err)
-        toast.error('Error al archivar conversación')
+      } catch (err: any) {        toast.error('Error al archivar conversación')
       }
     },
     [userId]
@@ -429,9 +419,7 @@ export function useConversations(
           mute ? ChatEvents.CONVERSATION_MUTED : ChatEvents.CONVERSATION_UNMUTED,
           { conversation_id: conversationId }
         )
-      } catch (err: any) {
-        console.error('Error muting conversation:', err)
-        toast.error('Error al silenciar conversación')
+      } catch (err: any) {        toast.error('Error al silenciar conversación')
       }
     },
     [userId]
@@ -462,9 +450,7 @@ export function useConversations(
         )
 
         toast.success('Nombre personalizado actualizado')
-      } catch (err: any) {
-        console.error('Error updating custom name:', err)
-        toast.error('Error al actualizar nombre')
+      } catch (err: any) {        toast.error('Error al actualizar nombre')
       }
     },
     [userId]
@@ -487,9 +473,7 @@ export function useConversations(
         if (rpcError) throw rpcError
 
         setStats(data as ChatStats)
-      } catch (err: any) {
-        console.error('Error fetching chat stats:', err)
-      }
+      } catch (err: any) {      }
     },
     [userId, businessId]
   )

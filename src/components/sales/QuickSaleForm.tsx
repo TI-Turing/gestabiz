@@ -133,9 +133,7 @@ export function QuickSaleForm({ businessId, onSuccess }: QuickSaleFormProps) {
       
       setEmployees(employeesList)
 
-    } catch (error: any) {
-      console.error('Error fetching data:', error)
-      toast.error(`Error al cargar datos: ${error.message}`)
+    } catch (error: any) {      toast.error(`Error al cargar datos: ${error.message}`)
     }
   }
 
@@ -235,9 +233,7 @@ export function QuickSaleForm({ businessId, onSuccess }: QuickSaleFormProps) {
 
       if (onSuccess) onSuccess()
 
-    } catch (error: any) {
-      console.error('Error creating quick sale:', error)
-      toast.error(`Error al registrar venta: ${error.message}`)
+    } catch (error: any) {      toast.error(`Error al registrar venta: ${error.message}`)
     } finally {
       setLoading(false)
     }

@@ -37,13 +37,9 @@ export function FloatingChatButton({
   })
   
   // Abrir chat cuando se proporciona conversación inicial
-  React.useEffect(() => {
-    console.log('[FloatingChatButton] initialConversationId changed:', initialConversationId);
-    if (initialConversationId) {
+  React.useEffect(() => {    if (initialConversationId) {
       // Pequeño delay para asegurar que el prop se propague correctamente
-      const timer = setTimeout(() => {
-        console.log('[FloatingChatButton] Opening chat with conversation:', initialConversationId);
-        setIsOpen(true)
+      const timer = setTimeout(() => {        setIsOpen(true)
       }, 100)
       return () => clearTimeout(timer)
     }
@@ -65,9 +61,7 @@ export function FloatingChatButton({
   }, [refetch])
   
   // ✨ Refrescar badge cuando se marcan mensajes como leídos (en tiempo real)
-  const handleMessagesRead = React.useCallback(() => {
-    console.log('[FloatingChatButton] 🔄 Refetching badge after messages marked as read');
-    refetch();
+  const handleMessagesRead = React.useCallback(() => {    refetch();
   }, [refetch]);
 
   return (

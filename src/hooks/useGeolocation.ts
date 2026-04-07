@@ -46,9 +46,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}) {
       setState(prev => ({ ...prev, permissionStatus: result.state as 'granted' | 'denied' | 'prompt' }))
       return result.state
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error checking geolocation permission:', error)
-      return null
+      // eslint-disable-next-line no-console      return null
     }
   }, [])
 

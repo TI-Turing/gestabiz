@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
-import { Users, List, Network, Filter, AlertTriangle, Check, X, Loader2, Star } from 'lucide-react'
+import { Users, List, Network, Filter, AlertTriangle, Check, X, Loader2, Star, QrCode, Copy } from 'lucide-react'
 import { usePlanFeatures } from '@/hooks/usePlanFeatures'
 import { PlanLimitBanner } from '@/components/ui/PlanLimitBanner'
 import { useBusinessHierarchy } from '@/hooks/useBusinessHierarchy'
@@ -19,11 +19,13 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { FiltersPanel } from './FiltersPanel'
 import { EmployeeListView } from './EmployeeListView'
 import { HierarchyMapView } from './HierarchyMapView'
 import { EmployeeProfileModal } from './EmployeeProfileModal'
 import { JoinRequestsCard } from './JoinRequestsManager'
+import { useGenerateInviteCode, useActiveInviteCodes } from '@/hooks/useEmployeeJoinRequests'
 import supabase from '@/lib/supabase'
 import { toast } from 'sonner'
 import type { EmployeeHierarchy as EmployeeHierarchyFromTypes } from '@/types'
@@ -54,6 +56,9 @@ export function EmployeeManagementHierarchy({
   const [showFilters, setShowFilters] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeHierarchyFromTypes | null>(null)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const [showInviteDialog, setShowInviteDialog] = useState(false)
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null)
+  const [showJoinRequests, setShowJoinRequests] = useState(false) // Oculto por defecto
   
   // Hook de sede preferida
   const { preferredLocationId } = usePreferredLocation(businessId)
@@ -78,6 +83,10 @@ export function EmployeeManagementHierarchy({
   const [assigningFor, setAssigningFor] = useState<string | null>(null)
   const [pendingSupervisorId, setPendingSupervisorId] = useState('')
   const queryClient = useQueryClient()
+
+  // Hooks de invitación de empleados
+  const { data: activeCodes = [] } = useActiveInviteCodes(businessId)
+  const generateCode = useGenerateInviteCode(businessId)
 
   // Query: empleados sin configuración completa (sin supervisor y sin rol elevado)
   const { data: pendingSetup = [] } = useQuery({
@@ -282,6 +291,26 @@ export function EmployeeManagementHierarchy({
               <span className="hidden sm:inline">{t('employees.management.mapView')}</span>
               <span className="sm:hidden">Mapa</span>
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowInviteDialog(true)}
+              className="gap-2 min-h-[44px]"
+            >
+              <QrCode className="h-4 w-4" />
+              <span className="hidden sm:inline">Invitar empleado</span>
+              <span className="sm:hidden">Invitar</span>
+            </Button>
+            <Button
+              variant={showJoinRequests ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowJoinRequests(!showJoinRequests)}
+              className="gap-2 min-h-[44px]"
+            >
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Solicitudes</span>
+              <span className="sm:hidden">Solic.</span>
+            </Button>
           </div>
         </div>
 
@@ -394,9 +423,6 @@ export function EmployeeManagementHierarchy({
           />
         </Card>
       )}
-
-      {/* JOIN REQUESTS - empleados que quieren unirse */}
-      <JoinRequestsCard businessId={businessId} />
 
       {/* PENDING SETUP ALERT - empleados sin jefe asignado */}
       {pendingSetup.length > 0 && (
@@ -520,6 +546,112 @@ export function EmployeeManagementHierarchy({
         onClose={() => setIsProfileModalOpen(false)}
         employees={employees}
       />
+
+      {/* INVITE DIALOG */}
+      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="h-5 w-5" />
+              Invitar empleado
+            </DialogTitle>
+            <DialogDescription>
+              Genera un código de 6 dígitos para compartir con un empleado. El código caduca en 24 horas.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Generate Code Button */}
+            <Button
+              onClick={async () => {
+                try {
+                  const code = await generateCode.mutateAsync()
+                  setGeneratedCode(code)
+                  toast.success('Código generado correctamente')
+                } catch (error) {
+                  toast.error('Error al generar el código')
+                }
+              }}
+              disabled={generateCode.isPending}
+              className="w-full gap-2"
+            >
+              <QrCode className="h-4 w-4" />
+              {generateCode.isPending ? 'Generando...' : 'Generar código'}
+            </Button>
+
+            {/* Display Generated Code */}
+            {generatedCode && (
+              <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 space-y-3">
+                <p className="text-xs text-muted-foreground">Código de invitación:</p>
+                <code className="block font-mono text-2xl font-bold tracking-widest text-center text-primary">
+                  {generatedCode}
+                </code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(generatedCode)
+                    toast.success('Código copiado al portapapeles')
+                  }}
+                  className="w-full gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  Copiar código
+                </Button>
+              </div>
+            )}
+
+            {/* Active Codes */}
+            {activeCodes.length > 0 && (
+              <div className="space-y-2 pt-2 border-t">
+                <p className="text-xs font-medium text-muted-foreground">Códigos activos:</p>
+                <div className="space-y-2">
+                  {activeCodes.map(c => (
+                    <div
+                      key={c.id}
+                      className="flex items-center gap-2 p-2 rounded bg-background/50 border border-border/50"
+                    >
+                      <code className="font-mono font-bold text-sm flex-1">
+                        {c.invite_code}
+                      </code>
+                      <Badge variant="outline" className="text-xs whitespace-nowrap">
+                        {new Date(c.invite_code_expires_at!).toLocaleTimeString('es-CO', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </Badge>
+                      <button
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(c.invite_code!)
+                          toast.success('Código copiado')
+                        }}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950/20 p-3 rounded border border-blue-200 dark:border-blue-800">
+              <p className="font-medium mb-1">Cómo usar:</p>
+              <ol className="space-y-1 list-decimal list-inside">
+                <li>Comparte el código con el empleado</li>
+                <li>El empleado lo ingresa en su app como código de invitación</li>
+                <li>Tú recibirás una solicitud para aprobar</li>
+                <li>Una vez aprobado, el empleado se agrega a tu equipo</li>
+              </ol>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* JOIN REQUESTS - empleados que quieren unirse (al final, oculto por defecto) */}
+      {showJoinRequests && (
+        <JoinRequestsCard businessId={businessId} />
+      )}
     </div>
   )
 }

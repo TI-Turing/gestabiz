@@ -65,9 +65,7 @@ export function useEmployeeRequests(options: UseEmployeeRequestsOptions = {}) {
       }
 
       // Ensure at least one filter is applied (safety check)
-      if (!businessId && !userId) {
-        console.warn('[useEmployeeRequests] No filters applied, skipping query')
-        setRequests([])
+      if (!businessId && !userId) {        setRequests([])
         return
       }
 

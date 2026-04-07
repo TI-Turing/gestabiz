@@ -14,6 +14,7 @@ import { OverviewTab } from './OverviewTab'
 import { MyProfilePage } from '@/components/profile/MyProfilePage'
 import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary'
 import { usePendingNavigation } from '@/hooks/usePendingNavigation'
+import { usePendingJoinRequests } from '@/hooks/useEmployeeJoinRequests'
 import { lazyWithRetry } from '@/lib/lazyWithRetry'
 import type { Business, UserRole, User, EmployeeHierarchy } from '@/types/types'
 import logoTiTuring from '@/assets/images/tt/1.png'
@@ -152,6 +153,9 @@ export function AdminDashboard({
   // Plan activo del negocio
   const { hasModule, upgradePlan } = usePlanFeatures(business.id)
 
+  // Solicitudes de ingreso de empleados pendientes (para badge en sidebar)
+  const { data: pendingJoinRequests = [] } = usePendingJoinRequests(business.id)
+
   // Determinar si mostrar tab de recursos
   const showResourcesTab = business.resource_model && business.resource_model !== 'professional'
 
@@ -182,7 +186,7 @@ export function AdminDashboard({
       planItem('services',    t('adminDashboard.sidebar.services'),     <Briefcase className="h-5 w-5" />),
       // Tab de recursos (solo para negocios con recursos físicos)
       ...(showResourcesTab ? [planItem('resources', t('adminDashboard.sidebar.resources'), <Box className="h-5 w-5" />)] : []),
-      planItem('employees',   t('adminDashboard.sidebar.employees'),    <Users className="h-5 w-5" />),
+      planItem('employees',   t('adminDashboard.sidebar.employees'),    <Users className="h-5 w-5" />, pendingJoinRequests.length > 0 ? { badge: pendingJoinRequests.length } : undefined),
       planItem('recruitment', t('adminDashboard.sidebar.recruitment'),  <BriefcaseBusiness className="h-5 w-5" />),
       planItem('clients',     'Clientes',                               <UserCheck className="h-5 w-5" />),
       planItem('sales',       'Ventas',                                 <BarChart3 className="h-5 w-5" />),
@@ -194,7 +198,7 @@ export function AdminDashboard({
     ]
     // Módulos disponibles en el plan activo primero, bloqueados al final
     return [...items.filter(i => !i.locked), ...items.filter(i => i.locked)]
-  }, [t, showResourcesTab, planItem])
+  }, [t, showResourcesTab, planItem, pendingJoinRequests.length])
 
   const renderContent = () => {
     const tabFallback = (

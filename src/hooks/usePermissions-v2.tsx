@@ -377,9 +377,7 @@ export function usePermissions({ userId, businessId, ownerId }: UsePermissionsOp
               .from('user_permissions')
               .insert(permissionInserts)
 
-            if (permError) {
-              console.warn('Error al aplicar permisos del template:', permError)
-              // No lanzar error, el rol ya fue creado exitosamente
+            if (permError) {              // No lanzar error, el rol ya fue creado exitosamente
             }
           }
         }

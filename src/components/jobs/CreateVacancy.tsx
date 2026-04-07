@@ -188,9 +188,7 @@ export function CreateVacancy({ businessId, vacancyId, onClose, onSuccess }: Rea
           .update(vacancyData)
           .eq('id', vacancyId)
 
-        if (error) {
-          console.error('Error actualizando vacante:', error)
-          throw error
+        if (error) {          throw error
         }
         toast.success(t('jobs.toasts.vacancyUpdated'))
       } else {
@@ -199,18 +197,14 @@ export function CreateVacancy({ businessId, vacancyId, onClose, onSuccess }: Rea
           .from('job_vacancies')
           .insert([vacancyData])
 
-        if (error) {
-          console.error('Error creando vacante:', error)
-          throw error
+        if (error) {          throw error
         }
         toast.success(t('jobs.toasts.vacancyCreated'))
       }
 
       onSuccess()
       onClose()
-    } catch (error: unknown) {
-      console.error('Error completo:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+    } catch (error: unknown) {      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
       toast.error(vacancyId ? `${t('common.messages.updateError')}: ${errorMessage}` : `${t('common.messages.createError')}: ${errorMessage}`)
     } finally {
       setLoading(false)

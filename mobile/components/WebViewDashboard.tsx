@@ -43,11 +43,9 @@ export default function WebViewDashboard({ route, onMessage }: Props) {
                 \`sb-\${projectId}-auth-token\`,
                 JSON.stringify(session)
               );
-              console.log('[Mobile] Session injected:', session.user?.email);
             }
           }
       } catch (e) {
-        console.error('[Mobile] Error injecting session:', e);
       }
       
       // 2. Establecer bridge de comunicación React Native ↔ Web
@@ -63,7 +61,6 @@ export default function WebViewDashboard({ route, onMessage }: Props) {
             window.ReactNativeWebView.postMessage(JSON.stringify(data));
           }
         } catch (e) {
-          console.error('[Web] Error handling message:', e);
         }
       });
       
@@ -72,9 +69,6 @@ export default function WebViewDashboard({ route, onMessage }: Props) {
       meta.name = 'viewport';
       meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
       document.head.appendChild(meta);
-      
-      console.log('[Mobile] Bridge initialized for:', '${route}');
-      
       true;
     })();
   `
@@ -82,19 +76,14 @@ export default function WebViewDashboard({ route, onMessage }: Props) {
   const handleMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data)
-      
-      console.log('[Mobile] Message from web:', data)
-      
       // Manejar diferentes tipos de mensajes
       switch (data.type) {
         case 'navigate':
           // TODO: Implementar navegación nativa
-          console.log('[Mobile] Navigate to:', data.route)
           break
         
         case 'deep-link':
           // TODO: Manejar deep links
-          console.log('[Mobile] Deep link:', data.url)
           break
         
         case 'reload':
@@ -107,13 +96,11 @@ export default function WebViewDashboard({ route, onMessage }: Props) {
           onMessage?.(data)
       }
     } catch (e) {
-      console.error('[Mobile] Error parsing message:', e)
     }
   }
   
   const handleError = (syntheticEvent: any) => {
     const { nativeEvent } = syntheticEvent
-    console.error('[Mobile] WebView error:', nativeEvent)
     setError(`Error cargando contenido: ${nativeEvent.description || 'Desconocido'}`)
     setLoading(false)
   }

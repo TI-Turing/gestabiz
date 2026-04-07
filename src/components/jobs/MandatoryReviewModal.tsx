@@ -265,9 +265,7 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
           setEmployeeRating(0);
         }
       } catch (err) {
-        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'MandatoryReviewModal' } })
-        console.error('Error loading previous ratings:', err);
-      }
+        Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'MandatoryReviewModal' } })      }
     };
 
     loadPreviousRatings();

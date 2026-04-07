@@ -105,9 +105,7 @@ export function PlanUpgradeModal({
       await updatePlan(selectedPlan, selectedCycle)
       onSuccess()
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'PlanUpgradeModal' } })
-      console.error('Error updating plan:', error)
-    } finally {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'PlanUpgradeModal' } })    } finally {
       setIsSubmitting(false)
     }
   }

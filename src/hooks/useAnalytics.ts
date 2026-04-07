@@ -88,10 +88,7 @@ export function useAnalytics() {
       hitType: 'pageview',
       page: path,
       title: title || document.title,
-    });
-
-    console.debug('[Analytics] Page view:', path, title);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   // ============================================
   // BOOKING FLOW EVENTS
@@ -106,10 +103,7 @@ export function useAnalytics() {
       service_id: params.serviceId,
       service_name: params.serviceName,
       currency: params.currency || 'COP',
-    });
-
-    console.debug('[Analytics] Booking started:', params);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   const trackBookingStepCompleted = useCallback((params: BookingEventParams) => {
     if (!isEnabled()) return;
@@ -121,10 +115,7 @@ export function useAnalytics() {
       service_id: params.serviceId,
       employee_id: params.employeeId,
       location_id: params.locationId,
-    });
-
-    console.debug('[Analytics] Booking step completed:', params.stepNumber);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   const trackBookingCompleted = useCallback((params: BookingEventParams) => {
     if (!isEnabled()) return;
@@ -157,10 +148,7 @@ export function useAnalytics() {
       amount: params.amount,
       currency: params.currency || 'COP',
       duration_minutes: params.duration,
-    });
-
-    console.debug('[Analytics] Booking completed:', params);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   const trackBookingAbandoned = useCallback((params: BookingEventParams) => {
     if (!isEnabled()) return;
@@ -171,10 +159,7 @@ export function useAnalytics() {
       total_steps: params.totalSteps,
       service_id: params.serviceId,
       employee_id: params.employeeId,
-    });
-
-    console.debug('[Analytics] Booking abandoned at step:', params.stepNumber);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   // ============================================
   // PROFILE & BUSINESS EVENTS
@@ -190,10 +175,7 @@ export function useAnalytics() {
       category: params.category,
       has_reviews: params.hasReviews,
       average_rating: params.averageRating,
-    });
-
-    console.debug('[Analytics] Profile viewed:', params.businessName);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   const trackReserveButtonClick = useCallback((params: {
     businessId: string;
@@ -206,10 +188,7 @@ export function useAnalytics() {
       business_id: params.businessId,
       service_id: params.serviceId,
       source: params.source,
-    });
-
-    console.debug('[Analytics] Reserve button clicked:', params);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   const trackContactClick = useCallback((params: {
     businessId: string;
@@ -220,10 +199,7 @@ export function useAnalytics() {
     ReactGA.event('click_contact', {
       business_id: params.businessId,
       contact_type: params.contactType,
-    });
-
-    console.debug('[Analytics] Contact clicked:', params);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   // ============================================
   // USER ACTIONS
@@ -234,20 +210,14 @@ export function useAnalytics() {
 
     ReactGA.event('login', {
       method,
-    });
-
-    console.debug('[Analytics] Login:', method);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   const trackSignup = useCallback((method: 'email' | 'google' | 'github') => {
     if (!isEnabled()) return;
 
     ReactGA.event('sign_up', {
       method,
-    });
-
-    console.debug('[Analytics] Signup:', method);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   const trackSearch = useCallback((params: SearchParams) => {
     if (!isEnabled()) return;
@@ -258,10 +228,7 @@ export function useAnalytics() {
       city: params.filters?.city,
       min_rating: params.filters?.minRating,
       results_count: params.resultsCount,
-    });
-
-    console.debug('[Analytics] Search:', params.query);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   const trackReviewSubmitted = useCallback((params: {
     businessId: string;
@@ -274,10 +241,7 @@ export function useAnalytics() {
       business_id: params.businessId,
       rating: params.rating,
       has_comment: params.hasComment,
-    });
-
-    console.debug('[Analytics] Review submitted:', params);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   // ============================================
   // ERROR TRACKING
@@ -291,10 +255,7 @@ export function useAnalytics() {
       error_code: params.errorCode,
       page: params.page || window.location.pathname,
       fatal: false,
-    });
-
-    console.debug('[Analytics] Error tracked:', params);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   // ============================================
   // USER PROPERTIES
@@ -313,10 +274,7 @@ export function useAnalytics() {
       user_role: properties.role,
       business_id: properties.businessId,
       plan_type: properties.planType,
-    });
-
-    console.debug('[Analytics] User properties set:', properties);
-  }, [isEnabled]);
+    });  }, [isEnabled]);
 
   // ============================================
   // LIFECYCLE
@@ -360,14 +318,10 @@ export function useAnalytics() {
 // ============================================
 
 export const grantAnalyticsConsent = () => {
-  localStorage.setItem('ga_consent', 'true');
-  console.log('[Analytics] Consent granted');
-};
+  localStorage.setItem('ga_consent', 'true');};
 
 export const revokeAnalyticsConsent = () => {
-  localStorage.setItem('ga_consent', 'false');
-  console.log('[Analytics] Consent revoked');
-};
+  localStorage.setItem('ga_consent', 'false');};
 
 export const hasAnalyticsConsent = (): boolean => {
   return localStorage.getItem('ga_consent') === 'true';

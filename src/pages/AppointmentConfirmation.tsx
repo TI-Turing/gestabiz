@@ -97,7 +97,6 @@ export default function AppointmentConfirmation() {
       })
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'AppointmentConfirmation' } })
-      console.error('Error fetching appointment:', err)
       setError('Error al cargar los detalles de la cita')
     } finally {
       setLoading(false)
@@ -125,7 +124,6 @@ export default function AppointmentConfirmation() {
       setSuccess(true)
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'AppointmentConfirmation' } })
-      console.error('Error confirming appointment:', err)
       setError('Error al confirmar la cita. Por favor, inténtalo de nuevo.')
     } finally {
       setConfirming(false)

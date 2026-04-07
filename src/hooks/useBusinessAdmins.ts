@@ -157,9 +157,7 @@ export function useBusinessAdmins({ businessId, userLocation }: UseBusinessAdmin
 
       setAdmins([admin]);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Error fetching business admins:', err);
-      void logger.error('useBusinessAdmins: fetchAdmins failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBusinessAdmins', businessId })
+      // eslint-disable-next-line no-console      void logger.error('useBusinessAdmins: fetchAdmins failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBusinessAdmins', businessId })
       setError(err instanceof Error ? err.message : 'Error al cargar administradores');
     } finally {
       setLoading(false);

@@ -42,9 +42,7 @@ export function useAuth() {
   // Return default auth state if context is not available (instead of throwing)
   // This can happen during initial render before AuthProvider is ready
   if (!context) {
-    if (import.meta.env.DEV) {
-      console.warn('[useAuth] AuthContext is not available, returning default auth state')
-    }
+    if (import.meta.env.DEV) {    }
     return defaultAuthState as ReturnType<typeof useAuthSimple>
   }
 

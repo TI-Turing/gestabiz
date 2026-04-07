@@ -47,14 +47,8 @@ async function createAppointments() {
     u => !employeeIds.has(u.id) && !ownerIds.has(u.id)
   ).slice(0, 70); // Tomar 70 clientes
 
-  if (!clients || clients.length === 0) {
-    console.error('❌ No hay clientes disponibles');
-    return;
-  }
-
-  console.log(`✅ ${clients.length} clientes disponibles\n`);
-
-  // Obtener empleados con sus servicios y ubicaciones
+  if (!clients || clients.length === 0) {    return;
+  }  // Obtener empleados con sus servicios y ubicaciones
   const { data: employeeServices } = await supabase
     .from('employee_services')
     .select(`
@@ -65,14 +59,8 @@ async function createAppointments() {
       services(id, name, duration_minutes, price, currency)
     `);
 
-  if (!employeeServices || employeeServices.length === 0) {
-    console.error('❌ No hay empleados con servicios');
-    return;
-  }
-
-  console.log(`✅ ${employeeServices.length} asignaciones empleado-servicio\n`);
-
-  let totalAppointments = 0;
+  if (!employeeServices || employeeServices.length === 0) {    return;
+  }  let totalAppointments = 0;
   const targetAppointments = 500; // Objetivo: 500 citas
   const statusDistribution = [
     { status: 'completed', weight: 80 }, // 80%
@@ -145,22 +133,14 @@ async function createAppointments() {
         .from('appointments')
         .insert(appointmentData);
 
-      if (error) {
-        console.error(`❌ Error creando cita:`, error.message);
-        continue;
+      if (error) {        continue;
       }
 
       totalAppointments++;
 
-      if (totalAppointments % 50 === 0) {
-        console.log(`📅 ${totalAppointments} citas creadas...`);
-      }
+      if (totalAppointments % 50 === 0) {      }
     }
-  }
-
-  console.log(`\n✅ Total: ${totalAppointments} citas creadas`);
-
-  // Verificación por status
+  }  // Verificación por status
   const { data: statusCounts } = await supabase
     .from('appointments')
     .select('status');
@@ -169,10 +149,7 @@ async function createAppointments() {
     const counts = statusCounts.reduce((acc, apt) => {
       acc[apt.status] = (acc[apt.status] || 0) + 1;
       return acc;
-    }, {} as Record<string, number>);
-
-    console.log('\n📊 Distribución por status:');
-    Object.entries(counts).forEach(([status, count]) => {
+    }, {} as Record<string, number>);    Object.entries(counts).forEach(([status, count]) => {
       console.log(`   ${status}: ${count} (${((count / totalAppointments) * 100).toFixed(1)}%)`);
     });
   }
@@ -187,12 +164,7 @@ async function createAppointments() {
       const month = new Date(apt.start_time).toLocaleDateString('es-CO', { year: 'numeric', month: 'long' });
       acc[month] = (acc[month] || 0) + 1;
       return acc;
-    }, {} as Record<string, number>);
-
-    console.log('\n📊 Distribución por mes:');
-    Object.entries(months).forEach(([month, count]) => {
-      console.log(`   ${month}: ${count} citas`);
-    });
+    }, {} as Record<string, number>);    Object.entries(months).forEach(([month, count]) => {    });
   }
 }
 

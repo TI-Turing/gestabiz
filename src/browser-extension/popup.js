@@ -32,9 +32,7 @@ class AppointmentPopup {
       } else {
         this.showAuthSection()
       }
-    } catch (error) {
-      console.error('Error loading user session:', error)
-      this.showAuthSection()
+    } catch (error) {      this.showAuthSection()
     }
   }
 
@@ -97,9 +95,7 @@ class AppointmentPopup {
         this.showMainContent()
       }
 
-    } catch (error) {
-      console.error('Error loading appointments:', error)
-      this.showError('Failed to load appointments')
+    } catch (error) {      this.showError('Failed to load appointments')
     }
   }
 
@@ -214,9 +210,7 @@ class AppointmentPopup {
 
   showError(message) {
     this.hideAllSections()
-    // You could create an error section or show a simple alert
-    console.error(message)
-    this.showAuthSection() // Fallback to auth section
+    // You could create an error section or show a simple alert    this.showAuthSection() // Fallback to auth section
   }
 
   hideAllSections() {

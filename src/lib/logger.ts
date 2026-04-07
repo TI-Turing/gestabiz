@@ -144,9 +144,7 @@ class Logger {
    */
   debug(message: string, ...args: unknown[]): void {
     if (!CONFIG.IS_PRODUCTION) {
-      // eslint-disable-next-line no-console
-      console.log(`[DEBUG] ${message}`, ...args);
-    }
+      // eslint-disable-next-line no-console    }
   }
 
   /**
@@ -263,16 +261,12 @@ class Logger {
         if (rpcError) {
           // Fallback si falla Supabase: solo console en dev
           if (!CONFIG.IS_PRODUCTION) {
-            // eslint-disable-next-line no-console
-            console.error('[Logger] Failed to log to Supabase:', rpcError);
-          }
+            // eslint-disable-next-line no-console          }
         }
       } catch (rpcError) {
         // Silencioso en producción para no causar errores secundarios
         if (!CONFIG.IS_PRODUCTION) {
-          // eslint-disable-next-line no-console
-          console.error('[Logger] Exception logging to Supabase:', rpcError);
-        }
+          // eslint-disable-next-line no-console        }
       }
     }
 
@@ -325,15 +319,11 @@ class Logger {
 
       if (error) {
         if (!CONFIG.IS_PRODUCTION) {
-          // eslint-disable-next-line no-console
-          console.error('[Logger] Failed to log login:', error);
-        }
+          // eslint-disable-next-line no-console        }
       }
     } catch (rpcError) {
       if (!CONFIG.IS_PRODUCTION) {
-        // eslint-disable-next-line no-console
-        console.error('[Logger] Exception logging login:', rpcError);
-      }
+        // eslint-disable-next-line no-console      }
     }
   }
 }

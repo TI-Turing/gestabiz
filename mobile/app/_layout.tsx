@@ -113,12 +113,10 @@ export default function RootLayout() {
 
         // Set up auth state listener
         supabase.auth.onAuthStateChange((event, session) => {
-          console.log('Auth state changed:', event, session?.user?.email)
         })
 
         setIsLoading(false)
       } catch (error) {
-        console.error('Error initializing app:', error)
         setIsLoading(false)
       }
     }

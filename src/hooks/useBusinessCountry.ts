@@ -29,9 +29,7 @@ export function useBusinessCountry(businessId: string | null | undefined) {
         .single();
 
       if (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching business country:', error);
-        throw error;
+        // eslint-disable-next-line no-console        throw error;
       }
 
       return data as BusinessCountry;

@@ -49,7 +49,6 @@ const extractTimeZoneParts = (date: Date, timeZone: string = DEFAULT_TIME_ZONE) 
     return result;
   } catch (error) {
     Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AppointmentsCalendar' } })
-    console.warn('⚠️ toLocaleString falló, usando offset manual', error);
   }
   
   // Método 2: Fallback con offset manual (más confiable)
@@ -571,7 +570,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       }
     } catch (e) {
       Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
-      console.warn('Failed to load cached filters', e);
     }
   }, [currentBusinessId]);
 
@@ -583,7 +581,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       localStorage.setItem(`appointments-filters-${currentBusinessId}`, JSON.stringify(payload));
     } catch (e) {
       Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
-      console.warn('Failed to persist filters', e);
     }
   }, [currentBusinessId, filterStatus, filterLocation, filterService, filterEmployee]);
 
@@ -655,14 +652,11 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         .order('start_time');
 
       if (error) {
-        console.error('❌ Error al buscar citas:', error);
         return;
       }
 
       if (DEBUG_MODE) {
-        console.log(`✅ Citas encontradas: ${data?.length || 0}`);
         if (data && data.length > 0) {
-          console.log('📋 [DEBUG] Raw appointment data:', data[0]);
         }
       }
 
@@ -710,7 +704,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       }));
 
       if (DEBUG_MODE) {
-        console.log('📦 [fetchAppointments] Citas formateadas:', formattedAppointments);
         console.log('📊 [fetchAppointments] Resumen:', {
           total: formattedAppointments.length,
           employees: employeeIds,
@@ -746,8 +739,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
 
       setIsLoading(true);
       try {
-        console.log('🔍 [AppointmentsCalendar] User completo:', user);
-        
         // Usar businessId de la prop si está disponible (desde AdminDashboard)
         let resolvedBusinessId = propBusinessId;
         
@@ -782,9 +773,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         }
 
         setCurrentBusinessId(resolvedBusinessId);
-        
-        console.log('📍 [AppointmentsCalendar] Cargando locations para business:', resolvedBusinessId);
-
         // Get all locations for filter with their hours
         const { data: locationsData, error: locationError } = await supabase
           .from('locations')
@@ -792,9 +780,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           .eq('business_id', resolvedBusinessId);
 
         if (locationError) throw locationError;
-        
-        console.log('📍 [AppointmentsCalendar] Locations cargadas:', locationsData?.length || 0, locationsData);
-
         const formattedLocations: LocationWithHours[] = (locationsData || []).map(loc => ({
           id: loc.id,
           name: loc.name,
@@ -843,10 +828,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           if (selectedLocationId) {
             employeeServicesQuery = employeeServicesQuery.eq('location_id', selectedLocationId);
             if (DEBUG_MODE) {
-              console.log('🔍 [AppointmentsCalendar] Filtrando employee_services por business + location:', {
-                business: resolvedBusinessId,
-                location: selectedLocationId
-              });
             }
           }
         }
@@ -861,9 +842,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             services: Array.isArray(item.services) ? item.services[0] : item.services,
           }));
           if (response.error) {
-            console.error('❌ Error cargando employee_services:', response.error);
             if (DEBUG_MODE) {
-              console.log('Error details:', response.error);
             }
           }
         }
@@ -918,10 +897,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         if (employeeIds.length > 0 && selectedLocationId) {
           // CASE 1: Employee + Location selected → Use employee_services filtered by both
           if (DEBUG_MODE) {
-            console.log('🎯 [AppointmentsCalendar] Filtrando servicios por EMPLEADO + SEDE:', {
-              empleados: employeeIds,
-              sede: selectedLocationId
-            });
           }
           
           const { data: empServData, error: empServError } = await supabase
@@ -932,7 +907,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             .eq('location_id', selectedLocationId);
 
           if (empServError) {
-            console.error('❌ Error cargando employee_services para filtro:', empServError);
             setServices([]);
             return;
           }
@@ -947,17 +921,9 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
 
           availableServices = Array.from(serviceMap.entries()).map(([id, name]) => ({ id, name }));
           
-          if (DEBUG_MODE) {
-            console.log('✅ [AppointmentsCalendar] Servicios del empleado en esa sede:', {
-              total: availableServices.length,
-              servicios: availableServices.map(s => s.name)
-            });
-          }
-          
         } else if (selectedLocationId) {
           // CASE 2: Only location selected → Use location_services
           if (DEBUG_MODE) {
-            console.log('📍 [AppointmentsCalendar] Filtrando servicios solo por SEDE:', selectedLocationId);
           }
           
           const { data: locationServicesData, error: locServError } = await supabase
@@ -966,7 +932,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             .eq('location_id', selectedLocationId);
 
           if (locServError) {
-            console.error('❌ Error cargando location_services:', locServError);
             setServices([]);
             return;
           }
@@ -981,7 +946,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
               .in('id', availableServiceIds);
 
             if (servError) {
-              console.error('❌ Error cargando services:', servError);
               setServices([]);
               return;
             }
@@ -989,17 +953,9 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             availableServices = (servicesData || []).map(s => ({ id: s.id, name: s.name }));
           }
           
-          if (DEBUG_MODE) {
-            console.log('✅ [AppointmentsCalendar] Servicios de la sede:', {
-              total: availableServices.length,
-              servicios: availableServices.map(s => s.name)
-            });
-          }
-          
         } else {
           // CASE 3: No filters → Load all business services
           if (DEBUG_MODE) {
-            console.log('🌐 [AppointmentsCalendar] Cargando TODOS los servicios del negocio');
           }
           
           const { data: servicesData, error: servError } = await supabase
@@ -1008,7 +964,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             .eq('business_id', resolvedBusinessId);
 
           if (servError) {
-            console.error('❌ Error cargando services:', servError);
             setServices([]);
             return;
           }
@@ -1016,9 +971,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           availableServices = (servicesData || []).map(s => ({ id: s.id, name: s.name }));
           
           if (DEBUG_MODE) {
-            console.log('✅ [AppointmentsCalendar] Servicios globales:', {
-              total: availableServices.length
-            });
           }
         }
 
@@ -1028,7 +980,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         // cuando business.id esté disponible
       } catch (error) {
         Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AppointmentsCalendar' } })
-        console.error('Error al cargar datos del calendario de citas', error);
         toast.error('Error al cargar los datos');
       } finally {
         setIsLoading(false);
@@ -1042,13 +993,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   useEffect(() => {
     if (!currentBusinessId) return;
     
-    if (DEBUG_MODE) {
-      console.log('🔄 [Effect] Fetch appointments disparado por:', {
-        currentBusinessId,
-        selectedDate: format(selectedDate, 'yyyy-MM-dd')
-      });
-    }
-    
     fetchAppointments(currentBusinessId, selectedDate);
   }, [currentBusinessId, selectedDate, fetchAppointments]);
 
@@ -1060,7 +1004,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       localStorage.setItem(`appointments-filters-${currentBusinessId}`, JSON.stringify(payload));
     } catch (e) {
       Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
-      console.warn('Failed to persist filters', e);
     }
   }, [currentBusinessId, filterStatus, filterLocation, filterService, filterEmployee]);
 
@@ -1215,7 +1158,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       }
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AppointmentsCalendar' } })
-      console.error('Error al completar la cita en el calendario admin', error);
       toast.error('Error al completar la cita');
     }
   };
@@ -1306,10 +1248,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   // Calcular horario operativo basado en configuración y filtros
   const operatingHours = useMemo((): { openHour: number; closeHour: number } | null => {
     if (DEBUG_MODE) {
-      console.log('🕐 [operatingHours] Calculando horario operativo...');
-      console.log('  - Total locations:', locations.length);
-      console.log('  - preferredLocationId:', preferredLocationId);
-      console.log('  - filterLocation:', filterLocation);
     }
     
     // Determinar qué sedes considerar
@@ -1357,9 +1295,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     
     if (!allSameSchedule) {
       if (DEBUG_MODE) {
-        console.log('  ❌ Las sedes tienen horarios diferentes, no aplicar scroll automático');
         selectedLocations.forEach(loc => {
-          console.log(`    - ${loc.name}: ${loc.opens_at} - ${loc.closes_at}`);
         });
       }
       return null;
@@ -1370,9 +1306,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     const closeHour = Number.parseInt(firstCloses.split(':')[0], 10);
     
     if (DEBUG_MODE) {
-      console.log('  ✅ Todas las sedes tienen el mismo horario');
-      console.log('  - Hora apertura:', openHour, ':00');
-      console.log('  - Hora cierre:', closeHour, ':00');
     }
     
     return { openHour, closeHour };
@@ -1492,10 +1425,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     
     // Log detallado para debugging (solo en dev)
     if (DEBUG_MODE) {
-      console.log('🕐 [Calendario] Debugging hora actual:');
       console.log('  - Hora sistema (UTC):', now.toISOString());
-      console.log('  - Hora Colombia extraída:', `${hour}:${minute}`);
-      console.log('  - Total minutos desde medianoche:', hour * 60 + minute);
     }
     
     // Calcular posición relativa a las 24 horas completas
@@ -1505,7 +1435,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     
     if (DEBUG_MODE) {
       console.log('  - Porcentaje calculado:', `${percentage.toFixed(2)}%`);
-      console.log('  - Debe aparecer en la hora:', hour);
     }
 
     return percentage;
@@ -1514,13 +1443,9 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   // Scroll automático al horario de operación o a la hora actual
   useEffect(() => {
     if (DEBUG_MODE) {
-      console.log('📜 [ScrollEffect] Ejecutando scroll automático...');
-      console.log('  - showFilters:', showFilters);
-      console.log('  - timelineRef.current:', !!timelineRef.current);
     }
     
     if (!timelineRef.current && DEBUG_MODE) {
-      console.log('  ⚠️ Ref no está disponible en el primer intento');
     }
 
     // Usar múltiples intentos para asegurar que el DOM esté listo
@@ -1541,12 +1466,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       let scrollPosition = 0;
 
       if (DEBUG_MODE) {
-        console.log('  ✅ Ref encontrado en intento', attempt + 1);
-        console.log('  - scrollHeight:', scrollHeight);
-        console.log('  - containerHeight:', containerHeight);
-        console.log('  - isSelectedDateToday:', isSelectedDateToday);
-        console.log('  - currentTimePosition:', currentTimePosition);
-        console.log('  - operatingHours:', operatingHours);
       }
 
       // Prioridad 1: Si es hoy y tenemos posición actual, scroll a hora actual
@@ -1554,9 +1473,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         const linePxPosition = (currentTimePosition / 100) * scrollHeight;
         scrollPosition = linePxPosition - (containerHeight / 2);
         if (DEBUG_MODE) {
-          console.log('  ✅ PRIORIDAD 1: Scroll a hora actual');
-          console.log('    - linePxPosition:', linePxPosition);
-          console.log('    - scrollPosition final:', scrollPosition);
         }
       } 
       // Prioridad 2: Si tenemos horario operativo, scroll al inicio del horario
@@ -1567,10 +1483,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         // Dejar un poco de margen arriba (restar 50px)
         scrollPosition = Math.max(0, openPxPosition - 50);
         if (DEBUG_MODE) {
-          console.log('  ✅ PRIORIDAD 2: Scroll a hora de apertura');
-          console.log('    - openHour:', operatingHours.openHour);
-          console.log('    - openPercentage:', openPercentage, '%');
-          console.log('    - openPxPosition:', openPxPosition);
           console.log('    - scrollPosition final (con margen -50px):', scrollPosition);
         }
       } else {
@@ -1645,17 +1557,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
 
   return (
     <div className="space-y-6">
-      {/* Console log for debugging - outside JSX (solo en dev) */}
-      {DEBUG_MODE && (() => {
-        console.log('📋 [RENDER] Estado actual del calendario:', {
-          totalAppointments: appointments.length,
-          filteredAppointments: filteredAppointments.length,
-          totalEmployees: employees.length,
-          selectedDate: format(selectedDate, 'yyyy-MM-dd', { locale: es })
-        });
-        return null;
-      })()}
-      
       {/* Header with date navigation */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Calendario de Citas</h2>

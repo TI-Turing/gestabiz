@@ -55,31 +55,17 @@ export function SimpleChatLayout({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const autoOpenedRef = useRef(false);
   // Retry counter to avoid infinite loops when conversation is not found
-  const fetchRetryCountRef = useRef(0);
-
-  console.log('[SimpleChatLayout] userId:', userId);
-  console.log('[SimpleChatLayout] initialConversationId:', initialConversationId);
-  console.log('[SimpleChatLayout] conversations:', conversations);
-  console.log('[SimpleChatLayout] activeConversation:', activeConversation);
-  console.log('[SimpleChatLayout] showChat:', showChat);
-
-  // Función para hacer scroll al final
+  const fetchRetryCountRef = useRef(0);  // Función para hacer scroll al final
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   // Fetch inicial
-  useEffect(() => {
-    console.log('[SimpleChatLayout] Fetching conversations...');
-    fetchConversations();
+  useEffect(() => {    fetchConversations();
   }, [fetchConversations]);
 
   // Set conversación inicial y mostrar chat
-  useEffect(() => {
-    console.log('[SimpleChatLayout] initialConversationId:', initialConversationId);
-    if (initialConversationId) {
-      console.log('[SimpleChatLayout] Setting active conversation:', initialConversationId);
-      setActiveConversationId(initialConversationId);
+  useEffect(() => {    if (initialConversationId) {      setActiveConversationId(initialConversationId);
       setShowChat(true);
       // Refresh conversations to ensure the newly created conversation is in the list.
       // This is critical when the chat panel is already open (no remount), so the
@@ -96,9 +82,7 @@ export function SimpleChatLayout({
     if (showChat) return;
     if (conversations.length === 0) return;
 
-    const firstConversation = conversations[0];
-    console.log('[SimpleChatLayout] Auto-opening first conversation:', firstConversation.id);
-    setActiveConversationId(firstConversation.id);
+    const firstConversation = conversations[0];    setActiveConversationId(firstConversation.id);
     setShowChat(true);
     autoOpenedRef.current = true;
   }, [conversations, initialConversationId, showChat, setActiveConversationId]);
@@ -116,9 +100,7 @@ export function SimpleChatLayout({
     if (loading) return; // Still loading, wait
     if (fetchRetryCountRef.current >= 3) return; // Stop after 3 attempts
 
-    fetchRetryCountRef.current += 1;
-    console.log('[SimpleChatLayout] Conversation not found after load, retry attempt:', fetchRetryCountRef.current);
-    // Add a delay between retries to avoid rapid consecutive API calls
+    fetchRetryCountRef.current += 1;    // Add a delay between retries to avoid rapid consecutive API calls
     const retryTimer = setTimeout(() => {
       fetchConversations();
     }, 500);
@@ -127,9 +109,7 @@ export function SimpleChatLayout({
 
   // Auto-scroll cuando llegan nuevos mensajes
   useEffect(() => {
-    if (activeMessages.length > 0) {
-      console.log('[SimpleChatLayout] 📜 New messages detected, scrolling to bottom');
-      // Pequeño delay para asegurar que el DOM se haya actualizado
+    if (activeMessages.length > 0) {      // Pequeño delay para asegurar que el DOM se haya actualizado
       setTimeout(() => {
         scrollToBottom();
       }, 100);
@@ -138,9 +118,7 @@ export function SimpleChatLayout({
 
   // Auto-scroll cuando se abre una conversación
   useEffect(() => {
-    if (showChat && activeConversation) {
-      console.log('[SimpleChatLayout] 📜 Conversation opened, scrolling to bottom');
-      // Delay más largo para la primera carga (esperar fetch de mensajes)
+    if (showChat && activeConversation) {      // Delay más largo para la primera carga (esperar fetch de mensajes)
       setTimeout(() => {
         scrollToBottom();
       }, 300);
@@ -174,23 +152,14 @@ export function SimpleChatLayout({
       msg => msg.sender_id !== userId && (!msg.read_by || !msg.read_by.some(r => r.user_id === userId))
     );
     
-    if (unreadMessages.length > 0) {
-      console.log('[SimpleChatLayout] 👀 Marking conversation as read:', {
-        conversationId: activeConversation.id,
-        lastMessageId: lastMessage.id,
-        totalMessages: activeMessages.length,
-        unreadCount: unreadMessages.length
-      });
-      markMessagesAsRead(activeConversation.id, lastMessage.id);
+    if (unreadMessages.length > 0) {      markMessagesAsRead(activeConversation.id, lastMessage.id);
       
       // ✨ Notificar al padre para que actualice el badge
       // Esperar 600ms para dar tiempo a Supabase de procesar
       setTimeout(() => {
         onMessagesRead?.();
       }, 600);
-    } else {
-      console.log('[SimpleChatLayout] ℹ️ No unread messages to mark');
-    }
+    } else {    }
     // ✅ IMPORTANTE: Incluir activeMessages.length para detectar mensajes nuevos
     // Esto SE ejecutará en cada mensaje nuevo, pero debouncedMarkAsRead en useChat
     // prevendrá llamadas excesivas agrupándolas con 500ms delay
@@ -207,9 +176,7 @@ export function SimpleChatLayout({
         type: 'text',
       });
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'SimpleChatLayout' } })
-      console.error('[SimpleChatLayout] Error sending message:', error);
-    }
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'SimpleChatLayout' } })    }
   };
 
   const handleSelectConversation = (conversationId: string) => {
