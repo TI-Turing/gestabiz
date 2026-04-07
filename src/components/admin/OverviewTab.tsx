@@ -200,6 +200,154 @@ export function OverviewTab({ business }: OverviewTabProps) {
 
   return (
     <div className="space-y-4">
+      {/* Setup Checklist — shown when business is not fully configured */}
+      {(stats.totalLocations === 0 || stats.totalServices === 0 || business.is_configured === false) && (() => {
+        const checklistItems = [
+          {
+            key: 'location',
+            label: 'Al menos una sede',
+            hint: 'Define dónde atenderás a tus clientes.',
+            done: stats.totalLocations > 0,
+            navigateTo: '/app/admin/locations',
+            required: true,
+          },
+          {
+            key: 'services',
+            label: 'Servicios configurados',
+            hint: 'Define qué ofreces y sus precios para recibir reservas.',
+            done: stats.totalServices > 0,
+            navigateTo: '/app/admin/services',
+            required: true,
+          },
+          {
+            key: 'employees',
+            label: 'Profesionales o recursos asignados',
+            hint: 'Necesitas al menos un empleado o recurso para atender citas.',
+            done: stats.totalEmployees > 0,
+            navigateTo: '/app/admin/employees',
+            required: true,
+          },
+          {
+            key: 'logo',
+            label: 'Logo del negocio',
+            hint: 'Un logo mejora la confianza y reconocimiento de tu marca.',
+            done: !!business.logo_url,
+            navigateTo: '/app/admin/settings',
+            required: false,
+          },
+          {
+            key: 'description',
+            label: 'Descripción del negocio',
+            hint: 'Cuéntales a tus clientes qué hace especial tu negocio.',
+            done: !!business.description,
+            navigateTo: '/app/admin/settings',
+            required: false,
+          },
+          {
+            key: 'phone',
+            label: 'Teléfono de contacto',
+            hint: 'Facilita que los clientes puedan contactarte directamente.',
+            done: !!business.phone,
+            navigateTo: '/app/admin/settings',
+            required: false,
+          },
+        ]
+        const completedCount = checklistItems.filter((i) => i.done).length
+        const totalCount = checklistItems.length
+        const progressPct = Math.round((completedCount / totalCount) * 100)
+
+        return (
+          <Card className="bg-amber-500/10 border-amber-500/30">
+            <CardContent className="pt-4 pb-4">
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-foreground leading-tight">
+                      Completa la configuración de tu negocio
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {completedCount} de {totalCount} pasos completados · Tu negocio{' '}
+                      {business.is_configured
+                        ? 'ya es visible al público'
+                        : 'aún no es visible al público'}
+                    </p>
+                  </div>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={
+                    business.is_configured
+                      ? 'border-green-500/50 text-green-400 shrink-0'
+                      : 'border-red-500/50 text-red-400 shrink-0'
+                  }
+                >
+                  {business.is_configured ? 'Público' : 'No público'}
+                </Badge>
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full bg-muted rounded-full h-1.5 mb-4">
+                <div
+                  className="bg-green-500 h-1.5 rounded-full transition-all duration-500"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+
+              {/* Checklist items */}
+              <div className="space-y-1">
+                {checklistItems.map((item) => (
+                  <div
+                    key={item.key}
+                    className="flex items-center justify-between gap-3 py-1.5 px-1 rounded-md"
+                  >
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      {item.done ? (
+                        <CheckCircle className="h-4 w-4 text-green-400 shrink-0 mt-0.5" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                      )}
+                      <div className="min-w-0">
+                        <p
+                          className={`text-sm font-medium leading-tight ${
+                            item.done
+                              ? 'text-muted-foreground line-through decoration-muted-foreground/40'
+                              : 'text-foreground'
+                          }`}
+                        >
+                          {item.label}
+                          {item.required && !item.done && (
+                            <span className="ml-1.5 text-xs font-normal text-amber-400">
+                              requerido
+                            </span>
+                          )}
+                        </p>
+                        {!item.done && (
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
+                            {item.hint}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {!item.done && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs shrink-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                        onClick={() => navigate(item.navigateTo)}
+                      >
+                        Ir →
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })()}
+
       {/* Stats Grid */}
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
         <Card
@@ -353,154 +501,6 @@ export function OverviewTab({ business }: OverviewTabProps) {
           </CardContent>
         </Card>
       </div>
-
-      {/* Setup Checklist — shown when business is not fully configured */}
-      {(stats.totalLocations === 0 || stats.totalServices === 0 || business.is_configured === false) && (() => {
-        const checklistItems = [
-          {
-            key: 'location',
-            label: 'Al menos una sede',
-            hint: 'Define dónde atenderás a tus clientes.',
-            done: stats.totalLocations > 0,
-            navigateTo: '/app/admin/locations',
-            required: true,
-          },
-          {
-            key: 'services',
-            label: 'Servicios configurados',
-            hint: 'Define qué ofreces y sus precios para recibir reservas.',
-            done: stats.totalServices > 0,
-            navigateTo: '/app/admin/services',
-            required: true,
-          },
-          {
-            key: 'employees',
-            label: 'Profesionales o recursos asignados',
-            hint: 'Necesitas al menos un empleado o recurso para atender citas.',
-            done: stats.totalEmployees > 0,
-            navigateTo: '/app/admin/employees',
-            required: true,
-          },
-          {
-            key: 'logo',
-            label: 'Logo del negocio',
-            hint: 'Un logo mejora la confianza y reconocimiento de tu marca.',
-            done: !!business.logo_url,
-            navigateTo: '/app/admin/settings',
-            required: false,
-          },
-          {
-            key: 'description',
-            label: 'Descripción del negocio',
-            hint: 'Explica qué ofreces para atraer más clientes.',
-            done: !!business.description,
-            navigateTo: '/app/admin/settings',
-            required: false,
-          },
-          {
-            key: 'phone',
-            label: 'Teléfono de contacto',
-            hint: 'Facilita que los clientes puedan contactarte directamente.',
-            done: !!business.phone,
-            navigateTo: '/app/admin/settings',
-            required: false,
-          },
-        ]
-        const completedCount = checklistItems.filter((i) => i.done).length
-        const totalCount = checklistItems.length
-        const progressPct = Math.round((completedCount / totalCount) * 100)
-
-        return (
-          <Card className="bg-amber-500/10 border-amber-500/30">
-            <CardContent className="pt-4 pb-4">
-              {/* Header */}
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-2.5">
-                  <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-foreground leading-tight">
-                      Completa la configuración de tu negocio
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {completedCount} de {totalCount} pasos completados · Tu negocio{' '}
-                      {business.is_configured
-                        ? 'ya es visible al público'
-                        : 'aún no es visible al público'}
-                    </p>
-                  </div>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={
-                    business.is_configured
-                      ? 'border-green-500/50 text-green-400 shrink-0'
-                      : 'border-red-500/50 text-red-400 shrink-0'
-                  }
-                >
-                  {business.is_configured ? 'Público' : 'No público'}
-                </Badge>
-              </div>
-
-              {/* Progress bar */}
-              <div className="w-full bg-muted rounded-full h-1.5 mb-4">
-                <div
-                  className="bg-green-500 h-1.5 rounded-full transition-all duration-500"
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
-
-              {/* Checklist items */}
-              <div className="space-y-1">
-                {checklistItems.map((item) => (
-                  <div
-                    key={item.key}
-                    className="flex items-center justify-between gap-3 py-1.5 px-1 rounded-md"
-                  >
-                    <div className="flex items-start gap-2.5 min-w-0">
-                      {item.done ? (
-                        <CheckCircle className="h-4 w-4 text-green-400 shrink-0 mt-0.5" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
-                      )}
-                      <div className="min-w-0">
-                        <p
-                          className={`text-sm font-medium leading-tight ${
-                            item.done
-                              ? 'text-muted-foreground line-through decoration-muted-foreground/40'
-                              : 'text-foreground'
-                          }`}
-                        >
-                          {item.label}
-                          {item.required && !item.done && (
-                            <span className="ml-1.5 text-xs font-normal text-amber-400">
-                              requerido
-                            </span>
-                          )}
-                        </p>
-                        {!item.done && (
-                          <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
-                            {item.hint}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {!item.done && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs shrink-0 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
-                        onClick={() => navigate(item.navigateTo)}
-                      >
-                        Ir →
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )
-      })()}
 
       {/* Business Info Summary */}
       <Card className="bg-card border-border overflow-hidden">

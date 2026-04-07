@@ -323,7 +323,7 @@ export function AdminDashboard({
       } : undefined}
     >
       <div className="flex flex-col min-h-full">
-        <div key={business.id} className="flex-1 p-3 sm:p-4">
+        <div key={business.id} className="flex-1 p-3 sm:p-4 pt-4 sm:pt-4">
           {renderContent()}
         </div>
 

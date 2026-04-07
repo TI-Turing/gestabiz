@@ -20,6 +20,7 @@ import {
   X,
   Save,
   AlertTriangle,
+  MoreVertical,
 } from 'lucide-react'
 import { PermissionGate } from '@/components/ui/PermissionGate'
 import { Button } from '@/components/ui/button'
@@ -40,6 +41,13 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { BusinessHoursPicker, type BusinessHours } from '@/components/ui/BusinessHoursPicker'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
 import { usePreferredLocation } from '@/hooks/usePreferredLocation'
 import { MediaUploader } from '@/components/ui/MediaUploader'
@@ -114,6 +122,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
   // Estados para banner cropper
   const [isBannerCropperOpen, setIsBannerCropperOpen] = useState(false)
   const [bannerImageToEdit, setBannerImageToEdit] = useState<string | null>(null)
+  const [croppedBannerBlob, setCroppedBannerBlob] = useState<Blob | null>(null)
+  const [croppedBannerPreview, setCroppedBannerPreview] = useState<string | null>(null)
   const [selectedRegionId, setSelectedRegionId] = useState<string>('')
   
   // Estado para tabs
@@ -145,6 +155,32 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
   }, [])
 
   // Función para cargar multimedia existente
+  const normalizeBannerDuplicates = async (mediaItems: typeof existingMedia) => {
+    const bannerImages = mediaItems.filter((media) => media.type === 'image' && media.is_banner)
+    if (bannerImages.length <= 1) return mediaItems
+
+    const sortedBanners = [...bannerImages].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
+    const duplicateIds = sortedBanners.slice(1).map((media) => media.id)
+
+    try {
+      const { error } = await supabase
+        .from('location_media')
+        .update({ is_banner: false })
+        .in('id', duplicateIds)
+
+      if (error) throw error
+    } catch (err) {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })
+      console.error('Error normalizando banners duplicados:', err)
+    }
+
+    return mediaItems.map((media) =>
+      duplicateIds.includes(media.id) ? { ...media, is_banner: false } : media
+    )
+  }
+
   const loadExistingMedia = React.useCallback(async (locationId: string) => {
     setIsLoadingMedia(true)
     try {
@@ -155,7 +191,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setExistingMedia(data || [])
+      const normalized = await normalizeBannerDuplicates(data || [])
+      setExistingMedia(normalized)
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })
       console.error('Error loading existing media:', err)
@@ -269,6 +306,9 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       // Primera sede: marcar como principal automáticamente
       setFormData({ ...initialFormData, is_primary: locations.length === 0 })
       setExistingMedia([])
+      setCroppedBannerBlob(null)
+      setCroppedBannerPreview(null)
+      setBannerImageToEdit(null)
     }
     setNewPrimaryId(null)
     // Limpiar descripciones temporales
@@ -286,6 +326,9 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       setNewPrimaryId(null)
       setTempDescriptions({})
       setSavingDescriptions({})
+      setCroppedBannerBlob(null)
+      setCroppedBannerPreview(null)
+      setBannerImageToEdit(null)
     }
   }
 
@@ -316,54 +359,31 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
   }
 
   const handleBannerSave = async (croppedImageBlob: Blob) => {
-    if (!editingLocation) return
+    if (!editingLocation || !bannerImageToEdit) return
 
     try {
-      // Subir la imagen recortada
-      const fileName = `banner-${editingLocation.id}-${Date.now()}.jpg`
-      const { data, error } = await supabase.storage
-        .from('location-images')
-        .upload(`banners/${fileName}`, croppedImageBlob, {
-          contentType: 'image/jpeg',
-          upsert: true
-        })
-
-      if (error) throw error
-
-      // Obtener URL pública
-      const { data: { publicUrl } } = supabase.storage
-        .from('location-images')
-        .getPublicUrl(`banners/${fileName}`)
-
-      // Actualizar el banner en la base de datos (usar columnas correctas)
-      // Primero, desmarcar banners anteriores
-      await supabase
-        .from('location_media')
-        .update({ is_banner: false })
-        .eq('location_id', editingLocation.id)
-        .eq('type', 'image')
-        .eq('is_banner', true)
-
-      // Insertar nuevo banner
-      await supabase
-        .from('location_media')
-        .insert({
-          location_id: editingLocation.id,
-          type: 'image',
-          url: publicUrl,
-          is_banner: true
-        })
-
-      toast.success('Banner actualizado exitosamente')
+      // Guardar blob en memoria para procesarlo al guardar la ubicación
+      setCroppedBannerBlob(croppedImageBlob)
+      
+      // Crear preview para mostrarlo al usuario
+      const preview = URL.createObjectURL(croppedImageBlob)
+      setCroppedBannerPreview(preview)
+      
+      // Actualizar el media existente para que muestre el preview
+      setExistingMedia(prev => prev.map(media => {
+        if (media.url === bannerImageToEdit && media.type === 'image') {
+          return { ...media, url: preview }
+        }
+        return media
+      }))
+      
+      toast.success('Banner recortado. Presiona "Actualizar" para guardar los cambios.')
       setIsBannerCropperOpen(false)
       setBannerImageToEdit(null)
-      
-      // Recargar las ubicaciones para mostrar el nuevo banner
-      fetchLocations()
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'LocationsManager' } })
-      console.error('Error al guardar banner:', error)
-      toast.error('Error al guardar el banner')
+      console.error('Error al procesar banner:', error)
+      toast.error('Error al procesar el banner')
     }
   }
 
@@ -514,6 +534,52 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
         locationId = newLocation.id
         
         toast.success('Sede creada exitosamente')
+      }
+
+      // Guardar banner recortado si existe
+      if (editingLocation && croppedBannerBlob) {
+        try {
+          const fileName = `banner_${Date.now()}.jpg`
+          const filePath = `${editingLocation.id}/${fileName}`
+          const { error: uploadError } = await supabase.storage
+            .from('location-images')
+            .upload(filePath, croppedBannerBlob, {
+              contentType: 'image/jpeg'
+            })
+
+          if (uploadError) throw uploadError
+
+          // Obtener URL pública
+          const { data: { publicUrl } } = supabase.storage
+            .from('location-images')
+            .getPublicUrl(filePath)
+
+          // Desmarcar banners anteriores
+          await supabase
+            .from('location_media')
+            .update({ is_banner: false })
+            .eq('location_id', editingLocation.id)
+            .eq('type', 'image')
+
+          // Insertar nuevo banner
+          await supabase
+            .from('location_media')
+            .insert({
+              location_id: editingLocation.id,
+              type: 'image',
+              url: publicUrl,
+              is_banner: true
+            })
+
+          // Limpiar memoria
+          setCroppedBannerBlob(null)
+          setCroppedBannerPreview(null)
+          setBannerImageToEdit(null)
+        } catch (bannerError) {
+          Sentry.captureException(bannerError instanceof Error ? bannerError : new Error(String(bannerError)), { tags: { component: 'LocationsManager' } })
+          console.error('Error al guardar banner:', bannerError)
+          toast.error('Sede guardada, pero hubo un error al guardar el banner')
+        }
       }
 
       // Subir multimedia si hay archivos pendientes y es una edición
@@ -870,16 +936,15 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
           {locations.map((location) => (
             <Card
               key={location.id}
-              className="relative overflow-hidden cursor-pointer group"
+              className={`relative overflow-hidden cursor-pointer group ${locationBanners[location.id] ? 'bg-transparent' : ''}`}
               onClick={() => handleOpenProfile(location)}
             >
-              {/* Banner superior (50% de la tarjeta) */}
+              {/* Banner como fondo completo de la tarjeta */}
               {locationBanners[location.id] && (
                 <img
                   src={locationBanners[location.id]}
                   alt=""
-                  className="absolute left-0 top-0 w-full object-cover"
-                  style={{ height: '50%' }}
+                  className="absolute inset-0 h-full w-full object-cover"
                   aria-hidden="true"
                   onError={(e) => {
                     const img = e.currentTarget as HTMLImageElement
@@ -887,11 +952,10 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                   }}
                 />
               )}
-              {/* Degradado para legibilidad (en la mitad superior) */}
+              {/* Degradado para legibilidad */}
               {locationBanners[location.id] && (
                 <div
-                  className="absolute left-0 top-0 w-full bg-gradient-to-t from-black/40 via-black/30 to-transparent"
-                  style={{ height: '50%' }}
+                  className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"
                 />
               )}
               <CardHeader className="p-3 sm:p-6 relative z-10">
@@ -969,8 +1033,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                 )}
                 {location.business_hours && (
                   <div className="flex items-center gap-2 text-xs sm:text-sm">
-                    <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-muted-foreground">Horarios configurados</span>
+                    <Clock className={`h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0 ${locationBanners[location.id] ? 'text-white/70' : 'text-muted-foreground'}`} />
+                    <span className={`${locationBanners[location.id] ? 'text-white/80' : 'text-muted-foreground'}`}>Horarios configurados</span>
                   </div>
                 )}
                 {location.images && location.images.length > 0 && (
@@ -1170,15 +1234,22 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                         <h4 className="text-sm font-medium">Multimedia actual</h4>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                           {existingMedia.map((media) => (
-                            <div key={media.id} className="relative group border rounded-lg overflow-hidden">
-                              {media.type === 'image' ? (
+                            <div
+                              key={media.id}
+                              className="relative group w-full h-40 border rounded-lg overflow-hidden flex-shrink-0 bg-gray-100"
+                            >
+                              {/* Imagen de fondo */}
+                              {media.type === 'image' && (
                                 <img
                                   src={media.url}
-                                  alt={media.description || 'Imagen'}
-                                  className="w-full h-32 object-cover"
+                                  alt={media.description || 'Media image'}
+                                  className="absolute inset-0 h-full w-full object-cover"
                                 />
-                              ) : (
-                                <div className="relative w-full h-32 bg-gray-100 flex items-center justify-center">
+                              )}
+
+                              {/* Contenido para videos */}
+                              {media.type === 'video' && (
+                                <div className="absolute inset-0 w-full h-full bg-gray-900 flex items-center justify-center">
                                   <video
                                     src={media.url}
                                     className="w-full h-full object-cover"
@@ -1189,37 +1260,144 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                                   </div>
                                 </div>
                               )}
+
+                              {/* Capa oscura de fondo para contraste */}
+                              <div className="absolute inset-0 bg-black/50 group-hover:bg-black/70 transition-all duration-200"></div>
                               
-                              {/* Badges */}
-                              <div className="absolute top-2 left-2 flex flex-col gap-1">
+                              {/* Badges - Con mejor contraste */}
+                              <div className="absolute top-2 left-2 flex flex-col gap-1 z-20">
                                 {media.is_banner && (
-                                  <Badge variant="secondary" className="text-xs">
+                                  <Badge className="text-xs bg-amber-500 text-white hover:bg-amber-600">
                                     <Star className="h-3 w-3 mr-1" />
                                     Banner
                                   </Badge>
                                 )}
                                 {media.is_primary && media.type === 'video' && (
-                                  <Badge variant="secondary" className="text-xs">
+                                  <Badge className="text-xs bg-blue-500 text-white hover:bg-blue-600">
                                     <Play className="h-3 w-3 mr-1" />
                                     Principal
                                   </Badge>
                                 )}
                               </div>
 
-                              {/* Overlay con controles */}
-                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                                <div className="flex justify-end gap-1">
+                              {/* Menú de 3 puntos - Visible siempre */}
+                              <div className="absolute top-2 right-2 z-40">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-8 w-8 p-0 hover:bg-black/50 rounded-full text-white"
+                                      title="Opciones"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-48">
+                                    {/* Editar descripción */}
+                                    <div
+                                      className="flex flex-col gap-2 p-2"
+                                      onClick={(e) => e.stopPropagation()}
+                                      onPointerDown={(e) => e.stopPropagation()}
+                                    >
+                                      <Label className="text-xs font-medium">Descripción</Label>
+                                      <div className="flex gap-1">
+                                        <Input
+                                          placeholder="Descripción..."
+                                          value={getDisplayDescription(media)}
+                                          onChange={(e) => handleTempDescriptionChange(media.id, e.target.value)}
+                                          className="text-xs h-7 flex-1"
+                                          onPointerDown={(e) => e.stopPropagation()}
+                                        />
+                                        {hasUnsavedChanges(media) && (
+                                          <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="default"
+                                            onClick={() => handleSaveDescription(media.id)}
+                                            disabled={savingDescriptions[media.id]}
+                                            className="h-7 w-7 p-0"
+                                          >
+                                            {savingDescriptions[media.id] ? (
+                                              <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                                            ) : (
+                                              <Save className="h-3 w-3" />
+                                            )}
+                                          </Button>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <DropdownMenuSeparator />
+
+                                    {/* Marcar/Desmarcar como Banner */}
+                                    {media.type === 'image' && (
+                                      <>
+                                        <DropdownMenuItem asChild>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleToggleBanner(media.id, media.is_banner)}
+                                            className="flex items-center gap-2 w-full px-2 py-1.5 text-sm cursor-pointer"
+                                          >
+                                            <Star className="h-4 w-4" />
+                                            {media.is_banner ? 'Desmarcar como Banner' : 'Marcar como Banner'}
+                                          </button>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                      </>
+                                    )}
+
+                                    {/* Marcar/Desmarcar como Principal (Video) */}
+                                    {media.type === 'video' && (
+                                      <>
+                                        <DropdownMenuItem asChild>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleTogglePrimaryVideo(media.id, media.is_primary)}
+                                            className="flex items-center gap-2 w-full px-2 py-1.5 text-sm cursor-pointer"
+                                          >
+                                            <Play className="h-4 w-4" />
+                                            {media.is_primary ? 'Desmarcar como Principal' : 'Marcar como Principal'}
+                                          </button>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                      </>
+                                    )}
+
+                                    {/* Eliminar */}
+                                    <DropdownMenuItem asChild>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteExistingMedia(media.id)}
+                                        className="flex items-center gap-2 w-full px-2 py-1.5 text-sm text-red-600 hover:text-red-700 cursor-pointer"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                        Eliminar
+                                      </button>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+
+                              {/* Overlay con controles - Desktop only (hover) */}
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-3 z-30 hidden sm:flex">
+                                {/* Botón eliminar */}
+                                <div className="flex justify-end">
                                   <Button
                                     type="button"
                                     size="sm"
                                     variant="destructive"
                                     onClick={() => handleDeleteExistingMedia(media.id)}
-                                    className="h-7 w-7 p-0"
+                                    className="h-8 w-8 p-0 rounded-full"
+                                    title="Eliminar imagen"
                                   >
-                                    <X className="h-3 w-3" />
+                                    <X className="h-4 w-4" />
                                   </Button>
                                 </div>
                                 
+                                {/* Controles inferiores */}
                                 <div className="space-y-2">
                                   {/* Descripción editable */}
                                   <div className="flex gap-1">
@@ -1227,7 +1405,7 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                                       placeholder="Descripción..."
                                       value={getDisplayDescription(media)}
                                       onChange={(e) => handleTempDescriptionChange(media.id, e.target.value)}
-                                      className="text-xs h-7 bg-background/90 border-border flex-1"
+                                      className="text-xs h-8 bg-background/95 border-border flex-1"
                                     />
                                     {hasUnsavedChanges(media) && (
                                       <Button
@@ -1236,7 +1414,7 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                                         variant="default"
                                         onClick={() => handleSaveDescription(media.id)}
                                         disabled={savingDescriptions[media.id]}
-                                        className="h-7 w-7 p-0"
+                                        className="h-8 w-8 p-0"
                                       >
                                         {savingDescriptions[media.id] ? (
                                           <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
@@ -1255,10 +1433,10 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                                         size="sm"
                                         variant={media.is_banner ? "default" : "secondary"}
                                         onClick={() => handleToggleBanner(media.id, media.is_banner)}
-                                        className="h-7 px-2 text-xs flex-1"
+                                        className="h-8 px-2 text-xs flex-1 rounded"
                                       >
                                         <Star className="h-3 w-3 mr-1" />
-                                        {media.is_banner ? 'Quitar Banner' : 'Marcar Banner'}
+                                        {media.is_banner ? 'Quitar' : 'Banner'}
                                       </Button>
                                     )}
                                     {media.type === 'video' && (
@@ -1267,10 +1445,10 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                                         size="sm"
                                         variant={media.is_primary ? "default" : "secondary"}
                                         onClick={() => handleTogglePrimaryVideo(media.id, media.is_primary)}
-                                        className="h-7 px-2 text-xs flex-1"
+                                        className="h-8 px-2 text-xs flex-1 rounded"
                                       >
                                         <Play className="h-3 w-3 mr-1" />
-                                        {media.is_primary ? 'Quitar Principal' : 'Marcar Principal'}
+                                        {media.is_primary ? 'Quitar' : 'Principal'}
                                       </Button>
                                     )}
                                   </div>
@@ -1301,7 +1479,7 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                       }}
                       onUploadError={(error) => toast.error(error)}
                       onBannerCropRequest={(imageUrl) => {
-                        // Activar recorte automático cuando se marca como banner
+                        // Activar recorte de banner con la imagen recién subida
                         setBannerImageToEdit(imageUrl)
                         setIsBannerCropperOpen(true)
                       }}
@@ -1453,8 +1631,12 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       {bannerImageToEdit && (
         <BannerCropper
           isOpen={isBannerCropperOpen}
-          onClose={() => setIsBannerCropperOpen(false)}
+          onClose={() => {
+            setIsBannerCropperOpen(false)
+            setBannerImageToEdit(null)
+          }}
           imageFile={null}
+          imageUrl={bannerImageToEdit}
           onCropComplete={(blob: Blob) => { void handleBannerSave(blob) }}
         />
       )}

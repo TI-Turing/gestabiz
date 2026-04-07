@@ -14,6 +14,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   Calendar,
   TrendingUp,
   AlertCircle,
@@ -83,6 +92,9 @@ export function BillingDashboard({ businessId, ownerId }: Readonly<BillingDashbo
   const [showPricingPage, setShowPricingPage] = useState(false)
   const [recentPayments, setRecentPayments] = useState<RecentPayment[]>([])
   const [paymentsLoading, setPaymentsLoading] = useState(false)
+  const [showFreeTrialConfirmation, setShowFreeTrialConfirmation] = useState(false)
+  const [businessName, setBusinessName] = useState<string | null>(null)
+  const [loadingBusinessName, setLoadingBusinessName] = useState(true)
 
   // Fetch recent payments when there is an active plan
   useEffect(() => {
@@ -111,6 +123,30 @@ export function BillingDashboard({ businessId, ownerId }: Readonly<BillingDashbo
       cancelled = true
     }
   }, [businessId, plan])
+
+  // Fetch business name
+  useEffect(() => {
+    let cancelled = false
+    setLoadingBusinessName(true)
+
+    supabase
+      .from('businesses')
+      .select('name')
+      .eq('id', businessId)
+      .single()
+      .then(({ data, error }) => {
+        if (!cancelled) {
+          if (!error && data) {
+            setBusinessName(data.name)
+          }
+          setLoadingBusinessName(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [businessId])
 
   if (isLoading) {
     return (
@@ -169,7 +205,7 @@ export function BillingDashboard({ businessId, ownerId }: Readonly<BillingDashbo
                 <p className="text-sm text-destructive">{trial.error}</p>
               )}
               <Button
-                onClick={trial.activateFreeTrial}
+                onClick={() => setShowFreeTrialConfirmation(true)}
                 disabled={trial.isActivating}
                 className="w-full sm:w-auto"
               >
@@ -581,6 +617,51 @@ export function BillingDashboard({ businessId, ownerId }: Readonly<BillingDashbo
           )}
         </CardContent>
       </Card>
+
+      {/* Free Trial Confirmation Dialog */}
+      <AlertDialog open={showFreeTrialConfirmation} onOpenChange={setShowFreeTrialConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Gift className="h-5 w-5 text-primary" />
+              Activar Mes Gratis
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3 pt-2">
+              <div>
+                <p className="font-medium text-foreground">
+                  Este mes gratis se aplicará al negocio:
+                </p>
+                <p className="text-primary font-semibold mt-1">
+                  {loadingBusinessName ? '...' : businessName || 'Negocio'}
+                </p>
+              </div>
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-3">
+                <p className="text-sm text-foreground">
+                  <span className="font-semibold">Importante:</span> Solo puedes utilizar el mes gratis una sola vez. 
+                  Después de vencer, deberás activar un plan de pago para mantener el acceso.
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                ¿Deseas proceder con la activación?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-3 justify-end">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                trial.activateFreeTrial()
+                setShowFreeTrialConfirmation(false)
+              }}
+              disabled={trial.isActivating}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {trial.isActivating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Activar
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

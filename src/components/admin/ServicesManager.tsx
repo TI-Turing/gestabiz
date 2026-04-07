@@ -665,15 +665,15 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
           <h2 className="text-xl sm:text-2xl font-bold text-foreground truncate">Servicios</h2>
           <p className="text-muted-foreground text-xs sm:text-sm">Gestiona los servicios que ofreces</p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-background">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 w-full">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-background w-full sm:w-auto">
             <Label htmlFor="show-inactive" className="text-xs sm:text-sm">Mostrar inactivos</Label>
             <Switch id="show-inactive" checked={showInactive} onCheckedChange={setShowInactive} />
           </div>
           <PermissionGate permission="services.create" businessId={businessId} mode="hide">
             <Button
               onClick={() => handleOpenDialog()}
-              className="bg-primary hover:bg-primary/90 w-full sm:w-auto min-h-[44px]"
+              className="bg-primary hover:bg-primary/90 w-full sm:w-auto min-h-[44px] justify-center"
             >
               <Plus className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Agregar Servicio</span>
