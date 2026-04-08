@@ -315,7 +315,10 @@ export function AdminDashboard({
       activePage={activePage}
       onPageChange={handlePageChange}
       preferredLocationName={preferredLocationName}
-      onLocationSelect={setPreferredLocation}
+      onLocationSelect={(locationId) => {
+        setPreferredLocation(locationId)
+        window.location.reload()
+      }}
       availableLocations={locations.map(l => ({ id: l.id, name: l.name }))}
       chatConversationId={chatConversationId}
       onChatClose={() => setChatConversationId(null)}

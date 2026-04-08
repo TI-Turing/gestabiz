@@ -31,6 +31,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
@@ -815,6 +816,16 @@ export function UnifiedLayout({
                     <Settings className="h-4 w-4 mr-2" />
                     {t('navigation.nav.settings')}
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator className="hidden sm:block lg:hidden" />
+                  {onLogout && (
+                    <DropdownMenuItem
+                      onClick={onLogout}
+                      className="hidden sm:flex lg:hidden cursor-pointer text-destructive focus:text-destructive"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      {t('common.actions.logout')}
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

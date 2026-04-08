@@ -111,6 +111,8 @@ export function useAuthSimple() {
 
         if (profileError) {
           debugLog('⚠️ Profile fetch error:', profileError)
+          // Asegurar que loading baje aunque no haya datos de perfil
+          if (mounted) setState(prev => ({ ...prev, loading: false }))
           return
         }
 
@@ -124,9 +126,13 @@ export function useAuthSimple() {
             loading: false,
             error: null
           }))
+        } else if (mounted) {
+          // Sin datos de perfil: bajar loading con el usuario que ya existe
+          setState(prev => ({ ...prev, loading: false }))
         }
       } catch (error) {
         debugLog('💥 Error hydrating user profile:', error)
+        if (mounted) setState(prev => ({ ...prev, loading: false }))
       }
     }
 
@@ -151,11 +157,13 @@ export function useAuthSimple() {
             id: session.user.id,
             email: session.user.email,
           })
+          // NO bajamos loading aquí: esperamos a que hydrateUserProfile complete
+          // para evitar que EmployeeDashboard vea phone vacío momentáneamente.
           setState(prev => ({
             ...prev,
             user: fallbackUser,
             session,
-            loading: false,
+            // loading permanece true hasta que hydrateUserProfile termine
             error: null
           }))
           void hydrateUserProfile(session)
@@ -200,21 +208,30 @@ export function useAuthSimple() {
         }
 
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          const fallbackUser = buildUserFromSession(session.user)
           // Establecer contexto de usuario en Sentry para trazabilidad
           Sentry.setUser({
             id: session.user.id,
             email: session.user.email,
           })
-          setState(prev => ({
-            ...prev,
-            user: fallbackUser,
-            session,
-            loading: false,
-            error: null
-          }))
+          setState(prev => {
+            // TOKEN_REFRESHED: conservar el usuario hidratado para evitar regresión
+            // de campos como `phone` y `avatar_url` mientras re-hidrata.
+            // SIGNED_IN: no bajar loading aún — hydrateUserProfile lo bajará con el
+            // avatar y todos los campos del perfil ya cargados.
+            if (event === 'TOKEN_REFRESHED' && prev.user) {
+              return { ...prev, session, loading: false, error: null }
+            }
+            // SIGNED_IN: establecer fallback sin bajar loading
+            return {
+              ...prev,
+              user: buildUserFromSession(session.user),
+              session,
+              // loading permanece true hasta que hydrateUserProfile complete
+              error: null
+            }
+          })
 
-          // Hydrate with latest profile data after optimistic update
+          // Hydrate con datos reales del perfil (avatar, phone, etc.)
           void hydrateUserProfile(session)
         } else {
           setState(prev => ({
@@ -322,6 +339,8 @@ export function useAuthSimple() {
       businessOwnerId,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.user?.id, state.session?.access_token, state.loading, state.error, signOut, currentBusinessId, businessOwnerId],
+    // avatar_url y phone se incluyen explícitamente porque hydrateUserProfile los actualiza
+    // con el mismo user.id — sin ellos el memo no recomputa y los consumidores ven datos stale.
+    [state.user?.id, state.user?.avatar_url, state.user?.phone, state.session?.access_token, state.loading, state.error, signOut, currentBusinessId, businessOwnerId],
   )
 }

@@ -44,9 +44,11 @@ export function FinancialDashboard({
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month');
 
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat(language === 'es' ? 'es-MX' : 'en-US', {
+    return new Intl.NumberFormat(language === 'es' ? 'es-CO' : 'en-US', {
       style: 'currency',
       currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 

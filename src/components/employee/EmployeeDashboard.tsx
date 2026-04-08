@@ -15,6 +15,7 @@ import { usePendingNavigation } from '@/hooks/usePendingNavigation'
 import { useEmployeeAbsences } from '@/hooks/useEmployeeAbsences'
 import { useEmployeeBusinesses } from '@/hooks/useEmployeeBusinesses'
 import { APP_CONFIG } from '@/constants'
+import { supabase } from '@/lib/supabase'
 import { useMyJoinRequests } from '@/hooks/useEmployeeJoinRequests'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Button } from '@/components/ui/button'
@@ -70,6 +71,10 @@ export function EmployeeDashboard({
   
   const [activePage, setActivePage] = useState(getPageFromUrl())
   const [currentUser, setCurrentUser] = useState(user)
+  // 'checking': perfil aún cargando | 'found': tiene tel | 'missing': confirmado sin tel
+  const [phoneStatus, setPhoneStatus] = useState<'checking' | 'found' | 'missing'>(() =>
+    currentUser.phone?.trim() ? 'found' : 'checking'
+  )
   const [showAbsenceModal, setShowAbsenceModal] = useState(false)
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null)
   
@@ -174,6 +179,27 @@ export function EmployeeDashboard({
     setCurrentUser(user)
   }, [user])
 
+  // Verificar teléfono contra la BD para evitar falso positivo durante carga del perfil
+  useEffect(() => {
+    if (currentUser.phone?.trim()) {
+      setPhoneStatus('found')
+      return
+    }
+    // phone es falsy — puede ser carga lenta; confirmar con la BD antes de bloquear
+    let cancelled = false
+    supabase
+      .from('profiles')
+      .select('phone')
+      .eq('id', currentUser.id)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled) {
+          setPhoneStatus(data?.phone?.trim() ? 'found' : 'missing')
+        }
+      })
+    return () => { cancelled = true }
+  }, [currentUser.id, currentUser.phone])
+
   const sidebarItems = [
     {
       id: 'employments',
@@ -214,7 +240,8 @@ export function EmployeeDashboard({
 
   const renderContent = () => {
     // Verificar que el empleado tenga teléfono registrado antes de mostrar el dashboard
-    if (!currentUser.phone?.trim()) {
+    if (phoneStatus === 'checking') return null
+    if (phoneStatus === 'missing') {
       return (
         <PhoneRequiredModal userId={currentUser.id} userName={currentUser.name} />
       )

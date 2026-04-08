@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react'
-import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
+import { ZoomIn, ZoomOut, Maximize2, Minimize2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { HierarchyNode } from './HierarchyNode'
 import { cn } from '@/lib/utils'
@@ -58,6 +58,7 @@ interface TreeNode {
 
 export function HierarchyMapView({ employees, onEmployeeSelect, focusEmployeeId }: Readonly<HierarchyMapViewProps>) {
   const [zoom, setZoom] = useState(100)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   // Inicializar con los ancestros del empleado enfocado expandidos
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(() =>
     focusEmployeeId ? computeAncestorIds(focusEmployeeId, employees) : new Set()
@@ -150,6 +151,16 @@ export function HierarchyMapView({ employees, onEmployeeSelect, focusEmployeeId 
     setExpandedNodes(new Set())
   }
 
+  // ESC cierra el modo pantalla completa
+  useEffect(() => {
+    if (!isFullscreen) return
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false)
+    }
+    document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [isFullscreen])
+
   // =====================================================
   // RENDER NODE RECURSIVO
   // =====================================================
@@ -227,9 +238,18 @@ export function HierarchyMapView({ employees, onEmployeeSelect, focusEmployeeId 
   }
 
   return (
-    <div className="flex flex-col h-full min-h-[500px] bg-accent/20 rounded-lg overflow-hidden">
+    <div className={cn(
+      'relative flex flex-col rounded-lg overflow-hidden',
+      isFullscreen
+        ? 'fixed inset-0 z-60'
+        : 'h-full min-h-[500px]'
+    )}>
+      {/* Capa 1: fondo sólido que respeta el tema (blanco en light, negro en dark) */}
+      <div className="absolute inset-0 bg-background" aria-hidden="true" />
+      {/* Capa 2: color secundario translúcido — siempre visible */}
+      <div className="absolute inset-0 bg-accent/20" aria-hidden="true" />
       {/* TOOLBAR — siempre visible, no flotante */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-background border-b border-border shrink-0 flex-wrap">
+      <div className="relative flex items-center justify-between gap-2 px-3 py-2 bg-background border-b border-border shrink-0 flex-wrap">
         {/* Expandir / Colapsar */}
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleExpandAll}>
@@ -251,7 +271,6 @@ export function HierarchyMapView({ employees, onEmployeeSelect, focusEmployeeId 
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
-          <span className="text-sm font-medium w-10 text-center tabular-nums">{zoom}%</span>
           <Button
             variant="ghost"
             size="sm"
@@ -261,19 +280,28 @@ export function HierarchyMapView({ employees, onEmployeeSelect, focusEmployeeId 
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
+          <button
+            type="button"
+            onClick={handleResetZoom}
+            className="h-8 w-8 flex items-center justify-center text-xs font-mono font-medium text-muted-foreground hover:text-foreground rounded transition-colors"
+            title="Resetear zoom"
+          >
+            {zoom}%
+          </button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleResetZoom}
+            onClick={() => setIsFullscreen(prev => !prev)}
+            title={isFullscreen ? 'Salir de pantalla completa (Esc)' : 'Ver en pantalla completa'}
             className="h-8 w-8 p-0"
           >
-            <Maximize2 className="h-4 w-4" />
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
         </div>
       </div>
 
       {/* ORGANIGRAMA — scrollable */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-auto">
+      <div ref={scrollContainerRef} className="relative flex-1 overflow-auto">
         <div
           className="p-6 sm:p-12 w-full transition-transform"
           style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}
