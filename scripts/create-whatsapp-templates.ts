@@ -30,9 +30,7 @@ const APP_URL = (process.env.APP_URL ?? 'https://gestabiz.com').replace(/\/$/, '
 const DEV_APP_URL = 'https://dev.gestabiz.com'
 const WHATSAPP_MEDIA_SAMPLE_URL = 'https://dkancockzvcqorqbwtyh.supabase.co/storage/v1/object/public/business-logos/532dbdb9-6c0f-4c08-b0a8-2e2b811d86be/logo.png'
 
-if (!ACCOUNT_SID || !AUTH_TOKEN) {
-  console.error('\n❌  Se requieren TWILIO_ACCOUNT_SID y TWILIO_AUTH_TOKEN como variables de entorno.\n')
-  process.exit(1)
+if (!ACCOUNT_SID || !AUTH_TOKEN) {  process.exit(1)
 }
 
 const authHeader = `Basic ${Buffer.from(`${ACCOUNT_SID}:${AUTH_TOKEN}`).toString('base64')}`
@@ -69,16 +67,12 @@ async function listTemplates(): Promise<void> {
   if (!res.ok) { console.error('Error fetching templates:', data); return }
 
   const list = data.contents ?? []
-  if (list.length === 0) {
-    console.log('\n📭  No hay templates creados todavía.\n')
-    return
+  if (list.length === 0) {    return
   }
   console.log(`\n📋  Templates existentes (${list.length}):\n`)
   for (const t of list) {
     console.log(`  ${t.friendly_name.padEnd(35)} ${t.sid}   [${t.language}]`)
-  }
-  console.log()
-}
+  }}
 
 // ─── Definición de templates ───────────────────────────────────────────────────
 
@@ -320,14 +314,8 @@ async function main() {
     const nameIdx = args.indexOf('--name')
     const name = nameIdx !== -1 ? args[nameIdx + 1] : sid
     console.log(`\n📤  Enviando approval para SID ${sid} (nombre: ${name})...`)
-    const result = await submitForApproval(sid, name)
-    console.log(`    Estado: ${result.status}`)
-    return
-  }
-
-  console.log('\n🚀  Creando templates de WhatsApp en Twilio...\n')
-  console.log(`    APP_URL: ${APP_URL}`)
-  console.log(`    Account SID: ${ACCOUNT_SID!.substring(0, 8)}...\n`)
+    const result = await submitForApproval(sid, name)    return
+  }  console.log(`    Account SID: ${ACCOUNT_SID!.substring(0, 8)}...\n`)
 
   const results: Array<{ name: string; sid?: string; status?: string; error?: string; envKey: string }> = []
 
@@ -346,63 +334,20 @@ async function main() {
       ]
 
   for (const { template, envKey } of templates) {
-    const name = template.friendly_name
-    console.log(`📝  Creando template "${name}"...`)
-
-    try {
-      const content = await createContent(template)
-      console.log(`    ✅  Creado.  SID: ${content.sid}`)
-
-      console.log(`    📤  Enviando a aprobación de WhatsApp (categoría: UTILITY)...`)
-      const approval = await submitForApproval(content.sid, name)
-      console.log(`    ✅  Enviado.  Estado: ${approval.status}`)
-      if (approval.rejection_reason) {
-        console.warn(`    ⚠️   Motivo de rechazo: ${approval.rejection_reason}`)
-      }
+    const name = template.friendly_name    try {
+      const content = await createContent(template)      console.log(`    📤  Enviando a aprobación de WhatsApp (categoría: UTILITY)...`)
+      const approval = await submitForApproval(content.sid, name)      if (approval.rejection_reason) {      }
 
       results.push({ name, sid: content.sid, status: approval.status, envKey })
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      console.error(`    ❌  Error: ${msg}`)
-      results.push({ name, error: msg, envKey })
-    }
+      const msg = err instanceof Error ? err.message : String(err)      results.push({ name, error: msg, envKey })
+    }  }
 
-    console.log()
-  }
-
-  // Resumen final
-  console.log('─────────────────────────────────────────────────────────────────')
-  console.log('📋  Resumen\n')
-
-  const successful = results.filter(r => r.sid)
+  // Resumen final  const successful = results.filter(r => r.sid)
   const failed    = results.filter(r => r.error)
 
-  if (successful.length > 0) {
-    console.log('✅  Templates creados. Agrega estos SIDs como secrets en Supabase:\n')
-    for (const r of successful) {
-      console.log(`    ${r.envKey}=${r.sid}`)
-    }
-    console.log()
-    console.log('    npx supabase secrets set \\')
-    for (const r of successful) {
-      console.log(`      ${r.envKey}=${r.sid} \\`)
-    }
-    console.log()
-  }
+  if (successful.length > 0) {    for (const r of successful) {    }    for (const r of successful) {    }  }
 
-  if (failed.length > 0) {
-    console.log('❌  Templates con error:\n')
-    for (const r of failed) {
-      console.log(`    ${r.name}: ${r.error}`)
-    }
-    console.log()
-  }
-
-  console.log('💡  La aprobación de Meta puede tardar entre minutos y 24 horas.')
-  console.log('    Verifica el estado en: https://console.twilio.com/us1/develop/sms/content-template-builder\n')
-
-  console.log('⚠️   PENDIENTE: crear la ruta /reprogramar-cita/:token en App.tsx')
-  console.log('    Debe abrir el modal de detalle de la cita con la opción de modificación preseleccionada.\n')
-}
+  if (failed.length > 0) {    for (const r of failed) {    }  }}
 
 main().catch(console.error)

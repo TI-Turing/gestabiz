@@ -20,7 +20,58 @@ async function fetchHierarchy(businessId: string): Promise<HierarchyNode[]> {
     p_business_id: businessId,
   })
   throwIfError(error, 'FETCH_HIERARCHY', 'No se pudo cargar la jerarquía del negocio')
-  return (data ?? []) as HierarchyNode[]
+
+  const normalized = (data ?? []) as HierarchyNode[]
+
+  const { data: business, error: businessError } = await supabase
+    .from('businesses')
+    .select('owner_id')
+    .eq('id', businessId)
+    .single()
+
+  if (businessError) {
+    throwIfError(businessError, 'FETCH_OWNER', 'No se pudo cargar el owner del negocio')
+  }
+
+  const ownerId = business?.owner_id
+
+  // Corregir role del owner si vino del RPC como 'manager' (el trigger lo inserta así)
+  if (ownerId) {
+    const ownerIndex = normalized.findIndex(emp => emp.employee_id === ownerId)
+    if (ownerIndex >= 0) {
+      normalized[ownerIndex] = {
+        ...normalized[ownerIndex],
+        role: 'owner',
+        employee_type: 'owner',
+        level: 0,
+      }
+    } else {
+      // Owner no está en el RPC — agregarlo manualmente
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, avatar_url')
+        .eq('id', ownerId)
+        .single()
+
+      if (profileError) {
+        throwIfError(profileError, 'FETCH_OWNER_PROFILE', 'No se pudo cargar el perfil del owner')
+      }
+
+      normalized.push({
+        employee_id: ownerId,
+        business_id: businessId,
+        role: 'owner',
+        employee_type: 'owner',
+        full_name: profile?.full_name ?? profile?.email ?? 'Owner',
+        email: profile?.email ?? null,
+        avatar_url: profile?.avatar_url ?? null,
+        reports_to: null,
+        level: 0,
+      })
+    }
+  }
+
+  return normalized
 }
 
 export function useBusinessHierarchy(businessId: string | undefined) {

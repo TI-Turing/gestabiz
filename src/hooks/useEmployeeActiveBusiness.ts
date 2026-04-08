@@ -73,9 +73,7 @@ export function useEmployeeActiveBusiness(employeeId: string | null | undefined)
           .eq('employee_id', employeeId)
           .eq('status', 'approved')
 
-        if (error) {
-          console.error('[useEmployeeActiveBusiness] Error fetching businesses:', error)
-          setResult({
+        if (error) {          setResult({
             business_id: null,
             business_name: null,
             business_logo_url: null,
@@ -107,9 +105,7 @@ export function useEmployeeActiveBusiness(employeeId: string | null | undefined)
           is_within_schedule: true, // Asumimos siempre activo por ahora
           status: 'active',
         })
-      } catch (err) {
-        console.error('[useEmployeeActiveBusiness] Unexpected error:', err)
-        void logger.error('useEmployeeActiveBusiness: fetch failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeActiveBusiness', employeeId })
+      } catch (err) {        void logger.error('useEmployeeActiveBusiness: fetch failed', err instanceof Error ? err : new Error(String(err)), { component: 'useEmployeeActiveBusiness', employeeId })
         setResult({
           business_id: null,
           business_name: null,

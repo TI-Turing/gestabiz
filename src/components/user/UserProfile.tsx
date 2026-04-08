@@ -228,9 +228,7 @@ export default function UserProfile({
         expertise: [], // TODO: Implement expertise tracking
       });
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
-      console.error('Error fetching user data:', error);
-    } finally {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })    } finally {
       setLoading(false);
     }
   }, [userId, employeeBusinesses]);
@@ -279,9 +277,7 @@ export default function UserProfile({
       }
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
-      if (error instanceof Error) {
-        console.error('Error checking review eligibility:', error.message);
-      }
+      if (error instanceof Error) {      }
     }
   }, [user, userId]);
 
@@ -309,9 +305,7 @@ export default function UserProfile({
       // Refresh user data to update review count and rating
       fetchUserData();
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
-      console.error('Error submitting review:', error);
-    }
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })    }
   };
 
   useEffect(() => {

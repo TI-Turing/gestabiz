@@ -310,7 +310,7 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
     <div className={`min-h-screen bg-background ${embedded ? '' : 'pt-20'}`}>
       {/* Banner */}
       {business.banner_url && (
-          <div className="relative h-64 w-full overflow-hidden">
+          <div className="relative w-full aspect-video overflow-hidden">
             <img
               src={business.banner_url}
               alt={`Banner de ${business.name}`}

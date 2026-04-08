@@ -26,11 +26,7 @@ describe.skip('Job Vacancy Complete Flow E2E', () => {
     
     // Generate fixed UUIDs for test users (no email sending)
     testOwnerId = '00000000-0000-0000-0000-000000000001'
-    testApplicantId = '00000000-0000-0000-0000-000000000002'
-    
-    console.log('Using mock user IDs:', { testOwnerId, testApplicantId })
-
-    // Create test business (using real category_id from business_categories table)
+    testApplicantId = '00000000-0000-0000-0000-000000000002'    // Create test business (using real category_id from business_categories table)
     const { data: business, error: businessError } = await supabase
       .from('businesses')
       .insert({
@@ -44,9 +40,7 @@ describe.skip('Job Vacancy Complete Flow E2E', () => {
     if (businessError) throw new Error(`Business creation failed: ${businessError.message}`)
     if (!business) throw new Error('Business not created')
     
-    testBusinessId = business.id
-    console.log('Business created:', testBusinessId)
-  })
+    testBusinessId = business.id  })
 
   afterAll(async () => {
     // Cleanup: Delete test data

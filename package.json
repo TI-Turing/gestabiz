@@ -22,6 +22,7 @@
     "start": "npm run dev",
     "pre-deploy": "node scripts/pre-deploy-check.mjs",
     "generate-sitemap": "tsx scripts/generate-sitemap.ts",
+    "remove-logs": "node scripts/remove-console-logs.js",
     "db:clean": "tsx scripts/clean-transactional-data.ts",
     "db:clean:dry-run": "tsx scripts/clean-transactional-data.ts --dry-run",
     "db:clean:force": "tsx scripts/clean-transactional-data.ts --force",

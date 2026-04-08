@@ -89,7 +89,7 @@ export function HierarchyNode({
   return (
     <div
       className={cn(
-        'relative w-64 rounded-lg border-2 p-4 shadow-sm transition-all hover:shadow-md cursor-pointer',
+        'relative w-full max-w-[16rem] sm:w-64 rounded-lg border-2 p-4 shadow-sm transition-all hover:shadow-md cursor-pointer',
         getLevelColor(employee.hierarchy_level),
         className
       )}

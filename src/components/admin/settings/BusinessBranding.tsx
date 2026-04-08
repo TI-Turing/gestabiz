@@ -183,43 +183,6 @@ export function BusinessBranding({ businessId }: Readonly<BusinessBrandingProps>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-          {/* Banner section */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Banner</Label>
-            <div className="relative w-full overflow-hidden rounded-lg border border-border bg-muted/30">
-              {loadingInitial ? (
-                <div className="flex items-center justify-center h-40 text-muted-foreground">
-                  Cargando...
-                </div>
-              ) : bannerUrl ? (
-                <img
-                  key={bannerUrl}
-                  src={bannerUrl}
-                  alt="Banner del negocio"
-                  className="w-full h-48 object-cover"
-                />
-              ) : (
-                <div className="flex items-center justify-center h-48 text-muted-foreground">
-                  Sin banner aún
-                </div>
-              )}
-              <label className={`absolute bottom-3 right-3 inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-md px-3 py-2 shadow-md transition-all border-2 border-background ${isUploadingBanner ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-primary/90 hover:scale-[1.02]'}`}>
-                {isUploadingBanner ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4" />
-                )}
-                <span className="text-sm">Cambiar banner</span>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/webp"
-                  className="hidden"
-                  onChange={onBannerFileSelected}
-                />
-              </label>
-            </div>
-          </div>
-
           {/* Logo section */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Logo</Label>
@@ -252,6 +215,43 @@ export function BusinessBranding({ businessId }: Readonly<BusinessBrandingProps>
               <div className="text-sm text-muted-foreground">
                 Sube un logo cuadrado. Se recomienda 512x512.
               </div>
+            </div>
+          </div>
+
+          {/* Banner section */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Banner</Label>
+            <div className="relative w-full h-56 aspect-video overflow-hidden rounded-lg border border-border bg-muted/30">
+              {loadingInitial ? (
+                <div className="flex items-center justify-center w-full h-full text-muted-foreground">
+                  Cargando...
+                </div>
+              ) : bannerUrl ? (
+                <img
+                  key={bannerUrl}
+                  src={bannerUrl}
+                  alt="Banner del negocio"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex items-center justify-center w-full h-full text-muted-foreground">
+                  Sin banner aún
+                </div>
+              )}
+              <label className={`absolute bottom-3 right-3 inline-flex items-center gap-2 bg-primary text-primary-foreground rounded-md px-3 py-2 shadow-md transition-all border-2 border-background ${isUploadingBanner ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-primary/90 hover:scale-[1.02]'}`}>
+                {isUploadingBanner ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                <span className="text-sm">Cambiar banner</span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  className="hidden"
+                  onChange={onBannerFileSelected}
+                />
+              </label>
             </div>
           </div>
         </CardContent>

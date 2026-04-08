@@ -117,6 +117,99 @@ export function useBusinessHierarchy(businessId: string | null, initialFilters?:
         return acc;
       }, []);
 
+      const { data: business, error: businessError } = await supabase
+        .from('businesses')
+        .select('owner_id')
+        .eq('id', businessId)
+        .single();
+
+      if (businessError) {
+        throw new Error(businessError.message);
+      }
+
+      const ownerId = business?.owner_id;
+
+      // Asegurar que el owner tenga role/employee_type correcto si ya viene del RPC
+      // (el trigger lo inserta como 'manager' en business_employees, pero debe mostrarse como 'owner')
+      if (ownerId) {
+        const ownerIndex = normalized.findIndex(emp => emp.user_id === ownerId || emp.employee_id === ownerId);
+        if (ownerIndex >= 0) {
+          normalized[ownerIndex] = {
+            ...normalized[ownerIndex],
+            role: 'owner',
+            employee_type: 'owner',
+            hierarchy_level: 0,
+          };
+        }
+      }
+
+      if (ownerId && !normalized.some(emp => emp.user_id === ownerId || emp.employee_id === ownerId)) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, full_name, email, avatar_url, phone')
+            .eq('id', ownerId)
+            .single();
+
+          if (profileError) {
+            throw new Error(profileError.message);
+          }
+
+          const reportMap = normalized.reduce<Map<string, string[]>>((map, emp) => {
+            if (emp.reports_to) {
+              const parent = map.get(emp.reports_to) ?? [];
+              parent.push(emp.user_id);
+              map.set(emp.reports_to, parent);
+            }
+            return map;
+          }, new Map());
+
+          const collectReports = (userId: string, visited = new Set<string>()): Set<string> => {
+            const directReports = reportMap.get(userId) ?? [];
+            directReports.forEach(reportId => {
+              if (!visited.has(reportId)) {
+                visited.add(reportId);
+                collectReports(reportId, visited);
+              }
+            });
+            return visited;
+          };
+
+          const directReportsCount = normalized.filter(emp => emp.reports_to === ownerId).length;
+          const allReportsCount = collectReports(ownerId).size;
+
+          normalized.push({
+            user_id: ownerId,
+            employee_id: ownerId,
+            business_id: businessId,
+            full_name: profile?.full_name ?? profile?.email ?? 'Owner',
+            email: profile?.email ?? null,
+            phone: profile?.phone ?? null,
+            avatar_url: profile?.avatar_url ?? null,
+            role: 'owner',
+            employee_type: 'owner',
+            hierarchy_level: 0,
+            job_title: null,
+            reports_to: null,
+            supervisor_name: null,
+            location_id: null,
+            location_name: null,
+            direct_reports_count: directReportsCount,
+            all_reports_count: allReportsCount,
+            occupancy_rate: 0,
+            average_rating: 0,
+            gross_revenue: 0,
+            total_appointments: 0,
+            completed_appointments: 0,
+            cancelled_appointments: 0,
+            total_reviews: 0,
+            services_offered: null,
+            is_active: true,
+            hired_at: null,
+            salary_base: null,
+            salary_type: null,
+          });
+        }
+
       return normalized;
     },
     enabled: !!businessId,
@@ -156,12 +249,16 @@ export function useBusinessHierarchy(businessId: string | null, initialFilters?:
 
     // Filtro por sede/ubicación
     if (filters.location_id) {
-      result = result.filter(emp => emp.location_id === filters.location_id);
+      result = result.filter(
+        emp => emp.location_id === filters.location_id || emp.role === 'owner' || !emp.location_id
+      );
     }
 
     // Filtro por ubicación (departmentId - legacy)
     if (filters.departmentId) {
-      result = result.filter(emp => emp.location_id === filters.departmentId);
+      result = result.filter(
+        emp => emp.location_id === filters.departmentId || emp.role === 'owner' || !emp.location_id
+      );
     }
 
     return result;

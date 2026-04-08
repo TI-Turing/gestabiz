@@ -110,9 +110,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
       }, 2000)
       
     } catch (error: any) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AuthScreen' } })
-      console.error('Error sending reset email:', error)
-      toast.error('Error al enviar email', {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AuthScreen' } })      toast.error('Error al enviar email', {
         description: error.message || 'Por favor intenta nuevamente',
         duration: 5000
       })

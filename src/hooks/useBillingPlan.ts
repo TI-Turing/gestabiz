@@ -68,7 +68,6 @@ export function useBillingPlan(businessId: string | null): UseBillingPlanResult 
           .maybeSingle()
 
         if (planError) {
-          console.error('[useBillingPlan] Error fetching plan:', planError)
           if (!cancelled) {
             setPlan(null)
             setUsage(null)
@@ -134,7 +133,6 @@ export function useBillingPlan(businessId: string | null): UseBillingPlanResult 
           })
         }
       } catch (err) {
-        console.error('[useBillingPlan] Unexpected error:', err)
         if (!cancelled) {
           setPlan(null)
           setUsage(null)

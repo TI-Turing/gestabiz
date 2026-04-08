@@ -333,7 +333,7 @@ export function PhoneVerificationModal({
 
         {/* Cajitas OTP */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium block text-center">Ingresa el código de 6 dígitos</Label>
+          <Label className="text-sm font-medium block text-center">Ingresa el código de 4 dígitos</Label>
           <div className="flex gap-2 justify-center" onPaste={handleOtpPaste}>
             {otpDigits.map((digit, i) => (
               <input

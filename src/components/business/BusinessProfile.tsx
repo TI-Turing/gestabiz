@@ -133,13 +133,6 @@ export default function BusinessProfile({
   const [locationBanners, setLocationBanners] = useState<Record<string, string>>({});
 
   // DEBUG: Log auth state
-  console.log('[BusinessProfile] RENDER - propUserId:', propUserId);
-  console.log('[BusinessProfile] RENDER - authContext:', authContext);
-  console.log('[BusinessProfile] RENDER - authLoading:', authLoading);
-  console.log('[BusinessProfile] RENDER - user:', user);
-  console.log('[BusinessProfile] RENDER - user?.id:', user?.id);
-  console.log('[BusinessProfile] RENDER - effectiveUserId:', effectiveUserId);
-  
   // Use effectiveUserId which can come from context or props
   const { isFavorite, toggleFavorite: toggleFavoriteFn } = useFavorites(effectiveUserId);
   
@@ -184,26 +177,18 @@ export default function BusinessProfile({
   });
 
   const handleToggleFavorite = async () => {
-    console.log('[BusinessProfile] handleToggleFavorite called');
-    console.log('[BusinessProfile] authLoading:', authLoading);
-    console.log('[BusinessProfile] effectiveUserId:', effectiveUserId);
-    console.log('[BusinessProfile] business:', business?.name);
-    
     // CRITICAL FIX: Check effectiveUserId instead of just user
     if (!effectiveUserId) {
-      console.log('[BusinessProfile] NO effectiveUserId - showing error toast');
       toast.error('Inicia sesión para guardar favoritos');
       return;
     }
     
     if (!business) {
-      console.log('[BusinessProfile] No business, returning');
       return;
     }
     
     console.log('[BusinessProfile] User verified (effectiveUserId:', effectiveUserId, '), calling toggleFavorite...');
     await toggleFavoriteFn(businessId, business.name);
-    console.log('[BusinessProfile] toggleFavorite completed');
   };
 
   const formatCurrency = (amount: number, currency: string = 'COP') => {
@@ -373,7 +358,6 @@ export default function BusinessProfile({
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessProfile' } })
       if (error instanceof Error) {
         // eslint-disable-next-line no-console
-        console.error('Error fetching business data:', error.message);
       }
     } finally {
       setLoading(false);
@@ -425,7 +409,6 @@ export default function BusinessProfile({
       // Error handling
       if (error instanceof Error) {
         // eslint-disable-next-line no-console
-        console.error('Error checking review eligibility:', error.message);
       }
     }
   }, [user, businessId]);
@@ -457,7 +440,6 @@ export default function BusinessProfile({
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessProfile' } })
       // Error is already handled by useReviews hook
       // eslint-disable-next-line no-console
-      console.error('Error submitting review:', error);
     }
   };
 
@@ -533,16 +515,16 @@ export default function BusinessProfile({
       <DialogContent hideClose className="max-w-[98vw] sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] p-0 overflow-hidden flex flex-col">
         <DialogHeader className="sr-only"><DialogTitle>{business.name}</DialogTitle></DialogHeader>
       <Card className="w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden bg-card flex flex-col shadow-2xl border-0">
-        {/* Header con banner - Mobile Responsive */}
-        <div className="relative">
+        {/* Header con banner - 16:9 Aspect Ratio */}
+        <div className="relative aspect-video">
           {business.banner_url ? (
             <img 
               src={business.banner_url} 
               alt={business.name}
-              className="w-full h-32 sm:h-40 lg:h-48 object-cover"
+              className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-32 sm:h-40 lg:h-48 bg-linear-to-r from-primary/20 to-secondary/20" />
+            <div className="w-full h-full bg-linear-to-r from-primary/20 to-secondary/20" />
           )}
           
           {/* Botones en header - Touch Optimized */}

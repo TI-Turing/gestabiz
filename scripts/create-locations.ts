@@ -48,29 +48,17 @@ function generateAddress(city: string): string {
   return `${street} ${number1} # ${number2}-${number3}, ${neighborhood}`;
 }
 
-async function createLocations() {
-  console.log('🚀 Creando sedes para los 30 negocios...\n');
-
-  // Obtener todos los negocios
+async function createLocations() {  // Obtener todos los negocios
   const { data: businesses, error: bizError } = await supabase
     .from('businesses')
     .select('id, name, city, state, phone')
     .order('created_at');
 
-  if (bizError || !businesses) {
-    console.error('❌ Error obteniendo negocios:', bizError);
-    return;
-  }
-
-  console.log(`✅ ${businesses.length} negocios encontrados\n`);
-
-  let totalLocations = 0;
+  if (bizError || !businesses) {    return;
+  }  let totalLocations = 0;
 
   for (const business of businesses) {
-    const numLocations = randomInt(1, 10);
-    console.log(`📍 ${business.name}: ${numLocations} sedes`);
-
-    for (let i = 0; i < numLocations; i++) {
+    const numLocations = randomInt(1, 10);    for (let i = 0; i < numLocations; i++) {
       const locationName = numLocations === 1 
         ? 'Sede Principal' 
         : `Sede ${['Principal', 'Norte', 'Sur', 'Centro', 'Este', 'Oeste', 'Mall', 'Plaza', 'Express', 'VIP'][i] || (i + 1)}`;
@@ -96,28 +84,17 @@ async function createLocations() {
             is_active: true,
           });
 
-        if (error) {
-          console.error(`   ❌ Error:`, error.message);
-          continue;
+        if (error) {          continue;
         }
 
         totalLocations++;
       } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.error(`   ❌ Error:`, error.message);
-        }
+        if (error instanceof Error) {        }
       }
     }
-  }
-
-  console.log(`\n✅ Total: ${totalLocations} sedes creadas`);
-  
-  // Verificar total
+  }  // Verificar total
   const { count } = await supabase
     .from('locations')
-    .select('*', { count: 'exact', head: true });
-  
-  console.log(`📊 Verificación: ${count} sedes en la base de datos`);
-}
+    .select('*', { count: 'exact', head: true });}
 
 await createLocations();

@@ -101,7 +101,6 @@ export function useLocationNames(regionId?: string, cityId?: string) {
               }
             } catch (e) {
               // Si falla, al menos no romper la UI
-              console.error('Error resolving region/country names:', e);
               void logger.error('useLocationNames: region/country resolution failed', e instanceof Error ? e : new Error(String(e)), { component: 'useLocationNames' })
             }
           }
@@ -129,7 +128,6 @@ export function useLocationNames(regionId?: string, cityId?: string) {
           setCityName(null);
         }
       } catch (error) {
-        console.error('Error fetching location names:', error);
         void logger.error('useLocationNames: fetchNames failed', error instanceof Error ? error : new Error(String(error)), { component: 'useLocationNames' })
       } finally {
         setLoading(false);

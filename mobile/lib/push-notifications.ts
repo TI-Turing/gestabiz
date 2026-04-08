@@ -19,9 +19,7 @@ Notifications.setNotificationHandler({
  */
 export async function registerForPushNotifications(): Promise<string | null> {
   // Solo en dispositivos físicos
-  if (!Device.isDevice) {
-    console.log('Push notifications requieren dispositivo físico')
-    return null
+  if (!Device.isDevice) {    return null
   }
 
   // Verificar permisos existentes
@@ -35,17 +33,12 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
 
   // Si no se concedieron permisos, retornar null
-  if (finalStatus !== 'granted') {
-    console.log('Permiso de notificaciones denegado')
-    return null
+  if (finalStatus !== 'granted') {    return null
   }
 
   try {
     // Obtener token de Expo
-    const token = (await Notifications.getExpoPushTokenAsync()).data
-    console.log('Push token obtenido:', token)
-
-    // Configurar canal de notificaciones (Android)
+    const token = (await Notifications.getExpoPushTokenAsync()).data    // Configurar canal de notificaciones (Android)
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
         name: 'default',
@@ -56,9 +49,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     }
 
     return token
-  } catch (error) {
-    console.error('Error obteniendo push token:', error)
-    return null
+  } catch (error) {    return null
   }
 }
 
@@ -83,14 +74,8 @@ export async function savePushToken(userId: string, token: string): Promise<void
         }
       )
 
-    if (error) {
-      console.error('Error guardando push token:', error)
-    } else {
-      console.log('Push token guardado exitosamente')
-    }
-  } catch (error) {
-    console.error('Error en savePushToken:', error)
-  }
+    if (error) {    } else {    }
+  } catch (error) {  }
 }
 
 /**
@@ -103,14 +88,8 @@ export async function removePushToken(token: string): Promise<void> {
       .delete()
       .eq('token', token)
 
-    if (error) {
-      console.error('Error eliminando push token:', error)
-    } else {
-      console.log('Push token eliminado exitosamente')
-    }
-  } catch (error) {
-    console.error('Error en removePushToken:', error)
-  }
+    if (error) {    } else {    }
+  } catch (error) {  }
 }
 
 /**

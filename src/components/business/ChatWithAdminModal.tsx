@@ -60,41 +60,25 @@ export default function ChatWithAdminModal({
   const error = adminError || employeesError;
 
   const handleStartChat = async (employeeId: string, employeeName: string) => {
-    try {
-      console.log('[ChatWithAdminModal] Starting chat with:', { employeeId, employeeName, businessId });
-      setCreatingChat(true);
+    try {      setCreatingChat(true);
       setSelectedEmployeeId(employeeId);
 
       const conversationId = await createOrGetConversation({
         other_user_id: employeeId,
         business_id: businessId,
         initial_message: `Hola ${employeeName}, me interesa conocer más sobre ${businessName}`,
-      });
-
-      console.log('[ChatWithAdminModal] Conversation created:', conversationId);
-
-      if (conversationId) {
-        toast.success(`Chat iniciado con ${employeeName}`);
-        console.log('[ChatWithAdminModal] Closing modals and calling onChatStarted');
-        // Cerrar el modal de chat
+      });      if (conversationId) {
+        toast.success(`Chat iniciado con ${employeeName}`);        // Cerrar el modal de chat
         onClose();
         // Cerrar el modal padre (BusinessProfile) si se proporcionó
-        if (onCloseParent) {
-          console.log('[ChatWithAdminModal] Closing parent modal');
-          onCloseParent();
+        if (onCloseParent) {          onCloseParent();
         }
         // Llamar al callback de chat iniciado con la conversationId
-        onChatStarted(conversationId);
-        console.log('[ChatWithAdminModal] Chat flow completed successfully');
-      } else {
-        console.error('[ChatWithAdminModal] No conversationId returned');
-        toast.error('No se pudo crear la conversación');
+        onChatStarted(conversationId);      } else {        toast.error('No se pudo crear la conversación');
       }
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ChatWithAdminModal' } })
-      // eslint-disable-next-line no-console
-      console.error('[ChatWithAdminModal] Error starting chat:', err);
-      toast.error('No se pudo iniciar el chat. Intenta nuevamente.');
+      // eslint-disable-next-line no-console      toast.error('No se pudo iniciar el chat. Intenta nuevamente.');
     } finally {
       setCreatingChat(false);
       setSelectedEmployeeId(null);
@@ -211,9 +195,7 @@ export default function ChatWithAdminModal({
                           }
                         } catch (err) {
                           Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ChatWithAdminModal' } })
-                          // eslint-disable-next-line no-console
-                          console.error('Error starting chat:', err);
-                          toast.error('No se pudo iniciar el chat.');
+                          // eslint-disable-next-line no-console                          toast.error('No se pudo iniciar el chat.');
                         } finally {
                           setCreatingChat(false);
                         }

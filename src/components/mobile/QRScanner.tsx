@@ -45,9 +45,7 @@ export function QRScanner({ onScan, onCancel, isOpen }: QRScannerProps) {
         )
       }
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'QRScanner' } })
-      console.error('Error requesting camera permission:', error)
-      error('No se pudo solicitar permiso de cámara', { title: 'Error' })
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'QRScanner' } })      error('No se pudo solicitar permiso de cámara', { title: 'Error' })
     }
   }
 

@@ -145,7 +145,6 @@ export function EmployeeDashboard({
     // Aquí puedes usar el context si necesitas pasarlo a componentes hijos
     if (context) {
       // eslint-disable-next-line no-console
-      console.log('Employee navigation context:', context)
     }
   }
 
@@ -205,6 +204,7 @@ export function EmployeeDashboard({
       id: 'my-clients',
       label: 'Mis Clientes',
       icon: <Users className="h-5 w-5" />
+
     }
   ]
 
@@ -228,7 +228,6 @@ export function EmployeeDashboard({
             <MyEmployments 
               employeeId={currentUser.id} 
               onJoinBusiness={handleJoinBusiness}
-              hasPendingRequest={hasPendingRequest}
             />
           </div>
         )
@@ -236,7 +235,7 @@ export function EmployeeDashboard({
         return (
           <EmployeeOnboarding
             user={currentUser}
-            onRequestCreated={() => setActivePage('employments')}
+            onRequestCreated={() => setTimeout(() => setActivePage('employments'), 2000)}
           />
         )
       case 'vacancies':

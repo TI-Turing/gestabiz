@@ -1,18 +1,19 @@
 /* eslint-disable no-console */
 import React, { useState, useEffect, useMemo, useRef, useLayoutEffect, useCallback } from 'react';
 import * as Sentry from '@sentry/react'
-import { Calendar, Clock, ChevronLeft, ChevronRight, User, X, Check, AlertCircle, Eye, EyeOff, DollarSign, Mail } from 'lucide-react';
+import { Calendar, Clock, ChevronLeft, ChevronRight, User, X, Check, AlertCircle, Eye, EyeOff, DollarSign, Mail, Maximize2, Minimize2 } from 'lucide-react';
 import { Money } from '@phosphor-icons/react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { format, addDays, subDays, parseISO, isWithinInterval } from 'date-fns';
+import { format, addDays, subDays, parseISO, isWithinInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { usePreferredLocation } from '@/hooks/usePreferredLocation';
 import { useTaxCalculation } from '@/hooks/useTaxCalculation';
 import type { TaxType } from '@/types/accounting.types';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
 const DEFAULT_TIME_ZONE = 'America/Bogota';
@@ -49,7 +50,6 @@ const extractTimeZoneParts = (date: Date, timeZone: string = DEFAULT_TIME_ZONE) 
     return result;
   } catch (error) {
     Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AppointmentsCalendar' } })
-    console.warn('⚠️ toLocaleString falló, usando offset manual', error);
   }
   
   // Método 2: Fallback con offset manual (más confiable)
@@ -481,6 +481,11 @@ const AppointmentModal = React.memo<AppointmentModalProps>(({
 export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ businessId: propBusinessId }) => {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showMiniCalendar, setShowMiniCalendar] = useState(false);
+  const [miniCalendarMonth, setMiniCalendarMonth] = useState(new Date());
+  const [miniCalPos, setMiniCalPos] = useState({ top: 0, left: 0 });
+  const miniCalBtnRef = useRef<HTMLButtonElement>(null);
+  const miniCalRef = useRef<HTMLDivElement>(null);
   const isSelectedDateToday = useMemo(
     () => isSameDayInTimeZone(selectedDate, new Date()),
     [selectedDate]
@@ -495,6 +500,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   const serviceBtnRef = useRef<HTMLButtonElement>(null);
   const employeeBtnRef = useRef<HTMLButtonElement>(null);
   const [showServices, setShowServices] = useState(true);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [showFilters, setShowFilters] = useState(true);
 
   // Filter states - now as arrays for multi-select
@@ -571,7 +577,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       }
     } catch (e) {
       Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
-      console.warn('Failed to load cached filters', e);
     }
   }, [currentBusinessId]);
 
@@ -583,7 +588,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       localStorage.setItem(`appointments-filters-${currentBusinessId}`, JSON.stringify(payload));
     } catch (e) {
       Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
-      console.warn('Failed to persist filters', e);
     }
   }, [currentBusinessId, filterStatus, filterLocation, filterService, filterEmployee]);
 
@@ -655,14 +659,11 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         .order('start_time');
 
       if (error) {
-        console.error('❌ Error al buscar citas:', error);
         return;
       }
 
       if (DEBUG_MODE) {
-        console.log(`✅ Citas encontradas: ${data?.length || 0}`);
         if (data && data.length > 0) {
-          console.log('📋 [DEBUG] Raw appointment data:', data[0]);
         }
       }
 
@@ -710,7 +711,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       }));
 
       if (DEBUG_MODE) {
-        console.log('📦 [fetchAppointments] Citas formateadas:', formattedAppointments);
         console.log('📊 [fetchAppointments] Resumen:', {
           total: formattedAppointments.length,
           employees: employeeIds,
@@ -746,8 +746,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
 
       setIsLoading(true);
       try {
-        console.log('🔍 [AppointmentsCalendar] User completo:', user);
-        
         // Usar businessId de la prop si está disponible (desde AdminDashboard)
         let resolvedBusinessId = propBusinessId;
         
@@ -782,9 +780,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         }
 
         setCurrentBusinessId(resolvedBusinessId);
-        
-        console.log('📍 [AppointmentsCalendar] Cargando locations para business:', resolvedBusinessId);
-
         // Get all locations for filter with their hours
         const { data: locationsData, error: locationError } = await supabase
           .from('locations')
@@ -792,9 +787,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           .eq('business_id', resolvedBusinessId);
 
         if (locationError) throw locationError;
-        
-        console.log('📍 [AppointmentsCalendar] Locations cargadas:', locationsData?.length || 0, locationsData);
-
         const formattedLocations: LocationWithHours[] = (locationsData || []).map(loc => ({
           id: loc.id,
           name: loc.name,
@@ -832,7 +824,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         // Get employee services - FILTERED BY BUSINESS_ID AND LOCATION if selected
         let employeeServicesQuery = supabase
           .from('employee_services')
-          .select('employee_id, service_id, services(name)')
+          .select('employee_id, service_id, services(name, is_active)')
           .eq('business_id', resolvedBusinessId); // ✅ FIX: Filtrar por negocio actual
 
         if (employeeIds.length > 0) {
@@ -843,15 +835,11 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           if (selectedLocationId) {
             employeeServicesQuery = employeeServicesQuery.eq('location_id', selectedLocationId);
             if (DEBUG_MODE) {
-              console.log('🔍 [AppointmentsCalendar] Filtrando employee_services por business + location:', {
-                business: resolvedBusinessId,
-                location: selectedLocationId
-              });
             }
           }
         }
 
-        let employeeServicesData: Array<{ employee_id: string; service_id?: string; services?: { name?: string } | null }> = [];
+        let employeeServicesData: Array<{ employee_id: string; service_id?: string; services?: { name?: string; is_active?: boolean } | null }> = [];
         if (employeeIds.length > 0) {
           const response = await employeeServicesQuery;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -861,9 +849,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             services: Array.isArray(item.services) ? item.services[0] : item.services,
           }));
           if (response.error) {
-            console.error('❌ Error cargando employee_services:', response.error);
             if (DEBUG_MODE) {
-              console.log('Error details:', response.error);
             }
           }
         }
@@ -873,7 +859,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           if (!acc[es.employee_id]) {
             acc[es.employee_id] = [];
           }
-          if (es.services && typeof es.services === 'object' && 'name' in es.services) {
+          if (es.services && typeof es.services === 'object' && 'name' in es.services && es.services.is_active !== false) {
             acc[es.employee_id].push(es.services.name as string);
           }
           return acc;
@@ -918,10 +904,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         if (employeeIds.length > 0 && selectedLocationId) {
           // CASE 1: Employee + Location selected → Use employee_services filtered by both
           if (DEBUG_MODE) {
-            console.log('🎯 [AppointmentsCalendar] Filtrando servicios por EMPLEADO + SEDE:', {
-              empleados: employeeIds,
-              sede: selectedLocationId
-            });
           }
           
           const { data: empServData, error: empServError } = await supabase
@@ -932,7 +914,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             .eq('location_id', selectedLocationId);
 
           if (empServError) {
-            console.error('❌ Error cargando employee_services para filtro:', empServError);
             setServices([]);
             return;
           }
@@ -947,17 +928,9 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
 
           availableServices = Array.from(serviceMap.entries()).map(([id, name]) => ({ id, name }));
           
-          if (DEBUG_MODE) {
-            console.log('✅ [AppointmentsCalendar] Servicios del empleado en esa sede:', {
-              total: availableServices.length,
-              servicios: availableServices.map(s => s.name)
-            });
-          }
-          
         } else if (selectedLocationId) {
           // CASE 2: Only location selected → Use location_services
           if (DEBUG_MODE) {
-            console.log('📍 [AppointmentsCalendar] Filtrando servicios solo por SEDE:', selectedLocationId);
           }
           
           const { data: locationServicesData, error: locServError } = await supabase
@@ -966,7 +939,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             .eq('location_id', selectedLocationId);
 
           if (locServError) {
-            console.error('❌ Error cargando location_services:', locServError);
             setServices([]);
             return;
           }
@@ -981,7 +953,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
               .in('id', availableServiceIds);
 
             if (servError) {
-              console.error('❌ Error cargando services:', servError);
               setServices([]);
               return;
             }
@@ -989,17 +960,9 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             availableServices = (servicesData || []).map(s => ({ id: s.id, name: s.name }));
           }
           
-          if (DEBUG_MODE) {
-            console.log('✅ [AppointmentsCalendar] Servicios de la sede:', {
-              total: availableServices.length,
-              servicios: availableServices.map(s => s.name)
-            });
-          }
-          
         } else {
           // CASE 3: No filters → Load all business services
           if (DEBUG_MODE) {
-            console.log('🌐 [AppointmentsCalendar] Cargando TODOS los servicios del negocio');
           }
           
           const { data: servicesData, error: servError } = await supabase
@@ -1008,7 +971,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             .eq('business_id', resolvedBusinessId);
 
           if (servError) {
-            console.error('❌ Error cargando services:', servError);
             setServices([]);
             return;
           }
@@ -1016,9 +978,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           availableServices = (servicesData || []).map(s => ({ id: s.id, name: s.name }));
           
           if (DEBUG_MODE) {
-            console.log('✅ [AppointmentsCalendar] Servicios globales:', {
-              total: availableServices.length
-            });
           }
         }
 
@@ -1028,7 +987,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         // cuando business.id esté disponible
       } catch (error) {
         Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AppointmentsCalendar' } })
-        console.error('Error al cargar datos del calendario de citas', error);
         toast.error('Error al cargar los datos');
       } finally {
         setIsLoading(false);
@@ -1042,13 +1000,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   useEffect(() => {
     if (!currentBusinessId) return;
     
-    if (DEBUG_MODE) {
-      console.log('🔄 [Effect] Fetch appointments disparado por:', {
-        currentBusinessId,
-        selectedDate: format(selectedDate, 'yyyy-MM-dd')
-      });
-    }
-    
     fetchAppointments(currentBusinessId, selectedDate);
   }, [currentBusinessId, selectedDate, fetchAppointments]);
 
@@ -1060,7 +1011,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       localStorage.setItem(`appointments-filters-${currentBusinessId}`, JSON.stringify(payload));
     } catch (e) {
       Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
-      console.warn('Failed to persist filters', e);
     }
   }, [currentBusinessId, filterStatus, filterLocation, filterService, filterEmployee]);
 
@@ -1215,7 +1165,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       }
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AppointmentsCalendar' } })
-      console.error('Error al completar la cita en el calendario admin', error);
       toast.error('Error al completar la cita');
     }
   };
@@ -1306,10 +1255,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   // Calcular horario operativo basado en configuración y filtros
   const operatingHours = useMemo((): { openHour: number; closeHour: number } | null => {
     if (DEBUG_MODE) {
-      console.log('🕐 [operatingHours] Calculando horario operativo...');
-      console.log('  - Total locations:', locations.length);
-      console.log('  - preferredLocationId:', preferredLocationId);
-      console.log('  - filterLocation:', filterLocation);
     }
     
     // Determinar qué sedes considerar
@@ -1357,9 +1302,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     
     if (!allSameSchedule) {
       if (DEBUG_MODE) {
-        console.log('  ❌ Las sedes tienen horarios diferentes, no aplicar scroll automático');
         selectedLocations.forEach(loc => {
-          console.log(`    - ${loc.name}: ${loc.opens_at} - ${loc.closes_at}`);
         });
       }
       return null;
@@ -1370,9 +1313,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     const closeHour = Number.parseInt(firstCloses.split(':')[0], 10);
     
     if (DEBUG_MODE) {
-      console.log('  ✅ Todas las sedes tienen el mismo horario');
-      console.log('  - Hora apertura:', openHour, ':00');
-      console.log('  - Hora cierre:', closeHour, ':00');
     }
     
     return { openHour, closeHour };
@@ -1418,14 +1358,80 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   }, [appointments, filterStatus, filterLocation, filterService, filterEmployee]);
 
   // ✅ Filtrar empleados a mostrar basado en filterEmployee
+  // Días del mini-calendario mensual
+  const miniCalDays = useMemo(() => {
+    const start = startOfWeek(startOfMonth(miniCalendarMonth), { weekStartsOn: 1 });
+    const end = endOfWeek(endOfMonth(miniCalendarMonth), { weekStartsOn: 1 });
+    return eachDayOfInterval({ start, end });
+  }, [miniCalendarMonth]);
+
+  // ESC cierra modo maximizado
+  useEffect(() => {
+    if (!isMaximized) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsMaximized(false);
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [isMaximized]);
+
+  // Click fuera cierra el mini-calendario
+  useEffect(() => {
+    if (!showMiniCalendar) return;
+    const handle = (e: MouseEvent) => {
+      if (
+        miniCalRef.current && !miniCalRef.current.contains(e.target as Node) &&
+        miniCalBtnRef.current && !miniCalBtnRef.current.contains(e.target as Node)
+      ) {
+        setShowMiniCalendar(false);
+      }
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [showMiniCalendar]);
+
+  // Empleados que ofrecen al menos un servicio activo del negocio
+  const employeesEligible = useMemo(() =>
+    employees.filter(emp => (emp.services ?? []).length > 0)
+  , [employees]);
+
+  // Limpiar filterEmployee de IDs que no tienen servicios activos (p.ej. admin sin servicios)
+  useEffect(() => {
+    if (employeesEligible.length === 0) return;
+    const eligibleIds = new Set(employeesEligible.map(e => e.user_id));
+    const sanitized = filterEmployee.filter(id => eligibleIds.has(id));
+    if (sanitized.length !== filterEmployee.length) {
+      setFilterEmployee(sanitized);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employeesEligible]);
+
   const employeesToDisplay = useMemo(() => {
     // Si el filtro está vacío, no mostrar ningún empleado
     if (filterEmployee.length === 0) {
       return [];
     }
     // Mostrar solo empleados seleccionados en el filtro
-    return employees.filter(emp => filterEmployee.includes(emp.user_id));
-  }, [employees, filterEmployee]);
+    // Solo empleados seleccionados que ofrezcan al menos un servicio activo
+    const byEmployee = employees.filter(emp =>
+      filterEmployee.includes(emp.user_id) &&
+      (emp.services ?? []).length > 0
+    );
+
+    // Si hay filtro de servicios activo, ocultar empleados que no ofrecen ninguno
+    if (filterService.length > 0) {
+      return byEmployee.filter(emp => {
+        const empServiceNames = emp.services ?? [];
+        // Comparar contra los nombres de los servicios filtrados
+        const filteredServiceNames = services
+          .filter(s => filterService.includes(s.id))
+          .map(s => s.name);
+        return empServiceNames.some(sn => filteredServiceNames.includes(sn));
+      });
+    }
+
+    return byEmployee;
+  }, [employees, filterEmployee, filterService, services]);
 
   // Pre-calcular mapa de citas por empleado y hora (OPTIMIZACIÓN: evita 24+ filtros por render)
   const appointmentsBySlot = useMemo(() => {
@@ -1492,10 +1498,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     
     // Log detallado para debugging (solo en dev)
     if (DEBUG_MODE) {
-      console.log('🕐 [Calendario] Debugging hora actual:');
       console.log('  - Hora sistema (UTC):', now.toISOString());
-      console.log('  - Hora Colombia extraída:', `${hour}:${minute}`);
-      console.log('  - Total minutos desde medianoche:', hour * 60 + minute);
     }
     
     // Calcular posición relativa a las 24 horas completas
@@ -1505,7 +1508,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     
     if (DEBUG_MODE) {
       console.log('  - Porcentaje calculado:', `${percentage.toFixed(2)}%`);
-      console.log('  - Debe aparecer en la hora:', hour);
     }
 
     return percentage;
@@ -1514,13 +1516,9 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   // Scroll automático al horario de operación o a la hora actual
   useEffect(() => {
     if (DEBUG_MODE) {
-      console.log('📜 [ScrollEffect] Ejecutando scroll automático...');
-      console.log('  - showFilters:', showFilters);
-      console.log('  - timelineRef.current:', !!timelineRef.current);
     }
     
     if (!timelineRef.current && DEBUG_MODE) {
-      console.log('  ⚠️ Ref no está disponible en el primer intento');
     }
 
     // Usar múltiples intentos para asegurar que el DOM esté listo
@@ -1541,12 +1539,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       let scrollPosition = 0;
 
       if (DEBUG_MODE) {
-        console.log('  ✅ Ref encontrado en intento', attempt + 1);
-        console.log('  - scrollHeight:', scrollHeight);
-        console.log('  - containerHeight:', containerHeight);
-        console.log('  - isSelectedDateToday:', isSelectedDateToday);
-        console.log('  - currentTimePosition:', currentTimePosition);
-        console.log('  - operatingHours:', operatingHours);
       }
 
       // Prioridad 1: Si es hoy y tenemos posición actual, scroll a hora actual
@@ -1554,9 +1546,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         const linePxPosition = (currentTimePosition / 100) * scrollHeight;
         scrollPosition = linePxPosition - (containerHeight / 2);
         if (DEBUG_MODE) {
-          console.log('  ✅ PRIORIDAD 1: Scroll a hora actual');
-          console.log('    - linePxPosition:', linePxPosition);
-          console.log('    - scrollPosition final:', scrollPosition);
         }
       } 
       // Prioridad 2: Si tenemos horario operativo, scroll al inicio del horario
@@ -1567,10 +1556,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         // Dejar un poco de margen arriba (restar 50px)
         scrollPosition = Math.max(0, openPxPosition - 50);
         if (DEBUG_MODE) {
-          console.log('  ✅ PRIORIDAD 2: Scroll a hora de apertura');
-          console.log('    - openHour:', operatingHours.openHour);
-          console.log('    - openPercentage:', openPercentage, '%');
-          console.log('    - openPxPosition:', openPxPosition);
           console.log('    - scrollPosition final (con margen -50px):', scrollPosition);
         }
       } else {
@@ -1645,17 +1630,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
 
   return (
     <div className="space-y-6">
-      {/* Console log for debugging - outside JSX (solo en dev) */}
-      {DEBUG_MODE && (() => {
-        console.log('📋 [RENDER] Estado actual del calendario:', {
-          totalAppointments: appointments.length,
-          filteredAppointments: filteredAppointments.length,
-          totalEmployees: employees.length,
-          selectedDate: format(selectedDate, 'yyyy-MM-dd', { locale: es })
-        });
-        return null;
-      })()}
-      
       {/* Header with date navigation */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Calendario de Citas</h2>
@@ -1689,6 +1663,27 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90"
           >
             Hoy
+          </button>
+
+          <button
+            ref={miniCalBtnRef}
+            onClick={() => {
+              if (!showMiniCalendar && miniCalBtnRef.current) {
+                const rect = miniCalBtnRef.current.getBoundingClientRect();
+                setMiniCalPos({ top: rect.bottom + 8, left: Math.max(4, rect.right - 288) });
+              }
+              setMiniCalendarMonth(new Date(selectedDate));
+              setShowMiniCalendar(prev => !prev);
+            }}
+            className={cn(
+              'px-4 py-2 border border-border rounded-md font-medium flex items-center gap-2 transition-colors',
+              showMiniCalendar
+                ? 'bg-muted text-foreground'
+                : 'bg-background hover:bg-muted text-foreground'
+            )}
+          >
+            <Calendar className="h-4 w-4" />
+            Ir a fecha
           </button>
         </div>
       </div>
@@ -1903,12 +1898,12 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                     <div className="px-2 py-2 border-b border-border">
                       <button
                         className="w-full text-left px-3 py-2 text-sm font-medium hover:bg-muted/40 rounded"
-                        onClick={() => setFilterEmployee(employees.map(e => e.user_id))}
+                        onClick={() => setFilterEmployee(employeesEligible.map(e => e.user_id))}
                       >
                         Seleccionar Todos
                       </button>
                     </div>
-                    {employees.map(employee => (
+                    {employeesEligible.map(employee => (
                       <label key={employee.user_id} className="flex items-center px-3 py-2 hover:bg-muted/50 cursor-pointer">
                         <input
                           type="checkbox"
@@ -1934,9 +1929,15 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       </div>
 
       {/* Calendar Grid */}
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        {/* Services Toggle Button */}
-        <div className="bg-muted/30 border-b border-border px-4 py-2 flex items-center justify-end gap-2">
+      <div className={cn(
+        'bg-card border border-border',
+        isMaximized
+          ? 'fixed inset-0 z-[60] flex flex-col overflow-hidden'
+          : 'rounded-lg overflow-hidden'
+      )}>
+        {/* Calendar Toolbar */}
+        <div className="bg-muted/30 border-b border-border px-4 py-2 flex items-center justify-between gap-2">
+          {/* Izquierda: Toggle servicios */}
           <button
             onClick={() => setShowServices(!showServices)}
             className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors duration-200 font-medium"
@@ -1953,9 +1954,36 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
               </>
             )}
           </button>
+          {/* Derecha: hint ESC + botón maximizar */}
+          <div className="flex items-center gap-3">
+            {isMaximized && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-muted border border-border rounded-md text-xs text-foreground font-medium">
+                Presiona
+                <kbd className="px-1.5 py-0.5 font-mono bg-background border border-border rounded shadow-sm">Esc</kbd>
+                para salir del modo pantalla completa
+              </div>
+            )}
+            <button
+              onClick={() => setIsMaximized(prev => !prev)}
+              title={isMaximized ? 'Minimizar calendario (Esc)' : 'Maximizar calendario'}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-background hover:bg-muted text-muted-foreground hover:text-foreground border border-border rounded-lg transition-colors duration-200 font-medium"
+            >
+              {isMaximized ? (
+                <>
+                  <Minimize2 className="h-4 w-4" />
+                  Minimizar
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="h-4 w-4" />
+                  Maximizar
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className={cn('overflow-x-auto', isMaximized && 'flex-1 min-h-0')}>
           {employeesToDisplay.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
               <User className="h-16 w-16 text-muted-foreground/40 mb-4" />
@@ -1968,6 +1996,8 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             </div>
           ) : (
             <div className="inline-block min-w-full">
+              {/* Scroll container wraps header + rows so sticky header aligns with body columns */}
+              <div ref={timelineRef} className={cn('relative overflow-y-auto', isMaximized ? 'max-h-[calc(100vh-110px)]' : 'max-h-[600px]')}>
               {/* Header with employee names */}
               <div className="flex border-b-2 border-border bg-muted/50 sticky top-0 z-20">
                 <div className="w-20 shrink-0 p-3 font-semibold text-sm text-muted-foreground border-r-2 border-border bg-background">
@@ -2015,7 +2045,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             </div>
 
             {/* Time slots */}
-            <div ref={timelineRef} className="relative max-h-[600px] overflow-y-auto">
+            <div className="relative">
               {hours.map(hour => {
                 const isWorkHour = isBusinessHour(hour);
                 const workHourClass = isWorkHour ? '' : 'bg-muted/40';
@@ -2101,6 +2131,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
               })}
             </div>
           </div>
+        </div>
           )}
         </div>
       </div>
@@ -2197,6 +2228,85 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           onConfirm={handleConfirmAppointment}
           onResendConfirmation={handleResendConfirmation}
         />
+      )}
+
+      {/* Mini-calendario flotante */}
+      {showMiniCalendar && createPortal(
+        <div
+          ref={miniCalRef}
+          style={{ top: miniCalPos.top, left: miniCalPos.left }}
+          className="fixed z-[9999] bg-card border border-border rounded-xl shadow-2xl p-4 w-72"
+        >
+          {/* Navegación de mes */}
+          <div className="flex items-center justify-between mb-3">
+            <button
+              onClick={() => setMiniCalendarMonth(subMonths(miniCalendarMonth, 1))}
+              className="p-1.5 hover:bg-muted rounded-md transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4 text-foreground" />
+            </button>
+            <span className="text-sm font-semibold text-foreground capitalize">
+              {format(miniCalendarMonth, 'MMMM yyyy', { locale: es })}
+            </span>
+            <button
+              onClick={() => setMiniCalendarMonth(addMonths(miniCalendarMonth, 1))}
+              className="p-1.5 hover:bg-muted rounded-md transition-colors"
+            >
+              <ChevronRight className="h-4 w-4 text-foreground" />
+            </button>
+          </div>
+
+          {/* Cabecera de días */}
+          <div className="grid grid-cols-7 mb-1">
+            {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map(d => (
+              <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1">
+                {d}
+              </div>
+            ))}
+          </div>
+
+          {/* Grilla de días */}
+          <div className="grid grid-cols-7 gap-0.5">
+            {miniCalDays.map(day => {
+              const isCurrentMonth = isSameMonth(day, miniCalendarMonth);
+              const isToday = isSameDay(day, new Date());
+              const isSelected = isSameDay(day, selectedDate);
+              return (
+                <button
+                  key={day.toISOString()}
+                  onClick={() => {
+                    setSelectedDate(day);
+                    setShowMiniCalendar(false);
+                  }}
+                  className={cn(
+                    'h-8 w-full rounded-md text-xs font-medium transition-colors',
+                    !isCurrentMonth && 'text-muted-foreground/40',
+                    isCurrentMonth && !isToday && !isSelected && 'hover:bg-muted text-foreground',
+                    isToday && !isSelected && 'bg-primary/10 text-primary font-bold',
+                    isSelected && 'bg-primary text-primary-foreground font-bold',
+                  )}
+                >
+                  {format(day, 'd')}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Atajo "Ir a hoy" */}
+          <div className="mt-3 pt-3 border-t border-border">
+            <button
+              onClick={() => {
+                setSelectedDate(new Date());
+                setMiniCalendarMonth(new Date());
+                setShowMiniCalendar(false);
+              }}
+              className="w-full py-1.5 text-xs font-medium text-primary hover:bg-primary/10 rounded-md transition-colors"
+            >
+              Ir a hoy
+            </button>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

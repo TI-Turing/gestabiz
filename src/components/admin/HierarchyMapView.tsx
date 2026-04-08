@@ -183,7 +183,7 @@ export function HierarchyMapView({ employees, onEmployeeSelect, focusEmployeeId 
             <div className="w-0.5 h-8 bg-border shrink-0" />
 
             {/* Fila de hijos */}
-            <div className="flex items-start gap-8">
+            <div className="flex flex-wrap items-start justify-center gap-4 md:gap-8">
               {node.children.map((child, i) => {
                 const isFirst = i === 0
                 const isLast = i === node.children.length - 1
@@ -227,63 +227,60 @@ export function HierarchyMapView({ employees, onEmployeeSelect, focusEmployeeId 
   }
 
   return (
-    <div ref={scrollContainerRef} className="relative h-full min-h-[600px] overflow-auto bg-accent/20 rounded-lg">
-      {/* ZOOM CONTROLS */}
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2 bg-background rounded-lg border p-2 shadow-sm">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleZoomOut}
-          disabled={zoom <= 50}
-          className="h-8 w-8 p-0"
-        >
-          <ZoomOut className="h-4 w-4" />
-        </Button>
-        <span className="text-sm font-medium w-12 text-center">{zoom}%</span>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleZoomIn}
-          disabled={zoom >= 150}
-          className="h-8 w-8 p-0"
-        >
-          <ZoomIn className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleResetZoom}
-          className="h-8 w-8 p-0"
-        >
-          <Maximize2 className="h-4 w-4" />
-        </Button>
+    <div className="flex flex-col h-full min-h-[500px] bg-accent/20 rounded-lg overflow-hidden">
+      {/* TOOLBAR — siempre visible, no flotante */}
+      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-background border-b border-border shrink-0 flex-wrap">
+        {/* Expandir / Colapsar */}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExpandAll}>
+            Expandir todo
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleCollapseAll}>
+            Colapsar todo
+          </Button>
+        </div>
+
+        {/* Zoom */}
+        <div className="flex items-center gap-1 bg-muted rounded-lg px-1 py-0.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleZoomOut}
+            disabled={zoom <= 50}
+            className="h-8 w-8 p-0"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          <span className="text-sm font-medium w-10 text-center tabular-nums">{zoom}%</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleZoomIn}
+            disabled={zoom >= 150}
+            className="h-8 w-8 p-0"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleResetZoom}
+            className="h-8 w-8 p-0"
+          >
+            <Maximize2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* EXPAND/COLLAPSE CONTROLS */}
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExpandAll}
+      {/* ORGANIGRAMA — scrollable */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto">
+        <div
+          className="p-6 sm:p-12 w-full transition-transform"
+          style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}
         >
-          Expandir todo
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleCollapseAll}
-        >
-          Colapsar todo
-        </Button>
-      </div>
-
-      {/* ORGANIGRAMA */}
-      <div
-        className="p-12 w-max mx-auto transition-transform"
-        style={{ transform: `scale(${zoom / 100})`, transformOrigin: 'top center' }}
-      >
-        <div className="flex items-start justify-center gap-16">
-          {tree.map(node => renderNode(node))}
+          <div className="flex flex-col items-center gap-8 md:flex-row md:justify-center md:gap-16">
+            {tree.map(node => renderNode(node))}
+          </div>
         </div>
       </div>
     </div>

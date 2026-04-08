@@ -6,22 +6,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-async function createLocationServices() {
-  console.log('🚀 Vinculando servicios con ubicaciones...\n');
-
-  // Obtener todos los negocios
+async function createLocationServices() {  // Obtener todos los negocios
   const { data: businesses, error: bizError } = await supabase
     .from('businesses')
     .select('id, name');
 
-  if (bizError || !businesses) {
-    console.error('❌ Error obteniendo negocios:', bizError?.message);
-    return;
-  }
-
-  console.log(`✅ ${businesses.length} negocios encontrados\n`);
-
-  let totalAssignments = 0;
+  if (bizError || !businesses) {    return;
+  }  let totalAssignments = 0;
 
   for (const business of businesses) {
     // Obtener ubicaciones del negocio
@@ -38,12 +29,7 @@ async function createLocationServices() {
       .select('id, name')
       .eq('business_id', business.id);
 
-    if (!services || services.length === 0) continue;
-
-    console.log(`📍 ${business.name}:`);
-    console.log(`   ${locations.length} ubicaciones, ${services.length} servicios`);
-
-    // Vincular TODOS los servicios con TODAS las ubicaciones del negocio
+    if (!services || services.length === 0) continue;    // Vincular TODOS los servicios con TODAS las ubicaciones del negocio
     for (const location of locations) {
       for (const service of services) {
         const { error } = await supabase
@@ -54,25 +40,13 @@ async function createLocationServices() {
             is_active: true,
           });
 
-        if (error) {
-          console.error(`   ❌ Error vinculando ${service.name} con ${location.name}:`, error.message);
-        } else {
+        if (error) {        } else {
           totalAssignments++;
         }
       }
-    }
-
-    console.log(`   ✓ ${locations.length * services.length} vinculaciones creadas\n`);
-  }
-
-  console.log(`✅ Total: ${totalAssignments} vinculaciones de servicios-ubicaciones creadas`);
-
-  // Verificación
+    }  }  // Verificación
   const { data: verification } = await supabase
     .from('location_services')
-    .select('id', { count: 'exact', head: true });
-
-  console.log(`📊 Verificación: ${verification ? 'OK' : 'ERROR'}`);
-}
+    .select('id', { count: 'exact', head: true });}
 
 createLocationServices();

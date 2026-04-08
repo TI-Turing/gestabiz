@@ -284,9 +284,7 @@ export function useClientDashboard(clientId: string | null) {
         void logger.error('useClientDashboard: operation failed', edgeFunctionError instanceof Error ? edgeFunctionError : new Error(String(edgeFunctionError)), { component: 'useClientDashboard' })
         lastError = edgeFunctionError instanceof Error
           ? edgeFunctionError
-          : new Error(String(edgeFunctionError));
-        console.warn('[useClientDashboard] Edge Function failed, falling back to RPC', lastError);
-      }
+          : new Error(String(edgeFunctionError));      }
       */
 
       // ✅ Usar RPC directamente (Edge Function deshabilitada temporalmente)

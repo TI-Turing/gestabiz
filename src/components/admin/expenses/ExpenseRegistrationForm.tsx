@@ -209,9 +209,7 @@ export const ExpenseRegistrationForm: React.FC<ExpenseRegistrationFormProps> = (
 
       if (onSuccess) onSuccess();
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ExpenseRegistrationForm' } })
-      console.error('Error registering expense:', error);
-      toast.error('Error al registrar el egreso');
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ExpenseRegistrationForm' } })      toast.error('Error al registrar el egreso');
     } finally {
       setLoading(false);
     }

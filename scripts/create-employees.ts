@@ -20,49 +20,28 @@ function randomElement<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)];
 }
 
-async function createEmployees() {
-  console.log('🚀 Creando 15 empleados vinculados a negocios...\n');
-
-  // Obtener 15 usuarios para usar como empleados (usuarios 26-40)
+async function createEmployees() {  // Obtener 15 usuarios para usar como empleados (usuarios 26-40)
   const { data: employeeUsers, error: userError } = await supabase
     .from('profiles')
     .select('id, email, full_name, phone')
     .order('created_at')
     .range(25, 39); // Usuarios 26-40
 
-  if (userError || !employeeUsers || employeeUsers.length < 15) {
-    console.error('❌ Error obteniendo usuarios:', userError);
-    return;
-  }
-
-  console.log(`✅ ${employeeUsers.length} usuarios disponibles para empleados\n`);
-
-  // Obtener todos los negocios
+  if (userError || !employeeUsers || employeeUsers.length < 15) {    return;
+  }  // Obtener todos los negocios
   const { data: businesses, error: bizError } = await supabase
     .from('businesses')
     .select('id, name, category')
     .order('created_at');
 
-  if (bizError || !businesses) {
-    console.error('❌ Error obteniendo negocios:', bizError);
-    return;
-  }
-
-  console.log(`✅ ${businesses.length} negocios disponibles\n`);
-
-  // Obtener servicios por negocio
+  if (bizError || !businesses) {    return;
+  }  // Obtener servicios por negocio
   const { data: allServices, error: servicesError } = await supabase
     .from('services')
     .select('id, business_id, name');
 
-  if (servicesError || !allServices) {
-    console.error('❌ Error obteniendo servicios:', servicesError);
-    return;
-  }
-
-  console.log(`✅ ${allServices.length} servicios disponibles\n`);
-
-  let totalEmployees = 0;
+  if (servicesError || !allServices) {    return;
+  }  let totalEmployees = 0;
   let totalAssignments = 0;
 
   for (let i = 0; i < employeeUsers.length; i++) {
@@ -96,22 +75,14 @@ async function createEmployees() {
           .select()
           .single();
 
-        if (empError) {
-          console.error(`   ❌ Error vinculando a ${business.name}:`, empError.message);
-          continue;
-        }
-
-        console.log(`   ✓ Vinculado a: ${business.name}`);
-
-        // Obtener ubicaciones del negocio
+        if (empError) {          continue;
+        }        // Obtener ubicaciones del negocio
         const { data: businessLocations } = await supabase
           .from('locations')
           .select('id')
           .eq('business_id', business.id);
 
-        if (!businessLocations || businessLocations.length === 0) {
-          console.log(`   ⚠️ No hay ubicaciones para asignar servicios`);
-          totalEmployees++;
+        if (!businessLocations || businessLocations.length === 0) {          totalEmployees++;
           continue;
         }
 
@@ -122,9 +93,7 @@ async function createEmployees() {
           .in('location_id', businessLocations.map(l => l.id))
           .eq('is_active', true);
 
-        if (!availableServices || availableServices.length === 0) {
-          console.log(`   ⚠️ No hay servicios disponibles en las ubicaciones`);
-          totalEmployees++;
+        if (!availableServices || availableServices.length === 0) {          totalEmployees++;
           continue;
         }
 
@@ -152,42 +121,22 @@ async function createEmployees() {
               location_id: location_id,
             });
 
-          if (serviceError) {
-            console.error(`   ❌ Error asignando servicio:`, serviceError.message);
-            continue;
+          if (serviceError) {            continue;
           }
           
           totalAssignments++;
-        }
-
-        console.log(`   ✓ ${selectedServices.length} servicios asignados`);
-        totalEmployees++;
+        }        totalEmployees++;
 
       } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.error(`   ❌ Error:`, error.message);
-        }
+        if (error instanceof Error) {        }
       }
-    }
-
-    console.log();
-  }
-
-  console.log(`✅ Total: ${totalEmployees} vinculaciones de empleados creadas`);
-  console.log(`📊 Total: ${totalAssignments} asignaciones de servicios`);
-
-  // Verificar
+    }  }  // Verificar
   const { count: empCount } = await supabase
     .from('business_employees')
     .select('*', { count: 'exact', head: true });
   
   const { count: servCount } = await supabase
     .from('employee_services')
-    .select('*', { count: 'exact', head: true });
-  
-  console.log(`\n📊 Verificación:`);
-  console.log(`   - ${empCount} empleados en business_employees`);
-  console.log(`   - ${servCount} servicios asignados en employee_services`);
-}
+    .select('*', { count: 'exact', head: true });}
 
 await createEmployees();

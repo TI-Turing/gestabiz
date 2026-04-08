@@ -11,6 +11,8 @@
 import { useState, useMemo, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { useQueryClient } from '@tanstack/react-query'
+import { QUERY_CONFIG } from '@/lib/queryConfig'
 import type { BillingPlan } from './useBillingPlan'
 
 export interface FreeTrialState {
@@ -54,6 +56,7 @@ export function useFreeTrial(
   currentPlan: BillingPlan | null,
 ): FreeTrialState {
   const { user } = useAuth()
+  const queryClient = useQueryClient()
   const [isActivating, setIsActivating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -105,12 +108,17 @@ export function useFreeTrial(
 
       // Éxito — refrescar el plan
       refetchPlan()
+
+      // Invalida el caché de plan features para que los componentes vean el nuevo plan inmediatamente
+      queryClient.invalidateQueries({
+        queryKey: QUERY_CONFIG.KEYS.PLAN_FEATURES(businessId),
+      })
     } catch {
       setError(ERROR_MESSAGES.unknown)
     } finally {
       setIsActivating(false)
     }
-  }, [businessId, refetchPlan])
+  }, [businessId, refetchPlan, queryClient])
 
   return {
     isEligible,

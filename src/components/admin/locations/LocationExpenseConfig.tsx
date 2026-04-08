@@ -113,9 +113,7 @@ export function LocationExpenseConfig({ locationId, businessId, locationName }: 
         setNotes(data.notes || '')
       }
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'LocationExpenseConfig' } })
-      console.error('Error loading expense config:', error)
-      toast.error('Error al cargar configuración de egresos')
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'LocationExpenseConfig' } })      toast.error('Error al cargar configuración de egresos')
     } finally {
       setLoading(false)
     }
@@ -285,9 +283,7 @@ export function LocationExpenseConfig({ locationId, businessId, locationName }: 
 
       toast.success('Configuración de egresos guardada exitosamente')
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'LocationExpenseConfig' } })
-      console.error('Error saving expense config:', error)
-      toast.error('Error al guardar configuración de egresos')
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'LocationExpenseConfig' } })      toast.error('Error al guardar configuración de egresos')
     } finally {
       setSaving(false)
     }

@@ -93,7 +93,6 @@ export default function AppointmentCancellation() {
       })
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'AppointmentCancellation' } })
-      console.error('Error fetching appointment:', err)
       setError('Error al cargar los detalles de la cita')
     } finally {
       setLoading(false)
@@ -122,7 +121,6 @@ export default function AppointmentCancellation() {
       setSuccess(true)
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'AppointmentCancellation' } })
-      console.error('Error cancelling appointment:', err)
       setError('Error al cancelar la cita. Por favor, inténtalo de nuevo.')
     } finally {
       setCancelling(false)

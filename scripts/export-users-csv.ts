@@ -13,9 +13,7 @@ const { data } = await supabase
   .select('id, email, full_name, phone')
   .order('created_at');
 
-if (!data) {
-  console.error('❌ No se pudieron obtener los usuarios');
-  process.exit(1);
+if (!data) {  process.exit(1);
 }
 
 const csv = [
@@ -23,7 +21,4 @@ const csv = [
   ...data.map(u => `${u.email},Demo2025!,"${u.full_name}",${u.phone || 'N/A'},${u.id}`)
 ].join('\n');
 
-fs.writeFileSync('generated-data/2-todos-usuarios-100.csv', csv, 'utf-8');
-
-console.log('✅ CSV generado: generated-data/2-todos-usuarios-100.csv');
-console.log(`📊 Total: ${data.length} usuarios`);
+fs.writeFileSync('generated-data/2-todos-usuarios-100.csv', csv, 'utf-8');

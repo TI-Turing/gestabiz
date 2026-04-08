@@ -282,9 +282,7 @@ export function NotificationCenter({
         {
           availableRoles,
           onError: (error) => {
-            // eslint-disable-next-line no-console
-            console.error('Error navigating with role switch:', error)
-            // Fallback a navegación tradicional
+            // eslint-disable-next-line no-console            // Fallback a navegación tradicional
             fallbackNavigate(notification)
           }
         }

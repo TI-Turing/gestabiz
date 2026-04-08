@@ -70,31 +70,15 @@ async function checkWebViewPackage() {
   }
 }
 
-async function runChecks() {
-  console.log('🔍 Verificando configuración de la app móvil...\n')
-  
-  await checkNodeModules()
+async function runChecks() {  await checkNodeModules()
   await checkEnvVars()
-  await checkWebViewPackage()
-  
-  console.log('Resultados:\n')
-  
-  let allPassed = true
+  await checkWebViewPackage()  let allPassed = true
   checks.forEach(check => {
-    const icon = check.passed ? '✅' : '❌'
-    console.log(`${icon} ${check.name}`)
-    console.log(`   ${check.message}\n`)
-    
-    if (!check.passed) allPassed = false
+    const icon = check.passed ? '✅' : '❌'    if (!check.passed) allPassed = false
   })
   
-  if (allPassed) {
-    console.log('✅ Todo configurado correctamente!')
-    console.log('Ejecuta: npm run mobile')
-    process.exit(0)
-  } else {
-    console.log('❌ Completa los pasos anteriores antes de ejecutar la app')
-    process.exit(1)
+  if (allPassed) {    process.exit(0)
+  } else {    process.exit(1)
   }
 }
 

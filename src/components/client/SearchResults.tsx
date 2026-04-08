@@ -353,9 +353,7 @@ export function SearchResults({
         setResults(data)
       } catch (error) {
         Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'SearchResults' } })
-        // eslint-disable-next-line no-console
-        console.error('Error fetching search results:', error)
-        setResults([])
+        // eslint-disable-next-line no-console        setResults([])
       } finally {
         setLoading(false)
       }

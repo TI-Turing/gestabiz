@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import * as Sentry from '@sentry/react'
 import { businessesService } from '@/lib/services'
 import { Button } from '@/components/ui/button'
@@ -6,18 +6,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
 import { PhoneInput } from '@/components/ui/PhoneInput'
 import { CountrySelect } from '@/components/catalog/CountrySelect'
 import { RegionSelect } from '@/components/catalog/RegionSelect'
 import { CitySelect } from '@/components/catalog/CitySelect'
-import { Building2, Briefcase } from 'lucide-react'
+import { Building2, Briefcase, ChevronDown } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { toast } from 'sonner'
 import { Business, User } from '@/types'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useBusinessCategories } from '@/hooks/useBusinessCategories'
+import { cn } from '@/lib/utils'
 
 interface BusinessRegistrationProps {
   user: User
@@ -37,6 +38,21 @@ export default function BusinessRegistration({ user, onBusinessCreated, onCancel
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [phonePrefix, setPhonePrefix] = useState('+57')
   const [subcategories, setSubcategories] = useState<string[]>(['', '', ''])
+  const [categorySearchOpen, setCategorySearchOpen] = useState(false)
+  const [categorySearchTerm, setCategorySearchTerm] = useState('')
+  const categorySearchInputRef = useRef<HTMLInputElement>(null)
+  
+  const filteredCategories = useMemo(() => {
+    if (!categorySearchTerm) return mainCategories
+    const term = categorySearchTerm.toLowerCase()
+    return mainCategories.filter(cat => cat.name.toLowerCase().includes(term))
+  }, [categorySearchTerm, mainCategories])
+
+  useEffect(() => {
+    if (categorySearchOpen && categorySearchInputRef.current) {
+      categorySearchInputRef.current.focus()
+    }
+  }, [categorySearchOpen])
   
   const [formData, setFormData] = useState({
     name: '',
@@ -85,16 +101,7 @@ export default function BusinessRegistration({ user, onBusinessCreated, onCancel
         return
       }
 
-      // ⚠️ TEMPORAL DEBUG - Ver qué datos se están enviando
-      console.log('🔍 DEBUG - formData antes de crear negocio:', {
-        category_id: formData.category_id,
-        country_id: formData.country_id,
-        region_id: formData.region_id,
-        city_id: formData.city_id,
-        formDataCompleto: formData
-      })
-
-      // Create business in Supabase
+      // ⚠️ TEMPORAL DEBUG - Ver qué datos se están enviando      // Create business in Supabase
       // ⚠️ FIX: Convertir strings vacíos a undefined para evitar error 400 de UUID inválido
       const createdBusiness = await businessesService.create({
         name: formData.name,
@@ -169,22 +176,59 @@ export default function BusinessRegistration({ user, onBusinessCreated, onCancel
                     <Label htmlFor="category" className="required">
                       {t('business.registration.category')}
                     </Label>
-                    <Select 
-                      value={formData.category_id} 
-                      onValueChange={(value) => handleInputChange('category_id', value)}
-                      disabled={loadingCategories}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={loadingCategories ? 'Cargando categorías...' : t('business.registration.placeholders.category')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {mainCategories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={categorySearchOpen} onOpenChange={setCategorySearchOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={categorySearchOpen}
+                          disabled={loadingCategories}
+                          className="w-full justify-between"
+                        >
+                          {formData.category_id
+                            ? mainCategories.find(cat => cat.id === formData.category_id)?.name
+                            : loadingCategories
+                              ? 'Cargando categorías...'
+                              : t('business.registration.placeholders.category')}
+                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[90vw] sm:w-full p-0 max-h-[60vh] sm:max-h-none flex flex-col" align="start">
+                        <div className="p-3 border-b border-border flex-shrink-0">
+                          <Input
+                            ref={categorySearchInputRef}
+                            placeholder="Buscar categoría..."
+                            value={categorySearchTerm}
+                            onChange={(e) => setCategorySearchTerm(e.target.value)}
+                            className="h-9"
+                          />
+                        </div>
+                        <div className="max-h-[40vh] sm:max-h-[200px] overflow-y-auto flex-1">
+                          {filteredCategories.length > 0 ? (
+                            filteredCategories.map((cat) => (
+                              <button
+                                key={cat.id}
+                                onClick={() => {
+                                  handleInputChange('category_id', cat.id)
+                                  setCategorySearchOpen(false)
+                                  setCategorySearchTerm('')
+                                }}
+                                className={cn(
+                                  "w-full text-left px-3 py-2 hover:bg-muted transition-colors text-sm",
+                                  formData.category_id === cat.id && "bg-primary/10 text-primary font-medium"
+                                )}
+                              >
+                                {cat.name}
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-3 py-2 text-sm text-muted-foreground">
+                              No hay categorías que coincidan
+                            </div>
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
 

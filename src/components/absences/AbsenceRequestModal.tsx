@@ -125,9 +125,7 @@ export function AbsenceRequestModal({ isOpen, onClose, businessId }: Readonly<Ab
         setHolidaysInRange(holidaysInDateRange.map((h) => h.holiday_date));
       } catch (error) {
         Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AbsenceRequestModal' } })
-        // eslint-disable-next-line no-console
-        console.warn('Error loading appointments:', error);
-      } finally {
+        // eslint-disable-next-line no-console      } finally {
         setLoadingAppointments(false);
       }
     };

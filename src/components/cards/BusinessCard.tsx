@@ -291,8 +291,8 @@ export function BusinessCard({
         </div>
       )}
 
-      {/* Banner / hero área (60% altura) */}
-      <div className="relative h-36 overflow-hidden">
+      {/* Banner / hero área (16:9 ratio) */}
+      <div className="relative aspect-video overflow-hidden">
         {hasBanner && (
           <img
             src={business.banner_url ?? undefined}

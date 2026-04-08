@@ -192,9 +192,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       setIsIndependentBusiness(normalizedEmployees.length <= 1)
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServicesManager' } })
-      // eslint-disable-next-line no-console
-      console.error('Error al cargar datos:', error)
-      toast.error('Error al cargar los datos')
+      // eslint-disable-next-line no-console      toast.error('Error al cargar los datos')
       // En caso de error, establecer arrays vacíos para no romper la UI
       setServices([])
       setLocations([])
@@ -408,9 +406,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
           .single()
 
         if (error) {
-          // eslint-disable-next-line no-console
-          console.error('Error creating service:', error)
-          throw error
+          // eslint-disable-next-line no-console          throw error
         }
         serviceId = data.id
 
@@ -485,9 +481,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       await fetchData()
       handleCloseDialog()
     } catch (error: any) {
-      // eslint-disable-next-line no-console
-      console.error('Error en handleSubmit:', error)
-      const errorMessage = error?.message || 'Error desconocido'
+      // eslint-disable-next-line no-console      const errorMessage = error?.message || 'Error desconocido'
       const statusCode = (error as any)?.statusCode || (error as any)?.status || undefined
       const msg = String(errorMessage).toLowerCase()
       const is403 = statusCode === '403' || statusCode === 403 || msg.includes('row-level security') || msg.includes('unauthorized') || msg.includes('permission')
@@ -605,9 +599,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       await fetchData()
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServicesManager' } })
-      // eslint-disable-next-line no-console
-      console.error('Error al eliminar servicio y cancelar citas:', error)
-      toast.error('Error al eliminar el servicio y cancelar citas')
+      // eslint-disable-next-line no-console      toast.error('Error al eliminar el servicio y cancelar citas')
     }
   }
 
@@ -634,9 +626,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       }
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ServicesManager' } })
-      // eslint-disable-next-line no-console
-      console.error('Error al reactivar servicio:', err)
-      toast.error('Error al reactivar el servicio')
+      // eslint-disable-next-line no-console      toast.error('Error al reactivar el servicio')
     }
   }
 
@@ -665,15 +655,15 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
           <h2 className="text-xl sm:text-2xl font-bold text-foreground truncate">Servicios</h2>
           <p className="text-muted-foreground text-xs sm:text-sm">Gestiona los servicios que ofreces</p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-background">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 w-full">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-background w-full sm:w-auto">
             <Label htmlFor="show-inactive" className="text-xs sm:text-sm">Mostrar inactivos</Label>
             <Switch id="show-inactive" checked={showInactive} onCheckedChange={setShowInactive} />
           </div>
           <PermissionGate permission="services.create" businessId={businessId} mode="hide">
             <Button
               onClick={() => handleOpenDialog()}
-              className="bg-primary hover:bg-primary/90 w-full sm:w-auto min-h-[44px]"
+              className="bg-primary hover:bg-primary/90 w-full sm:w-auto min-h-[44px] justify-center"
             >
               <Plus className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Agregar Servicio</span>

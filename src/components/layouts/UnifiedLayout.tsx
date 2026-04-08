@@ -413,9 +413,9 @@ export function UnifiedLayout({
           })}
         </nav>
 
-        {/* Bottom Menu - Bug Report, Logout & Collapse Toggle */}
+        {/* Bottom Menu - Bug Report, Logout & Collapse Toggle - Desktop only */}
         <div className={cn(
-          "border-t border-border flex-shrink-0",
+          "border-t border-border flex-shrink-0 hidden lg:flex lg:flex-col",
           isCollapsed ? "p-2 space-y-0.5" : "p-3 space-y-0.5"
         )}>
           {isCollapsed ? (
@@ -1016,7 +1016,6 @@ export function UnifiedLayout({
                   </div>
                 )}
 
-
                 {/* Rol y notificaciones */}
                 <div className="space-y-3 rounded-xl border border-border bg-muted/30 px-3 py-3">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('common.labels.account')}</p>
@@ -1100,6 +1099,32 @@ export function UnifiedLayout({
                     </DropdownMenu>
                   </div>
                 )}
+
+                {/* Reportar Problema y Cerrar Sesión */}
+                <div className="space-y-1 pt-2 border-t border-border">
+                  <button
+                    onClick={() => {
+                      setBugReportOpen(true)
+                      setMobileHeaderOpen(false)
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-left text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    <Bug className="h-5 w-5 shrink-0" />
+                    <span className="text-sm font-medium">{t('common.actions.reportProblem')}</span>
+                  </button>
+                  {onLogout && (
+                    <button
+                      onClick={() => {
+                        onLogout()
+                        setMobileHeaderOpen(false)
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-left text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <LogOut className="h-5 w-5 shrink-0" />
+                      <span className="text-sm font-medium">{t('common.actions.logout')}</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

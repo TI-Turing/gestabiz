@@ -6,7 +6,7 @@
  * Not finished.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import * as Sentry from '@sentry/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
@@ -38,6 +38,7 @@ import { EmployeeAppointmentsModal } from '@/components/admin/EmployeeAppointmen
 import { EmployeeRevenueModal } from '@/components/admin/EmployeeRevenueModal'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { usePlanFeatures } from '@/hooks/usePlanFeatures'
 import type { EmployeeHierarchy } from '@/types'
 
 // =====================================================
@@ -158,6 +159,15 @@ export function EmployeeProfileModal({
     enabled: !!employee?.user_id && !!employee?.business_id,
   })
 
+  const { planId, isLoading: planLoading } = usePlanFeatures(employee?.business_id ?? null)
+  const isPayrollAvailable = !planLoading && planId === 'pro'
+
+  useEffect(() => {
+    if (!isPayrollAvailable && activeTab === 'payroll') {
+      setActiveTab('info')
+    }
+  }, [activeTab, isPayrollAvailable])
+
   if (!employee) return null
 
   // Objeto Location mínimo para LocationProfileModal
@@ -212,12 +222,7 @@ export function EmployeeProfileModal({
       await queryClient.invalidateQueries({ queryKey: ['businessHierarchy', employee.business_id] })
       setEditingCargo(false)
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'EmployeeProfileModal' } })
-      console.error('[handleSaveCargo] Error al guardar cargo:', err, {
-        employee_id: employee.user_id,
-        business_id: employee.business_id,
-      })
-      toast.error(t('employeeProfile.modal.cargo.updateError'))
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'EmployeeProfileModal' } })      toast.error(t('employeeProfile.modal.cargo.updateError'))
     } finally {
       setSavingCargo(false)
     }
@@ -291,9 +296,11 @@ export function EmployeeProfileModal({
 
           {/* PESTAÑAS FIJAS */}
           <div className="shrink-0 px-6 pb-3 border-b">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className={`grid w-full ${isPayrollAvailable ? 'grid-cols-2' : 'grid-cols-1'}`}>
               <TabsTrigger value="info">{t('employeeProfile.modal.tabs.info')}</TabsTrigger>
-              <TabsTrigger value="payroll">{t('employeeProfile.modal.tabs.payroll')}</TabsTrigger>
+              {isPayrollAvailable && (
+                <TabsTrigger value="payroll">{t('employeeProfile.modal.tabs.payroll')}</TabsTrigger>
+              )}
             </TabsList>
           </div>
 

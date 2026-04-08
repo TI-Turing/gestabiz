@@ -330,8 +330,8 @@ function BusinessCard({ business, ciudadNombre }: { business: BusinessResult; ci
       className="rounded-xl border border-border bg-card hover:shadow-md transition-shadow cursor-pointer overflow-hidden"
       onClick={() => navigate(`/negocio/${business.slug}`)}
     >
-      {/* Banner / logo */}
-      <div className="h-28 bg-muted relative flex items-center justify-center overflow-hidden">
+      {/* Banner / logo - 16:9 Aspect Ratio */}
+      <div className="aspect-video bg-muted relative flex items-center justify-center overflow-hidden">
         {business.banner_url ? (
           <img src={business.banner_url} alt={business.name} className="w-full h-full object-cover" />
         ) : (

@@ -12,17 +12,8 @@ import * as path from 'node:path';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!SUPABASE_URL || !SERVICE_KEY) {
-  console.error('❌ Error: Variables de entorno faltantes');
-  console.error('   Verifica que .env contenga:');
-  console.error('   - VITE_SUPABASE_URL');
-  console.error('   - SUPABASE_SERVICE_ROLE_KEY');
-  process.exit(1);
-}
-
-console.log('✅ Configuración validada');
-console.log(`   URL: ${SUPABASE_URL}`);
-console.log(`   Service Key: ${SERVICE_KEY.substring(0, 20)}...`);
+if (!SUPABASE_URL || !SERVICE_KEY) {  process.exit(1);
+}console.log(`   Service Key: ${SERVICE_KEY.substring(0, 20)}...`);
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: {
@@ -63,10 +54,7 @@ function generateEmail(firstName: string, lastName: string, index: number): stri
 // PASO 1: CREAR USUARIOS
 // ============================================================================
 
-async function createTestUsers() {
-  console.log('\n📝 PASO 1/2: Creando 20 usuarios de prueba...');
-  
-  const users = [];
+async function createTestUsers() {  const users = [];
   const password = 'Demo2025!';
 
   for (let i = 1; i <= 20; i++) {
@@ -88,9 +76,7 @@ async function createTestUsers() {
         }
       });
 
-      if (authError) {
-        console.error(`   ❌ Error creando ${email}:`, authError.message);
-        continue;
+      if (authError) {        continue;
       }
 
       const userId = authData.user.id;
@@ -106,33 +92,21 @@ async function createTestUsers() {
           is_active: true,
         });
 
-      if (profileError) {
-        console.error(`   ❌ Error creando perfil:`, profileError.message);
-        continue;
+      if (profileError) {        continue;
       }
 
       users.push({ id: userId, email, password, full_name: fullName, phone });
       
-      if (i % 5 === 0) {
-        console.log(`   ✓ ${i}/20 usuarios creados`);
-      }
-    } catch (error: any) {
-      console.error(`   ❌ Error en usuario ${i}:`, error.message);
-    }
-  }
-
-  console.log(`   ✅ Total: ${users.length} usuarios creados`);
-  return users;
+      if (i % 5 === 0) {      }
+    } catch (error: any) {    }
+  }  return users;
 }
 
 // ============================================================================
 // PASO 2: GENERAR CSV
 // ============================================================================
 
-async function generateCSV(users: any[]) {
-  console.log('\n📝 PASO 2/2: Generando archivo CSV...');
-  
-  const outputDir = path.join(process.cwd(), 'generated-data');
+async function generateCSV(users: any[]) {  const outputDir = path.join(process.cwd(), 'generated-data');
   
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -144,30 +118,15 @@ async function generateCSV(users: any[]) {
   ].join('\n');
 
   const filePath = path.join(outputDir, 'usuarios-demo.csv');
-  fs.writeFileSync(filePath, csv, 'utf-8');
-  
-  console.log(`   ✅ Archivo generado: ${filePath}`);
-  console.log(`\n📋 RESUMEN:`);
-  console.log(`   - Total usuarios: ${users.length}`);
-  console.log(`   - Contraseña: Demo2025!`);
-  console.log(`   - Ejemplo: ${users[0]?.email}`);
-}
+  fs.writeFileSync(filePath, csv, 'utf-8');}
 
 // ============================================================================
 // MAIN
 // ============================================================================
 
-async function main() {
-  console.log('🚀 Iniciando generación de datos de prueba...\n');
-  
-  try {
+async function main() {  try {
     const users = await createTestUsers();
-    await generateCSV(users);
-    
-    console.log('\n✅ ¡Completado! Puedes iniciar sesión con cualquier email del CSV');
-  } catch (error: any) {
-    console.error('\n❌ Error:', error.message);
-    process.exit(1);
+    await generateCSV(users);  } catch (error: any) {    process.exit(1);
   }
 }
 

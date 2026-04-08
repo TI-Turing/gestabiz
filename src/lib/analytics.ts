@@ -91,9 +91,7 @@ export function configureAnalytics(newConfig: Partial<AnalyticsConfig>) {
   config = { ...config, ...newConfig }
   
   if (config.debug) {
-    // eslint-disable-next-line no-console
-    console.log('[Analytics] Configured:', config)
-  }
+    // eslint-disable-next-line no-console  }
 }
 
 /**
@@ -151,9 +149,7 @@ export function trackEvent(event: AnalyticsEvent) {
           break
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(`[Analytics] Error tracking to ${provider}:`, error)
-    }
+      // eslint-disable-next-line no-console    }
   })
 }
 
@@ -234,9 +230,7 @@ export function trackTiming(
   }
 
   if (config.debug) {
-    // eslint-disable-next-line no-console
-    console.log('[Analytics] Timing:', { category, variable, value, label })
-  }
+    // eslint-disable-next-line no-console  }
 
   if (window.gtag) {
     window.gtag('event', 'timing_complete', {

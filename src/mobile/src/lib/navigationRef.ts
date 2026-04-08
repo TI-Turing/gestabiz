@@ -20,9 +20,7 @@ export function navigate(name: string, params?: object) {
   if (navigationRef.isReady()) {
     // @ts-expect-error — tipos genéricos de ReactNavigation
     navigationRef.navigate(name, params)
-  } else {
-    console.warn('[NavigationRef] Navigator not ready yet, ignoring navigation to:', name)
-  }
+  } else {  }
 }
 
 export function goBack() {

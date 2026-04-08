@@ -206,9 +206,7 @@ export const appointmentsService = {
     if (appointment.status === 'scheduled') {
       try {
         await sendAppointmentConfirmationEmail(appointment.id)
-      } catch (emailError) {
-        console.error('Error sending confirmation email:', emailError)
-        // Capturar en Sentry pero no fallar la creación de la cita
+      } catch (emailError) {        // Capturar en Sentry pero no fallar la creación de la cita
         Sentry.captureException(emailError, {
           tags: { service: 'appointments', operation: 'send_confirmation_email' },
           extra: { appointmentId: appointment.id },
