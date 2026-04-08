@@ -1,18 +1,19 @@
 /* eslint-disable no-console */
 import React, { useState, useEffect, useMemo, useRef, useLayoutEffect, useCallback } from 'react';
 import * as Sentry from '@sentry/react'
-import { Calendar, Clock, ChevronLeft, ChevronRight, User, X, Check, AlertCircle, Eye, EyeOff, DollarSign, Mail } from 'lucide-react';
+import { Calendar, Clock, ChevronLeft, ChevronRight, User, X, Check, AlertCircle, Eye, EyeOff, DollarSign, Mail, Maximize2, Minimize2 } from 'lucide-react';
 import { Money } from '@phosphor-icons/react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { format, addDays, subDays, parseISO, isWithinInterval } from 'date-fns';
+import { format, addDays, subDays, parseISO, isWithinInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { usePreferredLocation } from '@/hooks/usePreferredLocation';
 import { useTaxCalculation } from '@/hooks/useTaxCalculation';
 import type { TaxType } from '@/types/accounting.types';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
 const DEFAULT_TIME_ZONE = 'America/Bogota';
@@ -480,6 +481,11 @@ const AppointmentModal = React.memo<AppointmentModalProps>(({
 export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ businessId: propBusinessId }) => {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showMiniCalendar, setShowMiniCalendar] = useState(false);
+  const [miniCalendarMonth, setMiniCalendarMonth] = useState(new Date());
+  const [miniCalPos, setMiniCalPos] = useState({ top: 0, left: 0 });
+  const miniCalBtnRef = useRef<HTMLButtonElement>(null);
+  const miniCalRef = useRef<HTMLDivElement>(null);
   const isSelectedDateToday = useMemo(
     () => isSameDayInTimeZone(selectedDate, new Date()),
     [selectedDate]
@@ -494,6 +500,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   const serviceBtnRef = useRef<HTMLButtonElement>(null);
   const employeeBtnRef = useRef<HTMLButtonElement>(null);
   const [showServices, setShowServices] = useState(true);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [showFilters, setShowFilters] = useState(true);
 
   // Filter states - now as arrays for multi-select
@@ -817,7 +824,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         // Get employee services - FILTERED BY BUSINESS_ID AND LOCATION if selected
         let employeeServicesQuery = supabase
           .from('employee_services')
-          .select('employee_id, service_id, services(name)')
+          .select('employee_id, service_id, services(name, is_active)')
           .eq('business_id', resolvedBusinessId); // ✅ FIX: Filtrar por negocio actual
 
         if (employeeIds.length > 0) {
@@ -832,7 +839,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           }
         }
 
-        let employeeServicesData: Array<{ employee_id: string; service_id?: string; services?: { name?: string } | null }> = [];
+        let employeeServicesData: Array<{ employee_id: string; service_id?: string; services?: { name?: string; is_active?: boolean } | null }> = [];
         if (employeeIds.length > 0) {
           const response = await employeeServicesQuery;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -852,7 +859,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           if (!acc[es.employee_id]) {
             acc[es.employee_id] = [];
           }
-          if (es.services && typeof es.services === 'object' && 'name' in es.services) {
+          if (es.services && typeof es.services === 'object' && 'name' in es.services && es.services.is_active !== false) {
             acc[es.employee_id].push(es.services.name as string);
           }
           return acc;
@@ -1351,14 +1358,80 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   }, [appointments, filterStatus, filterLocation, filterService, filterEmployee]);
 
   // ✅ Filtrar empleados a mostrar basado en filterEmployee
+  // Días del mini-calendario mensual
+  const miniCalDays = useMemo(() => {
+    const start = startOfWeek(startOfMonth(miniCalendarMonth), { weekStartsOn: 1 });
+    const end = endOfWeek(endOfMonth(miniCalendarMonth), { weekStartsOn: 1 });
+    return eachDayOfInterval({ start, end });
+  }, [miniCalendarMonth]);
+
+  // ESC cierra modo maximizado
+  useEffect(() => {
+    if (!isMaximized) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsMaximized(false);
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [isMaximized]);
+
+  // Click fuera cierra el mini-calendario
+  useEffect(() => {
+    if (!showMiniCalendar) return;
+    const handle = (e: MouseEvent) => {
+      if (
+        miniCalRef.current && !miniCalRef.current.contains(e.target as Node) &&
+        miniCalBtnRef.current && !miniCalBtnRef.current.contains(e.target as Node)
+      ) {
+        setShowMiniCalendar(false);
+      }
+    };
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, [showMiniCalendar]);
+
+  // Empleados que ofrecen al menos un servicio activo del negocio
+  const employeesEligible = useMemo(() =>
+    employees.filter(emp => (emp.services ?? []).length > 0)
+  , [employees]);
+
+  // Limpiar filterEmployee de IDs que no tienen servicios activos (p.ej. admin sin servicios)
+  useEffect(() => {
+    if (employeesEligible.length === 0) return;
+    const eligibleIds = new Set(employeesEligible.map(e => e.user_id));
+    const sanitized = filterEmployee.filter(id => eligibleIds.has(id));
+    if (sanitized.length !== filterEmployee.length) {
+      setFilterEmployee(sanitized);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [employeesEligible]);
+
   const employeesToDisplay = useMemo(() => {
     // Si el filtro está vacío, no mostrar ningún empleado
     if (filterEmployee.length === 0) {
       return [];
     }
     // Mostrar solo empleados seleccionados en el filtro
-    return employees.filter(emp => filterEmployee.includes(emp.user_id));
-  }, [employees, filterEmployee]);
+    // Solo empleados seleccionados que ofrezcan al menos un servicio activo
+    const byEmployee = employees.filter(emp =>
+      filterEmployee.includes(emp.user_id) &&
+      (emp.services ?? []).length > 0
+    );
+
+    // Si hay filtro de servicios activo, ocultar empleados que no ofrecen ninguno
+    if (filterService.length > 0) {
+      return byEmployee.filter(emp => {
+        const empServiceNames = emp.services ?? [];
+        // Comparar contra los nombres de los servicios filtrados
+        const filteredServiceNames = services
+          .filter(s => filterService.includes(s.id))
+          .map(s => s.name);
+        return empServiceNames.some(sn => filteredServiceNames.includes(sn));
+      });
+    }
+
+    return byEmployee;
+  }, [employees, filterEmployee, filterService, services]);
 
   // Pre-calcular mapa de citas por empleado y hora (OPTIMIZACIÓN: evita 24+ filtros por render)
   const appointmentsBySlot = useMemo(() => {
@@ -1591,6 +1664,27 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           >
             Hoy
           </button>
+
+          <button
+            ref={miniCalBtnRef}
+            onClick={() => {
+              if (!showMiniCalendar && miniCalBtnRef.current) {
+                const rect = miniCalBtnRef.current.getBoundingClientRect();
+                setMiniCalPos({ top: rect.bottom + 8, left: Math.max(4, rect.right - 288) });
+              }
+              setMiniCalendarMonth(new Date(selectedDate));
+              setShowMiniCalendar(prev => !prev);
+            }}
+            className={cn(
+              'px-4 py-2 border border-border rounded-md font-medium flex items-center gap-2 transition-colors',
+              showMiniCalendar
+                ? 'bg-muted text-foreground'
+                : 'bg-background hover:bg-muted text-foreground'
+            )}
+          >
+            <Calendar className="h-4 w-4" />
+            Ir a fecha
+          </button>
         </div>
       </div>
 
@@ -1804,12 +1898,12 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                     <div className="px-2 py-2 border-b border-border">
                       <button
                         className="w-full text-left px-3 py-2 text-sm font-medium hover:bg-muted/40 rounded"
-                        onClick={() => setFilterEmployee(employees.map(e => e.user_id))}
+                        onClick={() => setFilterEmployee(employeesEligible.map(e => e.user_id))}
                       >
                         Seleccionar Todos
                       </button>
                     </div>
-                    {employees.map(employee => (
+                    {employeesEligible.map(employee => (
                       <label key={employee.user_id} className="flex items-center px-3 py-2 hover:bg-muted/50 cursor-pointer">
                         <input
                           type="checkbox"
@@ -1835,9 +1929,15 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       </div>
 
       {/* Calendar Grid */}
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        {/* Services Toggle Button */}
-        <div className="bg-muted/30 border-b border-border px-4 py-2 flex items-center justify-end gap-2">
+      <div className={cn(
+        'bg-card border border-border',
+        isMaximized
+          ? 'fixed inset-0 z-[60] flex flex-col overflow-hidden'
+          : 'rounded-lg overflow-hidden'
+      )}>
+        {/* Calendar Toolbar */}
+        <div className="bg-muted/30 border-b border-border px-4 py-2 flex items-center justify-between gap-2">
+          {/* Izquierda: Toggle servicios */}
           <button
             onClick={() => setShowServices(!showServices)}
             className="flex items-center gap-2 px-3 py-1.5 text-sm bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors duration-200 font-medium"
@@ -1854,9 +1954,36 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
               </>
             )}
           </button>
+          {/* Derecha: hint ESC + botón maximizar */}
+          <div className="flex items-center gap-3">
+            {isMaximized && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-muted border border-border rounded-md text-xs text-foreground font-medium">
+                Presiona
+                <kbd className="px-1.5 py-0.5 font-mono bg-background border border-border rounded shadow-sm">Esc</kbd>
+                para salir del modo pantalla completa
+              </div>
+            )}
+            <button
+              onClick={() => setIsMaximized(prev => !prev)}
+              title={isMaximized ? 'Minimizar calendario (Esc)' : 'Maximizar calendario'}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-background hover:bg-muted text-muted-foreground hover:text-foreground border border-border rounded-lg transition-colors duration-200 font-medium"
+            >
+              {isMaximized ? (
+                <>
+                  <Minimize2 className="h-4 w-4" />
+                  Minimizar
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="h-4 w-4" />
+                  Maximizar
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className={cn('overflow-x-auto', isMaximized && 'flex-1 min-h-0')}>
           {employeesToDisplay.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
               <User className="h-16 w-16 text-muted-foreground/40 mb-4" />
@@ -1869,6 +1996,8 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             </div>
           ) : (
             <div className="inline-block min-w-full">
+              {/* Scroll container wraps header + rows so sticky header aligns with body columns */}
+              <div ref={timelineRef} className={cn('relative overflow-y-auto', isMaximized ? 'max-h-[calc(100vh-110px)]' : 'max-h-[600px]')}>
               {/* Header with employee names */}
               <div className="flex border-b-2 border-border bg-muted/50 sticky top-0 z-20">
                 <div className="w-20 shrink-0 p-3 font-semibold text-sm text-muted-foreground border-r-2 border-border bg-background">
@@ -1916,7 +2045,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             </div>
 
             {/* Time slots */}
-            <div ref={timelineRef} className="relative max-h-[600px] overflow-y-auto">
+            <div className="relative">
               {hours.map(hour => {
                 const isWorkHour = isBusinessHour(hour);
                 const workHourClass = isWorkHour ? '' : 'bg-muted/40';
@@ -2002,6 +2131,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
               })}
             </div>
           </div>
+        </div>
           )}
         </div>
       </div>
@@ -2098,6 +2228,85 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           onConfirm={handleConfirmAppointment}
           onResendConfirmation={handleResendConfirmation}
         />
+      )}
+
+      {/* Mini-calendario flotante */}
+      {showMiniCalendar && createPortal(
+        <div
+          ref={miniCalRef}
+          style={{ top: miniCalPos.top, left: miniCalPos.left }}
+          className="fixed z-[9999] bg-card border border-border rounded-xl shadow-2xl p-4 w-72"
+        >
+          {/* Navegación de mes */}
+          <div className="flex items-center justify-between mb-3">
+            <button
+              onClick={() => setMiniCalendarMonth(subMonths(miniCalendarMonth, 1))}
+              className="p-1.5 hover:bg-muted rounded-md transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4 text-foreground" />
+            </button>
+            <span className="text-sm font-semibold text-foreground capitalize">
+              {format(miniCalendarMonth, 'MMMM yyyy', { locale: es })}
+            </span>
+            <button
+              onClick={() => setMiniCalendarMonth(addMonths(miniCalendarMonth, 1))}
+              className="p-1.5 hover:bg-muted rounded-md transition-colors"
+            >
+              <ChevronRight className="h-4 w-4 text-foreground" />
+            </button>
+          </div>
+
+          {/* Cabecera de días */}
+          <div className="grid grid-cols-7 mb-1">
+            {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map(d => (
+              <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1">
+                {d}
+              </div>
+            ))}
+          </div>
+
+          {/* Grilla de días */}
+          <div className="grid grid-cols-7 gap-0.5">
+            {miniCalDays.map(day => {
+              const isCurrentMonth = isSameMonth(day, miniCalendarMonth);
+              const isToday = isSameDay(day, new Date());
+              const isSelected = isSameDay(day, selectedDate);
+              return (
+                <button
+                  key={day.toISOString()}
+                  onClick={() => {
+                    setSelectedDate(day);
+                    setShowMiniCalendar(false);
+                  }}
+                  className={cn(
+                    'h-8 w-full rounded-md text-xs font-medium transition-colors',
+                    !isCurrentMonth && 'text-muted-foreground/40',
+                    isCurrentMonth && !isToday && !isSelected && 'hover:bg-muted text-foreground',
+                    isToday && !isSelected && 'bg-primary/10 text-primary font-bold',
+                    isSelected && 'bg-primary text-primary-foreground font-bold',
+                  )}
+                >
+                  {format(day, 'd')}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Atajo "Ir a hoy" */}
+          <div className="mt-3 pt-3 border-t border-border">
+            <button
+              onClick={() => {
+                setSelectedDate(new Date());
+                setMiniCalendarMonth(new Date());
+                setShowMiniCalendar(false);
+              }}
+              className="w-full py-1.5 text-xs font-medium text-primary hover:bg-primary/10 rounded-md transition-colors"
+            >
+              Ir a hoy
+            </button>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

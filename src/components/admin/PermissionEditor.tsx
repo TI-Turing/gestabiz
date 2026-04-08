@@ -21,7 +21,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { usePermissions } from '@/hooks/usePermissions-v2'
 import { 
@@ -265,7 +264,7 @@ export function PermissionEditor({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleCancel()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
@@ -349,7 +348,7 @@ export function PermissionEditor({
         )}
 
         {/* Lista de permisos por categoría */}
-        <ScrollArea className="flex-1 pr-4">
+        <div className="overflow-y-auto max-h-[calc(90vh-320px)] pr-1">
           <Accordion type="multiple" className="space-y-2" defaultValue={Object.keys(PERMISSION_CATEGORIES)}>
             {Object.entries(PERMISSION_CATEGORIES).map(([key, category]) => {
               const isFullySelected = isCategoryFullySelected(key)
@@ -442,7 +441,7 @@ export function PermissionEditor({
               )
             })}
           </Accordion>
-        </ScrollArea>
+        </div>
 
         {/* Footer */}
         <DialogFooter className="pt-4 border-t">

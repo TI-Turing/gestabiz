@@ -42,6 +42,8 @@ interface Stats {
   totalEmployees: number
   monthlyRevenue: number
   averageAppointmentValue: number
+  hasServicesInLocations: boolean
+  hasEmployeesWithServices: boolean
 }
 
 export function OverviewTab({ business }: OverviewTabProps) {
@@ -119,6 +121,30 @@ export function OverviewTab({ business }: OverviewTabProps) {
 
       if (empError) throw empError
 
+      // Check if services are linked to active locations (mirrors validate_business_configuration)
+      const locationIds = locations?.map((l) => l.id) || []
+      let hasServicesInLocations = false
+      if (locationIds.length > 0) {
+        const { data: locationServices } = await supabase
+          .from('location_services')
+          .select('id')
+          .in('location_id', locationIds)
+          .limit(1)
+        hasServicesInLocations = (locationServices?.length || 0) > 0
+      }
+
+      // Check if active employees are linked to services (mirrors validate_business_configuration)
+      const activeEmployeeIds = employees?.map((e) => e.employee_id) || []
+      let hasEmployeesWithServices = false
+      if (activeEmployeeIds.length > 0) {
+        const { data: employeeServices } = await supabase
+          .from('employee_services')
+          .select('id')
+          .in('employee_id', activeEmployeeIds)
+          .limit(1)
+        hasEmployeesWithServices = (employeeServices?.length || 0) > 0
+      }
+
       // Calculate stats
       const monthlyRevenue = appointments?.filter(
         (a) => a.status === 'completed'
@@ -139,9 +165,12 @@ export function OverviewTab({ business }: OverviewTabProps) {
         totalEmployees: employees?.length || 0,
         monthlyRevenue,
         averageAppointmentValue,
+        hasServicesInLocations,
+        hasEmployeesWithServices,
       })
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'OverviewTab' } })    } finally {
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'OverviewTab' } })
+    } finally {
       setIsLoading(false)
     }
   }, [business.id])
@@ -171,7 +200,8 @@ export function OverviewTab({ business }: OverviewTabProps) {
     try {
       localStorage.setItem(`appointments-filters-${business.id}`, JSON.stringify(filters))
     } catch (e) {
-      Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'OverviewTab' } })    }
+      Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'OverviewTab' } })
+    }
     navigate('/app/admin/appointments')
   }
 
@@ -211,15 +241,15 @@ export function OverviewTab({ business }: OverviewTabProps) {
             key: 'services',
             label: 'Servicios configurados',
             hint: 'Define qué ofreces y sus precios para recibir reservas.',
-            done: stats.totalServices > 0,
+            done: stats.totalServices > 0 && stats.hasServicesInLocations,
             navigateTo: '/app/admin/services',
             required: true,
           },
           {
             key: 'employees',
             label: 'Profesionales o recursos asignados',
-            hint: 'Necesitas al menos un empleado o recurso para atender citas.',
-            done: stats.totalEmployees > 0,
+            hint: 'Asigna al menos un empleado a un servicio para que los clientes puedan reservar.',
+            done: stats.totalEmployees > 0 && stats.hasEmployeesWithServices,
             navigateTo: '/app/admin/employees',
             required: true,
           },
