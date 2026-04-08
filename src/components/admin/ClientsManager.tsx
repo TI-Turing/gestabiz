@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Search, Users, Calendar, Mail } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -27,12 +27,14 @@ interface ProfileRow {
   id: string
   full_name: string | null
   email: string | null
+  avatar_url: string | null
 }
 
 interface ClientSummary {
   id: string
   name: string
   email: string | null
+  avatarUrl: string | null
   total: number
   completed: number
   lastVisit: string | null
@@ -83,7 +85,7 @@ async function fetchClients(businessId: string): Promise<ClientSummary[]> {
   // 3. Batch fetch de perfiles
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
-    .select('id, full_name, email')
+    .select('id, full_name, email, avatar_url')
     .in('id', clientIds)
 
   if (profilesError) throw profilesError
@@ -99,6 +101,7 @@ async function fetchClients(businessId: string): Promise<ClientSummary[]> {
         id,
         name: profile?.full_name || 'Cliente sin nombre',
         email: profile?.email ?? null,
+        avatarUrl: profile?.avatar_url ?? null,
         total: stats.total,
         completed: stats.completed,
         lastVisit: stats.lastVisit,
@@ -197,6 +200,9 @@ export function ClientsManager({ businessId }: ClientsManagerProps) {
               >
                 <div className="flex items-start gap-3">
                   <Avatar className="h-10 w-10 shrink-0">
+                    {client.avatarUrl && (
+                      <AvatarImage src={client.avatarUrl} alt={client.name} />
+                    )}
                     <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
                       {getInitials(client.name)}
                     </AvatarFallback>
