@@ -197,29 +197,30 @@ export function EmployeeListView({
   })
 
   return (
-    <div className="space-y-4">
-      {/* SORT CONTROLS */}
-      <div className="flex items-center gap-2 pb-3 border-b">
-        <span className="text-sm font-medium text-muted-foreground">Ordenar por:</span>
-        <div className="flex items-center gap-1">
-          {renderSortButton('name', 'Nombre')}
-          {renderSortButton('level', 'Nivel')}
-          {renderSortButton('occupancy', 'Ocupación')}
-          {renderSortButton('rating', 'Rating')}
-          {renderSortButton('revenue', 'Revenue')}
+    <div className="space-y-4 overflow-x-auto">
+      <div className="min-w-max space-y-4">
+        {/* SORT CONTROLS */}
+        <div className="overflow-x-auto pb-3 border-b">
+          <div className="flex min-w-max items-center gap-1 whitespace-nowrap">
+            {renderSortButton('name', 'Nombre')}
+            {renderSortButton('level', 'Nivel')}
+            {renderSortButton('occupancy', 'Ocupación')}
+            {renderSortButton('rating', 'Rating')}
+            {renderSortButton('revenue', 'Revenue')}
+          </div>
         </div>
-      </div>
 
-      {/* EMPLOYEES LIST */}
-      {employees.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No hay empleados para mostrar</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {topLevelEmployees.map(employee => renderEmployeeRow(employee))}
-        </div>
-      )}
+        {/* EMPLOYEES LIST */}
+        {employees.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No hay empleados para mostrar</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {topLevelEmployees.map(employee => renderEmployeeRow(employee))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

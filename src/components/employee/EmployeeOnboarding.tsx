@@ -43,13 +43,19 @@ export function EmployeeOnboarding({
       return
     }
     try {
-      await claimCode.mutateAsync(invitationCode.trim().toUpperCase())
+      await claimCode.mutateAsync(invitationCode.trim())
       setRequestStatus('success')
       setInvitationCode('')
       onRequestCreated?.()
     } catch (err: unknown) {
       setRequestStatus('error')
-      setErrorMsg(err instanceof Error ? err.message : 'Código inválido o vencido')
+      const msg =
+        err instanceof Error
+          ? err.message
+          : typeof err === 'object' && err !== null && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : 'Código inválido o vencido'
+      setErrorMsg(msg)
     }
   }
 
@@ -61,7 +67,7 @@ export function EmployeeOnboarding({
 
   const handleQRScanned = (data: BusinessInvitationQRData) => {
     if (data.invitation_code) {
-      setInvitationCode(data.invitation_code)
+      setInvitationCode(data.invitation_code.toUpperCase())
     }
     setShowScanner(false)
   }

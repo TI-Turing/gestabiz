@@ -64,9 +64,7 @@ export function useLocationTransfer(): UseLocationTransferReturn {
           p_effective_date: effectiveDate.toISOString(),
         });
 
-        if (error) {
-          console.error('Error al obtener impacto de traslado:', error);
-          return null;
+        if (error) {          return null;
         }
 
         return {
@@ -76,7 +74,6 @@ export function useLocationTransfer(): UseLocationTransferReturn {
         };
       } catch (error) {
         void logger.error('useLocationTransfer: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useLocationTransfer' })
-        console.error('Error en getTransferImpact:', error);
         return null;
       } finally {
         setIsLoading(false);
@@ -146,9 +143,7 @@ export function useLocationTransfer(): UseLocationTransferReturn {
           })
           .eq('id', employeeData.id);
 
-        if (updateError) {
-          console.error('Error al programar traslado:', updateError);
-          toast.error('Error al programar el traslado');
+        if (updateError) {          toast.error('Error al programar el traslado');
           return { success: false };
         }
 
@@ -162,18 +157,13 @@ export function useLocationTransfer(): UseLocationTransferReturn {
               employeeId,
             },
           }
-        );
-
-        console.log('🔄 Resultado cancelación de citas:', functionData);
-
-        toast.success(
+        );        toast.success(
           `Traslado programado exitosamente. ${impact.appointmentsToCancel} citas canceladas.`
         );
 
         return { success: true, impact };
       } catch (error) {
         void logger.error('useLocationTransfer: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useLocationTransfer' })
-        console.error('Error en scheduleTransfer:', error);
         toast.error('Error al programar el traslado');
         return { success: false };
       } finally {
@@ -224,9 +214,7 @@ export function useLocationTransfer(): UseLocationTransferReturn {
           })
           .eq('id', employeeData.id);
 
-        if (updateError) {
-          console.error('Error al cancelar traslado:', updateError);
-          toast.error('Error al cancelar el traslado');
+        if (updateError) {          toast.error('Error al cancelar el traslado');
           return false;
         }
 
@@ -234,7 +222,6 @@ export function useLocationTransfer(): UseLocationTransferReturn {
         return true;
       } catch (error) {
         void logger.error('useLocationTransfer: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useLocationTransfer' })
-        console.error('Error en cancelTransfer:', error);
         toast.error('Error al cancelar el traslado');
         return false;
       } finally {
@@ -259,9 +246,7 @@ export function useLocationTransfer(): UseLocationTransferReturn {
           .eq('business_id', businessId)
           .single();
 
-        if (error || !data) {
-          console.error('Error al obtener estado de traslado:', error);
-          return null;
+        if (error || !data) {          return null;
         }
 
         return {
@@ -274,7 +259,6 @@ export function useLocationTransfer(): UseLocationTransferReturn {
         };
       } catch (error) {
         void logger.error('useLocationTransfer: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useLocationTransfer' })
-        console.error('Error en getTransferStatus:', error);
         return null;
       }
     },

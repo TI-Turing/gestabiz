@@ -5,58 +5,30 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
-export async function testAuthDebug() {
-  console.log('🔍 INICIANDO TEST DE AUTENTICACIÓN');
-
-  try {
-    // Test 1: Verificar sesión actual
-    console.log('\n📋 Test 1: Verificar Sesión Actual');
+export async function testAuthDebug() {  try {
+    // Test 1: Verificar sesión actual    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError) {
-      console.error('❌ Session Error:', sessionError);
-      toast.error('Error al obtener sesión');
+    if (sessionError) {      toast.error('Error al obtener sesión');
       return { success: false, error: 'Session error' };
-    }
-
-    console.log('✅ Session exists:', !!sessionData.session);
-    console.log('✅ User ID:', sessionData.session?.user?.id);
-    console.log('✅ Email:', sessionData.session?.user?.email);
-    console.log('✅ Access Token (primeros 50 chars):', sessionData.session?.access_token?.substring(0, 50) + '...');
+    }    console.log('✅ Access Token (primeros 50 chars):', sessionData.session?.access_token?.substring(0, 50) + '...');
     console.log('✅ Token expires at:', new Date((sessionData.session?.expires_at || 0) * 1000));
     console.log('✅ Is token expired:', Date.now() > ((sessionData.session?.expires_at || 0) * 1000));
 
-    if (!sessionData.session?.user) {
-      console.error('❌ No hay sesión activa');
-      toast.error('No hay sesión activa');
+    if (!sessionData.session?.user) {      toast.error('No hay sesión activa');
       return { success: false, error: 'No session' };
     }
 
     const userId = sessionData.session.user.id;
 
-    // Test 2: Obtener una categoría válida
-    console.log('\n📋 Test 2: Obtener Categoría de Prueba');
-    
-    const { data: category, error: categoryError } = await supabase
+    // Test 2: Obtener una categoría válida    const { data: category, error: categoryError } = await supabase
       .from('business_categories')
       .select('id, name')
       .limit(1)
       .single();
 
-    if (categoryError || !category) {
-      console.error('❌ No se pudo obtener categoría:', categoryError);
-      toast.error('No se pudo obtener categoría de prueba');
+    if (categoryError || !category) {      toast.error('No se pudo obtener categoría de prueba');
       return { success: false, error: 'No category' };
-    }
-
-    console.log('📦 Categoría de prueba:', category);
-    console.log('👤 User ID para owner_id:', userId);
-
-    // Test 3: Intentar INSERT en businesses
-    console.log('\n📋 Test 3: Test INSERT en businesses');
-    
-    const testBusinessData = {
+    }    // Test 3: Intentar INSERT en businesses    const testBusinessData = {
       name: 'TEST Business Debug ' + Date.now(),
       owner_id: userId,
       category_id: category.id,
@@ -80,24 +52,13 @@ export async function testAuthDebug() {
         require_deposit: false,
         deposit_percentage: 0,
       },
-    };
-
-    console.log('📤 Enviando INSERT con data:', testBusinessData);
-
-    const { data: business, error: businessError } = await supabase
+    };    const { data: business, error: businessError } = await supabase
       .from('businesses')
       .insert(testBusinessData)
       .select()
       .single();
 
-    if (businessError) {
-      console.error('❌ INSERT ERROR:', businessError);
-      console.error('   Code:', businessError.code);
-      console.error('   Message:', businessError.message);
-      console.error('   Details:', businessError.details);
-      console.error('   Hint:', businessError.hint);
-      
-      toast.error(`Error al insertar: ${businessError.message}`);
+    if (businessError) {      toast.error(`Error al insertar: ${businessError.message}`);
       
       return {
         success: false,
@@ -108,27 +69,14 @@ export async function testAuthDebug() {
           hasToken: !!sessionData.session.access_token,
         },
       };
-    }
+    }    toast.success('¡Test exitoso! Business creado correctamente');
 
-    console.log('✅ INSERT SUCCESS:', business);
-    toast.success('¡Test exitoso! Business creado correctamente');
-
-    // Limpiar: eliminar el negocio de prueba
-    console.log('\n🧹 Limpiando: Eliminando test business...');
-    const { error: deleteError } = await supabase
+    // Limpiar: eliminar el negocio de prueba    const { error: deleteError } = await supabase
       .from('businesses')
       .delete()
       .eq('id', business.id);
 
-    if (deleteError) {
-      console.warn('⚠️ No se pudo eliminar el test business:', deleteError);
-    } else {
-      console.log('✅ Test business eliminado');
-    }
-
-    console.log('\n✅ TESTS COMPLETADOS EXITOSAMENTE');
-    
-    return {
+    if (deleteError) {    } else {    }    return {
       success: true,
       business,
       sessionInfo: {
@@ -138,9 +86,7 @@ export async function testAuthDebug() {
       },
     };
 
-  } catch (err) {
-    console.error('❌ Error durante tests:', err);
-    toast.error('Error durante el test de autenticación');
+  } catch (err) {    toast.error('Error durante el test de autenticación');
     return {
       success: false,
       error: err instanceof Error ? err.message : 'Unknown error',

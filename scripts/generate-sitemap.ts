@@ -34,13 +34,7 @@ const SITE_URL =
   (process.env.VITE_SITE_URL || 'https://gestabiz.com')
   .replace(/\/$/, '')
 
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-
-  console.warn('⚠️ Warning: faltan variables Supabase')
-  console.warn('⚠️ Requiere: VITE_SUPABASE_URL y VITE_SUPABASE_PUBLISHABLE_KEY')
-  console.warn('⚠️ Se generará sitemap mínimo')
-
-  const today = new Date().toISOString().split('T')[0]
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {  const today = new Date().toISOString().split('T')[0]
 
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
   xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -52,10 +46,7 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
   xml += '  </url>\n'
   xml += '</urlset>'
 
-  fs.writeFileSync('public/sitemap.xml', xml, 'utf-8')
-
-  console.log('✅ Sitemap mínimo generado')
-  process.exit(0)
+  fs.writeFileSync('public/sitemap.xml', xml, 'utf-8')  process.exit(0)
 }
 
 const supabase = createClient(
@@ -72,12 +63,7 @@ function escapeXml(str: string): string {
     .replace(/'/g,'&apos;')
 }
 
-async function generateSitemap() {
-
-  console.log('🚀 Generando sitemap.xml...')
-  console.log(`🌐 ${SITE_URL}`)
-
-  try {
+async function generateSitemap() {  try {
 
     const { data: businesses, error } = await supabase
       .from('businesses')
@@ -115,11 +101,7 @@ async function generateSitemap() {
       xml += '    <changefreq>monthly</changefreq>\n'
       xml += '    <priority>0.9</priority>\n'
       xml += '  </url>\n'
-    }
-
-    console.log(`✅ ${VERTICAL_SLUGS.length} vertical pages`)
-
-    // blog index
+    }    // blog index
     xml += '  <url>\n'
     xml += `    <loc>${SITE_URL}/blog</loc>\n`
     xml += `    <lastmod>${today}</lastmod>\n`
@@ -136,15 +118,7 @@ async function generateSitemap() {
       xml += '    <changefreq>monthly</changefreq>\n'
       xml += '    <priority>0.7</priority>\n'
       xml += '  </url>\n'
-    }
-
-    console.log(`✅ ${BLOG_SLUGS.length + 1} blog pages`)
-
-    if (businesses?.length) {
-
-      console.log(`✅ ${businesses.length} negocios públicos`)
-
-      for (const business of businesses) {
+    }    if (businesses?.length) {      for (const business of businesses) {
 
         if (!business.slug) continue
 
@@ -165,9 +139,7 @@ async function generateSitemap() {
         xml += '  </url>\n'
       }
 
-    } else {
-      console.warn('⚠️ No se encontraron negocios públicos')
-    }
+    } else {    }
 
     xml += '</urlset>\n'
 
@@ -186,13 +158,7 @@ async function generateSitemap() {
       + 1
       + VERTICAL_SLUGS.length
       + BLOG_SLUGS.length
-      + 1
-
-    console.log(`✅ Sitemap generado`)
-    console.log(`📊 URLs: ${totalUrls}`)
-    console.log(`🔗 ${SITE_URL}/sitemap.xml`)
-
-  } catch (error) {
+      + 1  } catch (error) {
 
     console.warn(
       '⚠️ Sitemap no generado (continuando build):',

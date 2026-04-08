@@ -132,9 +132,7 @@ export function useMandatoryReviews(
       setShouldShowModal(false);
     } catch (error) {
       void logger.error('useMandatoryReviews: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useMandatoryReviews' })
-      // eslint-disable-next-line no-console
-      console.error('Error setting remind later:', error);
-    }
+      // eslint-disable-next-line no-console    }
   }, [userId]);
 
   const clearRemindLater = useCallback(() => {
@@ -154,9 +152,7 @@ export function useMandatoryReviews(
       }
     } catch (error) {
       void logger.error('useMandatoryReviews: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useMandatoryReviews' })
-      // eslint-disable-next-line no-console
-      console.error('Error clearing remind later:', error);
-    }
+      // eslint-disable-next-line no-console    }
   }, [userId]);
 
   return {
@@ -198,9 +194,7 @@ function getRemindLaterStatus(userId: string): boolean {
     return true;
   } catch (error) {
     void logger.error('useMandatoryReviews: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useMandatoryReviews' })
-    // eslint-disable-next-line no-console
-    console.error('Error getting remind later status:', error);
-    return false;
+    // eslint-disable-next-line no-console    return false;
   }
 }
 
@@ -225,9 +219,7 @@ export function cleanupExpiredRemindLater() {
     }
   } catch (error) {
     void logger.error('useMandatoryReviews: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useMandatoryReviews' })
-    // eslint-disable-next-line no-console
-    console.error('Error cleaning up remind later:', error);
-  }
+    // eslint-disable-next-line no-console  }
 }
 
 // ✅ NEW: Helper para obtener el timestamp del último check
@@ -242,9 +234,7 @@ function getLastCheckTime(userId: string): number {
     return userEntry?.timestamp || 0;
   } catch (error) {
     void logger.error('useMandatoryReviews: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useMandatoryReviews' })
-    // eslint-disable-next-line no-console
-    console.error('Error getting last check time:', error);
-    return 0;
+    // eslint-disable-next-line no-console    return 0;
   }
 }
 
@@ -266,7 +256,5 @@ function updateLastCheckTime(userId: string): void {
     localStorage.setItem(LAST_CHECK_KEY, JSON.stringify(filtered));
   } catch (error) {
     void logger.error('useMandatoryReviews: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useMandatoryReviews' })
-    // eslint-disable-next-line no-console
-    console.error('Error updating last check time:', error);
-  }
+    // eslint-disable-next-line no-console  }
 }

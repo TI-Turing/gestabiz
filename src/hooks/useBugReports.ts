@@ -194,13 +194,10 @@ export function useBugReports(): UseBugReportsReturn {
           }
         })
 
-        if (emailError) {
-          console.error('Error sending email:', emailError)
-          // No fallar el reporte si falla el email
+        if (emailError) {          // No fallar el reporte si falla el email
         }
       } catch (emailError) {
         void logger.error('useBugReports: operation failed', emailError instanceof Error ? emailError : new Error(String(emailError)), { component: 'useBugReports' })
-        console.error('Error calling email function:', emailError)
         // No fallar el reporte si falla el email
       }
 
@@ -327,7 +324,6 @@ export function useBugReports(): UseBugReportsReturn {
 
     } catch (err) {
       void logger.error('useBugReports: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBugReports' })
-      console.error('Error fetching bug report:', err)
       return null
     }
   }, [user])
@@ -349,7 +345,6 @@ export function useBugReports(): UseBugReportsReturn {
 
     } catch (err) {
       void logger.error('useBugReports: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useBugReports' })
-      console.error('Error fetching evidences:', err)
       return []
     }
   }, [user])

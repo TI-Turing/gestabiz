@@ -89,9 +89,7 @@ export function NotificationSettings({ userId }: { userId: string }) {
         setPreferences(data as NotificationPreferences)
       }
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'NotificationSettings' } })
-      console.error('Failed to load notification preferences:', err)
-      toast.error(t('notifications.errors.loadError'))
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'NotificationSettings' } })      toast.error(t('notifications.errors.loadError'))
       setPreferences({
         email_enabled: true,
         sms_enabled: false,

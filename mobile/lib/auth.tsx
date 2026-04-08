@@ -32,17 +32,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (authState.session) {
         try {
           await SecureStore.setItemAsync('session', JSON.stringify(authState.session))
-          console.log('Session persisted in SecureStore')
         } catch (error) {
-          console.error('Error persisting session:', error)
         }
       } else {
         // Eliminar sesión si user es null
         try {
           await SecureStore.deleteItemAsync('session')
-          console.log('Session cleared from SecureStore')
         } catch (error) {
-          console.error('Error clearing session:', error)
         }
       }
     }

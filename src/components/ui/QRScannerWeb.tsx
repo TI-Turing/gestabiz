@@ -58,9 +58,7 @@ export function QRScannerWeb({ onScan, onCancel, isOpen }: Readonly<QRScannerWeb
       setScanning(true)
       requestAnimationFrame(scanQRCode)
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'QRScannerWeb' } })
-      console.error('Error accessing camera:', err)
-      setHasPermission(false)
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'QRScannerWeb' } })      setHasPermission(false)
       setError('No se pudo acceder a la cámara. Por favor verifica los permisos.')
     }
   }

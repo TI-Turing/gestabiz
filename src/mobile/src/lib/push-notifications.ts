@@ -18,9 +18,7 @@ Notifications.setNotificationHandler({
  * Retorna el Expo push token o null si no se puede registrar.
  */
 export async function registerForPushNotifications(): Promise<string | null> {
-  if (!Device.isDevice) {
-    console.log('[PushNotifications] Requiere dispositivo físico')
-    return null
+  if (!Device.isDevice) {    return null
   }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync()
@@ -31,16 +29,11 @@ export async function registerForPushNotifications(): Promise<string | null> {
     finalStatus = status
   }
 
-  if (finalStatus !== 'granted') {
-    console.log('[PushNotifications] Permiso denegado')
-    return null
+  if (finalStatus !== 'granted') {    return null
   }
 
   try {
-    const token = (await Notifications.getExpoPushTokenAsync()).data
-    console.log('[PushNotifications] Token obtenido:', token)
-
-    if (Platform.OS === 'android') {
+    const token = (await Notifications.getExpoPushTokenAsync()).data    if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
         name: 'Gestabiz',
         importance: Notifications.AndroidImportance.MAX,
@@ -61,9 +54,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     }
 
     return token
-  } catch (error) {
-    console.error('[PushNotifications] Error obteniendo token:', error)
-    return null
+  } catch (error) {    return null
   }
 }
 
@@ -85,12 +76,8 @@ export async function savePushToken(userId: string, token: string): Promise<void
         { onConflict: 'user_id,token' }
       )
 
-    if (error) {
-      console.error('[PushNotifications] Error guardando token:', error)
-    }
-  } catch (error) {
-    console.error('[PushNotifications] Error en savePushToken:', error)
-  }
+    if (error) {    }
+  } catch (error) {  }
 }
 
 /**
@@ -103,12 +90,8 @@ export async function removePushToken(token: string): Promise<void> {
       .delete()
       .eq('token', token)
 
-    if (error) {
-      console.error('[PushNotifications] Error eliminando token:', error)
-    }
-  } catch (error) {
-    console.error('[PushNotifications] Error en removePushToken:', error)
-  }
+    if (error) {    }
+  } catch (error) {  }
 }
 
 export function addNotificationReceivedListener(

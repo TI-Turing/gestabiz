@@ -156,9 +156,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
         .eq('user_id', session.session.user.id)
         .maybeSingle();
 
-      if (checkError) {
-        console.error('Error checking existing application:', checkError);
-        // Continue anyway, backend will handle constraint violation
+      if (checkError) {        // Continue anyway, backend will handle constraint violation
       }
 
       if (existing) {
@@ -202,9 +200,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
             upsert: false
           });
 
-        if (uploadError) {
-          console.error('Error uploading CV:', uploadError);
-          throw new Error('Error al cargar el CV: ' + uploadError.message);
+        if (uploadError) {          throw new Error('Error al cargar el CV: ' + uploadError.message);
         }
 
         cvUrl = filePath; // Store the path in the database
@@ -475,9 +471,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
       });
 
       if (notifError) {
-        // eslint-disable-next-line no-console
-        console.error('Error enviando notificación:', notifError);
-        // No fallar la operación si falla la notificación
+        // eslint-disable-next-line no-console        // No fallar la operación si falla la notificación
       }
 
       toast.success('Proceso de selección iniciado', {
@@ -656,9 +650,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
       });
 
       if (notifError) {
-        // eslint-disable-next-line no-console
-        console.error('Error enviando notificaciones:', notifError);
-        // No fallar la operación si falla la notificación
+        // eslint-disable-next-line no-console        // No fallar la operación si falla la notificación
       }
 
       toast.success('¡Empleado seleccionado!', {

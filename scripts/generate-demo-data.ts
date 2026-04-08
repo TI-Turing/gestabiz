@@ -219,51 +219,24 @@ const generatedServices: GeneratedService[] = [];
 // FUNCIONES PRINCIPALES
 // ============================================================================
 
-async function main() {
-  console.log('🚀 Iniciando generación de datos ficticios...\n');
+async function main() {  try {
+    // Paso 1: Crear usuarios    await createUsers();
 
-  try {
-    // Paso 1: Crear usuarios
-    console.log('📝 Paso 1/9: Creando 100 usuarios...');
-    await createUsers();
+    // Paso 2: Crear negocios    await createBusinesses();
 
-    // Paso 2: Crear negocios
-    console.log('📝 Paso 2/9: Creando 30 negocios...');
-    await createBusinesses();
+    // Paso 3: Crear sedes    await createLocations();
 
-    // Paso 3: Crear sedes
-    console.log('📝 Paso 3/9: Creando sedes para cada negocio...');
-    await createLocations();
+    // Paso 4: Crear servicios    await createServices();
 
-    // Paso 4: Crear servicios
-    console.log('📝 Paso 4/9: Generando servicios...');
-    await createServices();
+    // Paso 5: Crear empleados    await createEmployees();
 
-    // Paso 5: Crear empleados
-    console.log('📝 Paso 5/9: Creando 15 empleados...');
-    await createEmployees();
+    // Paso 6: Asignar servicios a empleados    await assignServicesToEmployees();
 
-    // Paso 6: Asignar servicios a empleados
-    console.log('📝 Paso 6/9: Asignando servicios a empleados...');
-    await assignServicesToEmployees();
+    // Paso 7: Crear citas históricas    await createAppointments();
 
-    // Paso 7: Crear citas históricas
-    console.log('📝 Paso 7/9: Generando citas históricas...');
-    await createAppointments();
+    // Paso 8: Crear transacciones contables    await createTransactions();
 
-    // Paso 8: Crear transacciones contables
-    console.log('📝 Paso 8/9: Generando transacciones contables...');
-    await createTransactions();
-
-    // Paso 9: Generar archivos CSV
-    console.log('📝 Paso 9/9: Generando archivos CSV...');
-    await generateCSVFiles();
-
-    console.log('\n✅ ¡Generación completada exitosamente!');
-    console.log('📂 Archivos CSV generados en: ./generated-data/');
-  } catch (error) {
-    console.error('❌ Error durante la generación:', error);
-    throw error;
+    // Paso 9: Generar archivos CSV    await generateCSVFiles();  } catch (error) {    throw error;
   }
 }
 
@@ -307,9 +280,7 @@ async function createUsers() {
         }
       });
 
-      if (authError) {
-        console.error(`Error creando usuario ${email}:`, authError);
-        continue;
+      if (authError) {        continue;
       }
 
       const userId = authData.user.id;
@@ -326,9 +297,7 @@ async function createUsers() {
           created_at: new Date().toISOString(),
         });
 
-      if (profileError) {
-        console.error(`Error creando perfil para ${email}:`, profileError);
-        continue;
+      if (profileError) {        continue;
       }
 
       generatedUsers.push({
@@ -340,16 +309,9 @@ async function createUsers() {
         role,
       });
 
-      if ((i + 1) % 10 === 0) {
-        console.log(`   ✓ ${i + 1}/100 usuarios creados`);
-      }
-    } catch (error) {
-      console.error(`Error procesando usuario ${i + 1}:`, error);
-    }
-  }
-
-  console.log(`   ✅ Total: ${generatedUsers.length} usuarios creados`);
-}
+      if ((i + 1) % 10 === 0) {      }
+    } catch (error) {    }
+  }}
 
 async function createBusinesses() {
   const owners = generatedUsers.filter(u => u.role === 'owner');
@@ -393,9 +355,7 @@ async function createBusinesses() {
           .select()
           .single();
 
-        if (error) {
-          console.error(`Error creando negocio ${businessName}:`, error);
-          continue;
+        if (error) {          continue;
         }
 
         generatedBusinesses.push({
@@ -411,17 +371,10 @@ async function createBusinesses() {
 
         businessIndex++;
         
-        if ((businessIndex) % 5 === 0) {
-          console.log(`   ✓ ${businessIndex}/30 negocios creados`);
-        }
-      } catch (error) {
-        console.error(`Error procesando negocio ${businessIndex + 1}:`, error);
-      }
+        if ((businessIndex) % 5 === 0) {        }
+      } catch (error) {      }
     }
-  }
-
-  console.log(`   ✅ Total: ${generatedBusinesses.length} negocios creados`);
-}
+  }}
 
 async function createLocations() {
   let totalLocations = 0;
@@ -457,9 +410,7 @@ async function createLocations() {
           .select()
           .single();
 
-        if (error) {
-          console.error(`Error creando sede ${locationName}:`, error);
-          continue;
+        if (error) {          continue;
         }
 
         generatedLocations.push({
@@ -474,18 +425,11 @@ async function createLocations() {
         });
 
         totalLocations++;
-      } catch (error) {
-        console.error(`Error procesando sede:`, error);
-      }
+      } catch (error) {      }
     }
     
-    if ((generatedLocations.length) % 20 === 0) {
-      console.log(`   ✓ ${generatedLocations.length} sedes creadas...`);
-    }
-  }
-
-  console.log(`   ✅ Total: ${totalLocations} sedes creadas`);
-}
+    if ((generatedLocations.length) % 20 === 0) {    }
+  }}
 
 async function createServices() {
   let totalServices = 0;
@@ -494,9 +438,7 @@ async function createServices() {
     const categoryData = BUSINESS_CATEGORIES[business.category as keyof typeof BUSINESS_CATEGORIES];
     const serviceList = categoryData.services[business.subcategory as keyof typeof categoryData.services] as string[] | undefined;
     
-    if (!serviceList || serviceList.length === 0) {
-      console.warn(`No hay servicios definidos para ${business.subcategory}`);
-      continue;
+    if (!serviceList || serviceList.length === 0) {      continue;
     }
 
     // Crear todos los servicios de esa subcategoría
@@ -521,9 +463,7 @@ async function createServices() {
           .select()
           .single();
 
-        if (error) {
-          console.error(`Error creando servicio ${serviceName}:`, error);
-          continue;
+        if (error) {          continue;
         }
 
         generatedServices.push({
@@ -537,18 +477,11 @@ async function createServices() {
         });
 
         totalServices++;
-      } catch (error) {
-        console.error(`Error procesando servicio:`, error);
-      }
+      } catch (error) {      }
     }
     
-    if ((totalServices) % 50 === 0) {
-      console.log(`   ✓ ${totalServices} servicios creados...`);
-    }
-  }
-
-  console.log(`   ✅ Total: ${totalServices} servicios creados`);
-}
+    if ((totalServices) % 50 === 0) {    }
+  }}
 
 async function createEmployees() {
   const employees = generatedUsers.filter(u => u.role === 'employee');
@@ -615,9 +548,7 @@ async function createEmployees() {
           .select()
           .single();
 
-        if (error) {
-          console.error(`Error vinculando empleado a negocio:`, error);
-          continue;
+        if (error) {          continue;
         }
 
         // Vincular empleado a las sedes seleccionadas
@@ -635,20 +566,13 @@ async function createEmployees() {
           location_ids: selectedLocations,
           schedule,
         });
-      } catch (error) {
-        console.error(`Error procesando empleado:`, error);
-      }
+      } catch (error) {      }
     }
 
     generatedEmployees.push(employeeData);
     
-    if ((i + 1) % 5 === 0) {
-      console.log(`   ✓ ${i + 1}/15 empleados creados`);
-    }
-  }
-
-  console.log(`   ✅ Total: ${generatedEmployees.length} empleados creados`);
-}
+    if ((i + 1) % 5 === 0) {    }
+  }}
 
 async function assignServicesToEmployees() {
   let totalAssignments = 0;
@@ -674,25 +598,16 @@ async function assignServicesToEmployees() {
               business_id: businessData.business_id,
             });
 
-          if (error) {
-            console.error(`Error asignando servicio a empleado:`, error);
-            continue;
+          if (error) {            continue;
           }
 
           totalAssignments++;
-        } catch (error) {
-          console.error(`Error procesando asignación:`, error);
-        }
+        } catch (error) {        }
       }
     }
     
-    if (totalAssignments % 20 === 0) {
-      console.log(`   ✓ ${totalAssignments} servicios asignados...`);
-    }
-  }
-
-  console.log(`   ✅ Total: ${totalAssignments} servicios asignados a empleados`);
-}
+    if (totalAssignments % 20 === 0) {    }
+  }}
 
 async function createAppointments() {
   const clients = generatedUsers.filter(u => u.role === 'client');
@@ -762,24 +677,15 @@ async function createAppointments() {
             created_at: addDays(appointmentDate, -randomInt(1, 5)).toISOString(),
           });
 
-        if (error) {
-          console.error(`Error creando cita:`, error);
-          continue;
+        if (error) {          continue;
         }
 
         totalAppointments++;
-      } catch (error) {
-        console.error(`Error procesando cita:`, error);
-      }
+      } catch (error) {      }
     }
     
-    if (totalAppointments % 50 === 0) {
-      console.log(`   ✓ ${totalAppointments} citas creadas...`);
-    }
-  }
-
-  console.log(`   ✅ Total: ${totalAppointments} citas históricas creadas`);
-}
+    if (totalAppointments % 50 === 0) {    }
+  }}
 
 async function createTransactions() {
   // Obtener todas las citas completadas
@@ -788,9 +694,7 @@ async function createTransactions() {
     .select('id, service_id, business_id, start_time')
     .eq('status', 'completed');
 
-  if (error || !completedAppointments) {
-    console.error('Error obteniendo citas completadas:', error);
-    return;
+  if (error || !completedAppointments) {    return;
   }
 
   let totalTransactions = 0;
@@ -826,19 +730,13 @@ async function createTransactions() {
           created_at: transactionDate.toISOString(),
         });
 
-      if (txError) {
-        console.error(`Error creando transacción:`, txError);
-        continue;
+      if (txError) {        continue;
       }
 
       totalTransactions++;
 
-      if (totalTransactions % 50 === 0) {
-        console.log(`   ✓ ${totalTransactions} transacciones creadas...`);
-      }
-    } catch (error) {
-      console.error(`Error procesando transacción:`, error);
-    }
+      if (totalTransactions % 50 === 0) {      }
+    } catch (error) {    }
   }
 
   // Crear algunos gastos operacionales aleatorios para cada negocio
@@ -870,14 +768,9 @@ async function createTransactions() {
           });
 
         totalTransactions++;
-      } catch (error) {
-        console.error(`Error procesando gasto:`, error);
-      }
+      } catch (error) {      }
     }
-  }
-
-  console.log(`   ✅ Total: ${totalTransactions} transacciones contables creadas`);
-}
+  }}
 
 async function generateCSVFiles() {
   const outputDir = path.join(process.cwd(), 'generated-data');
@@ -894,10 +787,7 @@ async function generateCSVFiles() {
       `${u.email},${u.password},${u.full_name},${u.phone},${u.role},${u.id}`
     )
   ].join('\n');
-  fs.writeFileSync(path.join(outputDir, '1-todos-usuarios.csv'), allUsersCSV, 'utf-8');
-  console.log('   ✓ 1-todos-usuarios.csv generado');
-
-  // CSV 2: Solo owners
+  fs.writeFileSync(path.join(outputDir, '1-todos-usuarios.csv'), allUsersCSV, 'utf-8');  // CSV 2: Solo owners
   const owners = generatedUsers.filter(u => u.role === 'owner');
   const ownersCSV = [
     'email,password,full_name,phone,user_id',
@@ -905,10 +795,7 @@ async function generateCSVFiles() {
       `${u.email},${u.password},${u.full_name},${u.phone},${u.id}`
     )
   ].join('\n');
-  fs.writeFileSync(path.join(outputDir, '2-propietarios.csv'), ownersCSV, 'utf-8');
-  console.log('   ✓ 2-propietarios.csv generado');
-
-  // CSV 3: Solo employees
+  fs.writeFileSync(path.join(outputDir, '2-propietarios.csv'), ownersCSV, 'utf-8');  // CSV 3: Solo employees
   const employees = generatedUsers.filter(u => u.role === 'employee');
   const employeesCSV = [
     'email,password,full_name,phone,user_id,num_businesses',
@@ -918,10 +805,7 @@ async function generateCSVFiles() {
       return `${u.email},${u.password},${u.full_name},${u.phone},${u.id},${numBusinesses}`;
     })
   ].join('\n');
-  fs.writeFileSync(path.join(outputDir, '3-empleados.csv'), employeesCSV, 'utf-8');
-  console.log('   ✓ 3-empleados.csv generado');
-
-  // CSV 4: Solo clientes
+  fs.writeFileSync(path.join(outputDir, '3-empleados.csv'), employeesCSV, 'utf-8');  // CSV 4: Solo clientes
   const clients = generatedUsers.filter(u => u.role === 'client');
   const clientsCSV = [
     'email,password,full_name,phone,user_id',
@@ -929,10 +813,7 @@ async function generateCSVFiles() {
       `${u.email},${u.password},${u.full_name},${u.phone},${u.id}`
     )
   ].join('\n');
-  fs.writeFileSync(path.join(outputDir, '4-clientes.csv'), clientsCSV, 'utf-8');
-  console.log('   ✓ 4-clientes.csv generado');
-
-  // CSV 5: Negocios
+  fs.writeFileSync(path.join(outputDir, '4-clientes.csv'), clientsCSV, 'utf-8');  // CSV 5: Negocios
   const businessesCSV = [
     'business_id,name,owner_email,category,subcategory,city,department,description',
     ...generatedBusinesses.map(b => {
@@ -940,39 +821,21 @@ async function generateCSVFiles() {
       return `${b.id},${b.name},${owner?.email || ''},${b.category},${b.subcategory},${b.city},${b.department},"${b.description}"`;
     })
   ].join('\n');
-  fs.writeFileSync(path.join(outputDir, '5-negocios.csv'), businessesCSV, 'utf-8');
-  console.log('   ✓ 5-negocios.csv generado');
-
-  // CSV 6: Sedes
+  fs.writeFileSync(path.join(outputDir, '5-negocios.csv'), businessesCSV, 'utf-8');  // CSV 6: Sedes
   const locationsCSV = [
     'location_id,business_id,name,address,city,phone,opens_at,closes_at',
     ...generatedLocations.map(l => 
       `${l.id},${l.business_id},${l.name},"${l.address}",${l.city},${l.phone},${l.opens_at},${l.closes_at}`
     )
   ].join('\n');
-  fs.writeFileSync(path.join(outputDir, '6-sedes.csv'), locationsCSV, 'utf-8');
-  console.log('   ✓ 6-sedes.csv generado');
-
-  // CSV 7: Servicios
+  fs.writeFileSync(path.join(outputDir, '6-sedes.csv'), locationsCSV, 'utf-8');  // CSV 7: Servicios
   const servicesCSV = [
     'service_id,business_id,name,description,duration_minutes,price_cop,category',
     ...generatedServices.map(s => 
       `${s.id},${s.business_id},${s.name},"${s.description}",${s.duration},${s.price},${s.category}`
     )
   ].join('\n');
-  fs.writeFileSync(path.join(outputDir, '7-servicios.csv'), servicesCSV, 'utf-8');
-  console.log('   ✓ 7-servicios.csv generado');
-
-  console.log(`\n   ✅ Todos los archivos CSV generados en: ${outputDir}/`);
-  console.log(`   📊 Resumen de datos generados:`);
-  console.log(`      - ${generatedUsers.length} usuarios totales`);
-  console.log(`      - ${owners.length} propietarios`);
-  console.log(`      - ${employees.length} empleados`);
-  console.log(`      - ${clients.length} clientes`);
-  console.log(`      - ${generatedBusinesses.length} negocios`);
-  console.log(`      - ${generatedLocations.length} sedes`);
-  console.log(`      - ${generatedServices.length} servicios`);
-}
+  fs.writeFileSync(path.join(outputDir, '7-servicios.csv'), servicesCSV, 'utf-8');}
 
 // Ejecutar script
 await main().catch(console.error);

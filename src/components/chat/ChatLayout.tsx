@@ -59,19 +59,10 @@ export function ChatLayout({
   const messages = activeMessages || [];
 
   // Debug: Log conversations array changes
-  useEffect(() => {
-    console.log('[ChatLayout] conversations changed:', conversations);
-    console.log('[ChatLayout] conversations.length:', conversations.length);
-    console.log('[ChatLayout] activeConversationId:', activeConversationId);
-    console.log('[ChatLayout] activeConversation:', activeConversation);
-  }, [conversations, activeConversationId, activeConversation]);
+  useEffect(() => {  }, [conversations, activeConversationId, activeConversation]);
 
   // Sincronizar conversationId inicial
-  useEffect(() => {
-    console.log('[ChatLayout] initialConversationId changed:', initialConversationId)
-    if (initialConversationId) {
-      console.log('[ChatLayout] Setting active conversation to:', initialConversationId)
-      setActiveConversationId(initialConversationId);
+  useEffect(() => {    if (initialConversationId) {      setActiveConversationId(initialConversationId);
       // ✅ También setear en el hook para cargar los mensajes
       hookSetActiveConversation(initialConversationId);
     }
@@ -145,25 +136,19 @@ export function ChatLayout({
    * Wrapper de editMessage
    */
   const handleEditMessage = async (_messageId: string, _newContent: string) => {
-    // TODO: Implementar editMessage en useChat
-    console.log('Edit message not implemented yet');
-  };
+    // TODO: Implementar editMessage en useChat  };
 
   /**
    * Wrapper de deleteMessage
    */
   const handleDeleteMessage = async (_messageId: string) => {
-    // TODO: Implementar deleteMessage en useChat
-    console.log('Delete message not implemented yet');
-  };
+    // TODO: Implementar deleteMessage en useChat  };
 
   /**
    * Wrapper de toggleArchive
    */
   const handleToggleArchive = async (_convId: string, _isArchived: boolean) => {
-    // TODO: Implementar archive en useChat
-    console.log('Archive conversation not implemented yet');
-  };
+    // TODO: Implementar archive en useChat  };
 
   /**
    * Wrapper de toggleMute

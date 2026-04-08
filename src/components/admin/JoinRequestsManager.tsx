@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react'
-import { UserCheck, X, Check, QrCode, Clock, Copy, RefreshCw } from 'lucide-react'
+import { UserCheck, X, Check, QrCode, Clock, Copy, RefreshCw, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +18,7 @@ import {
   useApproveJoinRequest,
   useRejectJoinRequest,
   useGenerateInviteCode,
+  useDeleteInviteCode,
   useActiveInviteCodes,
   type JoinRequest,
 } from '@/hooks/useEmployeeJoinRequests'
@@ -36,6 +37,7 @@ export function JoinRequestsManager({ businessId }: Readonly<JoinRequestsManager
   const approve = useApproveJoinRequest(businessId)
   const reject = useRejectJoinRequest(businessId)
   const generateCode = useGenerateInviteCode(businessId)
+  const deleteCode = useDeleteInviteCode(businessId)
 
   const handleApprove = async (req: JoinRequest) => {
     if (!req.employee_id) return
@@ -94,7 +96,7 @@ export function JoinRequestsManager({ businessId }: Readonly<JoinRequestsManager
             return (
               <div
                 key={req.id}
-                className="flex items-start gap-3 p-3 rounded-lg border bg-background"
+                className="flex items-start gap-3 p-3 rounded-lg border bg-muted/50"
               >
                 <Avatar className="h-10 w-10 shrink-0">
                   <AvatarImage src={emp?.avatar_url ?? undefined} alt={name} />
@@ -127,8 +129,8 @@ export function JoinRequestsManager({ businessId }: Readonly<JoinRequestsManager
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 h-8 gap-1"
+                    variant="destructive"
+                    className="h-8 gap-1"
                     onClick={() => setRejecting(req)}
                   >
                     <X className="h-3 w-3" />
@@ -143,28 +145,16 @@ export function JoinRequestsManager({ businessId }: Readonly<JoinRequestsManager
 
       {/* Invite Code Section */}
       <div className="pt-3 border-t space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium">Códigos de invitación</p>
-            <p className="text-xs text-muted-foreground">
-              Genera un código de 6 dígitos para compartir con un empleado. Caduca en 24 horas.
-            </p>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleGenerateCode}
-            disabled={generateCode.isPending}
-            className="gap-2 shrink-0"
-          >
-            <QrCode className="h-4 w-4" />
-            {generateCode.isPending ? 'Generando...' : 'Nuevo código'}
-          </Button>
+        <div>
+          <p className="text-sm font-medium">Códigos de invitación</p>
+          <p className="text-xs text-muted-foreground">
+            Genera un código de 6 dígitos para compartir con un empleado. Caduca en 24 h.
+          </p>
         </div>
 
         {/* Last generated code */}
         {generatedCode && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted border">
             <code className="flex-1 font-mono text-lg font-bold tracking-widest text-center">
               {generatedCode}
             </code>
@@ -190,12 +180,23 @@ export function JoinRequestsManager({ businessId }: Readonly<JoinRequestsManager
                 <Badge variant="outline" className="text-xs">
                   Vence {new Date(c.invite_code_expires_at!).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
                 </Badge>
-                <button
-                  onClick={() => copyCode(c.invite_code!)}
-                  className="text-muted-foreground hover:text-foreground ml-auto"
-                >
-                  <Copy className="h-3 w-3" />
-                </button>
+                <div className="ml-auto flex items-center gap-2">
+                  <button
+                    onClick={() => copyCode(c.invite_code!)}
+                    className="text-muted-foreground hover:text-foreground"
+                    title="Copiar código"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </button>
+                  <button
+                    onClick={() => deleteCode.mutate(c.id)}
+                    disabled={deleteCode.isPending}
+                    className="text-muted-foreground hover:text-destructive disabled:opacity-40"
+                    title="Eliminar código"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -255,18 +256,25 @@ export function JoinRequestsBadge({ businessId }: { businessId: string }) {
 // Card version for embedding in EmployeeManagementHierarchy
 export function JoinRequestsCard({ businessId }: { businessId: string }) {
   const { data: requests = [] } = usePendingJoinRequests(businessId)
-
-  if (requests.length === 0) return null
+  const hasPending = requests.length > 0
 
   return (
-    <Card className="border-blue-300 bg-blue-50 dark:bg-blue-950/20">
+    <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-blue-900 dark:text-blue-200 flex items-center gap-2">
+        <CardTitle className="text-sm flex items-center gap-2">
           <UserCheck className="h-4 w-4" />
-          {requests.length} solicitud{requests.length > 1 ? 'es' : ''} de ingreso pendiente{requests.length > 1 ? 's' : ''}
+          Solicitudes de ingreso
+          {hasPending && (
+            <Badge variant="destructive" className="h-5 px-1.5 text-xs">
+              {requests.length}
+            </Badge>
+          )}
         </CardTitle>
-        <CardDescription className="text-xs text-blue-700 dark:text-blue-300">
-          Empleados que quieren unirse a tu equipo esperan tu aprobación.
+        <CardDescription className="text-xs">
+          {hasPending
+            ? `${requests.length} empleado${requests.length > 1 ? 's' : ''} espera${requests.length === 1 ? '' : 'n'} tu aprobación para unirse al equipo.`
+            : 'Aquí aparecerán las solicitudes de empleados que quieran unirse a tu negocio.'
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>

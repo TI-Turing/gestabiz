@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
-import { Upload, Loader2, CalendarDays } from 'lucide-react'
+import { Upload, Loader2, CalendarDays, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { User as UserType } from '@/types'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -33,11 +33,12 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
   const { uploadFile, deleteFile } = useFileUpload('user-avatars')
   const [pendingPhoneVerification, setPendingPhoneVerification] = useState(false)
-  
+  const [phoneChangedForVerification, setPhoneChangedForVerification] = useState(false)
+
   // Image cropper states
   const [showCropper, setShowCropper] = useState(false)
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
-  
+
   const [formData, setFormData] = useState({
     name: user.name,
     username: user.username || '',
@@ -49,11 +50,17 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
   // Detectar si es autenticación OAuth (Google, etc)
   const isOAuthUser = Boolean(user.avatar_url && (user.avatar_url.includes('googleusercontent.com') || user.avatar_url.includes('lh3.googleusercontent.com')))
 
-  // Extract prefix for selector from existing phone, default to CO +57
+  // Extract prefix for selector from existing phone using COUNTRY_CODES for precision
   const initialPrefix = (() => {
-    const regex = /^\+(\d{1,3})/
-    const match = regex.exec(user.phone || '')
-    if (match) return `+${match[1]}`
+    const userPhone = user.phone || ''
+    if (!userPhone) return '+57' // Default to Colombia
+    // Sort by length DESC to match longest prefix first (e.g., +593 before +5)
+    const sorted = [...COUNTRY_CODES].sort((a, b) => b.code.length - a.code.length)
+    for (const country of sorted) {
+      if (userPhone.startsWith(country.code)) {
+        return country.code
+      }
+    }
     return '+57' // Default to Colombia
   })()
   const [phonePrefix, setPhonePrefix] = useState<string>(initialPrefix)
@@ -88,7 +95,16 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
 
   const handlePrefixChange = (prefix: string) => {
     setPhonePrefix(prefix)
-    const localPart = (formData.phone || '').replace(/^\+\d{1,4}\s?/, '')
+    // Extract local part by removing the old prefix (not a generic regex)
+    const currentPhone = formData.phone || ''
+    let localPart = currentPhone
+    // Remove any existing prefix
+    for (const cc of COUNTRY_CODES) {
+      if (currentPhone.startsWith(cc.code)) {
+        localPart = currentPhone.slice(cc.code.length).trim()
+        break
+      }
+    }
     setFormData(prev => ({ ...prev, phone: `${prefix} ${localPart}`.trim() }))
   }
 
@@ -192,13 +208,14 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
     }
 
     setIsUpdating(true)
-    
+
     try {
-      // Persist to Supabase
+      // Persist to Supabase — guardar campos (username es solo local, no existe en profiles)
       const { error: dbError } = await supabase
         .from('profiles')
         .update({
           full_name: formData.name,
+          email: formData.email || null,
           phone: formData.phone || null,
           updated_at: new Date().toISOString()
         })
@@ -220,7 +237,7 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
       }
 
       // Update in users array
-      await setUsers(prev => 
+      await setUsers(prev =>
         prev.map(u => u.id === user.id ? updatedUser : u)
       )
 
@@ -231,15 +248,15 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
       } catch {
         // noop
       }
-      
+
       // Invalidar queries para refrescar dashboard automáticamente (Bug #5 fix)
-      await queryClient.invalidateQueries({ 
-        queryKey: ['nearby-businesses'] 
+      await queryClient.invalidateQueries({
+        queryKey: ['nearby-businesses']
       })
-      await queryClient.invalidateQueries({ 
-        queryKey: ['client-dashboard-data'] 
+      await queryClient.invalidateQueries({
+        queryKey: ['client-dashboard-data']
       })
-      
+
       toast.success(t('profile.success'))
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
@@ -362,7 +379,7 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
               <Label htmlFor="phone" className="text-sm font-medium">
                 Teléfono
               </Label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-start">
                 <Select value={phonePrefix} onValueChange={handlePrefixChange} disabled={isOAuthUser}>
                   <SelectTrigger className={`w-32 ${isOAuthUser ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     {(() => {
@@ -377,18 +394,108 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
                     ))}
                   </SelectContent>
                 </Select>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={(formData.phone || '').replace(/^\+\d{1,4}\s?/, '')}
-                  onChange={(e) => handlePhoneChange(e.target.value)}
-                  placeholder={COUNTRY_PHONE_EXAMPLES[phonePrefix] || '55 1234 5678'}
-                  className="flex-1"
-                />
+                <div className="flex-1 relative">
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formData.phone && formData.phone.startsWith(phonePrefix) ? formData.phone.slice(phonePrefix.length).trim() : (formData.phone || '')}
+                    onChange={(e) => {
+                      handlePhoneChange(e.target.value)
+                      // Mostrar botón de verificación cuando el teléfono cambia
+                      const newPhone = `${phonePrefix} ${e.target.value}`.trim()
+                      const currentPhone = user.phone?.trim() ?? ''
+                      if (newPhone !== currentPhone && newPhone !== phonePrefix) {
+                        setPhoneChangedForVerification(true)
+                      }
+                    }}
+                    placeholder={COUNTRY_PHONE_EXAMPLES[phonePrefix] || '55 1234 5678'}
+                    className="w-full"
+                  />
+                  {/* Botón de verificación que aparece cuando el teléfono cambia */}
+                  {phoneChangedForVerification && !pendingPhoneVerification && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setPendingPhoneVerification(true)}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 px-2 h-8 text-xs hover:bg-primary/10 text-primary"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
+                      SMS
+                    </Button>
+                  )}
+                </div>
               </div>
               <p className="text-xs text-muted-foreground">
                 Ejemplo: {`${phonePrefix} ${COUNTRY_PHONE_EXAMPLES[phonePrefix] || '55 1234 5678'}`}
               </p>
+
+              {/* Campo OTP inline cuando se inicia verificación */}
+              {pendingPhoneVerification && (
+                <div className="mt-4 p-5 border-2 border-primary/30 rounded-lg bg-gradient-to-br from-primary/5 to-primary/10 space-y-4 shadow-sm">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <MessageSquare className="w-4 h-4 text-primary" />
+                    Verificación de Teléfono
+                  </div>
+                  <div className="text-xs text-muted-foreground text-center border-t border-primary/20 pt-3">
+                    Se enviará un código de 4 dígitos a tu número de teléfono
+                  </div>
+                  <PhoneVerificationModal
+                    userId={user.id}
+                    initialPhone={formData.phone?.trim()}
+                    submitLabel="Verificar por SMS"
+                    onSuccess={async (verifiedPhone) => {
+                      // La edge function ya guardó el teléfono en la BD
+                      setPendingPhoneVerification(false)
+                      setPhoneChangedForVerification(false)
+                      setIsUpdating(true)
+                      try {
+                        const { error: dbError } = await supabase
+                          .from('profiles')
+                          .update({
+                            full_name: formData.name,
+                            email: formData.email || null,
+                            updated_at: new Date().toISOString(),
+                          })
+                          .eq('id', user.id)
+
+                        if (dbError) {
+                          toast.error(dbError.message || t('profile.error'))
+                          return
+                        }
+
+                        const updatedUser = {
+                          ...user,
+                          name: formData.name,
+                          username: formData.username?.toLowerCase(),
+                          email: formData.email,
+                          phone: verifiedPhone,
+                          avatar_url: formData.avatar_url,
+                          updated_at: new Date().toISOString(),
+                        }
+
+                        await setUsers(prev => prev.map(u => u.id === user.id ? updatedUser : u))
+                        onUserUpdate(updatedUser)
+                        try { window.localStorage.setItem('current-user', JSON.stringify(updatedUser)) } catch { /* noop */ }
+
+                        await queryClient.invalidateQueries({ queryKey: ['nearby-businesses'] })
+                        await queryClient.invalidateQueries({ queryKey: ['client-dashboard-data'] })
+
+                        toast.success(t('profile.success'))
+                      } catch (error) {
+                        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
+                        toast.error(t('profile.error'))
+                      } finally {
+                        setIsUpdating(false)
+                      }
+                    }}
+                    onCancel={() => {
+                      setPendingPhoneVerification(false)
+                      setPhoneChangedForVerification(false)
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -407,72 +514,14 @@ export default function UserProfile({ user, onUserUpdate }: Readonly<UserProfile
           </div>
           
           <div className="flex justify-end pt-4 border-t border-border">
-            <Button 
-              onClick={handleSaveProfile} 
-              disabled={isUpdating}
+            <Button
+              onClick={handleSaveProfile}
+              disabled={isUpdating || pendingPhoneVerification}
               className="min-w-32"
             >
               {isUpdating ? 'Guardando...' : t('profile.save_changes')}
             </Button>
           </div>
-
-          {/* Verificación OTP inline cuando el teléfono cambia */}
-          {pendingPhoneVerification && (
-            <div className="mt-4 border border-border rounded-lg p-5 bg-muted/30">
-              <p className="text-sm font-medium mb-4 text-center">
-                Verifica tu nuevo número de teléfono
-              </p>
-              <PhoneVerificationModal
-                userId={user.id}
-                initialPhone={formData.phone?.trim()}
-                submitLabel="Enviar código de verificación"
-                onSuccess={async (verifiedPhone) => {
-                  // La edge function ya guardó el teléfono en la BD; solo actualizamos el resto
-                  setPendingPhoneVerification(false)
-                  setIsUpdating(true)
-                  try {
-                    const { error: dbError } = await supabase
-                      .from('profiles')
-                      .update({
-                        full_name: formData.name,
-                        updated_at: new Date().toISOString(),
-                      })
-                      .eq('id', user.id)
-
-                    if (dbError) {
-                      toast.error(dbError.message || t('profile.error'))
-                      return
-                    }
-
-                    const updatedUser = {
-                      ...user,
-                      name: formData.name,
-                      username: formData.username?.toLowerCase(),
-                      email: formData.email,
-                      phone: verifiedPhone,
-                      avatar_url: formData.avatar_url,
-                      updated_at: new Date().toISOString(),
-                    }
-
-                    await setUsers(prev => prev.map(u => u.id === user.id ? updatedUser : u))
-                    onUserUpdate(updatedUser)
-                    try { window.localStorage.setItem('current-user', JSON.stringify(updatedUser)) } catch { /* noop */ }
-
-                    await queryClient.invalidateQueries({ queryKey: ['nearby-businesses'] })
-                    await queryClient.invalidateQueries({ queryKey: ['client-dashboard-data'] })
-
-                    toast.success(t('profile.success'))
-                  } catch (error) {
-                    Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
-                    toast.error(t('profile.error'))
-                  } finally {
-                    setIsUpdating(false)
-                  }
-                }}
-                onCancel={() => setPendingPhoneVerification(false)}
-              />
-            </div>
-          )}
         </div>
       </div>
 

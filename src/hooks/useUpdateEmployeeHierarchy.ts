@@ -66,10 +66,7 @@ export function useUpdateEmployeeHierarchy() {
         lvl: newLevel,
       }
 
-  // eslint-disable-next-line no-console
-  console.log('Payload enviado update-hierarchy:', payload)
-
-  const response = await fetch(`${supabaseUrl}/functions/v1/update-hierarchy`, {
+  // eslint-disable-next-line no-console  const response = await fetch(`${supabaseUrl}/functions/v1/update-hierarchy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

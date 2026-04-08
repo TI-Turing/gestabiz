@@ -13,9 +13,7 @@ function getEnvVar(key: string, fallback?: string): string {
   const value = (Constants.expoConfig?.extra as Record<string, string> | undefined)?.[key]
     ?? (process.env as Record<string, string | undefined>)[key]
 
-  if (!value && !fallback) {
-    console.warn(`[EnvConfig] Variable '${key}' no configurada`)
-  }
+  if (!value && !fallback) {  }
 
   return value ?? fallback ?? ''
 }
@@ -41,13 +39,7 @@ export const IS_DEV = __DEV__
 export const EFFECTIVE_WEB_URL = IS_DEV ? WEB_APP_URL_DEV : WEB_APP_URL
 
 // Validar al importar
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('[EnvConfig] ❌ Variables de Supabase no configuradas')
-  console.info('[EnvConfig] Configura EXPO_PUBLIC_SUPABASE_URL y EXPO_PUBLIC_SUPABASE_ANON_KEY')
-} else if (__DEV__) {
-  console.info('[EnvConfig] ✅ Supabase URL:', SUPABASE_URL)
-  console.info('[EnvConfig] 🌐 Web URL:', EFFECTIVE_WEB_URL)
-}
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {} else if (__DEV__) {}
 
 export default {
   SUPABASE_URL,

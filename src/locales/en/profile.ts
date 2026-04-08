@@ -17,5 +17,13 @@ export const profile = {
   save_changes: 'Save Changes',
   saving: 'Saving...',
   success: 'Profile updated successfully',
-  error: 'Error updating profile'
+  error: 'Error updating profile',
+  
+  // Toasts
+  toasts: {
+    avatarUpdated: 'Avatar updated successfully',
+    avatarDbError: 'Error updating avatar in database',
+    avatarUploadError: 'Unexpected error uploading avatar',
+    invalidImage: 'Please select a valid image',
+  },
 };

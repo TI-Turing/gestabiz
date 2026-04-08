@@ -16,9 +16,7 @@ import Constants from 'expo-constants'
 function getEnvVar(key: string, fallback?: string): string {
   const value = Constants.expoConfig?.extra?.[key] || process.env[key]
   
-  if (!value && !fallback) {
-    console.warn(`⚠️ Variable de entorno ${key} no configurada`)
-  }
+  if (!value && !fallback) {  }
   
   return value || fallback || ''
 }
@@ -52,16 +50,7 @@ export const IS_DEV = __DEV__
 export const EFFECTIVE_WEB_URL = IS_DEV ? WEB_APP_URL_DEV : WEB_APP_URL
 
 // Validación al importar
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('❌ Variables de Supabase no configuradas')
-  console.log('Web usa: VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY')
-  console.log('Mobile usa: EXPO_PUBLIC_SUPABASE_URL y EXPO_PUBLIC_SUPABASE_ANON_KEY')
-  console.log('Ambas deben estar en las variables del sistema o en app.config.js')
-} else {
-  console.log('✅ Variables de entorno configuradas correctamente')
-  console.log('📍 Supabase URL:', SUPABASE_URL)
-  console.log('🌐 Web URL:', EFFECTIVE_WEB_URL)
-}
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {} else {}
 
 export default {
   SUPABASE_URL,

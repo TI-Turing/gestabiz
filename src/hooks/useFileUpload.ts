@@ -244,9 +244,7 @@ export function useFileUpload(bucket: StorageBucket) {
 
         return data.map((file) => `${folderPath}/${file.name}`)
       } catch (err) {
-        void logger.error('useFileUpload: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFileUpload' })
-        console.error('Error listing files:', err)
-        return []
+        void logger.error('useFileUpload: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFileUpload' })        return []
       }
     },
     [bucket]

@@ -97,7 +97,5 @@ export async function openExternalUrl(url: string): Promise<void> {
   const canOpen = await Linking.canOpenURL(url)
   if (canOpen) {
     await Linking.openURL(url)
-  } else {
-    console.warn('[Linking] No se puede abrir URL:', url)
-  }
+  } else {  }
 }

@@ -48,9 +48,7 @@ export function BusinessInvitationCard({ business, className }: BusinessInvitati
       setQrCodeDataUrl(dataUrl)
       toast.success(t('businessInvitationCard.qrGenerated'))
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessInvitationCard' } })
-      console.error('Error generating QR:', error)
-      toast.error(t('businessInvitationCard.qrError'))
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessInvitationCard' } })      toast.error(t('businessInvitationCard.qrError'))
     } finally {
       setIsGeneratingQR(false)
     }
@@ -78,9 +76,7 @@ export function BusinessInvitationCard({ business, className }: BusinessInvitati
         toast.success(t('businessInvitationCard.shareSuccess'))
       } catch (error) {
         Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessInvitationCard' } })
-        if (error instanceof Error && error.name !== 'AbortError') {
-          console.error('Error sharing:', error)
-          toast.error(t('businessInvitationCard.shareError'))
+        if (error instanceof Error && error.name !== 'AbortError') {          toast.error(t('businessInvitationCard.shareError'))
         }
       }
     } else {

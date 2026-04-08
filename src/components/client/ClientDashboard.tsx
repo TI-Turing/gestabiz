@@ -325,10 +325,7 @@ export function ClientDashboard({
   }, [])
 
   // Handle booking from business profile
-  const handleBookAppointment = useCallback((businessId?: string, serviceId?: string, locationId?: string, employeeId?: string) => {
-    console.log('[ClientDashboard] handleBookAppointment called with:', { businessId, serviceId, locationId, employeeId });
-    
-    // Usar el businessId pasado como parámetro o el selectedBusinessId
+  const handleBookAppointment = useCallback((businessId?: string, serviceId?: string, locationId?: string, employeeId?: string) => {    // Usar el businessId pasado como parámetro o el selectedBusinessId
     const businessIdToUse = businessId || selectedBusinessId
     
     // Guardar preselección de servicio, ubicación y empleado ANTES de abrir el wizard
@@ -379,9 +376,7 @@ export function ClientDashboard({
         toast.success(t('appointments.toasts.chatStarted'))
       }
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })
-      console.error('Error al iniciar chat:', error)
-      toast.error(t('appointments.toasts.chatFailed'))
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })      toast.error(t('appointments.toasts.chatFailed'))
     } finally {
       setIsStartingChat(false)
     }
@@ -412,9 +407,7 @@ export function ClientDashboard({
       // ✅ Refetch dashboard data (useClientDashboard automáticamente invalidará cache)
       refetchDashboard()
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })
-      console.error('Error al cancelar cita:', error)
-      toast.error(t('appointments.toasts.cancelFailed'))
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })      toast.error(t('appointments.toasts.cancelFailed'))
     }
   }, [user?.id, refetchDashboard])
 

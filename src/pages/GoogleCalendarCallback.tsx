@@ -60,7 +60,6 @@ export default function GoogleCalendarCallback() {
         toast.success('Google Calendar conectado correctamente')
         setTimeout(() => navigate('/app'), 1500)
       } catch (err) {
-        console.error('Google Calendar callback error:', err)
         Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'GoogleCalendarCallback', operation: 'oauthExchange' } })
         setStatus('error')
         toast.error('Error al conectar Google Calendar')

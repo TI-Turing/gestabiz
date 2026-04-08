@@ -214,9 +214,7 @@ export function getNotificationRoleConfig(
 ): RoleNavigationConfig | null {
   const config = NOTIFICATION_ROLE_MAP[notification.type]
   
-  if (!config) {
-    console.warn(`No role mapping found for notification type: ${notification.type}`)
-    return null
+  if (!config) {    return null
   }
 
   // Clonar config para no mutar el original
@@ -335,10 +333,7 @@ export async function handleNotificationWithRoleSwitch(
 
     // Si necesita cambiar de rol, guardar navegación pendiente
     if (requiredRole !== currentRole) {
-      // eslint-disable-next-line no-console
-      console.log(`🔄 Switching role from ${currentRole} to ${requiredRole}`)
-      
-      // Guardar navegación pendiente en sessionStorage para que persista tras re-render
+      // eslint-disable-next-line no-console      // Guardar navegación pendiente en sessionStorage para que persista tras re-render
       const pendingNavigation = {
         page,
         context,
@@ -357,16 +352,12 @@ export async function handleNotificationWithRoleSwitch(
 
     // Mismo rol, navegar directamente
     if (page) {
-      // eslint-disable-next-line no-console
-      console.log(`📍 Navigating to page: ${page}`, context)
-      navigate(page, context)
+      // eslint-disable-next-line no-console      navigate(page, context)
     }
 
     options?.onSuccess?.()
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error handling notification with role switch:', error)
-    Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { service: 'notificationRoleMapping' } })
+    // eslint-disable-next-line no-console    Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { service: 'notificationRoleMapping' } })
     sessionStorage.removeItem('pending-navigation')
     options?.onError?.(error as Error)
   }

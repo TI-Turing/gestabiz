@@ -432,14 +432,10 @@ async function main() {
     try {
       const sql = await (fn as () => Promise<string>)()
       if (sql) {
-        sections.push(sql)
-        console.log('OK')
-      } else {
+        sections.push(sql)      } else {
         console.log('(vacío)')
       }
-    } catch (e) {
-      console.error(`ERROR: ${e}`)
-    }
+    } catch (e) {    }
   }
 
   const output = sections.join('\n')
@@ -447,17 +443,13 @@ async function main() {
     process.cwd(),
     'supabase/migrations/20251026230533_initial_schema.sql'
   )
-  fs.writeFileSync(outPath, output, 'utf-8')
-  console.log(`\nEscrito en: ${outPath}`)
-  console.log(`Tamaño: ${(output.length / 1024).toFixed(1)} KB`)
+  fs.writeFileSync(outPath, output, 'utf-8')  console.log(`Tamaño: ${(output.length / 1024).toFixed(1)} KB`)
 
   // También limpiar el archivo vacío create_location_media (ya está en initial_schema)
   const emptyFile = path.join(
     process.cwd(),
     'supabase/migrations/20251026230506_create_location_media.sql'
   )
-  fs.writeFileSync(emptyFile, '-- Placeholder: location_media was included in initial_schema\n', 'utf-8')
-  console.log('Limpiado: 20251026230506_create_location_media.sql')
-}
+  fs.writeFileSync(emptyFile, '-- Placeholder: location_media was included in initial_schema\n', 'utf-8')}
 
 main().catch(console.error)

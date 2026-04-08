@@ -85,39 +85,24 @@ function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-async function createServices() {
-  console.log('🚀 Creando servicios por negocio...\n');
-
-  const { data: businesses, error: bizError } = await supabase
+async function createServices() {  const { data: businesses, error: bizError } = await supabase
     .from('businesses')
     .select('id, name, category')
     .order('created_at');
 
-  if (bizError || !businesses) {
-    console.error('❌ Error:', bizError);
-    return;
-  }
-
-  console.log(`✅ ${businesses.length} negocios encontrados\n`);
-
-  let totalServices = 0;
+  if (bizError || !businesses) {    return;
+  }  let totalServices = 0;
 
   for (const business of businesses) {
     const serviceList = SERVICES_BY_CATEGORY[business.category] || [];
     
-    if (serviceList.length === 0) {
-      console.log(`⚠️  ${business.name}: Sin servicios definidos para categoría ${business.category}`);
-      continue;
+    if (serviceList.length === 0) {      continue;
     }
 
     const numServices = Math.min(randomInt(5, 8), serviceList.length);
     const selectedServices = serviceList
       .sort(() => Math.random() - 0.5)
-      .slice(0, numServices);
-
-    console.log(`📦 ${business.name}: ${selectedServices.length} servicios`);
-
-    for (const serviceName of selectedServices) {
+      .slice(0, numServices);    for (const serviceName of selectedServices) {
       const duration = randomInt(3, 12) * 15; // 45-180 min
       const price = randomInt(30, 200) * 1000; // 30k-200k COP
       const description = `${serviceName} profesional de alta calidad`;
@@ -137,27 +122,16 @@ async function createServices() {
             is_taxable: true,
           });
 
-        if (error) {
-          console.error(`   ❌ Error:`, error.message);
-          continue;
+        if (error) {          continue;
         }
 
         totalServices++;
       } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.error(`   ❌ Error:`, error.message);
-        }
+        if (error instanceof Error) {        }
       }
     }
-  }
-
-  console.log(`\n✅ Total: ${totalServices} servicios creados`);
-  
-  const { count } = await supabase
+  }  const { count } = await supabase
     .from('services')
-    .select('*', { count: 'exact', head: true });
-  
-  console.log(`📊 Verificación: ${count} servicios en la base de datos`);
-}
+    .select('*', { count: 'exact', head: true });}
 
 await createServices();

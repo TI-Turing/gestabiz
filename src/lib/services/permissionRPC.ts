@@ -106,9 +106,7 @@ export class PermissionRPCService {
       }
 
       return data as RevokePermissionResponse;
-    } catch (err) {
-      console.error('Exception in revokePermission:', err);
-      Sentry.captureException(err, {
+    } catch (err) {      Sentry.captureException(err, {
         tags: { service: 'permissions', operation: 'revoke_permission' },
         extra: { businessId, userId, permission },
       });
@@ -171,9 +169,7 @@ export class PermissionRPCService {
       }
 
       return data as AssignPermissionResponse;
-    } catch (err) {
-      console.error('Exception in assignPermission:', err);
-      Sentry.captureException(err, {
+    } catch (err) {      Sentry.captureException(err, {
         tags: { service: 'permissions', operation: 'assign_permission' },
         extra: { businessId, userId, permission },
       });
@@ -234,9 +230,7 @@ export class PermissionRPCService {
       }
 
       return data as BulkAssignResponse;
-    } catch (err) {
-      console.error('Exception in applyTemplate:', err);
-      Sentry.captureException(err, {
+    } catch (err) {      Sentry.captureException(err, {
         tags: { service: 'permissions', operation: 'apply_template' },
         extra: { businessId, userId, templateId },
       });

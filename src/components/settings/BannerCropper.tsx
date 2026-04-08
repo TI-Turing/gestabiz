@@ -9,6 +9,7 @@ interface BannerCropperProps {
   isOpen: boolean
   onClose: () => void
   imageFile: File | null
+  imageUrl?: string | null
   onCropComplete: (croppedBlob: Blob) => void
 }
 
@@ -16,12 +17,14 @@ export const BannerCropper: React.FC<BannerCropperProps> = ({
   isOpen,
   onClose,
   imageFile,
+  imageUrl,
   onCropComplete
 }) => {
   const { t } = useLanguage()
   const [imageSrc, setImageSrc] = useState<string | null>(null)
   const [crop, setCrop] = useState<Crop>()
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
+  const [isLoading, setIsLoading] = useState(false)
   const imgRef = useRef<HTMLImageElement>(null)
 
   // Reset state when dialog opens/closes
@@ -35,19 +38,37 @@ export const BannerCropper: React.FC<BannerCropperProps> = ({
 
   // Load image when file changes or dialog opens
   React.useEffect(() => {
-    if (!imageFile || !isOpen) return
-    // Reject video files — they can't be cropped
-    if (imageFile.type.startsWith('video/')) return
+    if (!isOpen) return
+    setIsLoading(true)
 
-    const reader = new FileReader()
-    reader.addEventListener('load', () => {
-      const result = reader.result
-      if (typeof result === 'string') {
-        setImageSrc(result)
+    // Prioritize File over URL
+    if (imageFile) {
+      // Reject video files — they can't be cropped
+      if (imageFile.type.startsWith('video/')) {
+        setIsLoading(false)
+        return
       }
-    })
-    reader.readAsDataURL(imageFile)
-  }, [imageFile, isOpen])
+
+      const reader = new FileReader()
+      reader.addEventListener('load', () => {
+        const result = reader.result
+        if (typeof result === 'string') {
+          setImageSrc(result)
+          setIsLoading(false)
+        }
+      })
+      reader.addEventListener('error', () => {
+        setIsLoading(false)
+      })
+      reader.readAsDataURL(imageFile)
+    } else if (imageUrl) {
+      // Load from URL (Supabase storage URLs)
+      setImageSrc(imageUrl)
+      setIsLoading(false)
+    } else {
+      setIsLoading(false)
+    }
+  }, [imageFile, imageUrl, isOpen])
 
   // Initialize crop when image loads
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -134,7 +155,13 @@ export const BannerCropper: React.FC<BannerCropperProps> = ({
           <DialogTitle>{t('bannerCropper.title')}</DialogTitle>
         </DialogHeader>
 
-        {imageSrc && (
+        {isLoading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          </div>
+        )}
+
+        {imageSrc && !isLoading && (
           <div className="flex flex-col items-center gap-4">
             <ReactCrop
               crop={crop}

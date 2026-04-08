@@ -14,24 +14,15 @@ function getFiscalPeriod(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
-async function createTransactions() {
-  console.log('🚀 Creando transacciones monetarias...\n');
-
-  // 1. INGRESOS: Crear transacciones de ingresos para citas pagadas (completed)
+async function createTransactions() {  // 1. INGRESOS: Crear transacciones de ingresos para citas pagadas (completed)
   const { data: paidAppointments } = await supabase
     .from('appointments')
     .select('id, business_id, location_id, employee_id, start_time, price, currency, status')
     .in('status', ['completed'])
     .eq('payment_status', 'paid');
 
-  if (!paidAppointments || paidAppointments.length === 0) {
-    console.log('⚠️ No hay citas pagadas para generar ingresos');
-    return;
-  }
-
-  console.log(`✅ ${paidAppointments.length} citas pagadas encontradas\n`);
-
-  let totalIncome = 0;
+  if (!paidAppointments || paidAppointments.length === 0) {    return;
+  }  let totalIncome = 0;
   let totalExpenses = 0;
 
   // Crear transacciones de ingreso para cada cita pagada
@@ -65,29 +56,17 @@ async function createTransactions() {
       .from('transactions')
       .insert(incomeData);
 
-    if (error) {
-      console.error(`❌ Error creando ingreso:`, error.message);
-      continue;
+    if (error) {      continue;
     }
 
     totalIncome++;
-  }
-
-  console.log(`✅ ${totalIncome} transacciones de ingreso creadas\n`);
-
-  // 2. GASTOS: Crear gastos operacionales mensuales para cada negocio
+  }  // 2. GASTOS: Crear gastos operacionales mensuales para cada negocio
   const { data: businesses } = await supabase
     .from('businesses')
     .select('id, owner_id');
 
-  if (!businesses) {
-    console.log('❌ No se encontraron negocios');
-    return;
-  }
-
-  console.log(`📊 Generando gastos operacionales para ${businesses.length} negocios...\n`);
-
-  // Categorías de gastos con rangos de montos (COP)
+  if (!businesses) {    return;
+  }  // Categorías de gastos con rangos de montos (COP)
   const expenseCategories = [
     { category: 'rent', min: 800000, max: 3000000, desc: 'Arriendo de local' },
     { category: 'utilities', min: 150000, max: 500000, desc: 'Servicios públicos (luz, agua, gas)' },
@@ -136,23 +115,15 @@ async function createTransactions() {
           .from('transactions')
           .insert(expenseData);
 
-        if (error) {
-          console.error(`❌ Error creando gasto:`, error.message);
-          continue;
+        if (error) {          continue;
         }
 
         totalExpenses++;
       }
     }
 
-    if (totalExpenses % 50 === 0) {
-      console.log(`💸 ${totalExpenses} gastos creados...`);
-    }
-  }
-
-  console.log(`\n✅ Total: ${totalExpenses} transacciones de gastos creadas`);
-
-  // Resumen final
+    if (totalExpenses % 50 === 0) {    }
+  }  // Resumen final
   const { data: summary } = await supabase
     .from('transactions')
     .select('type');
@@ -161,12 +132,7 @@ async function createTransactions() {
     const counts = summary.reduce((acc, t) => {
       acc[t.type] = (acc[t.type] || 0) + 1;
       return acc;
-    }, {} as Record<string, number>);
-
-    console.log('\n📊 Resumen de transacciones:');
-    console.log(`   Ingresos: ${counts.income || 0}`);
-    console.log(`   Gastos: ${counts.expense || 0}`);
-    console.log(`   Total: ${(counts.income || 0) + (counts.expense || 0)}`);
+    }, {} as Record<string, number>);    console.log(`   Total: ${(counts.income || 0) + (counts.expense || 0)}`);
   }
 
   // Verificar montos por tipo
@@ -179,10 +145,7 @@ async function createTransactions() {
       if (!acc[t.type]) acc[t.type] = 0;
       acc[t.type] += Number(t.amount);
       return acc;
-    }, {} as Record<string, number>);
-
-    console.log('\n💰 Montos totales:');
-    for (const [type, amount] of Object.entries(totals)) {
+    }, {} as Record<string, number>);    for (const [type, amount] of Object.entries(totals)) {
       console.log(`   ${type}: $${amount.toLocaleString('es-CO')} COP`);
     }
   }

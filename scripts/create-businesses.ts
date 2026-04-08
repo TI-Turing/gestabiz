@@ -42,10 +42,7 @@ function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-async function createBusinesses() {
-  console.log('🚀 Creando 30 negocios ficticios...\n');
-
-  // Obtener los primeros 25 usuarios como owners
+async function createBusinesses() {  // Obtener los primeros 25 usuarios como owners
   const { data: owners } = await supabase
     .from('profiles')
     .select('id, email, full_name, phone')
@@ -55,17 +52,10 @@ async function createBusinesses() {
   if (!owners || owners.length < 25) {
     console.error('❌ No hay suficientes usuarios (se necesitan al menos 25)');
     return;
-  }
-
-  console.log(`✅ ${owners.length} propietarios disponibles\n`);
-
-  let businessIndex = 0;
+  }  let businessIndex = 0;
   const createdBusinesses = [];
 
-  for (const cityDist of CITIES) {
-    console.log(`📍 Creando negocios en ${cityDist.name}...`);
-
-    for (let i = 0; i < cityDist.count; i++) {
+  for (const cityDist of CITIES) {    for (let i = 0; i < cityDist.count; i++) {
       // Seleccionar owner (primeros 20 únicos, después repetidos)
       const ownerIndex = businessIndex < 20 ? businessIndex : randomInt(0, 19);
       const owner = owners[ownerIndex];
@@ -105,33 +95,15 @@ async function createBusinesses() {
           .select()
           .single();
 
-        if (error) {
-          console.error(`   ❌ Error:`, error.message);
-          continue;
+        if (error) {          continue;
         }
 
         createdBusinesses.push(data);
-        businessIndex++;
-
-        console.log(`   ✓ ${businessIndex}/30: ${businessName}`);
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.error(`   ❌ Error:`, error.message);
-        }
+        businessIndex++;      } catch (error: unknown) {
+        if (error instanceof Error) {        }
       }
-    }
-
-    console.log();
-  }
-
-  console.log(`✅ Total: ${createdBusinesses.length} negocios creados\n`);
-  
-  // Mostrar resumen por ciudad
-  console.log('📊 Resumen por ciudad:');
-  for (const city of CITIES) {
-    const count = createdBusinesses.filter(b => b.city === city.name).length;
-    console.log(`   ${city.name}: ${count} negocios`);
-  }
+    }  }  // Mostrar resumen por ciudad  for (const city of CITIES) {
+    const count = createdBusinesses.filter(b => b.city === city.name).length;  }
 
   return createdBusinesses;
 }

@@ -220,20 +220,9 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
   }, [appointments])
 
   // Destructure memoized entities
-  const { businesses, locations, services, categories, employees } = filterEntities
-  console.log('[ClientHistory] filterEntities extracted, entities counts:', {
-    businessesCount: businesses?.length,
-    locationsCount: locations?.length,
-    servicesCount: services?.length,
-    categoriesCount: categories?.length,
-    employeesCount: employees?.length
-  })
-
-  // Filtered appointments
+  const { businesses, locations, services, categories, employees } = filterEntities  // Filtered appointments
   // Helper functions for filtering
-  const matchesStatus = useCallback((apt: AppointmentWithRelations): boolean => {
-    console.log('[ClientHistory] matchesStatus called for apt:', apt?.id)
-    if (statusFilters.length === 0) return true
+  const matchesStatus = useCallback((apt: AppointmentWithRelations): boolean => {    if (statusFilters.length === 0) return true
     return statusFilters.some(filter => {
       if (filter === 'attended') return apt.status === 'completed'
       if (filter === 'cancelled') return apt.status === 'cancelled'
@@ -297,9 +286,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
   ])
 
   // Statistics
-  const stats = useMemo(() => {
-    console.log('[ClientHistory] Computing stats from filteredAppointments, count:', filteredAppointments?.length)
-    try {
+  const stats = useMemo(() => {    try {
       return {
         total: filteredAppointments.length,
         attended: filteredAppointments.filter(a => a.status === 'completed').length,
@@ -310,9 +297,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
           .reduce((sum, a) => sum + (a.service?.price || a.price || 0), 0)
       }
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })
-      console.error('[ClientHistory] Error computing stats:', error)
-      throw error
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })      throw error
     }
   }, [filteredAppointments])
 
@@ -325,106 +310,68 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
       firstItem: businesses?.[0] ? { id: businesses[0].id, name: businesses[0].name } : null
     })
     try {
-      if (!businessSearch.trim()) {
-        console.log('[ClientHistory] No business search, returning all businesses')
-        return businesses || []
+      if (!businessSearch.trim()) {        return businesses || []
       }
       const search = businessSearch.toLowerCase()
-      const result = businesses?.filter(b => (b.name || '').toLowerCase().includes(search)) || []
-      console.log('[ClientHistory] filteredBusinesses filtered, result count:', result.length)
-      return result
+      const result = businesses?.filter(b => (b.name || '').toLowerCase().includes(search)) || []      return result
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })
-      console.error('[ClientHistory] Error in filteredBusinesses:', error)
-      throw error
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })      throw error
     }
   }, [businesses, businessSearch])
 
   // Filtered locations - only show locations from selected businesses or all if no business selected
-  const filteredLocations = useMemo(() => {
-    console.log('[ClientHistory] filteredLocations computing, locations count:', locations?.length)
-    try {
+  const filteredLocations = useMemo(() => {    try {
       let available = locations || []
       // Filter by selected businesses
       if (businessFilters.length > 0) {
         available = available.filter(loc => businessFilters.includes(loc.business_id))
       }
       // Apply search
-      if (!locationSearch.trim()) {
-        console.log('[ClientHistory] filteredLocations returning:', available.length)
-        return available
+      if (!locationSearch.trim()) {        return available
       }
       const search = locationSearch.toLowerCase()
-      const result = available.filter(loc => (loc.name || '').toLowerCase().includes(search))
-      console.log('[ClientHistory] filteredLocations after search:', result.length)
-      return result
+      const result = available.filter(loc => (loc.name || '').toLowerCase().includes(search))      return result
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })
-      console.error('[ClientHistory] Error in filteredLocations:', error)
-      throw error
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })      throw error
     }
   }, [locations, locationSearch, businessFilters])
 
   // Filtered services - only show services from selected businesses or all if no business selected
-  const filteredServices = useMemo(() => {
-    console.log('[ClientHistory] filteredServices computing, services count:', services?.length)
-    try {
+  const filteredServices = useMemo(() => {    try {
       let available = services || []
       // Filter by selected businesses
       if (businessFilters.length > 0) {
         available = available.filter(svc => businessFilters.includes(svc.business_id))
       }
       // Apply search
-      if (!serviceSearch.trim()) {
-        console.log('[ClientHistory] filteredServices returning:', available.length)
-        return available
+      if (!serviceSearch.trim()) {        return available
       }
       const search = serviceSearch.toLowerCase()
-      const result = available.filter(svc => (svc.name || '').toLowerCase().includes(search))
-      console.log('[ClientHistory] filteredServices after search:', result.length)
-      return result
+      const result = available.filter(svc => (svc.name || '').toLowerCase().includes(search))      return result
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })
-      console.error('[ClientHistory] Error in filteredServices:', error)
-      throw error
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })      throw error
     }
   }, [services, serviceSearch, businessFilters])
 
   // Filtered categories by search
-  const filteredCategories = useMemo(() => {
-    console.log('[ClientHistory] filteredCategories computing, categories count:', categories?.length)
-    try {
-      if (!categorySearch.trim()) {
-        console.log('[ClientHistory] filteredCategories returning all:', categories?.length)
-        return categories || []
+  const filteredCategories = useMemo(() => {    try {
+      if (!categorySearch.trim()) {        return categories || []
       }
       const search = categorySearch.toLowerCase()
-      const result = (categories || []).filter(cat => (cat.name || '').toLowerCase().includes(search))
-      console.log('[ClientHistory] filteredCategories after search:', result.length)
-      return result
+      const result = (categories || []).filter(cat => (cat.name || '').toLowerCase().includes(search))      return result
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })
-      console.error('[ClientHistory] Error in filteredCategories:', error)
-      throw error
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })      throw error
     }
   }, [categories, categorySearch])
 
   // Filtered employees by search
-  const filteredEmployees = useMemo(() => {
-    console.log('[ClientHistory] filteredEmployees computing, employees count:', employees?.length)
-    try {
-      if (!employeeSearch.trim()) {
-        console.log('[ClientHistory] filteredEmployees returning all:', employees?.length)
-        return employees || []
+  const filteredEmployees = useMemo(() => {    try {
+      if (!employeeSearch.trim()) {        return employees || []
       }
       const search = employeeSearch.toLowerCase()
-      const result = (employees || []).filter(emp => (emp.full_name || '').toLowerCase().includes(search))
-      console.log('[ClientHistory] filteredEmployees after search:', result.length)
-      return result
+      const result = (employees || []).filter(emp => (emp.full_name || '').toLowerCase().includes(search))      return result
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })
-      console.error('[ClientHistory] Error in filteredEmployees:', error)
-      throw error
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientHistory' } })      throw error
     }
   }, [employees, employeeSearch])
 
@@ -525,10 +472,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
   })
   const totalPages = Math.ceil(filteredAppointments.length / appointmentsPerPage)
   const startIndex = (currentPage - 1) * appointmentsPerPage
-  const paginatedAppointments = filteredAppointments.slice(startIndex, startIndex + appointmentsPerPage)
-  console.log('[ClientHistory] Pagination calculated:', { totalPages, startIndex, paginatedCount: paginatedAppointments.length })
-
-  // Reset to page 1 when filters change
+  const paginatedAppointments = filteredAppointments.slice(startIndex, startIndex + appointmentsPerPage)  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
   }, [statusFilters, businessFilters, locationFilters, serviceFilters, categoryFilters, employeeFilters, priceRangeFilter, searchTerm])
@@ -539,12 +483,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     )
-  }
-
-  console.log('[ClientHistory] About to render - stats:', { total: stats?.total, attended: stats?.attended })
-  console.log('[ClientHistory] Pagination:', { currentPage, totalPages, paginatedAppointmentsCount: paginatedAppointments?.length })
-
-  return (
+  }  return (
     <div className="space-y-6">
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">

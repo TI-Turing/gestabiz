@@ -80,9 +80,7 @@ export function LanguageProvider({ children }: Readonly<{ children: React.ReactN
 
     // ⭐ FIX BUG-015: Validar que translation sea un string, no un objeto
     if (typeof translation !== 'string') {
-      if (import.meta.env.DEV) {
-        console.warn(`Translation key "${key}" returned an object instead of a string. Returning key as fallback.`)
-      }
+      if (import.meta.env.DEV) {      }
       return key
     }
 

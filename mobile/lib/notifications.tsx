@@ -35,23 +35,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     // Listener cuando llega una notificación (app en foreground)
     notificationListener.current = addNotificationReceivedListener((notification) => {
-      console.log('Notification received:', notification)
-      
       // Actualizar badge count
       setBadgeCount(1)
       
       // Si el chat está abierto y es un mensaje del chat activo, suprimir
       const data = notification.request.content.data
       if (isChatOpen && data?.conversationId === activeConversationId) {
-        console.log('Suprimiendo notificación: chat activo')
         return
       }
     })
 
     // Listener cuando usuario toca la notificación
     responseListener.current = addNotificationResponseReceivedListener((response) => {
-      console.log('Notification tapped:', response)
-      
       const data = response.notification.request.content.data
       
       // Navegar según el tipo de notificación

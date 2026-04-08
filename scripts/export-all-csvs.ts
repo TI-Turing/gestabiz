@@ -27,16 +27,11 @@ function arrayToCSV(headers: string[], rows: any[][]): string {
   return csvRows.join('\n');
 }
 
-async function exportAllData() {
-  console.log('🚀 Exportando todos los datos a CSV...\n');
-
-  if (!fs.existsSync(OUTPUT_DIR)) {
+async function exportAllData() {  if (!fs.existsSync(OUTPUT_DIR)) {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   }
 
-  // 1. PROPIETARIOS (owners)
-  console.log('📋 Exportando propietarios...');
-  const { data: owners } = await supabase
+  // 1. PROPIETARIOS (owners)  const { data: owners } = await supabase
     .from('businesses')
     .select('owner_id, profiles!businesses_owner_id_fkey(full_name, email, phone)')
     .order('created_at');
@@ -56,13 +51,9 @@ async function exportAllData() {
       ownerRows
     );
 
-    fs.writeFileSync(path.join(OUTPUT_DIR, '3-propietarios.csv'), ownersCSV, 'utf8');
-    console.log(`✅ ${uniqueOwners.length} propietarios exportados\n`);
-  }
+    fs.writeFileSync(path.join(OUTPUT_DIR, '3-propietarios.csv'), ownersCSV, 'utf8');  }
 
-  // 2. EMPLEADOS
-  console.log('📋 Exportando empleados...');
-  const { data: employees } = await supabase
+  // 2. EMPLEADOS  const { data: employees } = await supabase
     .from('business_employees')
     .select('employee_id, profiles!business_employees_employee_id_fkey(full_name, email, phone), businesses(name)')
     .order('employee_id');
@@ -100,13 +91,9 @@ async function exportAllData() {
       employeeRows
     );
 
-    fs.writeFileSync(path.join(OUTPUT_DIR, '4-empleados.csv'), employeesCSV, 'utf8');
-    console.log(`✅ ${employeeRows.length} empleados exportados\n`);
-  }
+    fs.writeFileSync(path.join(OUTPUT_DIR, '4-empleados.csv'), employeesCSV, 'utf8');  }
 
-  // 3. CLIENTES (usuarios que no son owners ni employees)
-  console.log('📋 Exportando clientes...');
-  const { data: allUsers } = await supabase
+  // 3. CLIENTES (usuarios que no son owners ni employees)  const { data: allUsers } = await supabase
     .from('profiles')
     .select('id, full_name, email, phone')
     .order('created_at');
@@ -137,13 +124,9 @@ async function exportAllData() {
       clientRows
     );
 
-    fs.writeFileSync(path.join(OUTPUT_DIR, '5-clientes.csv'), clientsCSV, 'utf8');
-    console.log(`✅ ${clients.length} clientes exportados\n`);
-  }
+    fs.writeFileSync(path.join(OUTPUT_DIR, '5-clientes.csv'), clientsCSV, 'utf8');  }
 
-  // 4. NEGOCIOS
-  console.log('📋 Exportando negocios...');
-  const { data: businesses } = await supabase
+  // 4. NEGOCIOS  const { data: businesses } = await supabase
     .from('businesses')
     .select('name, slug, category, city, state, profiles!businesses_owner_id_fkey(full_name, email)')
     .order('created_at');
@@ -167,13 +150,9 @@ async function exportAllData() {
       businessRows
     );
 
-    fs.writeFileSync(path.join(OUTPUT_DIR, '6-negocios.csv'), businessesCSV, 'utf8');
-    console.log(`✅ ${businesses.length} negocios exportados\n`);
-  }
+    fs.writeFileSync(path.join(OUTPUT_DIR, '6-negocios.csv'), businessesCSV, 'utf8');  }
 
-  // 5. SEDES
-  console.log('📋 Exportando sedes...');
-  const { data: locations } = await supabase
+  // 5. SEDES  const { data: locations } = await supabase
     .from('locations')
     .select('name, address, city, state, opens_at, closes_at, businesses(name)')
     .order('created_at');
@@ -197,13 +176,9 @@ async function exportAllData() {
       locationRows
     );
 
-    fs.writeFileSync(path.join(OUTPUT_DIR, '7-sedes.csv'), locationsCSV, 'utf8');
-    console.log(`✅ ${locations.length} sedes exportadas\n`);
-  }
+    fs.writeFileSync(path.join(OUTPUT_DIR, '7-sedes.csv'), locationsCSV, 'utf8');  }
 
-  // 6. SERVICIOS
-  console.log('📋 Exportando servicios...');
-  const { data: services } = await supabase
+  // 6. SERVICIOS  const { data: services } = await supabase
     .from('services')
     .select('name, description, duration_minutes, price, currency, category, businesses(name)')
     .order('created_at');
@@ -227,13 +202,9 @@ async function exportAllData() {
       serviceRows
     );
 
-    fs.writeFileSync(path.join(OUTPUT_DIR, '8-servicios.csv'), servicesCSV, 'utf8');
-    console.log(`✅ ${services.length} servicios exportados\n`);
-  }
+    fs.writeFileSync(path.join(OUTPUT_DIR, '8-servicios.csv'), servicesCSV, 'utf8');  }
 
-  // 7. CITAS
-  console.log('📋 Exportando citas...');
-  const { data: appointments } = await supabase
+  // 7. CITAS  const { data: appointments } = await supabase
     .from('appointments')
     .select(`
       start_time, end_time, status, price, currency, payment_status,
@@ -264,13 +235,9 @@ async function exportAllData() {
       appointmentRows
     );
 
-    fs.writeFileSync(path.join(OUTPUT_DIR, '9-citas.csv'), appointmentsCSV, 'utf8');
-    console.log(`✅ ${appointments.length} citas exportadas\n`);
-  }
+    fs.writeFileSync(path.join(OUTPUT_DIR, '9-citas.csv'), appointmentsCSV, 'utf8');  }
 
-  // 8. TRANSACCIONES
-  console.log('📋 Exportando transacciones...');
-  const { data: transactions } = await supabase
+  // 8. TRANSACCIONES  const { data: transactions } = await supabase
     .from('transactions')
     .select('transaction_date, type, category, amount, currency, description, payment_method, businesses(name)')
     .order('transaction_date', { ascending: false });
@@ -292,12 +259,6 @@ async function exportAllData() {
       transactionRows
     );
 
-    fs.writeFileSync(path.join(OUTPUT_DIR, '10-transacciones.csv'), transactionsCSV, 'utf8');
-    console.log(`✅ ${transactions.length} transacciones exportadas\n`);
-  }
-
-  console.log('🎉 ¡Exportación completada!');
-  console.log(`📁 Archivos guardados en: ${OUTPUT_DIR}`);
-}
+    fs.writeFileSync(path.join(OUTPUT_DIR, '10-transacciones.csv'), transactionsCSV, 'utf8');  }}
 
 exportAllData();

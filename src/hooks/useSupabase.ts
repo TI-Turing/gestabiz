@@ -372,22 +372,11 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
         .single()
       if (error) {
         // Log detallado para diagnosticar 400 Bad Request
-        const pgError = error as PostgrestError
-        console.error('❌ [APPOINTMENTS INSERT] Error:', {
-          message: pgError.message,
-          details: pgError.details,
-          hint: pgError.hint,
-          code: pgError.code,
-          payload: insert
-        })
-        throw new Error(error.message)
+        const pgError = error as PostgrestError        throw new Error(error.message)
       }
       
       const newAppointment = data as Appointment
-      setAppointments(prev => [...prev, newAppointment])
-      
-      console.log('🔔 [NOTIFICATIONS] Iniciando envío de notificaciones para cita:', newAppointment.id)
-      console.log('📋 [NOTIFICATIONS] Datos de la cita:', {
+      setAppointments(prev => [...prev, newAppointment])      console.log('📋 [NOTIFICATIONS] Datos de la cita:', {
         appointmentId: newAppointment.id,
         clientId: appointmentData.client_id,
         businessId: appointmentData.business_id,
@@ -400,9 +389,7 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
       
       // ✅ Enviar notificaciones in-app (no bloqueantes)
       try {
-        // Notificación al CLIENTE
-        console.log('📧 [CLIENT NOTIFICATION] Enviando notificación al cliente:', appointmentData.client_id)
-        const clientNotificationPayload = {
+        // Notificación al CLIENTE        const clientNotificationPayload = {
           type: 'appointment_new_client',
           recipient_user_id: appointmentData.client_id,
           business_id: appointmentData.business_id,
@@ -415,25 +402,13 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
             service_id: appointmentData.service_id,
             location_id: appointmentData.location_id
           }
-        }
-        console.log('📧 [CLIENT NOTIFICATION] Payload:', clientNotificationPayload)
-        
-        const clientResult = await supabase.functions.invoke('send-notification', {
+        }        const clientResult = await supabase.functions.invoke('send-notification', {
           body: clientNotificationPayload
-        })
-        
-        console.log('📧 [CLIENT NOTIFICATION] Resultado:', clientResult)
-        if (clientResult.error) {
-          console.error('❌ [CLIENT NOTIFICATION] Error:', clientResult.error)
-        } else {
-          console.log('✅ [CLIENT NOTIFICATION] Enviada exitosamente')
-        }
+        })        if (clientResult.error) {        } else {        }
         
         // Notificación al EMPLEADO (si es diferente del creador)
         const targetEmployeeId = (insert as any).employee_id ?? (insert as any).user_id
-        if (targetEmployeeId && targetEmployeeId !== userId) {
-          console.log('👨‍💼 [EMPLOYEE NOTIFICATION] Enviando notificación al empleado:', targetEmployeeId)
-          const employeeNotificationPayload = {
+        if (targetEmployeeId && targetEmployeeId !== userId) {          const employeeNotificationPayload = {
             type: 'appointment_new_employee',
             recipient_user_id: targetEmployeeId,
             business_id: appointmentData.business_id,
@@ -446,46 +421,21 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
               appointment_date: appointmentData.start_time,
               service_id: appointmentData.service_id
             }
-          }
-          console.log('👨‍💼 [EMPLOYEE NOTIFICATION] Payload:', employeeNotificationPayload)
-          
-          const employeeResult = await supabase.functions.invoke('send-notification', {
+          }          const employeeResult = await supabase.functions.invoke('send-notification', {
             body: employeeNotificationPayload
-          })
-          
-          console.log('👨‍💼 [EMPLOYEE NOTIFICATION] Resultado:', employeeResult)
-          if (employeeResult.error) {
-            console.error('❌ [EMPLOYEE NOTIFICATION] Error:', employeeResult.error)
-          } else {
-            console.log('✅ [EMPLOYEE NOTIFICATION] Enviada exitosamente')
-          }
-        } else {
-          console.log('⏭️ [EMPLOYEE NOTIFICATION] Omitida - empleado es el mismo que el creador o no hay empleado asignado')
-        }
+          })          if (employeeResult.error) {          } else {          }
+        } else {        }
 
-        // Notificación al ADMINISTRADOR/NEGOCIO
-        console.log('🏢 [BUSINESS NOTIFICATION] Buscando administrador del negocio:', appointmentData.business_id)
-        
-        // Obtener el administrador del negocio (propietario)
+        // Notificación al ADMINISTRADOR/NEGOCIO        // Obtener el administrador del negocio (propietario)
         const { data: businessOwner, error: businessOwnerError } = await supabase
           .from('businesses')
           .select('owner_id')
           .eq('id', appointmentData.business_id)
-          .single()
-
-        console.log('🏢 [BUSINESS NOTIFICATION] Resultado búsqueda admin:', { businessOwner, businessOwnerError })
-
-        if (businessOwnerError) {
-          console.error('❌ [BUSINESS NOTIFICATION] Error buscando admin:', businessOwnerError)
-        } else if (businessOwner && businessOwner.owner_id !== userId) {
+          .single()        if (businessOwnerError) {        } else if (businessOwner && businessOwner.owner_id !== userId) {
           // Verificar si el dueño del negocio es el mismo empleado para evitar notificaciones duplicadas
           const isOwnerSameAsEmployee = targetEmployeeId && businessOwner.owner_id === targetEmployeeId
           
-          if (isOwnerSameAsEmployee) {
-            console.log('⏭️ [BUSINESS NOTIFICATION] Omitida - el dueño del negocio es el mismo empleado que ya recibió notificación')
-          } else {
-            console.log('🏢 [BUSINESS NOTIFICATION] Enviando notificación al admin:', businessOwner.owner_id)
-            const businessNotificationPayload = {
+          if (isOwnerSameAsEmployee) {          } else {            const businessNotificationPayload = {
               type: 'appointment_new_business',
               recipient_user_id: businessOwner.owner_id,
               business_id: appointmentData.business_id,
@@ -500,28 +450,11 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
                 service_id: appointmentData.service_id,
                 location_id: appointmentData.location_id
               }
-            }
-            console.log('🏢 [BUSINESS NOTIFICATION] Payload:', businessNotificationPayload)
-            
-            const businessResult = await supabase.functions.invoke('send-notification', {
+            }            const businessResult = await supabase.functions.invoke('send-notification', {
               body: businessNotificationPayload
-            })
-            
-            console.log('🏢 [BUSINESS NOTIFICATION] Resultado:', businessResult)
-            if (businessResult.error) {
-              console.error('❌ [BUSINESS NOTIFICATION] Error:', businessResult.error)
-            } else {
-              console.log('✅ [BUSINESS NOTIFICATION] Enviada exitosamente')
-            }
+            })            if (businessResult.error) {            } else {            }
           }
-        } else {
-          console.log('⏭️ [BUSINESS NOTIFICATION] Omitida - admin es el mismo que el creador o no se encontró admin')
-        }
-        
-        console.log('✅ [NOTIFICATIONS] Proceso de notificaciones completado')
-      } catch (notificationError) {
-        console.error('❌ [NOTIFICATIONS] Error general enviando notificaciones:', notificationError)
-        void logger.error('useSupabase: notification send failed', notificationError instanceof Error ? notificationError : new Error(String(notificationError)), { component: 'useSupabase' })
+        } else {        }      } catch (notificationError) {        void logger.error('useSupabase: notification send failed', notificationError instanceof Error ? notificationError : new Error(String(notificationError)), { component: 'useSupabase' })
         // No fallar la creación de cita si fallan las notificaciones
       }
       

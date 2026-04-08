@@ -25,11 +25,7 @@ dotenv.config()
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('❌ Error: No están configuradas las variables de entorno:')
-  console.error('   - VITE_SUPABASE_URL')
-  console.error('   - SUPABASE_SERVICE_ROLE_KEY')
-  process.exit(1)
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {  process.exit(1)
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
@@ -134,19 +130,13 @@ async function deleteTableData(table: string): Promise<number> {
       .neq('id', 'non-existent-uuid') // delete all rows
 
     return count || 0
-  } catch (error) {
-    console.error(`  ⚠️  Error limpiando ${table}:`, error instanceof Error ? error.message : error)
-    return 0
+  } catch (error) {    return 0
   }
 }
 
-async function cleanTransactionalData(dryRun = false): Promise<void> {
-  console.log('\n📊 LIMPIEZA DE DATA TRANSACCIONAL')
-  console.log('='.repeat(60))
+async function cleanTransactionalData(dryRun = false): Promise<void> {  console.log('='.repeat(60))
 
-  // Obtener estadísticas actuales
-  console.log('\n📈 Recopilando estadísticas actuales...')
-  const beforeStats = await getTableStats()
+  // Obtener estadísticas actuales  const beforeStats = await getTableStats()
   const retainedStats = await getRetainedStats()
 
   const totalRows = Object.values(beforeStats).reduce((a, b) => a + b, 0)
@@ -155,41 +145,17 @@ async function cleanTransactionalData(dryRun = false): Promise<void> {
   console.log(`\n✅ Data a LIMPIAR (${TRANSACTIONAL_TABLES.length} tablas):`)
   Object.entries(beforeStats).forEach(([table, count]) => {
     if (count > 0) console.log(`   ${table}: ${count} registros`)
-  })
-  console.log(`   TOTAL: ${totalRows} registros`)
-
-  console.log(`\n📌 Data a PRESERVAR (${RETAINED_TABLES.length} tablas):`)
+  })  console.log(`\n📌 Data a PRESERVAR (${RETAINED_TABLES.length} tablas):`)
   Object.entries(retainedStats).forEach(([table, count]) => {
     if (count > 0) console.log(`   ${table}: ${count} registros`)
-  })
-  console.log(`   TOTAL: ${totalRetained} registros`)
-
-  if (totalRows === 0) {
-    console.log('\n✨ No hay data transaccional que limpiar. Base de datos ya está limpia.')
-    return
-  }
-
-  console.log('\n⚠️  ADVERTENCIA:')
-  console.log('  • Se eliminarán TODAS las citas, notificaciones, chats y transacciones')
-  console.log('  • Los negocios, empleados y servicios se MANTIENEN')
-  console.log('  • Esta acción NO se puede deshacer sin restaurar un backup')
-  console.log('  • Ejecuta esto SOLO en ambiente de desarrollo o testing')
-
-  if (dryRun) {
-    console.log('\n🔍 MODO DRY-RUN: No se ejecutarán cambios reales')
-    return
+  })  if (totalRows === 0) {    return
+  }  if (dryRun) {    return
   }
 
   const confirmed = await confirmAction('\n¿Deseas continuar? (escribe "yes" o "s" para confirmar): ')
 
-  if (!confirmed) {
-    console.log('\n❌ Operación cancelada.')
-    return
-  }
-
-  console.log('\n🗑️  Iniciando limpieza...\n')
-
-  const deletedStats: CleanupStats = {}
+  if (!confirmed) {    return
+  }  const deletedStats: CleanupStats = {}
   let totalDeleted = 0
 
   for (const table of TRANSACTIONAL_TABLES) {
@@ -205,23 +171,9 @@ async function cleanTransactionalData(dryRun = false): Promise<void> {
   }
 
   // Estadísticas finales
-  console.log('\n' + '='.repeat(60))
-  console.log('✅ LIMPIEZA COMPLETADA')
-  console.log('='.repeat(60))
-
-  console.log(`\n📊 Resumen:`)
-  console.log(`   Total eliminado: ${totalDeleted} registros`)
-  console.log(`   Data preservada: ${totalRetained} registros`)
-
-  console.log(`\n📈 Detalle por tabla:`)
-  Object.entries(deletedStats)
+  console.log('\n' + '='.repeat(60))  console.log('='.repeat(60))  Object.entries(deletedStats)
     .filter(([, count]) => count > 0)
-    .forEach(([table, count]) => {
-      console.log(`   ${table}: ${count} registros`)
-    })
-
-  console.log('\n✨ Database limpia y lista para nuevas operaciones.')
-}
+    .forEach(([table, count]) => {    })}
 
 // Main
 async function main() {
@@ -235,9 +187,7 @@ async function main() {
 
   try {
     await cleanTransactionalData(isDryRun)
-  } catch (error) {
-    console.error('\n❌ Error durante limpieza:', error)
-    process.exit(1)
+  } catch (error) {    process.exit(1)
   }
 }
 

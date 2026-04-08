@@ -44,10 +44,6 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
   // DEBUG: Log employee businesses (FIXED: Use length as dependency to prevent infinite loop)
   const employeeBusinessesLength = employeeBusinesses.length
   React.useEffect(() => {
-    console.log('🔍 DEBUG MainApp - employeeBusinesses:', employeeBusinesses)
-    console.log('🔍 DEBUG MainApp - isLoadingEmployeeBusinesses:', isLoadingEmployeeBusinesses)
-    console.log('🔍 DEBUG MainApp - activeRole:', activeRole)
-    console.log('🔍 DEBUG MainApp - needsEmployeeOnboarding:', activeRole === 'employee' && employeeBusinesses.length === 0 && !isLoadingEmployeeBusinesses)
   }, [employeeBusinessesLength, isLoadingEmployeeBusinesses, activeRole])
   
   // Extract booking context from URL params (from public profile redirect)
@@ -69,6 +65,23 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
       setSearchParams({})
     }
   }, [searchParams, setSearchParams])
+
+  // Clear URL params when switching roles to prevent "sticky" parameters
+  React.useEffect(() => {
+    // Only clear if there are params and we're switching roles
+    if (searchParams.toString() && activeRole) {
+      // Keep only necessary booking context params, clear the rest
+      const hasBookingParams = searchParams.has('businessId') ||
+                                searchParams.has('serviceId') ||
+                                searchParams.has('locationId') ||
+                                searchParams.has('employeeId')
+
+      // If no booking params, clear all
+      if (!hasBookingParams) {
+        setSearchParams({})
+      }
+    }
+  }, [activeRole, searchParams, setSearchParams])
 
   // Auto-select business if there's only one or use persisted selection
   // FIXED: Use businesses.length as dependency to prevent infinite loop
