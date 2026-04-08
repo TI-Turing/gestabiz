@@ -111,6 +111,10 @@ export const BannerCropper: React.FC<BannerCropperProps> = ({
 
     if (!ctx) return null
 
+    // Scale factors: displayed size vs. natural (original) size
+    const scaleX = image.naturalWidth / image.width
+    const scaleY = image.naturalHeight / image.height
+
     // Set output dimensions (1200x675 for 16:9 at good quality)
     const outputWidth = 1200
     const outputHeight = 675
@@ -118,13 +122,13 @@ export const BannerCropper: React.FC<BannerCropperProps> = ({
     canvas.width = outputWidth
     canvas.height = outputHeight
 
-    // Draw the cropped image
+    // Draw the cropped image using natural-pixel coordinates
     ctx.drawImage(
       image,
-      completedCrop.x,
-      completedCrop.y,
-      completedCrop.width,
-      completedCrop.height,
+      completedCrop.x * scaleX,
+      completedCrop.y * scaleY,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
       0,
       0,
       outputWidth,

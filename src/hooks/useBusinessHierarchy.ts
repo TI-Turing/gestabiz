@@ -19,6 +19,7 @@ export interface HierarchyFilters {
   employeeType?: string | null;
   departmentId?: string | null;
   location_id?: string | null; // Filtro por sede
+  includeNoSede?: boolean;     // Incluir empleados sin sede asignada
 }
 
 export interface EmployeeHierarchy {
@@ -247,17 +248,24 @@ export function useBusinessHierarchy(businessId: string | null, initialFilters?:
       result = result.filter(emp => emp.employee_type === filters.employeeType);
     }
 
+    // Excluir empleados sin sede cuando el toggle no está activo
+    if (!filters.includeNoSede) {
+      result = result.filter(emp => !!emp.location_id);
+    }
+
     // Filtro por sede/ubicación
     if (filters.location_id) {
       result = result.filter(
-        emp => emp.location_id === filters.location_id || emp.role === 'owner' || !emp.location_id
+        emp => emp.location_id === filters.location_id ||
+               (filters.includeNoSede && !emp.location_id)
       );
     }
 
     // Filtro por ubicación (departmentId - legacy)
     if (filters.departmentId) {
       result = result.filter(
-        emp => emp.location_id === filters.departmentId || emp.role === 'owner' || !emp.location_id
+        emp => emp.location_id === filters.departmentId ||
+               (filters.includeNoSede && !emp.location_id)
       );
     }
 

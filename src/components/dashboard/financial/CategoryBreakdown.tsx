@@ -34,9 +34,10 @@ export function CategoryBreakdown({
   const [loading, setLoading] = useState(true);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat(language === 'es' ? 'es-MX' : 'en-US', {
+    return new Intl.NumberFormat(language === 'es' ? 'es-CO' : 'en-US', {
       style: 'currency',
       currency: 'COP',
+      minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
   };

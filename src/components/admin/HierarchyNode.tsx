@@ -71,6 +71,23 @@ const getInitials = (name: string): string => {
     .slice(0, 2)
 }
 
+const EMPLOYEE_TYPE_LABELS: Record<string, string> = {
+  // employee_type values
+  service_provider: 'Proveedor de servicios',
+  support_staff: 'Personal de apoyo',
+  location_manager: 'Gerente de sede',
+  // role values (usados como fallback en algunos contextos)
+  manager: 'Gerente',
+  professional: 'Profesional',
+  receptionist: 'Recepcionista',
+  accountant: 'Contador',
+}
+
+const formatEmployeeTypeLabel = (value: string | null | undefined): string => {
+  if (!value) return ''
+  return EMPLOYEE_TYPE_LABELS[value] ?? value
+}
+
 // =====================================================
 // COMPONENTE
 // =====================================================
@@ -122,7 +139,7 @@ export function HierarchyNode({
           <div className="flex-1 min-w-0">
             <p className="font-semibold truncate text-white">{employee.full_name}</p>
             <p className="text-xs text-gray-300 truncate">
-              {employee.job_title || employee.employee_type}
+              {employee.job_title || formatEmployeeTypeLabel(employee.employee_type)}
             </p>
           </div>
         </div>

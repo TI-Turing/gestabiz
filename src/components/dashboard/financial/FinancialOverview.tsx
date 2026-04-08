@@ -57,9 +57,11 @@ export function FinancialOverview({
   const [loadingStats, setLoadingStats] = useState(true);
 
   const formatCurrency = (amount: number, currency = 'COP') => {
-    return new Intl.NumberFormat(language === 'es' ? 'es-MX' : 'en-US', {
+    return new Intl.NumberFormat(language === 'es' ? 'es-CO' : 'en-US', {
       style: 'currency',
       currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
