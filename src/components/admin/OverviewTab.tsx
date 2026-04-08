@@ -37,13 +37,20 @@ interface Stats {
   upcomingAppointments: number
   completedAppointments: number
   cancelledAppointments: number
+  /** Siempre es el total del negocio, independiente de la sede seleccionada */
   totalLocations: number
+  /** Filtrado por sede cuando hay una seleccionada */
   totalServices: number
+  /** Filtrado por sede cuando hay una seleccionada */
   totalEmployees: number
   monthlyRevenue: number
   averageAppointmentValue: number
+  /** Siempre a nivel de negocio (para el checklist de configuración) */
   hasServicesInLocations: boolean
+  /** Siempre a nivel de negocio (para el checklist de configuración) */
   hasEmployeesWithServices: boolean
+  /** Siempre a nivel de negocio (para trigger del checklist) */
+  businessTotalServices: number
 }
 
 export function OverviewTab({ business }: OverviewTabProps) {
@@ -71,12 +78,19 @@ export function OverviewTab({ business }: OverviewTabProps) {
       const nowISO = now.toISOString()
 
       // Get appointments for current month only (includes today)
-      const { data: appointments, error: apptError } = await supabase
+      // Filtered by location when one is selected
+      let apptQuery = supabase
         .from('appointments')
         .select('*')
         .eq('business_id', business.id)
         .gte('start_time', monthStartISO)
         .lt('start_time', nextMonthStartISO)
+
+      if (preferredLocationId) {
+        apptQuery = apptQuery.eq('location_id', preferredLocationId)
+      }
+
+      const { data: appointments, error: apptError } = await apptQuery
 
       if (apptError) throw apptError
 
@@ -95,7 +109,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
         (a) => a.status === 'cancelled'
       ).length || 0
 
-      // Get locations
+      // Get locations - ALWAYS business-wide (the "Sedes" card shows total del negocio)
       const { data: locations, error: locError } = await supabase
         .from('locations')
         .select('id')
@@ -103,25 +117,40 @@ export function OverviewTab({ business }: OverviewTabProps) {
 
       if (locError) throw locError
 
-      // Get services
-      const { data: services, error: svcError } = await supabase
-        .from('services')
-        .select('id')
-        .eq('business_id', business.id)
+      // Get services - filtered by location when one is selected
+      let totalServices: number
+      if (preferredLocationId) {
+        const { data: locationSvcs } = await supabase
+          .from('location_services')
+          .select('service_id')
+          .eq('location_id', preferredLocationId)
+        totalServices = locationSvcs?.length || 0
+      } else {
+        const { data: services, error: svcError } = await supabase
+          .from('services')
+          .select('id')
+          .eq('business_id', business.id)
+        if (svcError) throw svcError
+        totalServices = services?.length || 0
+      }
 
-      if (svcError) throw svcError
-
-      // Get employees (exclude auto-registered owner to match EmployeeManagement count)
-      const { data: employees, error: empError } = await supabase
+      // Get employees - filtered by location when one is selected (exclude auto-registered owner)
+      let empQuery = supabase
         .from('business_employees')
         .select('employee_id')
         .eq('business_id', business.id)
         .eq('is_active', true)
         .neq('employee_id', business.owner_id)
 
+      if (preferredLocationId) {
+        empQuery = empQuery.eq('location_id', preferredLocationId)
+      }
+
+      const { data: employees, error: empError } = await empQuery
+
       if (empError) throw empError
 
-      // Check if services are linked to active locations (mirrors validate_business_configuration)
+      // Check if services are linked to active locations — ALWAYS business-wide (for setup checklist)
       const locationIds = locations?.map((l) => l.id) || []
       let hasServicesInLocations = false
       if (locationIds.length > 0) {
@@ -133,14 +162,27 @@ export function OverviewTab({ business }: OverviewTabProps) {
         hasServicesInLocations = (locationServices?.length || 0) > 0
       }
 
-      // Check if active employees are linked to services (mirrors validate_business_configuration)
-      const activeEmployeeIds = employees?.map((e) => e.employee_id) || []
+      // Business-wide services count for setup checklist trigger
+      const { data: businessServices } = await supabase
+        .from('services')
+        .select('id')
+        .eq('business_id', business.id)
+      const businessTotalServices = businessServices?.length || 0
+
+      // Check if active employees are linked to services — ALWAYS business-wide (for setup checklist)
+      // We check all employees in the business, not just those in the selected location
+      const { data: allBusinessEmployees } = await supabase
+        .from('business_employees')
+        .select('employee_id')
+        .eq('business_id', business.id)
+        .eq('is_active', true)
+      const allActiveEmployeeIds = allBusinessEmployees?.map((e) => e.employee_id) || []
       let hasEmployeesWithServices = false
-      if (activeEmployeeIds.length > 0) {
+      if (allActiveEmployeeIds.length > 0) {
         const { data: employeeServices } = await supabase
           .from('employee_services')
           .select('id')
-          .in('employee_id', activeEmployeeIds)
+          .in('employee_id', allActiveEmployeeIds)
           .limit(1)
         hasEmployeesWithServices = (employeeServices?.length || 0) > 0
       }
@@ -161,19 +203,20 @@ export function OverviewTab({ business }: OverviewTabProps) {
         completedAppointments,
         cancelledAppointments,
         totalLocations: locations?.length || 0,
-        totalServices: services?.length || 0,
+        totalServices,
         totalEmployees: employees?.length || 0,
         monthlyRevenue,
         averageAppointmentValue,
         hasServicesInLocations,
         hasEmployeesWithServices,
+        businessTotalServices,
       })
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'OverviewTab' } })
     } finally {
       setIsLoading(false)
     }
-  }, [business.id])
+  }, [business.id, business.owner_id, preferredLocationId])
 
   useEffect(() => {
     fetchStats()
@@ -227,7 +270,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
   return (
     <div className="space-y-4">
       {/* Setup Checklist — shown when business is not fully configured */}
-      {(stats.totalLocations === 0 || stats.totalServices === 0 || business.is_configured === false) && (() => {
+      {(stats.totalLocations === 0 || stats.businessTotalServices === 0 || business.is_configured === false) && (() => {
         const checklistItems = [
           {
             key: 'location',
@@ -241,7 +284,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
             key: 'services',
             label: 'Servicios configurados',
             hint: 'Define qué ofreces y sus precios para recibir reservas.',
-            done: stats.totalServices > 0 && stats.hasServicesInLocations,
+            done: stats.businessTotalServices > 0 && stats.hasServicesInLocations,
             navigateTo: '/app/admin/services',
             required: true,
           },
@@ -249,7 +292,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
             key: 'employees',
             label: 'Profesionales o recursos asignados',
             hint: 'Asigna al menos un empleado a un servicio para que los clientes puedan reservar.',
-            done: stats.totalEmployees > 0 && stats.hasEmployeesWithServices,
+            done: stats.hasEmployeesWithServices,
             navigateTo: '/app/admin/employees',
             required: true,
           },
@@ -502,7 +545,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              ${stats.monthlyRevenue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+              ${stats.monthlyRevenue.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1 capitalize">
               Ingresos por citas completadas en {currentMonthName}
@@ -519,7 +562,7 @@ export function OverviewTab({ business }: OverviewTabProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              ${stats.averageAppointmentValue.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+              ${stats.averageAppointmentValue.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Promedio de ingresos por cita completada

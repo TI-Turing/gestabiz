@@ -20,6 +20,8 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { FiltersPanel } from './FiltersPanel'
 import { EmployeeListView } from './EmployeeListView'
 import { HierarchyMapView } from './HierarchyMapView'
@@ -59,7 +61,8 @@ export function EmployeeManagementHierarchy({
   const [showInviteDialog, setShowInviteDialog] = useState(false)
   const [generatedCode, setGeneratedCode] = useState<string | null>(null)
   const [showJoinRequests, setShowJoinRequests] = useState(false) // Oculto por defecto
-  
+  const [includeNoSede, setIncludeNoSede] = useState(false)
+
   // Hook de sede preferida
   const { preferredLocationId } = usePreferredLocation(businessId)
 
@@ -217,6 +220,7 @@ export function EmployeeManagementHierarchy({
 
   const handleClearFilters = () => {
     clearFilters()
+    setIncludeNoSede(false)
     setShowFilters(false)
   }
 
@@ -379,8 +383,8 @@ export function EmployeeManagementHierarchy({
       </div>
 
       {/* FILTERS BAR */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant={showFilters ? 'default' : 'outline'}
             size="sm"
@@ -405,6 +409,21 @@ export function EmployeeManagementHierarchy({
               {t('employees.management.clearFilters')}
             </Button>
           )}
+
+          {/* Toggle: incluir personal sin sede */}
+          <div className="flex items-center gap-2 pl-2 border-l border-border">
+            <Switch
+              id="include-no-sede"
+              checked={includeNoSede}
+              onCheckedChange={(checked) => {
+                setIncludeNoSede(checked)
+                updateFilters({ includeNoSede: checked })
+              }}
+            />
+            <Label htmlFor="include-no-sede" className="text-sm cursor-pointer select-none whitespace-nowrap">
+              Incluir personal sin sede
+            </Label>
+          </div>
         </div>
 
         <div className="text-sm text-muted-foreground">
@@ -426,17 +445,17 @@ export function EmployeeManagementHierarchy({
 
       {/* PENDING SETUP ALERT - empleados sin jefe asignado */}
       {pendingSetup.length > 0 && (
-        <Card className="p-4 border-amber-300 bg-amber-50 dark:bg-amber-950/20">
+        <Card className="p-4 border-amber-400 bg-amber-50 dark:border-amber-300/40 dark:bg-amber-950/20">
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-            <h3 className="font-semibold text-sm text-amber-900 dark:text-amber-200">
+            <AlertTriangle className="w-5 h-5 text-amber-700 dark:text-amber-400 shrink-0" />
+            <h3 className="font-semibold text-sm text-amber-950 dark:text-amber-200">
               {pendingSetup.length} empleado{pendingSetup.length > 1 ? 's' : ''} pendiente{pendingSetup.length > 1 ? 's' : ''} de configuración
             </h3>
-            <Badge variant="outline" className="ml-auto border-amber-400 text-amber-700 text-xs dark:text-amber-300">
+            <Badge variant="outline" className="ml-auto border-amber-600 text-amber-900 text-xs dark:border-amber-400 dark:text-amber-300">
               Sin jefe directo
             </Badge>
           </div>
-          <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
+          <p className="text-xs text-amber-900 dark:text-amber-300 mb-3">
             Estos empleados no aparecerán disponibles para recibir citas hasta que se les asigne un jefe directo.
           </p>
           <div className="space-y-2">
@@ -496,7 +515,7 @@ export function EmployeeManagementHierarchy({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="shrink-0 text-xs h-8 border-amber-400 text-amber-700 hover:bg-amber-50 dark:text-amber-300"
+                    className="shrink-0 text-xs h-8 border-amber-600 text-amber-900 hover:bg-amber-100 dark:border-amber-400 dark:text-amber-300 dark:hover:bg-amber-900/30"
                     onClick={() => { setAssigningFor(emp.employee_id); setPendingSupervisorId('') }}
                   >
                     Asignar jefe

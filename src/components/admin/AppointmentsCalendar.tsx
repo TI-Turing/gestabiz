@@ -821,22 +821,17 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           return acc;
         }, {} as Record<string, { full_name: string; avatar_url: string | null }>);
 
-        // Get employee services - FILTERED BY BUSINESS_ID AND LOCATION if selected
+        // Get employee services - FILTERED BY BUSINESS_ID only (NOT by location)
+        // The dropdown of professionals must show ALL employees who offer services
+        // in the business, regardless of the selected location filter.
+        // Location filtering only affects which appointments/services are displayed.
         let employeeServicesQuery = supabase
           .from('employee_services')
           .select('employee_id, service_id, services(name, is_active)')
-          .eq('business_id', resolvedBusinessId); // ✅ FIX: Filtrar por negocio actual
+          .eq('business_id', resolvedBusinessId);
 
         if (employeeIds.length > 0) {
           employeeServicesQuery = employeeServicesQuery.in('employee_id', employeeIds);
-
-          // Add location filter if a location is selected
-          const selectedLocationId = filterLocation.length > 0 ? filterLocation[0] : null;
-          if (selectedLocationId) {
-            employeeServicesQuery = employeeServicesQuery.eq('location_id', selectedLocationId);
-            if (DEBUG_MODE) {
-            }
-          }
         }
 
         let employeeServicesData: Array<{ employee_id: string; service_id?: string; services?: { name?: string; is_active?: boolean } | null }> = [];
@@ -888,7 +883,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
             empleados: formattedEmployees.map(e => ({ 
               id: e.id, 
               nombre: e.profile_name,
-              servicios: e.services // Now location-filtered
+              servicios: e.services // All services in the business (not location-filtered)
             }))
           });
         }

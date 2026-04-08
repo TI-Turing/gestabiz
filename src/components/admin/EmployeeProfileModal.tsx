@@ -159,6 +159,44 @@ export function EmployeeProfileModal({
     enabled: !!employee?.user_id && !!employee?.business_id,
   })
 
+  // Sede asignada — query directa para datos frescos (independiente del RPC)
+  const { data: locationData } = useQuery({
+    queryKey: ['employee-modal-location', employee?.user_id, employee?.business_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('business_employees')
+        .select('location_id, locations(id, name)')
+        .eq('employee_id', employee!.user_id)
+        .eq('business_id', employee!.business_id)
+        .maybeSingle()
+      if (!data?.location_id) return null
+      const loc = data.locations as { id: string; name: string } | null
+      return loc ? { id: data.location_id as string, name: loc.name } : null
+    },
+    enabled: !!employee?.user_id && !!employee?.business_id,
+  })
+
+  // Servicios asignados — query directa para datos frescos (independiente del RPC)
+  const { data: servicesData = [] } = useQuery({
+    queryKey: ['employee-modal-services', employee?.user_id, employee?.business_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('employee_services')
+        .select('service_id, expertise_level, commission_percentage, services(id, name)')
+        .eq('employee_id', employee!.user_id)
+        .eq('business_id', employee!.business_id)
+        .eq('is_active', true)
+      if (!data) return []
+      return data.map(es => ({
+        service_id: es.service_id,
+        service_name: (es.services as { id: string; name: string } | null)?.name ?? '',
+        expertise_level: es.expertise_level ?? 'beginner',
+        commission_percentage: es.commission_percentage ?? 0,
+      }))
+    },
+    enabled: !!employee?.user_id && !!employee?.business_id,
+  })
+
   const { planId, isLoading: planLoading } = usePlanFeatures(employee?.business_id ?? null)
   const isPayrollAvailable = !planLoading && planId === 'pro'
 
@@ -170,11 +208,16 @@ export function EmployeeProfileModal({
 
   if (!employee) return null
 
+  // Datos frescos de sede y servicios (fallback al prop si las queries aún no han resuelto)
+  const resolvedLocationId = locationData?.id ?? employee.location_id
+  const resolvedLocationName = locationData?.name ?? employee.location_name
+  const resolvedServices = servicesData.length > 0 ? servicesData : (employee.services_offered ?? [])
+
   // Objeto Location mínimo para LocationProfileModal
-  const locationObj = employee.location_id ? {
-    id: employee.location_id,
+  const locationObj = resolvedLocationId ? {
+    id: resolvedLocationId,
     business_id: employee.business_id,
-    name: employee.location_name ?? '',
+    name: resolvedLocationName ?? '',
     is_active: true,
     created_at: '',
     updated_at: '',
@@ -222,7 +265,8 @@ export function EmployeeProfileModal({
       await queryClient.invalidateQueries({ queryKey: ['businessHierarchy', employee.business_id] })
       setEditingCargo(false)
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'EmployeeProfileModal' } })      toast.error(t('employeeProfile.modal.cargo.updateError'))
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'EmployeeProfileModal' } })
+      toast.error(t('employeeProfile.modal.cargo.updateError'))
     } finally {
       setSavingCargo(false)
     }
@@ -609,24 +653,26 @@ export function EmployeeProfileModal({
           </Card>
 
           {/* UBICACIONES — abre LocationProfileModal */}
-          {employee.location_name && (
-            <Card
-              className={`p-4 ${clickable}`}
-              onClick={() => setShowLocationModal(true)}
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  {t('employeeProfile.modal.location.title')}
-                </h3>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              </div>
+          <Card
+            className={resolvedLocationName ? `p-4 ${clickable}` : 'p-4'}
+            onClick={resolvedLocationName ? () => setShowLocationModal(true) : undefined}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                {t('employeeProfile.modal.location.title')}
+              </h3>
+              {resolvedLocationName && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+            </div>
+            {resolvedLocationName ? (
               <div className="flex items-start gap-3 p-2 rounded mt-4">
                 <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
-                <p className="text-sm font-medium">{employee.location_name}</p>
+                <p className="text-sm font-medium">{resolvedLocationName}</p>
               </div>
-            </Card>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground mt-3">Sin sede asignada</p>
+            )}
+          </Card>
 
           {/* ESTADÍSTICAS */}
           <div className="grid grid-cols-2 gap-4">
@@ -740,12 +786,12 @@ export function EmployeeProfileModal({
           </div>
 
           {/* SERVICIOS — cada fila abre ServiceProfileModal */}
-          {employee.services_offered && employee.services_offered.length > 0 && (
-            <Card className="p-4">
-              <h3 className="font-semibold mb-1">{t('employeeProfile.modal.services.title')}</h3>
-              <p className="text-xs text-muted-foreground mb-3">{t('employeeProfile.modal.services.subtitle')}</p>
+          <Card className="p-4">
+            <h3 className="font-semibold mb-1">{t('employeeProfile.modal.services.title')}</h3>
+            <p className="text-xs text-muted-foreground mb-3">{t('employeeProfile.modal.services.subtitle')}</p>
+            {resolvedServices.length > 0 ? (
               <div className="space-y-2">
-                {employee.services_offered.slice(0, 5).map((service) => (
+                {resolvedServices.slice(0, 5).map((service) => (
                   <button
                     key={service.service_id}
                     type="button"
@@ -761,14 +807,16 @@ export function EmployeeProfileModal({
                     </div>
                   </button>
                 ))}
-                {employee.services_offered.length > 5 && (
+                {resolvedServices.length > 5 && (
                   <p className="text-xs text-muted-foreground text-center pt-2">
-                    +{employee.services_offered.length - 5} {t('employeeProfile.modal.services.more')}
+                    +{resolvedServices.length - 5} {t('employeeProfile.modal.services.more')}
                   </p>
                 )}
               </div>
-            </Card>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground">Sin servicios asignados</p>
+            )}
+          </Card>
 
           {/* AUSENCIAS Y VACACIONES APROBADAS */}
           <Card className="p-4">

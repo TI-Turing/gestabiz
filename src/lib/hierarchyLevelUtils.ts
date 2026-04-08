@@ -23,35 +23,35 @@ export interface HierarchyLevel {
 export const HIERARCHY_LEVELS: HierarchyLevel[] = [
   {
     value: 0,
-    label: 'Owner',
+    label: 'Propietario',
     description: 'Propietario del negocio',
     color: 'text-purple-700 dark:text-purple-400',
     badgeColor: 'bg-purple-500/10 text-purple-700 dark:text-purple-400',
   },
   {
     value: 1,
-    label: 'Admin',
+    label: 'Administrador',
     description: 'Administrador',
     color: 'text-blue-700 dark:text-blue-400',
     badgeColor: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
   },
   {
     value: 2,
-    label: 'Manager',
+    label: 'Gerente',
     description: 'Gerente',
     color: 'text-green-700 dark:text-green-400',
     badgeColor: 'bg-green-500/10 text-green-700 dark:text-green-400',
   },
   {
     value: 3,
-    label: 'Lead',
+    label: 'Líder',
     description: 'Líder',
     color: 'text-yellow-700 dark:text-yellow-400',
     badgeColor: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
   },
   {
     value: 4,
-    label: 'Staff',
+    label: 'Personal',
     description: 'Personal',
     color: 'text-gray-700 dark:text-gray-400',
     badgeColor: 'bg-gray-500/10 text-gray-700 dark:text-gray-400',
@@ -74,7 +74,7 @@ export const getLevelData = (level: number): HierarchyLevel => {
 /**
  * Obtiene el label de un nivel jerárquico
  * @param level - Nivel jerárquico (0-4)
- * @returns Label en inglés (Owner, Admin, Manager, Lead, Staff)
+ * @returns Label en español (Propietario, Administrador, Gerente, Líder, Personal)
  */
 export const getLevelLabel = (level: number): string => {
   return getLevelData(level).label
