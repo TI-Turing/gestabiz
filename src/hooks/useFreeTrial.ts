@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useQueryClient } from '@tanstack/react-query'
 import { QUERY_CONFIG } from '@/lib/queryConfig'
+import { toast } from 'sonner'
 import type { BillingPlan } from './useBillingPlan'
 
 export interface FreeTrialState {
@@ -88,33 +89,43 @@ export function useFreeTrial(
     setError(null)
 
     try {
+      console.log('[FreeTrial] Invoking activate-free-trial EF…', { businessId })
       const { data, error: fnError } = await supabase.functions.invoke(
         'activate-free-trial',
         { body: { businessId } },
       )
+      console.log('[FreeTrial] EF response:', { data, fnError })
 
       if (fnError) {
+        console.error('[FreeTrial] Function invoke error:', fnError)
         const errCode = (fnError as unknown as { context?: { error?: string } })?.context?.error
         const msg = ERROR_MESSAGES[(errCode as ActivationError) ?? 'unknown'] ?? ERROR_MESSAGES.unknown
         setError(msg)
+        toast.error(msg)
         return
       }
 
       if (data?.error) {
+        console.error('[FreeTrial] Business logic error:', data.error)
         const msg = ERROR_MESSAGES[(data.error as ActivationError)] ?? ERROR_MESSAGES.unknown
         setError(msg)
+        toast.error(msg)
         return
       }
 
       // Éxito — refrescar el plan
+      console.log('[FreeTrial] Success! Refetching plan…')
+      toast.success('¡Mes gratis activado! Tu Plan Básico está listo.')
       refetchPlan()
 
       // Invalida el caché de plan features para que los componentes vean el nuevo plan inmediatamente
       queryClient.invalidateQueries({
         queryKey: QUERY_CONFIG.KEYS.PLAN_FEATURES(businessId),
       })
-    } catch {
+    } catch (err) {
+      console.error('[FreeTrial] Unexpected error:', err)
       setError(ERROR_MESSAGES.unknown)
+      toast.error(ERROR_MESSAGES.unknown)
     } finally {
       setIsActivating(false)
     }

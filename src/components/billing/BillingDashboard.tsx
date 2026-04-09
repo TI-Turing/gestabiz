@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -618,7 +617,7 @@ export function BillingDashboard({ businessId, ownerId }: Readonly<BillingDashbo
       </Card>
 
       {/* Free Trial Confirmation Dialog */}
-      <AlertDialog open={showFreeTrialConfirmation} onOpenChange={setShowFreeTrialConfirmation}>
+      <AlertDialog open={showFreeTrialConfirmation} onOpenChange={(open) => { if (!trial.isActivating) setShowFreeTrialConfirmation(open) }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -646,10 +645,10 @@ export function BillingDashboard({ businessId, ownerId }: Readonly<BillingDashbo
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex gap-3 justify-end">
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                trial.activateFreeTrial()
+            <AlertDialogCancel disabled={trial.isActivating}>Cancelar</AlertDialogCancel>
+            <Button
+              onClick={async () => {
+                await trial.activateFreeTrial()
                 setShowFreeTrialConfirmation(false)
               }}
               disabled={trial.isActivating}
@@ -657,7 +656,7 @@ export function BillingDashboard({ businessId, ownerId }: Readonly<BillingDashbo
             >
               {trial.isActivating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Activar
-            </AlertDialogAction>
+            </Button>
           </div>
         </AlertDialogContent>
       </AlertDialog>
