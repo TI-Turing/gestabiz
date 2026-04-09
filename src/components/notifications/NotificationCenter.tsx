@@ -245,7 +245,7 @@ export function NotificationCenter({
     autoFetch: true,
     limit: 50,
     excludeChatMessages: true, // Excluir mensajes de chat del centro de notificaciones
-    excludeTypes: ['appointment_created'], // Evita duplicado visual por cita creada + confirmada
+    excludeTypes: ['appointment_new_client', 'appointment_new_employee', 'appointment_new_business'], // Evita duplicado visual por cita creada + confirmada
     suppressToasts: true
   })
 
