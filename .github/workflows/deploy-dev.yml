@@ -25,19 +25,16 @@ jobs:
       - name: Create .env.staging from secrets
         run: |
           cat > .env.staging << EOF
-          VITE_SUPABASE_URL=${{ secrets.DEV_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY=${{ secrets.DEV_SUPABASE_ANON_KEY }}
-          VITE_APP_URL=${{ secrets.DEV_APP_URL }}
-          VITE_SITE_URL=${{ secrets.DEV_APP_URL }}
+          VITE_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          VITE_APP_URL=${{ secrets.APP_URL }}
           VITE_APP_NAME=Gestabiz [DEV]
           VITE_DEMO_MODE=false
-          VITE_PAYMENT_GATEWAY=${{ secrets.DEV_PAYMENT_GATEWAY }}
-          VITE_MERCADOPAGO_PUBLIC_KEY=${{ secrets.DEV_MERCADOPAGO_PUBLIC_KEY }}
-          VITE_SUPPORT_EMAIL=dev@gestabiz.com
+          VITE_PAYMENT_GATEWAY=${{ secrets.PAYMENT_GATEWAY }}
+          VITE_MERCADOPAGO_PUBLIC_KEY=${{ secrets.MERCADOPAGO_PUBLIC_KEY }}
           VITE_SENTRY_DSN=${{ secrets.SENTRY_DSN }}
-          VITE_APP_VERSION=${{ github.sha }}
           VITE_SENTRY_SAMPLE_RATE=1.0
-          VITE_GA_MEASUREMENT_ID=${{ secrets.DEV_GA_MEASUREMENT_ID }}
+          VITE_GA_MEASUREMENT_ID=${{ secrets.GA_MEASUREMENT_ID }}
           EOF
 
       - name: Build for staging
@@ -74,7 +71,7 @@ jobs:
       - name: Link to DEV Supabase
         run: |
           npx supabase link \
-            --project-ref ${{ vars.DEV_SUPABASE_PROJECT_REF }}
+            --project-ref ${{ vars.SUPABASE_PROJECT_REF }}
 
       - name: Apply migrations
         run: npx supabase db push --dns-resolver https --yes
@@ -101,5 +98,5 @@ jobs:
       - name: Deploy all edge functions
         run: |
           npx supabase functions deploy \
-            --project-ref ${{ vars.DEV_SUPABASE_PROJECT_REF }} \
+            --project-ref ${{ vars.SUPABASE_PROJECT_REF }} \
             --dns-resolver https
