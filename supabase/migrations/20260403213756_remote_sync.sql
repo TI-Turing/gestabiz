@@ -1,0 +1,1 @@
+-- Migration applied directly on DEV remote. Stub file for CLI sync.
