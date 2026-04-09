@@ -836,7 +836,6 @@ export function useChat(userId: string | null) {
             // 🔥 FIX: Solo agregar mensajes de OTROS usuarios
             // Los mensajes propios ya se agregaron con optimistic update
             if (mappedMessage.sender_id === userId) {
-              console.log('[useChat] ⏭️ Skipping own message (already added optimistically)');
               return;
             }
             

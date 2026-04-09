@@ -132,7 +132,7 @@ async function createTransactions() {  // 1. INGRESOS: Crear transacciones de i
     const counts = summary.reduce((acc, t) => {
       acc[t.type] = (acc[t.type] || 0) + 1;
       return acc;
-    }, {} as Record<string, number>);    console.log(`   Total: ${(counts.income || 0) + (counts.expense || 0)}`);
+    }, {} as Record<string, number>);    
   }
 
   // Verificar montos por tipo
@@ -146,7 +146,6 @@ async function createTransactions() {  // 1. INGRESOS: Crear transacciones de i
       acc[t.type] += Number(t.amount);
       return acc;
     }, {} as Record<string, number>);    for (const [type, amount] of Object.entries(totals)) {
-      console.log(`   ${type}: $${amount.toLocaleString('es-CO')} COP`);
     }
   }
 }

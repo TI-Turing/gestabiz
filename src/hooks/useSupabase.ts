@@ -376,16 +376,7 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
       }
       
       const newAppointment = data as Appointment
-      setAppointments(prev => [...prev, newAppointment])      console.log('📋 [NOTIFICATIONS] Datos de la cita:', {
-        appointmentId: newAppointment.id,
-        clientId: appointmentData.client_id,
-        businessId: appointmentData.business_id,
-        employeeId: (insert as any).employee_id ?? (insert as any).user_id,
-        startTime: appointmentData.start_time,
-        serviceId: appointmentData.service_id,
-        locationId: appointmentData.location_id,
-        createdBy: userId
-      })
+      setAppointments(prev => [...prev, newAppointment])      
       
       // ✅ Enviar notificaciones in-app (no bloqueantes)
       try {

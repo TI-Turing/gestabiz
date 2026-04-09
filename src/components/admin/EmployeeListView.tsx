@@ -4,10 +4,11 @@
  * Phase 3 - UI Components
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowUpDown, ChevronDown, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmployeeCard } from './EmployeeCard'
+import { supabase } from '@/lib/supabase'
 import type { EmployeeHierarchy } from '@/types'
 
 // =====================================================
@@ -26,6 +27,14 @@ interface EmployeeListViewProps {
 type SortField = 'name' | 'level' | 'occupancy' | 'rating' | 'revenue'
 type SortDirection = 'asc' | 'desc'
 
+interface WorkScheduleEmployeeRow {
+  employee_id: string
+}
+
+interface EmployeeServiceRow {
+  employee_id: string
+}
+
 // =====================================================
 // COMPONENTE
 // =====================================================
@@ -41,9 +50,46 @@ export function EmployeeListView({
   const [sortField, setSortField] = useState<SortField>('level')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [expandedEmployees, setExpandedEmployees] = useState<Set<string>>(new Set())
+  const [employeesWithSchedule, setEmployeesWithSchedule] = useState<Set<string>>(new Set())
+  const [employeesWithServices, setEmployeesWithServices] = useState<Set<string>>(new Set())
 
   const getEmployeeId = (employee: EmployeeHierarchy): string | undefined =>
     employee.user_id ?? employee.employee_id
+
+  useEffect(() => {
+    const loadEmployeeConfiguration = async () => {
+      const employeeIds = employees
+        .map((employee) => getEmployeeId(employee))
+        .filter((id): id is string => !!id)
+
+      if (employeeIds.length === 0) {
+        setEmployeesWithSchedule(new Set())
+        setEmployeesWithServices(new Set())
+        return
+      }
+
+      const [scheduleResponse, servicesResponse] = await Promise.all([
+        supabase
+          .from('work_schedules')
+          .select('employee_id')
+          .in('employee_id', employeeIds)
+          .eq('is_working', true),
+        supabase
+          .from('employee_services')
+          .select('employee_id')
+          .in('employee_id', employeeIds)
+          .eq('business_id', businessId),
+      ])
+
+      const scheduleRows = (scheduleResponse.data as WorkScheduleEmployeeRow[] | null) ?? []
+      const serviceRows = (servicesResponse.data as EmployeeServiceRow[] | null) ?? []
+
+      setEmployeesWithSchedule(new Set(scheduleRows.map((row) => row.employee_id)))
+      setEmployeesWithServices(new Set(serviceRows.map((row) => row.employee_id)))
+    }
+
+    loadEmployeeConfiguration()
+  }, [employees, businessId])
 
   // =====================================================
   // SORTING
@@ -133,6 +179,26 @@ export function EmployeeListView({
     const subordinates = getSubordinates(employeeId)
     const isExpanded = expandedEmployees.has(employeeId)
     const hasSubordinates = subordinates.length > 0
+    const missingConfigItems: string[] = []
+
+    const locationId = employee.location_id
+    const employeeType = (employee.employee_type ?? '').toLowerCase()
+    const skipLocationRequirement = ['manager', 'owner', 'location_manager'].includes(employeeType)
+
+    if (!skipLocationRequirement && !locationId) {
+      missingConfigItems.push('Sin sede')
+    }
+
+    if (!employeesWithSchedule.has(employeeId)) {
+      missingConfigItems.push('Sin horario')
+    }
+
+    const servicesFromHierarchy = employee.services_offered ?? []
+    const hasServicesInHierarchy = servicesFromHierarchy.length > 0
+    const hasServicesInTable = employeesWithServices.has(employeeId)
+    if (!hasServicesInHierarchy && !hasServicesInTable) {
+      missingConfigItems.push('Sin servicios')
+    }
 
     return (
       <div key={employeeId}>
@@ -170,6 +236,7 @@ export function EmployeeListView({
               onEdit={onEdit}
               onViewProfile={onViewProfile}
               onAssignSupervisor={onAssignSupervisor}
+              missingConfigItems={missingConfigItems}
             />
           </button>
         </div>

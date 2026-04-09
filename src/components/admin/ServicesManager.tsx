@@ -117,6 +117,8 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
   const [showInactive, setShowInactive] = useState(false)
   const [pendingDeleteServiceId, setPendingDeleteServiceId] = useState<string | null>(null)
   const [isIndependentBusiness, setIsIndependentBusiness] = useState(false)
+  const [servicesWithLocations, setServicesWithLocations] = useState<Set<string>>(new Set())
+  const [servicesWithEmployees, setServicesWithEmployees] = useState<Set<string>>(new Set())
 
   // Evitar caché del navegador/CDN cuando la URL no cambia
   const cacheBust = (url: string) => {
@@ -185,18 +187,45 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       }));
 
       // Establecer datos (pueden ser arrays vacíos, no es error)
-      setServices(servicesData || [])
+      const fetchedServices = servicesData || []
+      setServices(fetchedServices)
       setLocations(locationsData || [])
       setEmployees(normalizedEmployees)
       // Negocio independiente = solo 1 empleado (el dueño). La comisión no aplica.
       setIsIndependentBusiness(normalizedEmployees.length <= 1)
+
+      const serviceIds = fetchedServices.map((service) => service.id)
+      if (serviceIds.length === 0) {
+        setServicesWithLocations(new Set())
+        setServicesWithEmployees(new Set())
+      } else {
+        const [locationAssignments, employeeAssignments] = await Promise.all([
+          supabase
+            .from('location_services')
+            .select('service_id')
+            .in('service_id', serviceIds),
+          supabase
+            .from('employee_services')
+            .select('service_id')
+            .eq('business_id', businessId)
+            .in('service_id', serviceIds),
+        ])
+
+        const locationRows = (locationAssignments.data as Array<{ service_id: string }> | null) ?? []
+        const employeeRows = (employeeAssignments.data as Array<{ service_id: string }> | null) ?? []
+        setServicesWithLocations(new Set(locationRows.map((row) => row.service_id)))
+        setServicesWithEmployees(new Set(employeeRows.map((row) => row.service_id)))
+      }
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServicesManager' } })
-      // eslint-disable-next-line no-console      toast.error('Error al cargar los datos')
+      // eslint-disable-next-line no-console
+      toast.error('Error al cargar los datos')
       // En caso de error, establecer arrays vacíos para no romper la UI
       setServices([])
       setLocations([])
       setEmployees([])
+      setServicesWithLocations(new Set())
+      setServicesWithEmployees(new Set())
     } finally {
       setIsLoading(false)
     }
@@ -406,7 +435,8 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
           .single()
 
         if (error) {
-          // eslint-disable-next-line no-console          throw error
+          // eslint-disable-next-line no-console
+          throw error
         }
         serviceId = data.id
 
@@ -481,7 +511,8 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       await fetchData()
       handleCloseDialog()
     } catch (error: any) {
-      // eslint-disable-next-line no-console      const errorMessage = error?.message || 'Error desconocido'
+      // eslint-disable-next-line no-console
+      const errorMessage = error?.message || 'Error desconocido'
       const statusCode = (error as any)?.statusCode || (error as any)?.status || undefined
       const msg = String(errorMessage).toLowerCase()
       const is403 = statusCode === '403' || statusCode === 403 || msg.includes('row-level security') || msg.includes('unauthorized') || msg.includes('permission')
@@ -599,7 +630,8 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       await fetchData()
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServicesManager' } })
-      // eslint-disable-next-line no-console      toast.error('Error al eliminar el servicio y cancelar citas')
+      // eslint-disable-next-line no-console
+      toast.error('Error al eliminar el servicio y cancelar citas')
     }
   }
 
@@ -626,7 +658,8 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       }
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ServicesManager' } })
-      // eslint-disable-next-line no-console      toast.error('Error al reactivar el servicio')
+      // eslint-disable-next-line no-console
+      toast.error('Error al reactivar el servicio')
     }
   }
 
@@ -653,7 +686,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div className="flex-1 min-w-0">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground truncate">Servicios</h2>
-          <p className="text-muted-foreground text-xs sm:text-sm">Gestiona los servicios que ofreces</p>
+          <p className="text-muted-foreground text-xs sm:text-sm whitespace-nowrap">Gestiona los servicios que ofreces</p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 w-full">
           <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-background w-full sm:w-auto">
@@ -713,6 +746,17 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
               className="group relative overflow-hidden border-border hover:border-border/80 transition-colors cursor-pointer"
               onClick={() => setProfileServiceId(service.id)}
             >
+              {(() => {
+                const missingItems: string[] = []
+                if (!servicesWithLocations.has(service.id)) {
+                  missingItems.push('Sin sedes')
+                }
+                if (!servicesWithEmployees.has(service.id)) {
+                  missingItems.push('Sin empleados')
+                }
+
+                return (
+                  <>
               <div
                 className="relative h-40 sm:h-48 w-full"
                 style={{
@@ -786,7 +830,19 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
                     <span>{service.duration_minutes} minutos</span>
                   </div>
                 </div>
+                {missingItems.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {missingItems.map((item) => (
+                      <Badge key={`${service.id}-${item}`} variant="outline" className="text-[10px] border-amber-500/40 text-amber-400">
+                        {item}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </CardContent>
+                  </>
+                )
+              })()}
             </Card>
           ))}
         </div>

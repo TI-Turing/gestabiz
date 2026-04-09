@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { PermissionGate } from '@/components/ui/PermissionGate'
 import { AppointmentWizard } from '@/components/appointments/AppointmentWizard'
 import { SectionErrorBoundary } from '@/components/ui/SectionErrorBoundary'
 import { AppointmentCard, type AppointmentCardData } from '@/components/cards/AppointmentCard'
@@ -325,7 +324,8 @@ export function ClientDashboard({
   }, [])
 
   // Handle booking from business profile
-  const handleBookAppointment = useCallback((businessId?: string, serviceId?: string, locationId?: string, employeeId?: string) => {    // Usar el businessId pasado como parámetro o el selectedBusinessId
+  const handleBookAppointment = useCallback((businessId?: string, serviceId?: string, locationId?: string, employeeId?: string) => {
+    // Usar el businessId pasado como parámetro o el selectedBusinessId
     const businessIdToUse = businessId || selectedBusinessId
     
     // Guardar preselección de servicio, ubicación y empleado ANTES de abrir el wizard
@@ -376,7 +376,8 @@ export function ClientDashboard({
         toast.success(t('appointments.toasts.chatStarted'))
       }
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })      toast.error(t('appointments.toasts.chatFailed'))
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })
+      toast.error(t('appointments.toasts.chatFailed'))
     } finally {
       setIsStartingChat(false)
     }
@@ -407,7 +408,8 @@ export function ClientDashboard({
       // ✅ Refetch dashboard data (useClientDashboard automáticamente invalidará cache)
       refetchDashboard()
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })      toast.error(t('appointments.toasts.cancelFailed'))
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ClientDashboard' } })
+      toast.error(t('appointments.toasts.cancelFailed'))
     }
   }, [user?.id, refetchDashboard])
 
@@ -701,7 +703,7 @@ export function ClientDashboard({
             {/* Layout de 2 columnas: Citas (izquierda) + Sugerencias (derecha) */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 w-full min-w-0">
               {/* Columna izquierda: Citas (2/3 del ancho en pantallas XL) */}
-              <div className="xl:col-span-2">
+              <div className="xl:col-span-2 min-w-0">
                 {/* Calendar View */}
                 {viewMode === 'calendar' ? (
                   <ClientCalendarView
@@ -723,7 +725,7 @@ export function ClientDashboard({
                         </CardContent>
                       </Card>
                     ) : (
-                      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))' }}>
+                      <div className="grid gap-4 w-full min-w-0" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))' }}>
                         {upcomingAppointments.map((appointment) => {
                           const svcImg = appointment.service?.id ? serviceImages[appointment.service.id] : undefined
                           const locImg = appointment.location?.id ? locationBanners[appointment.location.id] : undefined
@@ -784,7 +786,7 @@ export function ClientDashboard({
               </div>
 
               {/* Columna derecha: Sugerencias de negocios (1/3 del ancho en XL) */}
-              <div className="xl:col-span-1">
+              <div className="xl:col-span-1 min-w-0">
                 <BusinessSuggestions
                   suggestions={suggestions}
                   isLoading={isDashboardLoading}

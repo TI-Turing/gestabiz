@@ -1,13 +1,15 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 
 /**
- * Script para eliminar todos los console.log de la aplicación
+ * Script para eliminar todos los console.log/warn/error/info/debug de la aplicacion.
  * Uso: node scripts/remove-console-logs.js
  *
- * Elimina:
- * - console.log(), console.info(), console.warn(), console.error()
- * - Líneas completas de console.* si es lo único en la línea
- * - Preserva comentarios y strings
+ * Usa un parser de caracteres para manejar correctamente:
+ * - Parentesis anidados: console.log(JSON.stringify(x))
+ * - Llamadas multi-linea
+ * - Strings y template literals (no modifica console.* dentro de strings)
+ * - Comentarios de linea (//) y bloque de tipo JSDoc
+ * - Guards de debug: if (DEBUG_MODE) console.log(...)
  */
 
 import fs from 'fs'
@@ -17,40 +19,37 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..')
 
-const IGNORE_DIRS = [
-  'node_modules',
-  'dist',
-  'build',
-  '.git',
-  '.next',
-  'coverage',
-  '.env.local',
-  '.env.production',
-  'supabase',
-  'extension'
-]
+const IGNORE_DIRS = new Set([
+  'node_modules', 'dist', 'build', '.git', '.next', 'coverage',
+  'migrations_backup', '.vscode', '.claude', 'Obsidian', 'Posts',
+  'public', 'pnpm-lock.yaml'
+])
 
-const TARGET_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx']
+// Dentro de src/, ignorar supabase (edge functions) y tests
+const IGNORE_SRC_SUBDIRS = new Set([])
+
+const TARGET_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx'])
 
 let filesProcessed = 0
 let logsRemoved = 0
 
-/**
- * Recursively find all target files
- */
-function findFiles(dir) {
+function findFiles(dir, isInsideSrc = false) {
   const files = []
-  const items = fs.readdirSync(dir)
+  let items
+  try { items = fs.readdirSync(dir) } catch { return files }
 
   for (const item of items) {
     const fullPath = path.join(dir, item)
-    const stat = fs.statSync(fullPath)
+    let stat
+    try { stat = fs.statSync(fullPath) } catch { continue }
+    if (fullPath === SELF_PATH) continue
 
     if (stat.isDirectory()) {
-      if (!IGNORE_DIRS.includes(item)) {
-        files.push(...findFiles(fullPath))
-      }
-    } else if (TARGET_EXTENSIONS.includes(path.extname(item))) {
+      if (IGNORE_DIRS.has(item) || item.startsWith('.')) continue
+      const nowInSrc = isInsideSrc || item === 'src'
+      if (isInsideSrc && IGNORE_SRC_SUBDIRS.has(item)) continue
+      files.push(...findFiles(fullPath, nowInSrc))
+    } else if (TARGET_EXTENSIONS.has(path.extname(item))) {
       files.push(fullPath)
     }
   }
@@ -59,62 +58,160 @@ function findFiles(dir) {
 }
 
 /**
- * Remove console logs from file content
+ * Finds matching closing paren, skipping strings, template literals, and comments.
  */
-function removeConsoleLogs(content) {
-  let result = content
-  let removed = 0
+function findMatchingParen(s, start) {
+  let depth = 0
+  let i = start
 
-  // Regex pattern para console.log, console.warn, console.error, console.info
-  // Captura:
-  // 1. Líneas que solo contienen console.* seguidas de punto y coma
-  // 2. Statements de console.* dentro de expresiones
+  while (i < s.length) {
+    const ch = s[i]
 
-  // Patrón 1: Línea completa dedicada a console.* (con indentación)
-  const fullLinePattern = /^\s*console\.(log|warn|error|info|debug)\([^)]*\);?\s*\n/gm
-  result = result.replace(fullLinePattern, () => {
-    removed++
-    return ''
-  })
-
-  // Patrón 2: console.* sin salto de línea (para casos en una línea con otra lógica)
-  // Esto es más delicado, solo elimina si está entre llaves o es statement completo
-  const inlinePattern = /console\.(log|warn|error|info|debug)\([^)]*\);\s*/g
-  const matches = result.match(inlinePattern)
-
-  if (matches) {
-    // Para inline patterns, verificar que no rompa nada
-    for (const match of matches) {
-      // Si la línea completa es solo console.log, ya fue removida
-      if (!fullLinePattern.test(match + '\n')) {
-        // Verificar que sea seguro remover (ej: no es parte de una expresión lógica)
-        const lines = result.split('\n')
-        let shouldRemoveInline = true
-
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i]
-          if (line.includes(match) && line.trim() !== match.trim()) {
-            // Esta es una línea con más contenido
-            const before = line.substring(0, line.indexOf(match)).trim()
-            const after = line.substring(line.indexOf(match) + match.length).trim()
-
-            // Si tiene contenido antes o después (que no sea comentario), no remover
-            if ((before && !before.startsWith('//')) || (after && !after.startsWith('//'))) {
-              shouldRemoveInline = false
-              break
-            }
-          }
-        }
+    if (ch === '(') {
+      depth++
+      i++
+    } else if (ch === ')') {
+      depth--
+      if (depth === 0) return i
+      i++
+    } else if (ch === '/' && i + 1 < s.length) {
+      if (s[i + 1] === '/') {
+        const nl = s.indexOf('\n', i + 2)
+        i = nl === -1 ? s.length : nl + 1
+      } else if (s[i + 1] === '*') {
+        const end = s.indexOf('*/', i + 2)
+        i = end === -1 ? s.length : end + 2
+      } else {
+        i++
       }
+    } else if (ch === '"' || ch === "'") {
+      const quote = ch
+      i++
+      while (i < s.length) {
+        if (s[i] === '\\') { i += 2; continue }
+        if (s[i] === quote) { i++; break }
+        i++
+      }
+    } else if (ch === '`') {
+      i++
+      while (i < s.length) {
+        if (s[i] === '\\') { i += 2; continue }
+        if (s[i] === '$' && s[i + 1] === '{') {
+          i += 2
+          let braceDepth = 1
+          while (i < s.length && braceDepth > 0) {
+            if (s[i] === '{') braceDepth++
+            else if (s[i] === '}') braceDepth--
+            i++
+          }
+          continue
+        }
+        if (s[i] === '`') { i++; break }
+        i++
+      }
+    } else {
+      i++
     }
   }
 
-  return { result, removed }
+  return -1
 }
 
 /**
- * Process all files
+ * Returns the index of a '//' line-comment start in str, ignoring // inside strings.
  */
+function findLineCommentStart(str) {
+  let inSingle = false
+  let inDouble = false
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i]
+    if (inSingle) {
+      if (ch === '\\') { i++; continue }
+      if (ch === "'") inSingle = false
+    } else if (inDouble) {
+      if (ch === '\\') { i++; continue }
+      if (ch === '"') inDouble = false
+    } else {
+      if (ch === "'") inSingle = true
+      else if (ch === '"') inDouble = true
+      else if (ch === '/' && str[i + 1] === '/') return i
+    }
+  }
+  return -1
+}
+
+/**
+ * Returns true if position pos is inside a block comment.
+ */
+function isInsideBlockComment(content, pos) {
+  const bsIdx = content.lastIndexOf('/*', pos - 1)
+  if (bsIdx === -1) return false
+  const beIdx = content.indexOf('*/', bsIdx + 2)
+  return beIdx === -1 || beIdx >= pos
+}
+
+/**
+ * Remove all console.* calls from source content.
+ */
+function removeConsoleLogs(content) {
+  const re = /console\.(log|warn|error|info|debug)\s*\(/g
+  const segments = []
+  let keepStart = 0
+  let removed = 0
+
+  let match
+  while ((match = re.exec(content)) !== null) {
+    const callStart = match.index
+    const openParenPos = callStart + match[0].length - 1
+
+    const lineStart = content.lastIndexOf('\n', callStart - 1) + 1
+    const prefix = content.slice(lineStart, callStart)
+
+    // Skip if the call appears after a // comment on the same line
+    if (findLineCommentStart(prefix) !== -1) continue
+
+    // Skip if inside a /* ... */ block comment
+    if (isInsideBlockComment(content, callStart)) continue
+
+    // Find matching closing paren (handles nested parens, strings, templates)
+    const closeParenPos = findMatchingParen(content, openParenPos)
+    if (closeParenPos === -1) continue
+
+    let stmtEnd = closeParenPos + 1
+    if (stmtEnd < content.length && content[stmtEnd] === ';') stmtEnd++
+
+    const afterStmt = content.slice(stmtEnd)
+    const newlineRelPos = afterStmt.indexOf('\n')
+    const afterOnSameLine = newlineRelPos === -1 ? afterStmt : afterStmt.slice(0, newlineRelPos)
+
+    // Strip trailing line comment for the empty-line check
+    const afterNoComment = afterOnSameLine.replace(/\/\/.*$/, '').trimEnd()
+
+    // If the line only contains (optional if-guard +) the console call, remove entire line
+    const isWholeLine =
+      /^\s*(if\s*\([^)]*\)\s*)?$/.test(prefix) &&
+      /^\s*$/.test(afterNoComment)
+
+    if (isWholeLine) {
+      segments.push(content.slice(keepStart, lineStart))
+      keepStart = newlineRelPos === -1
+        ? stmtEnd
+        : stmtEnd + afterOnSameLine.length + 1
+    } else {
+      segments.push(content.slice(keepStart, callStart))
+      keepStart = stmtEnd
+    }
+
+    removed++
+    re.lastIndex = keepStart
+  }
+
+  segments.push(content.slice(keepStart))
+  return { result: segments.join(''), removed }
+}
+
+const SELF_PATH = path.resolve(__dirname, 'remove-console-logs.js')
+
 function processAllFiles() {
   const files = findFiles(rootDir)
   for (const file of files) {
@@ -126,15 +223,16 @@ function processAllFiles() {
         fs.writeFileSync(file, result, 'utf-8')
         filesProcessed++
         logsRemoved += removed
-
         const relativePath = path.relative(rootDir, file)
-        console.log(`✅ ${relativePath} — ${removed} console.log(s) removido(s)`)
+        console.log(`[OK] ${relativePath} -- ${removed} removido(s)`)
       }
-    } catch (error) {
+    } catch (err) {
+      const relativePath = path.relative(rootDir, file)
+      console.error(`[ERROR] ${relativePath}: ${err.message}`)
     }
   }
 }
 
-// Run
 processAllFiles()
-console.log(`   Console.log(s) removido(s): ${logsRemoved}\n`)
+console.log(`\nArchivos modificados: ${filesProcessed}`)
+console.log(`Console calls removidas: ${logsRemoved}\n`)

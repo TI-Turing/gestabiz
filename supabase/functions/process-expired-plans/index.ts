@@ -14,7 +14,6 @@ Deno.serve(async (_req) => {
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('[process-expired-plans] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
     return new Response(JSON.stringify({ error: 'Server misconfigured' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -35,7 +34,6 @@ Deno.serve(async (_req) => {
     .lt('end_date', now)
 
   if (fetchError) {
-    console.error('[process-expired-plans] Error fetching expired plans:', fetchError)
     return new Response(JSON.stringify({ error: fetchError.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -51,7 +49,6 @@ Deno.serve(async (_req) => {
     .lt('trial_ends_at', now)
 
   if (trialFetchError) {
-    console.error('[process-expired-plans] Error fetching expired trials:', trialFetchError)
     return new Response(JSON.stringify({ error: trialFetchError.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -61,13 +58,11 @@ Deno.serve(async (_req) => {
   const allExpired = [...(expiredPlans ?? []), ...(expiredTrials ?? [])]
 
   if (allExpired.length === 0) {
-    console.log('[process-expired-plans] No expired plans found')
     return new Response(JSON.stringify({ success: true, updated: 0 }), {
       headers: { 'Content-Type': 'application/json' },
     })
   }
 
-  console.log(`[process-expired-plans] Found ${allExpired.length} expired plan(s) (${expiredPlans?.length ?? 0} active, ${expiredTrials?.length ?? 0} trialing)`)
 
   const expiredIds = allExpired.map((p) => p.id)
 
@@ -81,7 +76,6 @@ Deno.serve(async (_req) => {
     .select('id')
 
   if (updateError) {
-    console.error('[process-expired-plans] Error updating plans:', updateError)
     return new Response(JSON.stringify({ error: updateError.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -89,7 +83,6 @@ Deno.serve(async (_req) => {
   }
 
   const updatedCount = updatedRows?.length ?? 0
-  console.log(`[process-expired-plans] Marked ${updatedCount} plan(s) as expired`)
 
   // Registrar eventos trial_ended para los trials vencidos
   if (expiredTrials && expiredTrials.length > 0) {
@@ -106,9 +99,7 @@ Deno.serve(async (_req) => {
       .insert(trialEvents)
 
     if (eventsError) {
-      console.error('[process-expired-plans] Error inserting trial_ended events:', eventsError)
     } else {
-      console.log(`[process-expired-plans] Inserted ${trialEvents.length} trial_ended event(s)`)
     }
   }
 

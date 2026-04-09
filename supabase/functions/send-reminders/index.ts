@@ -42,7 +42,6 @@ serve(async (req) => {
       throw fetchError
     }
 
-    console.log(`Found ${notifications?.length || 0} notifications to process`)
 
     let processedCount = 0
     let errorCount = 0
@@ -52,7 +51,6 @@ serve(async (req) => {
       try {
         const appointment = notification.appointment
         if (!appointment || !appointment.client) {
-          console.log(`Skipping notification ${notification.id} - missing appointment or client data`)
           continue
         }
 
@@ -80,14 +78,11 @@ serve(async (req) => {
             .eq('id', notification.id)
 
           processedCount++
-          console.log(`Sent notification ${notification.id} to ${appointment.client.email}`)
         } else {
           errorCount++
-          console.log(`Failed to send notification ${notification.id}`)
         }
       } catch (error) {
         errorCount++
-        console.error(`Error processing notification ${notification.id}:`, error)
       }
     }
 
@@ -106,7 +101,6 @@ serve(async (req) => {
       },
     )
   } catch (error) {
-    console.error('Error in send-reminders function:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'send-reminders' })
     await flushSentry()
     return new Response(
@@ -213,23 +207,16 @@ async function sendEmailNotification(params: {
       })
 
       if (response.ok) {
-        console.log(`Email sent successfully to ${params.to}`)
         return true
       } else {
         const errorData = await response.text()
-        console.error(`Failed to send email to ${params.to}:`, errorData)
         return false
       }
     } else {
       // Fallback: Log email content (for development)
-      console.log(`EMAIL TO: ${params.to}`)
-      console.log(`SUBJECT: ${params.subject}`)
-      console.log(`CONTENT: ${params.message}`)
-      console.log('Email service not configured, email logged instead')
       return true // Return true for development
     }
   } catch (error) {
-    console.error('Error sending email:', error)
     return false
   }
 }

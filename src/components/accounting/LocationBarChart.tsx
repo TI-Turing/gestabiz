@@ -123,7 +123,7 @@ export const LocationBarChart: React.FC<LocationBarChartProps> = ({
           radius={[8, 8, 0, 0]}
         />
         <Bar
-          dataKey="expense"
+          dataKey="expenses"
           name="Egresos"
           fill="#ef4444"
           radius={[8, 8, 0, 0]}

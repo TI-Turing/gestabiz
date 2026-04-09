@@ -401,7 +401,6 @@ async function getGrantsToRoles(): Promise<string> {
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('Generando schema desde DEV (dkancockzvcqorqbwtyh)...')
 
   const sections: string[] = [
     '-- ============================================================',
@@ -433,7 +432,6 @@ async function main() {
       const sql = await (fn as () => Promise<string>)()
       if (sql) {
         sections.push(sql)      } else {
-        console.log('(vacío)')
       }
     } catch (e) {    }
   }
@@ -443,7 +441,7 @@ async function main() {
     process.cwd(),
     'supabase/migrations/20251026230533_initial_schema.sql'
   )
-  fs.writeFileSync(outPath, output, 'utf-8')  console.log(`Tamaño: ${(output.length / 1024).toFixed(1)} KB`)
+  fs.writeFileSync(outPath, output, 'utf-8')  
 
   // También limpiar el archivo vacío create_location_media (ya está en initial_schema)
   const emptyFile = path.join(

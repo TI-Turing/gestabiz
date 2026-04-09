@@ -48,15 +48,15 @@ const getLevelColor = (level: number): string => {
 const getLevelLabel = (level: number): string => {
   switch (level) {
     case 0:
-      return 'Owner'
+      return 'Propietario'
     case 1:
-      return 'Admin'
+      return 'Administrador'
     case 2:
-      return 'Manager'
+      return 'Gerente'
     case 3:
-      return 'Lead'
+      return 'Líder de Equipo'
     case 4:
-      return 'Staff'
+      return 'Personal'
     default:
       return `Nivel ${level}`
   }

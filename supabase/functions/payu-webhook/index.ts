@@ -43,14 +43,6 @@ serve(async (req) => {
     const planType = formData.get('extra2')
     const billingCycle = formData.get('extra3')
 
-    console.log('PayU Webhook received:', {
-      merchantId,
-      referenceCode,
-      transactionState,
-      businessId,
-      planType,
-      billingCycle,
-    })
 
     // Validar firma MD5 con comparación en tiempo constante (evita timing attacks)
     // Formato: ApiKey~merchantId~referenceCode~value~currency~transactionState
@@ -72,7 +64,6 @@ serve(async (req) => {
       })()
 
     if (!signaturesMatch) {
-      console.error('[payu-webhook] Invalid signature')
       return new Response('Invalid signature', { status: 400 })
     }
 
@@ -188,7 +179,6 @@ serve(async (req) => {
 
     return new Response('OK', { status: 200 })
   } catch (error) {
-    console.error('PayU Webhook Error:', error)
     
     // Capture error to Sentry
     captureEdgeFunctionError(error as Error, {

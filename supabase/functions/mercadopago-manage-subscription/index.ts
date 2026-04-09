@@ -105,7 +105,6 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error('mercadopago-manage-subscription error:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'mercadopago-manage-subscription' })
     await flushSentry()
     return new Response(

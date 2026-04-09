@@ -173,7 +173,6 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('PayU Checkout Error:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'payu-create-checkout' })
     await flushSentry()
     return new Response(

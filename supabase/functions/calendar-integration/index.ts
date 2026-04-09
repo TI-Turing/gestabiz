@@ -94,7 +94,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error syncing calendar:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'calendar-integration' })
     await flushSentry()
     return new Response(

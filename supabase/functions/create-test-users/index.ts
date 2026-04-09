@@ -12,7 +12,6 @@ serve(async (req) => {
 
   const corsHeaders = getCorsHeaders(req)
 
-  console.log('[create-test-users] Function called')
 
   try {
     // ─── AUTENTICACIÓN: requiere clave de administrador ──────────────────────
@@ -158,7 +157,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('[create-test-users] Unexpected error:', error instanceof Error ? error.message : 'unknown')
     captureEdgeFunctionError(error as Error, { functionName: 'create-test-users' })
     await flushSentry()
     return new Response(

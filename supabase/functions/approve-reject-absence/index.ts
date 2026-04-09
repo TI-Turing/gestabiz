@@ -126,7 +126,6 @@ serve(async (req) => {
       .eq('absence_id', absenceId);
 
     if (approvalError) {
-      console.error('Error updating approval request:', approvalError);
     }
 
     let cancelledAppointments = [];
@@ -165,7 +164,6 @@ serve(async (req) => {
           .in('id', appointments.map(a => a.id));
 
         if (cancelError) {
-          console.error('Error cancelling appointments:', cancelError);
         }
 
         // ✅ Batch insert all notifications in one query (was N sequential inserts)
@@ -203,7 +201,6 @@ serve(async (req) => {
         });
 
         if (balanceError) {
-          console.error('Error updating vacation balance:', balanceError);
         }
       }
     }
@@ -228,7 +225,6 @@ serve(async (req) => {
     });
 
     // TODO: Enviar email al empleado
-    console.log(`TODO: Enviar email a ${absence.employee.email} sobre ${action}`);
 
     return new Response(
       JSON.stringify({
@@ -248,7 +244,6 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error in approve-reject-absence:', error);
     captureEdgeFunctionError(error as Error, { functionName: 'approve-reject-absence' })
     await flushSentry()
     return new Response(

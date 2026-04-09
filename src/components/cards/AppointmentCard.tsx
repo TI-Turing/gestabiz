@@ -214,7 +214,7 @@ export function AppointmentCard({
       <button
         type="button"
         className={cn(
-          'relative overflow-hidden rounded-xl border bg-card hover:shadow-lg transition-shadow w-full text-left',
+          'relative overflow-hidden rounded-xl border bg-card hover:shadow-lg transition-shadow w-full min-w-0 text-left',
           onClick && 'cursor-pointer',
           className,
         )}
@@ -231,7 +231,7 @@ export function AppointmentCard({
           </>
         )}
 
-        <div className="relative z-10 p-4 space-y-3">
+        <div className="relative z-10 p-4 space-y-3 min-w-0">
           {/* Header: Logo negocio + Badge estado */}
           <div className="flex items-start justify-between gap-2 pb-2 border-b border-border/60">
             {/* Business logo */}
@@ -264,12 +264,12 @@ export function AppointmentCard({
               {serviceName}
             </h3>
             {appointment.business?.name && (
-              <p className={cn('text-sm font-medium', hasBg ? 'text-white/90' : 'text-muted-foreground')}>
+              <p className={cn('text-sm font-medium truncate', hasBg ? 'text-white/90' : 'text-muted-foreground')}>
                 {appointment.business.name}
               </p>
             )}
             {appointment.locationData?.name && (
-              <p className={cn('text-xs', subtleColor)}>{appointment.locationData.name}</p>
+              <p className={cn('text-xs truncate', subtleColor)}>{appointment.locationData.name}</p>
             )}
           </div>
 
@@ -310,7 +310,7 @@ export function AppointmentCard({
           </div>
 
           {/* Address & Price */}
-          <div className="flex items-center justify-between gap-3 pt-1">
+          <div className="flex min-w-0 items-center justify-between gap-3 pt-1">
             <div className={cn('flex items-center gap-2 text-sm min-w-0', mutedColor)}>
               <MapPin className="h-4 w-4 shrink-0" />
               <span className="truncate">
@@ -318,7 +318,7 @@ export function AppointmentCard({
               </span>
             </div>
             {servicePrice != null && servicePrice > 0 && (
-              <span className={cn('text-base font-bold', hasBg ? 'text-white' : 'text-primary')}>
+              <span className={cn('shrink-0 whitespace-nowrap text-base font-bold', hasBg ? 'text-white' : 'text-primary')}>
                 {formatPrice(servicePrice, appointment.service?.currency || appointment.currency)}
               </span>
             )}

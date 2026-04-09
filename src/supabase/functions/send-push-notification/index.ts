@@ -98,7 +98,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error sending push notification:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

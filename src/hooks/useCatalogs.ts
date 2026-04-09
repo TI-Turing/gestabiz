@@ -298,7 +298,6 @@ export function useDocumentTypes(countryId?: string, forCompany?: boolean) {
 
           setDocumentTypes(data || []);
         } catch (err) {
-          console.error('Error fetching document types (fallback all):', err);
           void logger.error('useCatalogs: Error fetching document types (fallback ', err instanceof Error ? err : new Error(String(err)), { component: 'useCatalogs' })
           setError(err instanceof Error ? err.message : 'Error al cargar tipos de documento');
         } finally {

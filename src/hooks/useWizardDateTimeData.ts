@@ -72,8 +72,9 @@ export function useWizardDateTimeData(
   selectedDate: Date | null | undefined,
   clientId: string | null | undefined,
 ) {
+  const effectiveDate = selectedDate ?? new Date();
   const dateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
-  const monthStr = selectedDate ? format(selectedDate, 'yyyy-MM') : null;
+  const monthStr = format(effectiveDate, 'yyyy-MM');
 
   // Query for day-specific data (appointments for selected day)
   const dayQuery = useQuery({
@@ -111,10 +112,10 @@ export function useWizardDateTimeData(
       monthStr || '',
     ),
     queryFn: async () => {
-      if (!businessId || !locationId || !monthStr) return null;
+      if (!businessId || !locationId) return null;
 
       // Use first day of month as reference
-      const firstDayOfMonth = new Date(selectedDate?.getFullYear() || 2026, selectedDate?.getMonth() || 0, 1);
+      const firstDayOfMonth = new Date(effectiveDate.getFullYear(), effectiveDate.getMonth(), 1);
       const monthDateStr = format(firstDayOfMonth, 'yyyy-MM-dd');
 
       const { data, error } = await supabase.rpc('get_datetime_selection_data', {
@@ -131,7 +132,7 @@ export function useWizardDateTimeData(
 
       return data as DateTimeSelectionData;
     },
-    enabled: !!businessId && !!locationId && !!monthStr && (!!employeeId || !!resourceId),
+    enabled: !!businessId && !!locationId && (!!employeeId || !!resourceId),
     ...QUERY_CONFIG.STABLE,
   });
 
@@ -143,7 +144,7 @@ export function useWizardDateTimeData(
     day: {
       locationSchedule: dayData?.location_schedule || null,
       employeeSchedule: dayData?.employee_schedule || null,
-      workSchedules: dayData?.work_schedules || [],
+      workSchedules: dayData?.work_schedules || monthData?.work_schedules || [],
       dayAppointments: dayData?.day_appointments || [],
       clientDayAppointments: dayData?.client_day_appointments || [],
       employeeTransfer: dayData?.employee_transfer || null,

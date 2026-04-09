@@ -33,18 +33,15 @@ serve(async (req) => {
       }
     })
 
-    console.log('🔄 Iniciando refresco de vistas materializadas de ratings...')
 
     // Ejecutar función SQL que refresca ambas vistas materializadas
     const { error } = await supabase.rpc('refresh_ratings_stats')
 
     if (error) {
-      console.error('❌ Error al refrescar stats:', error)
       throw error
     }
 
     const executionTime = Date.now() - startTime
-    console.log(`✅ Stats refrescadas exitosamente en ${executionTime}ms`)
 
     // Obtener conteos de las vistas para confirmar
     const { count: businessCount } = await supabase
@@ -64,7 +61,6 @@ serve(async (req) => {
       employeeStatsCount: employeeCount || 0
     }
 
-    console.log('📊 Resultado:', response)
 
     return new Response(
       JSON.stringify(response),
@@ -75,7 +71,6 @@ serve(async (req) => {
     )
   } catch (error) {
     const executionTime = Date.now() - startTime
-    console.error('❌ Error en Edge Function:', error)
 
     const errorResponse: RefreshStatsResponse = {
       success: false,

@@ -187,7 +187,6 @@ export default function BusinessProfile({
       return;
     }
     
-    console.log('[BusinessProfile] User verified (effectiveUserId:', effectiveUserId, '), calling toggleFavorite...');
     await toggleFavoriteFn(businessId, business.name);
   };
 

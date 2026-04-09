@@ -97,7 +97,6 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
     };
 
     img.onerror = () => {
-      console.warn(`[ProfileAvatar] Failed to load image (attempt ${attempt + 1}/${maxRetries}):`, url);
       
       if (attempt + 1 < maxRetries) {
         // Reintentar después del delay

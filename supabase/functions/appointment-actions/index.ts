@@ -161,7 +161,6 @@ serve(async (req) => {
       .eq('id', appointmentId)
 
     if (updateError) {
-      console.error('[appointment-actions] Update error:', updateError.code)
       throw new Error('Failed to update appointment')
     }
 
@@ -177,7 +176,6 @@ serve(async (req) => {
       })
 
     if (notificationError) {
-      console.error('[appointment-actions] Notification error:', notificationError.code)
     }
 
     // ─── 6. WHATSAPP / EMAIL ────────────────────────────────────────────────────
@@ -209,7 +207,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('[appointment-actions] Unexpected error:', error instanceof Error ? error.message : 'unknown')
     captureEdgeFunctionError(error as Error, { functionName: 'appointment-actions' })
     await flushSentry()
     return new Response(
@@ -240,10 +237,8 @@ function createWhatsAppMessage(action: string, appointment: Record<string, any>)
 
 async function sendWhatsAppMessage(params: { phone: string; message: string; appointmentId: string }): Promise<boolean> {
   try {
-    console.log(`[appointment-actions] WhatsApp queued for appointment ${params.appointmentId}`)
     return true
   } catch (error) {
-    console.error('[appointment-actions] WhatsApp error:', error instanceof Error ? error.message : 'unknown')
     return false
   }
 }
@@ -253,10 +248,8 @@ async function sendEmailNotification(params: {
   appointmentDetails: { serviceName: string; businessName: string; startTime: string; endTime: string }
 }): Promise<boolean> {
   try {
-    console.log(`[appointment-actions] Email queued for appointment notification`)
     return true
   } catch (error) {
-    console.error('[appointment-actions] Email error:', error instanceof Error ? error.message : 'unknown')
     return false
   }
 }

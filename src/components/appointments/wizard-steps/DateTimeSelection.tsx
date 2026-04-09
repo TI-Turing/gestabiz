@@ -183,16 +183,16 @@ export function DateTimeSelection({
 
   // Calcular días laborables a partir de workSchedules
   const employeeWorkingDays = React.useMemo(() => {
-    if (!workSchedules || workSchedules.length === 0) {
-      // Fallback: Lunes(1) a Viernes(5) si no hay datos
-      return new Set([1, 2, 3, 4, 5]);
+    if (employeeId && (!workSchedules || workSchedules.length === 0)) {
+      // Regla de negocio: sin horario configurado no hay disponibilidad.
+      return new Set<number>();
     }
     const days = new Set<number>();
     workSchedules.forEach((row) => {
       if (row.is_working) days.add(row.day_of_week);
     });
-    return days.size > 0 ? days : new Set([1, 2, 3, 4, 5]);
-  }, [workSchedules]);
+    return days;
+  }, [workSchedules, employeeId]);
 
   // Sincronizar datos del hook cuando sea necesario
   useEffect(() => {

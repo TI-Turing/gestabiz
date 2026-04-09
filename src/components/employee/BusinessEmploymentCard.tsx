@@ -174,7 +174,7 @@ export function BusinessEmploymentCard({
               </div>
               
               {business.description && (
-                <p className="text-xs text-muted-foreground truncate mt-1">
+                <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
                   {business.description}
                 </p>
               )}

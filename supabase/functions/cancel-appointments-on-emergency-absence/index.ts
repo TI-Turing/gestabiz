@@ -129,7 +129,6 @@ serve(async (req) => {
       .in('id', appointmentIds)
 
     if (batchCancelError) {
-      console.error('Error batch-cancelling appointments:', batchCancelError)
       // Fall back: mark all as failed
       for (const a of appointments) {
         cancellationResults.failed.push({ appointmentId: a.id, error: batchCancelError.message })
@@ -164,7 +163,6 @@ serve(async (req) => {
           .from('in_app_notifications')
           .insert(notificationsToInsert)
         if (notifError) {
-          console.error('Error inserting cancellation notifications:', notifError)
         }
       }
 
@@ -211,7 +209,6 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error in cancel-appointments-on-emergency-absence:', error);
     captureEdgeFunctionError(error as Error, { functionName: 'cancel-appointments-on-emergency-absence' })
     await flushSentry()
     return new Response(

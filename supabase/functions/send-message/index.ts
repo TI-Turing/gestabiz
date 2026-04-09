@@ -172,7 +172,6 @@ serve(async (req) => {
       // Verificar palabras prohibidas
       for (const word of BANNED_WORDS) {
         if (bodyLower.includes(word)) {
-          console.warn(`Spam detected from user ${user.id}: contains "${word}"`)
           return new Response(
             JSON.stringify({ success: false, error: 'Message contains prohibited content' }),
             { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -191,7 +190,6 @@ serve(async (req) => {
       // Detectar spam por repetición excesiva de caracteres
       const repeatedChars = /(.)\1{10,}/
       if (repeatedChars.test(request.body)) {
-        console.warn(`Spam detected from user ${user.id}: excessive character repetition`)
         return new Response(
           JSON.stringify({ success: false, error: 'Message contains spam patterns' }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
@@ -256,7 +254,6 @@ serve(async (req) => {
       .single()
 
     if (insertError || !newMessage) {
-      console.error('Error inserting message:', insertError)
       return new Response(
         JSON.stringify({ success: false, error: 'Failed to send message' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -327,14 +324,12 @@ serve(async (req) => {
               },
             })
           } catch (notifyError) {
-            console.error(`Failed to notify user ${member.user_id}:`, notifyError)
             // No bloquear el envío del mensaje si falla la notificación
           }
         })
 
       // Ejecutar notificaciones en paralelo (sin await para no bloquear)
       Promise.all(notifyPromises).catch((err) =>
-        console.error('Some notifications failed:', err)
       )
     }
 
@@ -367,7 +362,6 @@ serve(async (req) => {
       },
     })
   } catch (error) {
-    console.error('Unexpected error:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'send-message' })
     await flushSentry()
     return new Response(

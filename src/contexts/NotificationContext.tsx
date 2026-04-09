@@ -106,6 +106,12 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
         (payload) => {
           const notification = payload.new as InAppNotification
           const { activeConversationId, isChatOpen } = stateRef.current
+
+          // Evita duplicar avisos de citas: el wizard ya muestra su toast de exito.
+          // Estas notificaciones siguen visibles en NotificationCenter/Bell.
+          if (notification.type === 'appointment_created' || notification.type === 'appointment_confirmed') {
+            return
+          }
           
           logger.debug('[NotificationContext] New notification:', {
             type: notification.type,
@@ -146,8 +152,8 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
               label: 'Ver',
               onClick: () => {
                 // Solo permitir rutas internas (previene open redirect)
-                if (notification.action_url && notification.action_url.startsWith('/')) {
-                  window.location.href = notification.action_url
+                if (notification.action_url?.startsWith('/')) {
+                  globalThis.location.href = notification.action_url
                 }
               }
             } : undefined

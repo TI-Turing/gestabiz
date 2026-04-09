@@ -152,7 +152,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Google Calendar sync error:', error)
 
     return new Response(
       JSON.stringify({

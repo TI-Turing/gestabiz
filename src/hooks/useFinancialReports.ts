@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { logger } from '@/lib/logger';
 import { es } from 'date-fns/locale';
 import { getCategoryColor } from './useChartData';
+import { getCategoryLabel } from '@/lib/categoryLabels';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -34,7 +35,7 @@ interface UseFinancialReportsReturn {
   generatePayrollReport: (filters: ReportFilters) => Promise<PayrollReport>;
   exportToCSV: (data: unknown[], filename: string, options?: ExportOptions) => void;
   exportToExcel: (data: unknown[], filename: string, sheetName?: string) => void;
-  exportToPDF: (report: ProfitAndLossReport, businessName: string, filename?: string) => void;
+  exportToPDF: (report: ProfitAndLossReport, businessName: string, filename?: string, locale?: 'es' | 'en') => void;
 }
 
 export function useFinancialReports(): UseFinancialReportsReturn {
@@ -67,6 +68,11 @@ export function useFinancialReports(): UseFinancialReportsReturn {
             .gte('transaction_date', filters.date_range.start)
             .lte('transaction_date', filters.date_range.end);
         }
+
+        // Sin limit explícito Supabase corta a 1000 filas; forzamos un máximo alto
+        query = query
+          .order('transaction_date', { ascending: true })
+          .limit(50000);
 
         const { data: transactions, error: fetchError } = await query;
 
@@ -288,7 +294,7 @@ export function useFinancialReports(): UseFinancialReportsReturn {
 
   // Exportar reporte P&L a PDF
   const exportToPDF = useCallback(
-    (report: ProfitAndLossReport, businessName: string, filename?: string) => {
+    (report: ProfitAndLossReport, businessName: string, filename?: string, locale: 'es' | 'en' = 'es') => {
       try {
         const doc = new jsPDF();
         const pageWidth = doc.internal.pageSize.getWidth();
@@ -316,7 +322,7 @@ export function useFinancialReports(): UseFinancialReportsReturn {
       yPos += 8;
       
       const incomeData = report.income_by_category.map((cat) => [
-        cat.category,
+        getCategoryLabel(cat.category, locale),
         `$${cat.amount.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`,
       ]);
       
@@ -343,7 +349,7 @@ export function useFinancialReports(): UseFinancialReportsReturn {
       yPos += 8;
       
       const expenseData = report.expenses_by_category.map((cat) => [
-        cat.category,
+        getCategoryLabel(cat.category, locale),
         `$${cat.amount.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`,
       ]);
       

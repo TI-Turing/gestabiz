@@ -70,7 +70,11 @@ export const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
           <XAxis
             dataKey="period"
             className="text-muted-foreground"
-            tick={{ fill: 'currentColor' }}
+            tick={{ fill: 'currentColor', fontSize: 11 }}
+            interval={0}
+            angle={-35}
+            textAnchor="end"
+            height={55}
           />
           <YAxis
             className="text-muted-foreground"
@@ -89,7 +93,7 @@ export const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
           />
           <Area
             type="monotone"
-            dataKey="expense"
+            dataKey="expenses"
             name="Egresos"
             stroke={COLOR_EXPENSE}
             fillOpacity={1}
@@ -110,7 +114,11 @@ export const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
         <XAxis
           dataKey="period"
           className="text-muted-foreground"
-          tick={{ fill: 'currentColor' }}
+          tick={{ fill: 'currentColor', fontSize: 11 }}
+          interval={0}
+          angle={-35}
+          textAnchor="end"
+          height={55}
         />
         <YAxis
           className="text-muted-foreground"
@@ -130,7 +138,7 @@ export const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
         />
         <Line
           type="monotone"
-          dataKey="expense"
+          dataKey="expenses"
           name="Egresos"
           stroke="hsl(var(--chart-2))"
           strokeWidth={3}

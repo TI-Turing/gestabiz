@@ -1400,6 +1400,7 @@ export interface ReviewFilters {
 export interface TransactionFilters {
   business_id?: string;
   location_id?: string;
+  employee_id?: string[];
   type?: TransactionType[];
   category?: TransactionCategory[];
   date_range?: {

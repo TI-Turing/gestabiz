@@ -154,7 +154,6 @@ serve(async (req) => {
       status: 200,
     })
   } catch (err) {
-    console.error('[ManageSubscription] Error:', err)
     captureEdgeFunctionError(err as Error, { functionName: 'manage-subscription' })
     await flushSentry()
     return new Response(

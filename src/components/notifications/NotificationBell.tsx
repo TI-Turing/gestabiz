@@ -58,6 +58,7 @@ export function NotificationBell({
     autoFetch: true,
     limit: 50, // Aumentado para capturar todas las notificaciones no leídas
     excludeChatMessages: true, // Nueva opción para excluir mensajes de chat
+    excludeTypes: ['appointment_created'], // Mantener una sola notificación por cita
     suppressToasts: true
   })
   

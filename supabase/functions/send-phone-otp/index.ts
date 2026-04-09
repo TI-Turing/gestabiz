@@ -81,7 +81,6 @@ serve(async (req) => {
         phone_verified: false,
       }).eq('id', userId)
 
-      console.log(`[DEV] OTP para ${cleanPhone}: ${devCode}`)
       return new Response(
         JSON.stringify({ success: true, dev_code: devCode, message: 'Modo dev: código devuelto en respuesta.' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }

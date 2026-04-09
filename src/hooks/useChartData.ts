@@ -40,8 +40,8 @@ export function useChartData(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Obtener transacciones filtradas
-  const fetchTransactions = useCallback(async () => {
+  // Construye la query base con todos los filtros (sin paginación)
+  const buildBaseQuery = useCallback(() => {
     let query = supabase
       .from('transactions')
       .select(`
@@ -51,7 +51,6 @@ export function useChartData(
       `)
       .eq('business_id', businessId);
 
-    // Aplicar filtros
     if (filters?.location_id) {
       if (Array.isArray(filters.location_id)) {
         query = query.in('location_id', filters.location_id);
@@ -74,11 +73,35 @@ export function useChartData(
         .lte('transaction_date', filters.date_range.end);
     }
 
-    const { data, error } = await query;
+    if (filters?.category && filters.category.length > 0) {
+      query = query.in('category', filters.category);
+    }
 
-    if (error) throw error;
-    return data || [];
+    return query.order('transaction_date', { ascending: true });
   }, [businessId, filters]);
+
+  // Obtener transacciones con paginación automática
+  // Supabase limita a 1000 filas por request (server-side max_rows),
+  // por lo que se hacen múltiples requests de 1000 hasta obtener todos los datos.
+  const fetchTransactions = useCallback(async () => {
+    const PAGE_SIZE = 1000;
+    const allData: Transaction[] = [];
+    let from = 0;
+
+    while (true) {
+      const { data, error } = await buildBaseQuery().range(from, from + PAGE_SIZE - 1);
+
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+
+      allData.push(...data);
+      if (data.length < PAGE_SIZE) break;
+
+      from += PAGE_SIZE;
+    }
+
+    return allData;
+  }, [buildBaseQuery]);
 
   // Procesar datos para gráfico de ingresos vs egresos
   const processIncomeVsExpense = useCallback((transactions: Transaction[]) => {
@@ -133,19 +156,31 @@ export function useChartData(
       .sort((a, b) => b.amount - a.amount);
   }, []);
 
-  // Procesar tendencia mensual (últimos 12 meses)
+  // Procesar tendencia mensual (rango dinámico basado en filtros)
   const processMonthlyTrend = useCallback((transactions: Transaction[]) => {
     const months: ChartDataPoint[] = [];
-    const now = new Date();
 
-    for (let i = 11; i >= 0; i--) {
-      const date = subMonths(now, i);
-      const start = startOfMonth(date);
-      const end = endOfMonth(date);
+    // Determinar rango de meses: usar filtros si existen, sino últimos 12 meses
+    let rangeStart: Date;
+    let rangeEnd: Date;
+
+    if (filters?.date_range?.start && filters?.date_range?.end) {
+      rangeStart = startOfMonth(new Date(filters.date_range.start));
+      rangeEnd = endOfMonth(new Date(filters.date_range.end));
+    } else {
+      rangeEnd = endOfMonth(new Date());
+      rangeStart = startOfMonth(subMonths(new Date(), 11));
+    }
+
+    // Iterar mes a mes dentro del rango
+    let current = rangeStart;
+    while (current <= rangeEnd) {
+      const mStart = startOfMonth(current);
+      const mEnd = endOfMonth(current);
 
       const monthTransactions = transactions.filter(t => {
         const tDate = new Date(t.transaction_date);
-        return tDate >= start && tDate <= end;
+        return tDate >= mStart && tDate <= mEnd;
       });
 
       const income = monthTransactions
@@ -157,16 +192,19 @@ export function useChartData(
         .reduce((sum, t) => sum + Number(t.amount), 0);
 
       months.push({
-        period: format(date, 'MMM', { locale: es }),
-        label: format(date, 'MMMM yyyy', { locale: es }),
+        period: format(current, 'MMM', { locale: es }),
+        label: format(current, 'MMMM yyyy', { locale: es }),
         income,
         expenses,
         profit: income - expenses,
       });
+
+      // Avanzar al siguiente mes
+      current = startOfMonth(subMonths(current, -1));
     }
 
     return months;
-  }, []);
+  }, [filters]);
 
   // Procesar comparación por sedes
   const processLocationComparison = useCallback((transactions: Transaction[]) => {
@@ -222,7 +260,7 @@ export function useChartData(
       .forEach(t => {
         const empId = t.employee_id!;
         const current = employeeMap.get(empId) || {
-          name: t.employee!.name || 'Sin nombre',
+          name: (t.employee as unknown as { full_name?: string }).full_name || 'Sin nombre',
           revenue: 0,
           appointments: 0,
         };

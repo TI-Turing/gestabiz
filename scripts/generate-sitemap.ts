@@ -160,10 +160,6 @@ async function generateSitemap() {  try {
       + BLOG_SLUGS.length
       + 1  } catch (error) {
 
-    console.warn(
-      '⚠️ Sitemap no generado (continuando build):',
-      error instanceof Error ? error.message : error
-    )
   }
 }
 

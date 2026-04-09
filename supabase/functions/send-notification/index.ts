@@ -85,7 +85,6 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🚀 [SEND-NOTIFICATION] Función iniciada')
     captureEdgeFunctionMessage('send-notification:start', 'info', { request_id: requestId })
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -94,18 +93,6 @@ serve(async (req) => {
 
     const request: NotificationRequest = await req.json()
     
-    console.log('📨 [SEND-NOTIFICATION] Solicitud recibida:', {
-      type: request.type,
-      recipient_user_id: request.recipient_user_id,
-      recipient_email: request.recipient_email,
-      business_id: request.business_id,
-      appointment_id: request.appointment_id,
-      force_channels: request.force_channels,
-      skip_preferences: request.skip_preferences,
-      priority: request.priority,
-      action_url: request.action_url,
-      data: request.data
-    })
     captureEdgeFunctionMessage('send-notification:request', 'info', {
       request_id: requestId,
       type: request.type,
@@ -116,23 +103,14 @@ serve(async (req) => {
     })
     
     // Determinar canales a usar
-    console.log('🔍 [SEND-NOTIFICATION] Determinando canales...')
     const channels = await determineChannels(supabase, request)
-    console.log('📡 [SEND-NOTIFICATION] Canales determinados:', channels)
     captureEdgeFunctionMessage('send-notification:channels', 'info', { request_id: requestId, channels: channels.join(',') })
     
     // Preparar contenido de la notificación
-    console.log('📝 [SEND-NOTIFICATION] Preparando contenido...')
     const content = await prepareNotificationContent(request, supabase)
-    console.log('📄 [SEND-NOTIFICATION] Contenido preparado:', {
-      subject: content.subject,
-      message: content.message,
-      html: content.html ? 'HTML presente' : 'Sin HTML'
-    })
     
     // Enriquecer destinatario: si falta email pero tenemos user_id, resolver desde profiles
     if (!request.recipient_email && request.recipient_user_id) {
-      console.log('🧩 [SEND-NOTIFICATION] Resolviendo email desde profiles para user_id:', request.recipient_user_id)
       const { data: profile, error: profileErr } = await supabase
         .from('profiles')
         .select('email, full_name')
@@ -143,12 +121,7 @@ serve(async (req) => {
         if (!request.recipient_name && profile.full_name) {
           request.recipient_name = profile.full_name
         }
-        console.log('✅ [SEND-NOTIFICATION] Email resuelto:', request.recipient_email)
       } else {
-        console.warn('⚠️ [SEND-NOTIFICATION] No se pudo resolver email para user_id:', {
-          recipient_user_id: request.recipient_user_id,
-          profileErr
-        })
       }
     }
     
@@ -169,15 +142,12 @@ serve(async (req) => {
       },
       channels_selected: channels
     }
-    console.log('🧪 [SEND-NOTIFICATION] Diagnósticos:', diagnostics)
     captureEdgeFunctionMessage('send-notification:diagnostics', 'info', { request_id: requestId, hasBrevoApiKey: String(diagnostics.env.hasBrevoApiKey), fromEmail: diagnostics.env.fromEmail })
 
     // Enviar por cada canal
-    console.log('📤 [SEND-NOTIFICATION] Iniciando envío por canales...')
     const results = []
     
     for (const channel of channels) {
-      console.log(`🔄 [SEND-NOTIFICATION] Procesando canal: ${channel}`)
       try {
         let sent = false
         let externalId = null
@@ -185,9 +155,7 @@ serve(async (req) => {
 
         switch (channel) {
           case 'email': {
-            console.log('📧 [EMAIL] Enviando email...')
             const emailResult = await sendEmail(request, content)
-            console.log('📧 [EMAIL] Resultado:', emailResult)
             sent = emailResult.success
             externalId = ('messageId' in emailResult) ? emailResult.messageId : null
             errorMsg = emailResult.error || null
@@ -195,9 +163,7 @@ serve(async (req) => {
           }
             
           case 'sms': {
-            console.log('📱 [SMS] Enviando SMS...')
             const smsResult = await sendSMS(request, content)
-            console.log('📱 [SMS] Resultado:', smsResult)
             sent = smsResult.success
             externalId = smsResult.id
             errorMsg = smsResult.error
@@ -205,9 +171,7 @@ serve(async (req) => {
           }
             
           case 'whatsapp': {
-            console.log('💬 [WHATSAPP] Enviando WhatsApp...')
             const waResult = await sendWhatsApp(request, content)
-            console.log('💬 [WHATSAPP] Resultado:', waResult)
             sent = waResult.success
             externalId = waResult.id
             errorMsg = waResult.error
@@ -215,9 +179,7 @@ serve(async (req) => {
           }
             
           case 'in_app': {
-            console.log('🔔 [IN-APP] Enviando notificación in-app...')
             const inAppResult = await sendInAppNotification(supabase, request, content)
-            console.log('🔔 [IN-APP] Resultado:', inAppResult)
             sent = inAppResult.success
             externalId = inAppResult.id
             errorMsg = inAppResult.error
@@ -225,10 +187,8 @@ serve(async (req) => {
           }
         }
 
-        console.log(`📊 [${channel.toUpperCase()}] Estado final:`, { sent, externalId, errorMsg })
 
         // Registrar en notification_log
-        console.log('💾 [SEND-NOTIFICATION] Registrando en notification_log...')
         const logData = {
           business_id: request.business_id,
           appointment_id: request.appointment_id,
@@ -245,10 +205,8 @@ serve(async (req) => {
           error_message: errorMsg,
           metadata: request.data
         }
-        console.log('💾 [SEND-NOTIFICATION] Datos del log:', logData)
         
         const logResult = await supabase.from('notification_log').insert(logData)
-        console.log('💾 [SEND-NOTIFICATION] Resultado del log:', logResult)
 
         results.push({
           channel,
@@ -259,11 +217,9 @@ serve(async (req) => {
 
         // Si se envió exitosamente y no requiere fallback, salir
         if (sent && !request.force_channels) {
-          console.log(`✅ [SEND-NOTIFICATION] Envío exitoso por ${channel}, terminando proceso`)
           break
         }
       } catch (error) {
-        console.error(`❌ [SEND-NOTIFICATION] Error enviando por ${channel}:`, error)
         results.push({
           channel,
           sent: false,
@@ -292,7 +248,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error in send-notification:', error)
     captureEdgeFunctionError(error as Error, {
       functionName: 'send-notification',
       requestId,
@@ -301,7 +256,6 @@ serve(async (req) => {
     
     // Sentry disabled: log request body for diagnostics only
     try {
-      console.error('[send-notification] Request body snapshot:', await req.clone().text())
     } catch {}
 
     // Diagnósticos mínimos también en error
@@ -492,13 +446,9 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
 
   // Intentar enriquecer variables desde appointment_details si hay appointment_id
   let appointment: any | null = null
-  console.log('🔍 [DEBUG] Iniciando enriquecimiento de datos...')
-  console.log('🔍 [DEBUG] appointment_id:', request.appointment_id)
-  console.log('🔍 [DEBUG] request.data:', JSON.stringify(request.data, null, 2))
   
   try {
     if (request.appointment_id) {
-      console.log('🔍 [DEBUG] Consultando appointment_details para ID:', request.appointment_id)
       
       // Crear cliente admin para consultar la vista
       const supabaseAdmin = createClient(
@@ -513,25 +463,18 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
         .single()
         
       if (apptError) {
-        console.error('❌ [DEBUG] Error consultando appointment_details:', apptError)
       } else if (appt) {
-        console.log('✅ [DEBUG] appointment_details encontrado:', JSON.stringify(appt, null, 2))
         appointment = appt
       } else {
-        console.log('⚠️ [DEBUG] No se encontró appointment_details para ID:', request.appointment_id)
       }
     } else {
-      console.log('⚠️ [DEBUG] No appointment_id proporcionado, saltando consulta appointment_details')
     }
   } catch (e) {
-    console.warn('❌ [DEBUG] No se pudo cargar appointment_details:', e)
   }
 
   // Fallbacks inteligentes: si la vista no devolvió datos, resolver por IDs recibidos en request.data
-  console.log('🔍 [DEBUG] Iniciando fallbacks por IDs...')
   try {
     const d = request.data || {}
-    console.log('🔍 [DEBUG] Data disponible para fallbacks:', JSON.stringify(d, null, 2))
 
     // Crear cliente admin para los fallbacks
     const supabaseAdmin = createClient(
@@ -541,65 +484,52 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
 
     // Cliente
     if ((!appointment?.client_name || appointment?.client_name === '') && typeof d.client_id === 'string') {
-      console.log('🔍 [DEBUG] Buscando client_name para ID:', d.client_id)
       const { data: clientRow, error: clientError } = await supabaseAdmin
         .from('profiles')
         .select('full_name')
         .eq('id', d.client_id)
         .single()
-      console.log('🔍 [DEBUG] Resultado consulta cliente:', clientRow, 'Error:', clientError)
       if (clientRow?.full_name) {
         appointment = { ...(appointment || {}), client_name: clientRow.full_name }
-        console.log('✅ [DEBUG] client_name enriquecido:', clientRow.full_name)
       }
     }
 
       // Empleado
       if ((!appointment?.employee_name || appointment?.employee_name === '') && typeof d.employee_id === 'string') {
-        console.log('🔍 [DEBUG] Buscando employee_name para ID:', d.employee_id)
         const { data: empRow, error: empError } = await supabaseAdmin
           .from('profiles')
           .select('full_name')
           .eq('id', d.employee_id)
           .single()
-        console.log('🔍 [DEBUG] Resultado consulta empleado:', empRow, 'Error:', empError)
         if (empRow?.full_name) {
           appointment = { ...(appointment || {}), employee_name: empRow.full_name }
-          console.log('✅ [DEBUG] employee_name enriquecido:', empRow.full_name)
         }
       }
 
       // Servicio
       if ((!appointment?.service_name || appointment?.service_name === '') && typeof d.service_id === 'string') {
-        console.log('🔍 [DEBUG] Buscando service_name para ID:', d.service_id)
         const { data: svcRow, error: svcError } = await supabaseAdmin
           .from('services')
           .select('name')
           .eq('id', d.service_id)
           .single()
-        console.log('🔍 [DEBUG] Resultado consulta servicio:', svcRow, 'Error:', svcError)
         if (svcRow?.name) {
           appointment = { ...(appointment || {}), service_name: svcRow.name }
-          console.log('✅ [DEBUG] service_name enriquecido:', svcRow.name)
         }
       }
 
       // Sede / ubicación: siempre intentar enriquecer dirección y ciudad si tenemos location_id
       if (typeof d.location_id === 'string') {
-        console.log('🔍 [DEBUG] Buscando datos de ubicación para ID:', d.location_id)
         const { data: locRow, error: locError } = await supabaseAdmin
           .from('locations')
           .select('name, address, city')
           .eq('id', d.location_id)
           .single()
-        console.log('🔍 [DEBUG] Resultado consulta ubicación:', locRow, 'Error:', locError)
         if (locRow?.name && (!appointment?.location_name || appointment?.location_name === '')) {
           appointment = { ...(appointment || {}), location_name: locRow.name }
-          console.log('✅ [DEBUG] location_name enriquecido:', locRow.name)
         }
         if (locRow?.address) {
           appointment = { ...(appointment || {}), location_address: locRow.address }
-          console.log('✅ [DEBUG] location_address enriquecido:', locRow.address)
         }
         if (locRow?.city) {
           // Puede venir como nombre o como UUID; si es UUID, resolver nombre desde cities
@@ -614,14 +544,11 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
                 .single()
               const cityName = cityRow?.name || cityCandidate
               appointment = { ...(appointment || {}), location_city: cityName }
-              console.log('✅ [DEBUG] location_city (resuelta por UUID) enriquecido:', cityName)
             } catch (e) {
               appointment = { ...(appointment || {}), location_city: cityCandidate }
-              console.log('⚠️ [DEBUG] No se pudo resolver ciudad por UUID, usando valor original:', cityCandidate)
             }
           } else {
             appointment = { ...(appointment || {}), location_city: cityCandidate }
-            console.log('✅ [DEBUG] location_city enriquecido:', cityCandidate)
           }
         }
       }
@@ -632,7 +559,6 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
         appointment = { ...(appointment || {}), start_time: d.appointment_date }
       }
   } catch (e) {
-    console.warn('[prepareNotificationContent] Fallbacks por IDs fallaron:', e)
   }
 
   // Formateadores de fecha/hora en español
@@ -650,9 +576,6 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
   }
 
   // Normalizar variables con alias y fallbacks
-  console.log('🔍 [DEBUG] Datos disponibles para normalización:')
-  console.log('🔍 [DEBUG] - request.data:', JSON.stringify(request.data, null, 2))
-  console.log('🔍 [DEBUG] - appointment:', JSON.stringify(appointment, null, 2))
   
   const data = request.data || {}
   const vars: Record<string, string> = {}
@@ -698,7 +621,6 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
     ''
   )
   
-  console.log('🔍 [DEBUG] Variables normalizadas iniciales:', JSON.stringify(vars, null, 2))
 
   // Si la ciudad aún parece un UUID, resolverla con la tabla cities para mostrar nombre
   try {
@@ -716,11 +638,9 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
         .single()
       if (cityRow?.name) {
         vars['city'] = cityRow.name
-        console.log('✅ [DEBUG] city resuelta por UUID:', cityRow.name)
       }
     }
   } catch (e) {
-    console.log('⚠️ [DEBUG] Falló resolución de city por UUID, se mantiene valor original')
   }
 
   // Fecha y hora
@@ -736,9 +656,6 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
   if (typeof data.new_address === 'string') vars['new_address'] = data.new_address
   if (typeof data.user_name === 'string') vars['user_name'] = data.user_name
 
-  console.log('🔍 [DEBUG] Variables finales antes del reemplazo:', JSON.stringify(vars, null, 2))
-  console.log('🔍 [DEBUG] Subject template:', template.subject)
-  console.log('🔍 [DEBUG] Message template:', template.message)
   
   // Reemplazar variables en subject y message
   let subject = template.subject
@@ -758,8 +675,6 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
     message = message.replace(new RegExp(placeholder, 'g'), value)
   }
   
-  console.log('🔍 [DEBUG] Subject procesado:', subject)
-  console.log('🔍 [DEBUG] Message procesado:', message)
 
   // Añadir dirección de la sede al correo del cliente si existe
   try {
@@ -790,7 +705,6 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
   const crit = criticalByType[request.type] || []
   const missing = crit.filter(k => (vars[k] || '').trim() === '')
   if (missing.length > 0) {
-    console.warn('[prepareNotificationContent] Campos faltantes en plantilla:', { type: request.type, missing })
     // Ajustar a un mensaje genérico para evitar enviar email “vacío”
     const genericMap: Record<string, string> = {
       appointment_new_employee: 'Se te ha asignado una nueva cita. Revisa la app para ver detalles completos.',
@@ -815,7 +729,6 @@ async function loadHTMLTemplate(templateName: string, data: any): Promise<string
     // TODO: Implementar carga de template desde storage
     return null
   } catch (error) {
-    console.error(`Error loading template ${templateName}:`, error)
     return null
   }
 }
@@ -848,39 +761,24 @@ function getRecipientContact(request: NotificationRequest, channel: string): str
 }
 
 async function sendEmail(request: NotificationRequest, content: any) {
-  console.log('📧 [SEND-EMAIL] Iniciando función sendEmail')
-  console.log('📧 [SEND-EMAIL] Request:', {
-    type: request.type,
-    recipient_email: request.recipient_email,
-    recipient_name: request.recipient_name
-  })
-  console.log('📧 [SEND-EMAIL] Content:', {
-    subject: content.subject,
-    message: content.message?.substring(0, 100) + '...'
-  })
 
   if (!request.recipient_email) {
-    console.error('❌ [SEND-EMAIL] Email del destinatario faltante')
     return { success: false, error: 'Recipient email missing' }
   }
 
   try {
     let htmlBody = ''
     
-    console.log('🎨 [SEND-EMAIL] Preparando template HTML...')
     
     // Usar template HTML personalizado para job_application_new
     if (request.type === 'job_application_new' || request.type === 'job_application_accepted' || request.type === 'job_application_interview') {
-      console.log('🎨 [SEND-EMAIL] Usando template personalizado para:', request.type)
       // Intentar cargar template HTML personalizado
       const templateName = request.type === 'job_application_new' ? 'job-application' : request.type
       const customTemplate = await loadHTMLTemplate(templateName, request.data)
       
       if (customTemplate) {
-        console.log('✅ [SEND-EMAIL] Template personalizado cargado')
         htmlBody = renderHTMLTemplate(customTemplate, request.data)
       } else {
-        console.log('⚠️ [SEND-EMAIL] Template personalizado no encontrado, usando básico')
         // Fallback al template básico desde brevo.ts
         htmlBody = createBasicEmailTemplate(
           content.subject,
@@ -888,7 +786,6 @@ async function sendEmail(request: NotificationRequest, content: any) {
         )
       }
     } else {
-      console.log('🎨 [SEND-EMAIL] Usando template básico para:', request.type)
       // Template básico para otros tipos
       htmlBody = createBasicEmailTemplate(
         content.subject,
@@ -896,19 +793,16 @@ async function sendEmail(request: NotificationRequest, content: any) {
       )
     }
     
-    console.log('📄 [SEND-EMAIL] HTML Body preparado, longitud:', htmlBody.length)
 
     // Validación extra: si el mensaje quedó demasiado genérico o vacío, evitar enviar basura
     const isEmptyContent = !content.message || content.message.trim().length < 10
     if (isEmptyContent) {
-      console.warn('⚠️ [SEND-EMAIL] Contenido insuficiente. Se ajustará a mensaje seguro.')
       content.subject = content.subject || 'Notificación'
       content.message = 'Tienes una nueva notificación en Gestabiz. Abre la app para ver los detalles.'
       htmlBody = createBasicEmailTemplate(content.subject, content.message)
     }
     
     // Enviar email usando Brevo
-    console.log('🚀 [SEND-EMAIL] Enviando email con Brevo...')
     const emailParams = {
       to: request.recipient_email,
       subject: content.subject,
@@ -917,28 +811,16 @@ async function sendEmail(request: NotificationRequest, content: any) {
       fromEmail: Deno.env.get('FROM_EMAIL') || Deno.env.get('BREVO_SMTP_USER') || 'noreply@gestabiz.app',
       fromName: 'Gestabiz'
     }
-    console.log('📨 [SEND-EMAIL] Parámetros de Brevo:', {
-      to: emailParams.to,
-      subject: emailParams.subject,
-      fromEmail: emailParams.fromEmail,
-      fromName: emailParams.fromName,
-      htmlBodyLength: emailParams.htmlBody.length,
-      textBodyLength: emailParams.textBody.length
-    })
     
     const result = await sendBrevoEmail(emailParams)
     
-    console.log('📧 [SEND-EMAIL] Resultado de Brevo:', result)
     
     if (result.success) {
-      console.log('✅ [SEND-EMAIL] Email enviado exitosamente')
     } else {
-      console.error('❌ [SEND-EMAIL] Error enviando email:', result.error)
     }
     
     return result
   } catch (error) {
-    console.error('❌ [SEND-EMAIL] Excepción en sendEmail:', error)
     return { success: false, error: error.message }
   }
 }
@@ -1231,13 +1113,11 @@ async function sendInAppNotification(
     })
 
     if (error) {
-      console.error('Error creating in-app notification:', error)
       return { success: false, error: error.message }
     }
 
     return { success: true, id: data }
   } catch (error) {
-    console.error('Exception in sendInAppNotification:', error)
     return { success: false, error: (error as Error).message }
   }
 }

@@ -31,14 +31,12 @@ Deno.serve(async (req) => {
       }
     );
 
-    console.log('🔄 Starting materialized view refresh...');
     const startTime = Date.now();
 
     // Ejecutar refresh usando RPC function
     const { error } = await supabaseAdmin.rpc('refresh_user_active_permissions');
 
     if (error) {
-      console.error('❌ Error refreshing materialized view:', error);
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -53,7 +51,6 @@ Deno.serve(async (req) => {
     }
 
     const duration = Date.now() - startTime;
-    console.log(`✅ Materialized view refreshed successfully in ${duration}ms`);
 
     return new Response(
       JSON.stringify({
@@ -69,7 +66,6 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ Exception in refresh-permissions-cache:', error);
     
     captureEdgeFunctionError(error as Error, { functionName: 'refresh-permissions-cache' })
     await flushSentry()
