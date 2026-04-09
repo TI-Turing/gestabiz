@@ -59,7 +59,11 @@ export const IncomeVsExpenseChart: React.FC<IncomeVsExpenseChartProps> = ({
         <XAxis
           dataKey="period"
           className="text-muted-foreground"
-          tick={{ fill: 'currentColor' }}
+          tick={{ fill: 'currentColor', fontSize: 11 }}
+          interval={0}
+          angle={-35}
+          textAnchor="end"
+          height={55}
         />
         <YAxis
           className="text-muted-foreground"
@@ -79,7 +83,7 @@ export const IncomeVsExpenseChart: React.FC<IncomeVsExpenseChartProps> = ({
           radius={[8, 8, 0, 0]}
         />
         <Bar
-          dataKey="expense"
+          dataKey="expenses"
           name="Egresos"
           fill="#ef4444"
           radius={[8, 8, 0, 0]}

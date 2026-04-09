@@ -30,7 +30,6 @@ async function initializeExtension() {
         await loadAppointments()
         
     } catch (error) {
-        console.error('Error initializing extension:', error)
         showError('Error al inicializar la extensión')
     }
 }
@@ -82,7 +81,6 @@ async function loadAppointments() {
         updateUI()
         
     } catch (error) {
-        console.error('Error loading appointments:', error)
         showError('Error al cargar las citas')
     }
 }

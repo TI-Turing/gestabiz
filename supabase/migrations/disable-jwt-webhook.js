@@ -14,12 +14,9 @@ async function disableJWT() {
   const accessToken = process.env.SUPABASE_ACCESS_TOKEN;
   
   if (!accessToken) {
-    console.error('❌ SUPABASE_ACCESS_TOKEN not set');
-    console.log('Get it from: https://app.supabase.com/account/tokens');
     process.exit(1);
   }
 
-  console.log('🔧 Disabling JWT verification for mercadopago-webhook...');
 
   const options = {
     hostname: 'api.supabase.com',
@@ -41,18 +38,14 @@ async function disableJWT() {
 
       res.on('end', () => {
         if (res.statusCode === 200) {
-          console.log('✅ JWT verification disabled successfully');
           resolve();
         } else {
-          console.error(`❌ Error: ${res.statusCode}`);
-          console.error(data);
           reject(new Error(`HTTP ${res.statusCode}`));
         }
       });
     });
 
     req.on('error', (e) => {
-      console.error('❌ Request failed:', e.message);
       reject(e);
     });
 
@@ -62,6 +55,5 @@ async function disableJWT() {
 }
 
 disableJWT().catch((err) => {
-  console.error(err);
   process.exit(1);
 });

@@ -20,6 +20,7 @@ import { PermissionGate } from '@/components/ui/PermissionGate'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface WorkScheduleEditorProps {
   businessId: string
@@ -91,6 +92,7 @@ export function WorkScheduleEditor({
   employeeId,
   onScheduleChanged,
 }: Readonly<WorkScheduleEditorProps>) {
+  const { user } = useAuth()
   const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -109,6 +111,8 @@ export function WorkScheduleEditor({
     lunch_break_start: '12:00',
     lunch_break_end: '13:00',
   })
+
+  const isSelfEditor = user?.id === employeeId
 
   // Cargar horario existente
   useEffect(() => {
@@ -439,7 +443,7 @@ export function WorkScheduleEditor({
 
         {/* Botón Guardar */}
         <div className="flex justify-end pt-4 border-t">
-          <PermissionGate permission="employees.edit_own_schedule" businessId={businessId} mode="disable">
+          {isSelfEditor ? (
             <Button onClick={handleSave} disabled={saving} className="min-w-[120px]">
               {saving ? (
                 <>
@@ -453,7 +457,23 @@ export function WorkScheduleEditor({
                 </>
               )}
             </Button>
-          </PermissionGate>
+          ) : (
+            <PermissionGate permission="employees.edit_own_schedule" businessId={businessId} mode="disable">
+              <Button onClick={handleSave} disabled={saving} className="min-w-[120px]">
+                {saving ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    {t('common.actions.saving')}
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    {t('common.actions.save')}
+                  </>
+                )}
+              </Button>
+            </PermissionGate>
+          )}
         </div>
       </CardContent>
     </Card>

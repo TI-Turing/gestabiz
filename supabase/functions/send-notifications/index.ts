@@ -77,7 +77,6 @@ serve(async (req) => {
           ? String(result.reason?.message ?? result.reason)
           : 'Failed to send email'
         if (result.status === 'rejected') {
-          console.error(`Error processing notification ${notification.id}:`, result.reason)
         }
         failedUpdates.push({ id: notification.id, attempts: (notification.attempts ?? 0) + 1, error: errMsg })
         results.push({ id: notification.id, status: 'failed', error: errMsg })
@@ -115,7 +114,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error in send-notifications function:', error)
     
     captureEdgeFunctionError(error as Error, { functionName: 'send-notifications' })
     await flushSentry()
@@ -272,7 +270,6 @@ async function sendEmail(emailData: EmailData): Promise<boolean> {
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
     
     if (!RESEND_API_KEY) {
-      console.error('RESEND_API_KEY not configured')
       return false
     }
 
@@ -293,16 +290,13 @@ async function sendEmail(emailData: EmailData): Promise<boolean> {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Email sending failed:', errorText)
       return false
     }
 
     const result = await response.json()
-    console.log('Email sent successfully:', result.id)
     return true
 
   } catch (error) {
-    console.error('Error sending email:', error)
     return false
   }
 }

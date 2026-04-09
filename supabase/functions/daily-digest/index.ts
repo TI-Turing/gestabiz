@@ -91,7 +91,6 @@ serve(async (req) => {
         })
 
       } catch (error) {
-        console.error(`Error processing digest for user ${userSettings.user_id}:`, error)
         results.push({
           userId: userSettings.user_id,
           status: 'failed',
@@ -115,7 +114,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error in daily-digest function:', error)
     
     captureEdgeFunctionError(error as Error, { functionName: 'daily-digest' })
     await flushSentry()
@@ -261,7 +259,6 @@ async function sendDigestEmail(emailData: { to: string; subject: string; html: s
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
     
     if (!RESEND_API_KEY) {
-      console.error('RESEND_API_KEY not configured')
       return false
     }
 
@@ -281,16 +278,13 @@ async function sendDigestEmail(emailData: { to: string; subject: string; html: s
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Digest email sending failed:', errorText)
       return false
     }
 
     const result = await response.json()
-    console.log('Digest email sent successfully:', result.id)
     return true
 
   } catch (error) {
-    console.error('Error sending digest email:', error)
     return false
   }
 }

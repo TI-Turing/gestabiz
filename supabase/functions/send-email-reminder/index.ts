@@ -296,7 +296,6 @@ serve(async (req) => {
       }
     } catch (_) {}
 
-    console.error('Error sending email reminder:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'send-email-reminder' })
     await flushSentry()
     return new Response(JSON.stringify({ success: false, error: 'Internal server error' }), {

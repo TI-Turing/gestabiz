@@ -73,6 +73,8 @@ export default async function handler(_req: Request): Promise<Response> {
     urlEntry('https://gestabiz.com/blog/software-citas-medicas-colombia-2026', '2026-04-05', 'monthly', '0.8'),
     urlEntry('https://gestabiz.com/blog/software-barberias-colombia-2026', '2026-04-05', 'monthly', '0.8'),
     urlEntry('https://gestabiz.com/blog/como-elegir-software-agendamiento-citas', '2026-04-05', 'monthly', '0.8'),
+    urlEntry('https://gestabiz.com/blog/crm-para-negocios-servicios-colombia-2026', '2026-04-08', 'monthly', '0.8'),
+    urlEntry('https://gestabiz.com/blog/software-gimnasios-centros-deportivos-colombia-2026', '2026-04-08', 'monthly', '0.8'),
     // Legal and contact pages
     urlEntry('https://gestabiz.com/terminos', today, 'yearly', '0.3'),
     urlEntry('https://gestabiz.com/privacidad', today, 'yearly', '0.3'),

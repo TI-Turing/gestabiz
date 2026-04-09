@@ -89,7 +89,6 @@ serve(async (req) => {
     const resendApiKey = Deno.env.get('RESEND_API_KEY')
     
     if (!resendApiKey) {
-      console.warn('RESEND_API_KEY not configured, skipping email notification')
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -242,7 +241,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error sending employee request notification:', error)
     
     captureEdgeFunctionError(error as Error, { functionName: 'send-employee-request-notification' })
     await flushSentry()

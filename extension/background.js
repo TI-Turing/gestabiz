@@ -1,5 +1,4 @@
 // Background service worker for Chrome extension
-console.log('Gestabiz background script loaded')
 
 const SUPABASE_URL = 'your-supabase-url'
 const SUPABASE_ANON_KEY = 'your-supabase-anon-key'
@@ -29,17 +28,14 @@ async function handleAuthChange(authData) {
         // Set up notifications
         await setupNotifications()
         
-        console.log('User authenticated in extension')
     } else {
         // Clear auth data
         await chrome.storage.local.remove(['supabase_auth'])
-        console.log('User logged out from extension')
     }
 }
 
 // Handle appointment updates
 async function handleAppointmentUpdate(appointmentData) {
-    console.log('Appointment updated:', appointmentData)
     
     // If it's a new appointment or status change, might want to show notification
     if (appointmentData.type === 'created') {
@@ -85,16 +81,13 @@ async function setupNotifications() {
             }
         }
         
-        console.log(`Set up notifications for ${appointments.length} appointments`)
         
     } catch (error) {
-        console.error('Error setting up notifications:', error)
     }
 }
 
 // Listen for alarm triggers
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-    console.log('Alarm triggered:', alarm.name)
     
     if (alarm.name.startsWith('reminder_')) {
         const appointmentId = alarm.name.replace('reminder_', '').replace('reminder_final_', '')
@@ -121,7 +114,6 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
             })
             
         } catch (error) {
-            console.error('Error handling alarm:', error)
         }
     }
 })
@@ -223,12 +215,10 @@ async function showNotification(options) {
 
 // Initialize on extension startup
 chrome.runtime.onStartup.addListener(async () => {
-    console.log('Extension started, setting up notifications')
     await setupNotifications()
 })
 
 chrome.runtime.onInstalled.addListener(async () => {
-    console.log('Extension installed/updated')
     await setupNotifications()
 })
 
@@ -237,7 +227,6 @@ chrome.alarms.create('refresh_notifications', { periodInMinutes: 60 })
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'refresh_notifications') {
-        console.log('Refreshing notifications')
         await setupNotifications()
     }
 })

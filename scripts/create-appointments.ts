@@ -25,7 +25,6 @@ function getRandomTimeSlot(): { hour: number; minute: number } {
 }
 
 async function createAppointments() {
-  console.log('🚀 Creando citas históricas (últimos 90 días)...\n');
 
   // Obtener clientes (usuarios que NO son empleados ni owners)
   const { data: employees } = await supabase
@@ -150,7 +149,6 @@ async function createAppointments() {
       acc[apt.status] = (acc[apt.status] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);    Object.entries(counts).forEach(([status, count]) => {
-      console.log(`   ${status}: ${count} (${((count / totalAppointments) * 100).toFixed(1)}%)`);
     });
   }
 

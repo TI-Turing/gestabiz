@@ -194,7 +194,6 @@ Deno.serve(async (req) => {
       })
 
     if (paymentError) {
-      console.error('Error saving payment:', paymentError)
       // Don't throw, just log (payment still created in MercadoPago)
     }
 
@@ -208,7 +207,6 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('mercadopago-create-preference error:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'mercadopago-create-preference' })
     await flushSentry()
     return new Response(

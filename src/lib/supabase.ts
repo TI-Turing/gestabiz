@@ -30,13 +30,6 @@ const isDemoMode = demoFlag ||
 
 // ✨ DEBUG: Log configuración en desarrollo/producción
 if (typeof window !== 'undefined') {
-  console.log('[Supabase Init] Configuration:', {
-    url: supabaseUrl?.substring(0, 30) + '...',
-    hasKey: !!supabaseAnonKey && supabaseAnonKey !== 'demo-key',
-    isDemoMode,
-    hasValidCredentials,
-    env: import.meta.env.MODE
-  })
 }
 
 // For development purposes, we'll create a mock client if real credentials aren't available

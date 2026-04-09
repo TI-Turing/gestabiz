@@ -135,7 +135,6 @@ serve(async (req) => {
       }
     } catch (_) {}
 
-    console.error('Error sending SMS reminder:', error)
     captureEdgeFunctionError(_ as Error, { functionName: 'send-sms-reminder' })
     await flushSentry()
     return new Response(JSON.stringify({ success: false, error: 'Internal server error' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 })

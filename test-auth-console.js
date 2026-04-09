@@ -1,9 +1,7 @@
 ﻿// ==============================================
 // TEST DE AUTENTICACIÓN - Copiar y pegar en DevTools Console
 // ==============================================// Test 1: Verificar sesión actual
-const testAuth = async () => {  const { data: session, error: sessionError } = await supabase.auth.getSession();  console.log(' Access Token (primeros 50 chars):', session.session?.access_token?.substring(0, 50) + '...');
-  console.log(' Token expires at:', new Date(session.session?.expires_at * 1000));
-  console.log(' Is token expired:', Date.now() > (session.session?.expires_at * 1000));
+const testAuth = async () => {  const { data: session, error: sessionError } = await supabase.auth.getSession();  
   
   if (sessionError) {    return null;
   }
@@ -55,7 +53,6 @@ const testRLSPolicies = async () => {  const { data: policies, error } = await 
     .select();
   
   if (error) {
-    console.log(' No se puede ejecutar get_table_policies (esperado si no existe la función)');
   } else {  }
 };
 

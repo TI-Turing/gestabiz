@@ -128,18 +128,6 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
   const [dateTo, setDateTo] = useState('')
   
   // ✅ DEBUG: Log para verificar qué se está recibiendo
-  console.log('[ClientHistory] Props recibidas:', {
-    userId,
-    appointmentsCount: appointments?.length,
-    loading,
-    isArray: Array.isArray(appointments),
-    firstAppointment: appointments?.[0] ? {
-      id: appointments[0].id,
-      status: appointments[0].status,
-      hasService: !!appointments[0].service,
-      hasBusiness: !!appointments[0].business
-    } : null
-  })
   
   // ✅ OPTIMIZACIÓN: Consolidar 5 useEffect → 1 useMemo para extraer todas las entidades únicas
   const filterEntities = useMemo(() => {
@@ -303,12 +291,6 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
 
   // Filtered businesses by search
   const filteredBusinesses = useMemo(() => {
-    console.log('[ClientHistory] filteredBusinesses computing, businesses:', {
-      count: businesses?.length,
-      isArray: Array.isArray(businesses),
-      type: typeof businesses,
-      firstItem: businesses?.[0] ? { id: businesses[0].id, name: businesses[0].name } : null
-    })
     try {
       if (!businessSearch.trim()) {        return businesses || []
       }
@@ -464,12 +446,6 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
     searchTerm !== ''
 
   // Pagination logic
-  console.log('[ClientHistory] Before totalPages calculation, filteredAppointments:', {
-    exists: !!filteredAppointments,
-    isArray: Array.isArray(filteredAppointments),
-    length: filteredAppointments?.length,
-    appointmentsPerPage
-  })
   const totalPages = Math.ceil(filteredAppointments.length / appointmentsPerPage)
   const startIndex = (currentPage - 1) * appointmentsPerPage
   const paginatedAppointments = filteredAppointments.slice(startIndex, startIndex + appointmentsPerPage)  // Reset to page 1 when filters change

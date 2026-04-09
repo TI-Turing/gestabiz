@@ -64,14 +64,12 @@ async function listTemplates(): Promise<void> {
     headers: { Authorization: authHeader },
   })
   const data = await res.json() as { contents?: Array<{ sid: string; friendly_name: string; language: string }>; meta?: { page_size: number; total: number } }
-  if (!res.ok) { console.error('Error fetching templates:', data); return }
+  if (!res.ok) {  return }
 
   const list = data.contents ?? []
   if (list.length === 0) {    return
   }
-  console.log(`\n📋  Templates existentes (${list.length}):\n`)
   for (const t of list) {
-    console.log(`  ${t.friendly_name.padEnd(35)} ${t.sid}   [${t.language}]`)
   }}
 
 // ─── Definición de templates ───────────────────────────────────────────────────
@@ -313,9 +311,8 @@ async function main() {
     const sid = args[approveSidIdx + 1]
     const nameIdx = args.indexOf('--name')
     const name = nameIdx !== -1 ? args[nameIdx + 1] : sid
-    console.log(`\n📤  Enviando approval para SID ${sid} (nombre: ${name})...`)
     const result = await submitForApproval(sid, name)    return
-  }  console.log(`    Account SID: ${ACCOUNT_SID!.substring(0, 8)}...\n`)
+  }  
 
   const results: Array<{ name: string; sid?: string; status?: string; error?: string; envKey: string }> = []
 
@@ -335,7 +332,7 @@ async function main() {
 
   for (const { template, envKey } of templates) {
     const name = template.friendly_name    try {
-      const content = await createContent(template)      console.log(`    📤  Enviando a aprobación de WhatsApp (categoría: UTILITY)...`)
+      const content = await createContent(template)      
       const approval = await submitForApproval(content.sid, name)      if (approval.rejection_reason) {      }
 
       results.push({ name, sid: content.sid, status: approval.status, envKey })

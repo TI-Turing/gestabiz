@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom'
 import { usePreferredLocation } from '@/hooks/usePreferredLocation'
 import PublicBusinessProfile from '@/pages/PublicBusinessProfile'
 import { BusinessQRModal } from './BusinessQRModal'
+import { AssignmentHealthPanel } from './AssignmentHealthPanel'
 import { toast } from 'sonner'
 
 interface OverviewTabProps {
@@ -51,9 +52,48 @@ interface Stats {
   hasEmployeesWithServices: boolean
   /** Siempre a nivel de negocio (para trigger del checklist) */
   businessTotalServices: number
+  /** Servicios activos del negocio sin empleados asignados */
+  servicesWithoutEmployees: number
+  /** Sedes del negocio sin servicios asignados */
+  locationsWithoutServices: number
+  /** Empleados (no manager/owner) sin jefe directo */
+  employeesWithoutSupervisor: number
+  /** Empleados (no manager/owner) sin al menos un día laboral activo */
+  employeesWithoutSchedule: number
+  /** Empleados (no manager/owner) sin servicios asignados */
+  employeesWithoutServices: number
+  /** Empleados evaluados para checks operativos */
+  regularEmployeesChecked: number
 }
 
-export function OverviewTab({ business }: OverviewTabProps) {
+interface IdRow {
+  id: string
+}
+
+interface EmployeeRoleRow {
+  employee_id: string
+  role: string | null
+}
+
+interface EmployeeServiceRow {
+  employee_id: string
+  service_id: string
+}
+
+interface LocationServiceRow {
+  location_id: string
+}
+
+interface BusinessRoleRow {
+  user_id: string
+  reports_to: string | null
+}
+
+interface WorkScheduleRow {
+  employee_id: string
+}
+
+export function OverviewTab({ business }: Readonly<OverviewTabProps>) {
   const [stats, setStats] = useState<Stats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showPublicProfile, setShowPublicProfile] = useState(false)
@@ -153,12 +193,16 @@ export function OverviewTab({ business }: OverviewTabProps) {
       // Check if services are linked to active locations — ALWAYS business-wide (for setup checklist)
       const locationIds = locations?.map((l) => l.id) || []
       let hasServicesInLocations = false
+      let locationsWithoutServices = 0
       if (locationIds.length > 0) {
         const { data: locationServices } = await supabase
           .from('location_services')
-          .select('id')
+          .select('location_id')
           .in('location_id', locationIds)
-          .limit(1)
+        const locationServicesRows = (locationServices as LocationServiceRow[] | null) ?? []
+        const locationsWithServices = new Set(locationServicesRows.map((row) => row.location_id))
+
+        locationsWithoutServices = locationIds.filter((locationId) => !locationsWithServices.has(locationId)).length
         hasServicesInLocations = (locationServices?.length || 0) > 0
       }
 
@@ -167,24 +211,79 @@ export function OverviewTab({ business }: OverviewTabProps) {
         .from('services')
         .select('id')
         .eq('business_id', business.id)
-      const businessTotalServices = businessServices?.length || 0
+        .eq('is_active', true)
+      const businessServiceRows = (businessServices as IdRow[] | null) ?? []
+      const businessServiceIds = businessServiceRows.map((service) => service.id)
+      const businessTotalServices = businessServiceRows.length
 
       // Check if active employees are linked to services — ALWAYS business-wide (for setup checklist)
       // We check all employees in the business, not just those in the selected location
       const { data: allBusinessEmployees } = await supabase
         .from('business_employees')
-        .select('employee_id')
+        .select('employee_id, role')
         .eq('business_id', business.id)
         .eq('is_active', true)
-      const allActiveEmployeeIds = allBusinessEmployees?.map((e) => e.employee_id) || []
+      const allBusinessEmployeesRows = (allBusinessEmployees as EmployeeRoleRow[] | null) ?? []
+      const allActiveEmployeeIds = allBusinessEmployeesRows.map((e) => e.employee_id)
+
+      const regularActiveEmployeeIds = allBusinessEmployeesRows
+        .filter((employee) => !['manager', 'owner'].includes((employee.role ?? '').toLowerCase()))
+        .map((employee) => employee.employee_id)
+
+      let employeeServicesRows: EmployeeServiceRow[] = []
       let hasEmployeesWithServices = false
-      if (allActiveEmployeeIds.length > 0) {
+      if (allActiveEmployeeIds.length > 0 && businessServiceIds.length > 0) {
         const { data: employeeServices } = await supabase
           .from('employee_services')
-          .select('id')
+          .select('employee_id, service_id')
           .in('employee_id', allActiveEmployeeIds)
-          .limit(1)
-        hasEmployeesWithServices = (employeeServices?.length || 0) > 0
+          .in('service_id', businessServiceIds)
+        employeeServicesRows = (employeeServices as EmployeeServiceRow[] | null) ?? []
+        hasEmployeesWithServices = employeeServicesRows.length > 0
+      }
+
+      const assignedServiceIds = new Set(employeeServicesRows.map((row) => row.service_id))
+      const servicesWithoutEmployees = businessServiceIds.filter((serviceId) => !assignedServiceIds.has(serviceId)).length
+
+      const employeesWithServices = new Set(employeeServicesRows.map((row) => row.employee_id))
+      const employeesWithoutServices = regularActiveEmployeeIds.filter(
+        (employeeId) => !employeesWithServices.has(employeeId),
+      ).length
+
+      let employeesWithoutSchedule = 0
+      if (regularActiveEmployeeIds.length > 0) {
+        const { data: workSchedules } = await supabase
+          .from('work_schedules')
+          .select('employee_id')
+          .in('employee_id', regularActiveEmployeeIds)
+          .eq('is_working', true)
+
+        const employeesWithSchedule = new Set(
+          ((workSchedules as WorkScheduleRow[] | null) ?? []).map((row) => row.employee_id),
+        )
+
+        employeesWithoutSchedule = regularActiveEmployeeIds.filter(
+          (employeeId) => !employeesWithSchedule.has(employeeId),
+        ).length
+      }
+
+      let employeesWithoutSupervisor = 0
+      if (regularActiveEmployeeIds.length > 0) {
+        const { data: hierarchyRows } = await supabase
+          .from('business_roles')
+          .select('user_id, reports_to')
+          .eq('business_id', business.id)
+          .in('user_id', regularActiveEmployeeIds)
+
+        const employeesWithSupervisor = new Set(
+          ((hierarchyRows as BusinessRoleRow[] | null) ?? [])
+            .filter((row) => !!row.reports_to)
+            .map((row) => row.user_id),
+        )
+
+        employeesWithoutSupervisor = regularActiveEmployeeIds.filter(
+          (employeeId) => !employeesWithSupervisor.has(employeeId),
+        ).length
       }
 
       // Calculate stats
@@ -210,6 +309,12 @@ export function OverviewTab({ business }: OverviewTabProps) {
         hasServicesInLocations,
         hasEmployeesWithServices,
         businessTotalServices,
+        servicesWithoutEmployees,
+        locationsWithoutServices,
+        employeesWithoutSupervisor,
+        employeesWithoutSchedule,
+        employeesWithoutServices,
+        regularEmployeesChecked: regularActiveEmployeeIds.length,
       })
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'OverviewTab' } })
@@ -266,6 +371,21 @@ export function OverviewTab({ business }: OverviewTabProps) {
       </div>
     )
   }
+
+  const hasOperationalIssues =
+    stats.servicesWithoutEmployees > 0
+    || stats.locationsWithoutServices > 0
+    || stats.employeesWithoutSupervisor > 0
+    || stats.employeesWithoutSchedule > 0
+    || stats.employeesWithoutServices > 0
+
+  const isBusinessFullyConfigured =
+    business.is_configured === true
+    && stats.totalLocations > 0
+    && stats.businessTotalServices > 0
+    && stats.hasServicesInLocations
+    && stats.hasEmployeesWithServices
+    && !hasOperationalIssues
 
   return (
     <div className="space-y-4">
@@ -416,6 +536,18 @@ export function OverviewTab({ business }: OverviewTabProps) {
           </Card>
         )
       })()}
+
+      {hasOperationalIssues && (
+        <AssignmentHealthPanel
+          servicesWithoutEmployees={stats.servicesWithoutEmployees}
+          locationsWithoutServices={stats.locationsWithoutServices}
+          employeesWithoutSupervisor={stats.employeesWithoutSupervisor}
+          employeesWithoutSchedule={stats.employeesWithoutSchedule}
+          employeesWithoutServices={stats.employeesWithoutServices}
+          regularEmployeesChecked={stats.regularEmployeesChecked}
+          onNavigate={navigate}
+        />
+      )}
 
       {/* Stats Grid */}
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
@@ -594,6 +726,11 @@ export function OverviewTab({ business }: OverviewTabProps) {
               </div>
             </div>
             <div className="flex items-center gap-1 shrink-0 mt-3">
+              {isBusinessFullyConfigured && (
+                <Badge className="bg-primary text-primary-foreground hover:bg-primary/90 mr-1">
+                  Negocio disponible al público
+                </Badge>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

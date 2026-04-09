@@ -72,7 +72,6 @@ serve(async (req) => {
       .single()
 
     if (businessError || !business) {
-      console.error('Error fetching business:', businessError)
       return new Response(JSON.stringify({ error: 'Business not found' }), { 
         status: 404, 
         headers: corsHeaders 
@@ -84,7 +83,6 @@ serve(async (req) => {
     const businessName = business.name
 
     if (!ownerEmail) {
-      console.error('Owner email not found for business:', businessId)
       return new Response(JSON.stringify({ error: 'Owner email not found' }), { 
         status: 404, 
         headers: corsHeaders 
@@ -207,7 +205,6 @@ serve(async (req) => {
 
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text()
-      console.error('Brevo API error:', errorText)
       return new Response(JSON.stringify({ 
         error: 'Failed to send email', 
         details: errorText 
@@ -219,12 +216,6 @@ serve(async (req) => {
 
     const emailResult = await emailResponse.json()
 
-    console.log('Email sent successfully:', {
-      businessId,
-      businessName,
-      ownerEmail,
-      messageId: emailResult.messageId,
-    })
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -237,7 +228,6 @@ serve(async (req) => {
     })
 
   } catch (error) {
-    console.error('Error in notify-business-unconfigured:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'notify-business-unconfigured' })
     await flushSentry()
     return new Response(JSON.stringify({ 

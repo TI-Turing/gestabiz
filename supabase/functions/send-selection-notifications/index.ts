@@ -67,7 +67,6 @@ serve(async (req) => {
     const payload: SelectionNotificationPayload = await req.json();
     const { type, vacancy_title, business_name } = payload;
 
-    console.log('Processing selection notification:', { type, vacancy_title });
 
     // Procesar según tipo de notificación
     switch (type) {
@@ -107,7 +106,6 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error en send-selection-notifications:', error);
     captureEdgeFunctionError(error as Error, { functionName: 'send-selection-notifications' })
     await flushSentry()
     return new Response(
@@ -227,9 +225,7 @@ async function sendSelectionStartedNotification(
     try {
       // Aquí iría la lógica de AWS SES
       // Por ahora solo lo registramos
-      console.log('Email to send:', { to: user_email, subject: `🎉 Proceso de Selección - ${vacancy_title}` });
     } catch (error) {
-      console.error('Error enviando email:', error);
     }
   }
 }
@@ -334,7 +330,6 @@ async function sendSelectedNotification(
 </html>
   `;
 
-  console.log('Email to send:', { to: selected_user_email, subject: `🎊 ¡Has sido seleccionado! - ${vacancy_title}` });
 }
 
 /**
@@ -424,5 +419,4 @@ async function sendNotSelectedNotification(
 </html>
   `;
 
-  console.log('Email to send:', { to: user_email, subject: `Actualización de tu aplicación - ${vacancy_title}` });
 }

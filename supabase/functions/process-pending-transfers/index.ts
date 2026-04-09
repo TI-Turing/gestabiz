@@ -28,7 +28,6 @@ serve(async (req) => {
   const corsHeaders = getCorsHeaders(req)
 
   try {
-    console.log('🔄 [CRON] Iniciando proceso de traslados pendientes')
 
     // Crear cliente Supabase con service_role key
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -54,12 +53,10 @@ serve(async (req) => {
       .lte('transfer_effective_date', now)
 
     if (fetchError) {
-      console.error('❌ Error al buscar traslados pendientes:', fetchError)
       throw fetchError
     }
 
     if (!pendingTransfers || pendingTransfers.length === 0) {
-      console.log('✅ No hay traslados pendientes para procesar')
       return new Response(
         JSON.stringify({
           success: true,
@@ -73,7 +70,6 @@ serve(async (req) => {
       )
     }
 
-    console.log(`📋 ${pendingTransfers.length} traslados encontrados para procesar`)
 
     let processedCount = 0
     const errors: Array<{ id: string; error: string }> = []
@@ -81,7 +77,6 @@ serve(async (req) => {
     // 2. Procesar cada traslado
     for (const transfer of pendingTransfers) {
       try {
-        console.log(`🔄 Procesando traslado ${transfer.id}`)
 
         // Actualizar empleado a nueva sede
         const { error: updateError } = await supabase
@@ -101,12 +96,10 @@ serve(async (req) => {
           .eq('id', transfer.id)
 
         if (updateError) {
-          console.error(`❌ Error al actualizar traslado ${transfer.id}:`, updateError)
           errors.push({ id: transfer.id, error: updateError.message })
           continue
         }
 
-        console.log(`✅ Traslado ${transfer.id} completado exitosamente`)
 
         // 3. Notificar al empleado
         const newLocationName = transfer.locations?.name || 'Nueva sede'
@@ -128,22 +121,17 @@ serve(async (req) => {
           })
 
         if (notifError) {
-          console.error(`⚠️ Error al enviar notificación a ${transfer.employee_id}:`, notifError)
         } else {
-          console.log(`📬 Notificación enviada a empleado ${transfer.employee_id}`)
         }
 
         processedCount++
       } catch (error) {
-        console.error(`❌ Error al procesar traslado ${transfer.id}:`, error)
         errors.push({ id: transfer.id, error: error.message })
       }
     }
 
-    console.log(`✅ Proceso completado: ${processedCount}/${pendingTransfers.length} traslados procesados`)
 
     if (errors.length > 0) {
-      console.error('⚠️ Errores encontrados:', errors)
     }
 
     return new Response(
@@ -159,7 +147,6 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('❌ Error en process-pending-transfers:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'process-pending-transfers' })
     await flushSentry()
     return new Response(

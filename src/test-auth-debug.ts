@@ -10,9 +10,7 @@ export async function testAuthDebug() {  try {
     
     if (sessionError) {      toast.error('Error al obtener sesión');
       return { success: false, error: 'Session error' };
-    }    console.log('✅ Access Token (primeros 50 chars):', sessionData.session?.access_token?.substring(0, 50) + '...');
-    console.log('✅ Token expires at:', new Date((sessionData.session?.expires_at || 0) * 1000));
-    console.log('✅ Is token expired:', Date.now() > ((sessionData.session?.expires_at || 0) * 1000));
+    }    
 
     if (!sessionData.session?.user) {      toast.error('No hay sesión activa');
       return { success: false, error: 'No session' };

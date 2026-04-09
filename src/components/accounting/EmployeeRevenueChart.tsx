@@ -59,7 +59,7 @@ export const EmployeeRevenueChart: React.FC<EmployeeRevenueChartProps> = ({
       >
         <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
         <XAxis
-          dataKey="employee"
+          dataKey="employee_name"
           className="text-muted-foreground"
           tick={{ fill: 'currentColor' }}
           angle={-45}

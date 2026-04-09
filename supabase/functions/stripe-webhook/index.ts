@@ -31,7 +31,6 @@ serve(async (req) => {
     const body = await req.text()
     const event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
     
-    console.log(`[Stripe Webhook] Received event: ${event.type}`)
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
@@ -101,7 +100,6 @@ serve(async (req) => {
         break
 
       default:
-        console.log(`[Stripe Webhook] Unhandled event type: ${event.type}`)
     }
 
     return new Response(JSON.stringify({ received: true }), {
@@ -109,7 +107,6 @@ serve(async (req) => {
       status: 200,
     })
   } catch (err) {
-    console.error('[Stripe Webhook] Error:', err)
     
     // Capture error to Sentry
     captureEdgeFunctionError(err as Error, {
@@ -129,12 +126,10 @@ serve(async (req) => {
 // ========== HANDLERS DE CUSTOMER ==========
 
 async function handleCustomerCreated(supabase: any, customer: Stripe.Customer) {
-  console.log(`[Customer] Created: ${customer.id}`)
   
   // Buscar business_id en metadata
   const businessId = customer.metadata?.business_id
   if (!businessId) {
-    console.warn('[Customer] No business_id in metadata')
     return
   }
 
@@ -145,17 +140,14 @@ async function handleCustomerCreated(supabase: any, customer: Stripe.Customer) {
     .eq('business_id', businessId)
 
   if (error) {
-    console.error('[Customer] Error updating business_plans:', error)
   }
 }
 
 async function handleCustomerUpdated(supabase: any, customer: Stripe.Customer) {
-  console.log(`[Customer] Updated: ${customer.id}`)
   // Sincronizar cambios de customer (email, nombre, etc.)
 }
 
 async function handleCustomerDeleted(supabase: any, customer: Stripe.Customer) {
-  console.log(`[Customer] Deleted: ${customer.id}`)
   
   // Marcar suscripción como cancelada
   const { error } = await supabase
@@ -168,18 +160,15 @@ async function handleCustomerDeleted(supabase: any, customer: Stripe.Customer) {
     .eq('stripe_customer_id', customer.id)
 
   if (error) {
-    console.error('[Customer] Error updating business_plans:', error)
   }
 }
 
 // ========== HANDLERS DE SUBSCRIPTION ==========
 
 async function handleSubscriptionCreatedOrUpdated(supabase: any, subscription: Stripe.Subscription) {
-  console.log(`[Subscription] Created/Updated: ${subscription.id}`)
 
   const businessId = subscription.metadata?.business_id
   if (!businessId) {
-    console.warn('[Subscription] No business_id in metadata')
     return
   }
 
@@ -215,7 +204,6 @@ async function handleSubscriptionCreatedOrUpdated(supabase: any, subscription: S
     }, { onConflict: 'business_id' })
 
   if (planError) {
-    console.error('[Subscription] Error updating business_plans:', planError)
     return
   }
 
@@ -234,7 +222,6 @@ async function handleSubscriptionCreatedOrUpdated(supabase: any, subscription: S
 }
 
 async function handleSubscriptionDeleted(supabase: any, subscription: Stripe.Subscription) {
-  console.log(`[Subscription] Deleted: ${subscription.id}`)
 
   // Actualizar business_plans
   const { error } = await supabase
@@ -247,7 +234,6 @@ async function handleSubscriptionDeleted(supabase: any, subscription: Stripe.Sub
     .eq('stripe_subscription_id', subscription.id)
 
   if (error) {
-    console.error('[Subscription] Error updating business_plans:', error)
     return
   }
 
@@ -265,7 +251,6 @@ async function handleSubscriptionDeleted(supabase: any, subscription: Stripe.Sub
 }
 
 async function handleTrialWillEnd(supabase: any, subscription: Stripe.Subscription) {
-  console.log(`[Subscription] Trial will end: ${subscription.id}`)
 
   const businessId = subscription.metadata?.business_id
   if (!businessId) return
@@ -288,7 +273,6 @@ async function handleTrialWillEnd(supabase: any, subscription: Stripe.Subscripti
 // ========== HANDLERS DE PAYMENT INTENT ==========
 
 async function handlePaymentIntentSucceeded(supabase: any, paymentIntent: Stripe.PaymentIntent) {
-  console.log(`[PaymentIntent] Succeeded: ${paymentIntent.id}`)
 
   const businessId = paymentIntent.metadata?.business_id
   if (!businessId) return
@@ -309,7 +293,6 @@ async function handlePaymentIntentSucceeded(supabase: any, paymentIntent: Stripe
 }
 
 async function handlePaymentIntentFailed(supabase: any, paymentIntent: Stripe.PaymentIntent) {
-  console.log(`[PaymentIntent] Failed: ${paymentIntent.id}`)
 
   const businessId = paymentIntent.metadata?.business_id
   if (!businessId) return
@@ -344,7 +327,6 @@ async function handlePaymentIntentFailed(supabase: any, paymentIntent: Stripe.Pa
 // ========== HANDLERS DE INVOICE ==========
 
 async function handleInvoicePaymentSucceeded(supabase: any, invoice: Stripe.Invoice) {
-  console.log(`[Invoice] Payment succeeded: ${invoice.id}`)
 
   const businessId = invoice.metadata?.business_id || invoice.subscription_details?.metadata?.business_id
   if (!businessId) return
@@ -377,7 +359,6 @@ async function handleInvoicePaymentSucceeded(supabase: any, invoice: Stripe.Invo
 }
 
 async function handleInvoicePaymentFailed(supabase: any, invoice: Stripe.Invoice) {
-  console.log(`[Invoice] Payment failed: ${invoice.id}`)
 
   const businessId = invoice.metadata?.business_id
   if (!businessId) return
@@ -409,7 +390,6 @@ async function handleInvoicePaymentFailed(supabase: any, invoice: Stripe.Invoice
 }
 
 async function handleInvoiceUpcoming(supabase: any, invoice: Stripe.Invoice) {
-  console.log(`[Invoice] Upcoming: ${invoice.id}`)
 
   const businessId = invoice.metadata?.business_id
   if (!businessId) return
@@ -432,10 +412,8 @@ async function handleInvoiceUpcoming(supabase: any, invoice: Stripe.Invoice) {
 // ========== HANDLERS DE PAYMENT METHOD ==========
 
 async function handlePaymentMethodAttached(supabase: any, paymentMethod: Stripe.PaymentMethod) {
-  console.log(`[PaymentMethod] Attached: ${paymentMethod.id}`)
 
   if (paymentMethod.type !== 'card') {
-    console.log('[PaymentMethod] Not a card, skipping')
     return
   }
 
@@ -475,7 +453,6 @@ async function handlePaymentMethodAttached(supabase: any, paymentMethod: Stripe.
 }
 
 async function handlePaymentMethodDetached(supabase: any, paymentMethod: Stripe.PaymentMethod) {
-  console.log(`[PaymentMethod] Detached: ${paymentMethod.id}`)
 
   // Marcar método de pago como inactivo
   const { error } = await supabase
@@ -484,7 +461,6 @@ async function handlePaymentMethodDetached(supabase: any, paymentMethod: Stripe.
     .eq('stripe_payment_method_id', paymentMethod.id)
 
   if (error) {
-    console.error('[PaymentMethod] Error updating payment_methods:', error)
   }
 
   // Buscar business_id para audit log
@@ -508,7 +484,6 @@ async function handlePaymentMethodDetached(supabase: any, paymentMethod: Stripe.
 // ========== HANDLERS DE SETUP INTENT ==========
 
 async function handleSetupIntentSucceeded(supabase: any, setupIntent: Stripe.SetupIntent) {
-  console.log(`[SetupIntent] Succeeded: ${setupIntent.id}`)
 
   // El Setup Intent adjunta el Payment Method automáticamente al Customer
   // El evento payment_method.attached se encargará de guardar el método de pago
@@ -541,5 +516,4 @@ async function handleSetupIntentSucceeded(supabase: any, setupIntent: Stripe.Set
     })
   }
 
-  console.log(`[SetupIntent] Successfully processed for business ${businessId}`)
 }
