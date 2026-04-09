@@ -54,3 +54,52 @@ jobs:
           scope: ${{ secrets.VERCEL_ORG_ID }}
           alias-domains: dev.gestabiz.com
           working-directory: ./
+
+  migrate:
+    name: Apply Supabase Migrations to DEV
+    runs-on: ubuntu-latest
+    needs: deploy
+    environment: dev
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Link to DEV Supabase
+        run: |
+          npx supabase link \
+            --project-ref ${{ vars.DEV_SUPABASE_PROJECT_REF }}
+
+      - name: Apply migrations
+        run: npx supabase db push --dns-resolver https --yes
+
+      - name: Verify migration status
+        run: npx supabase migration list --dns-resolver https
+
+  deploy-edge-functions:
+    name: Deploy All Edge Functions to DEV
+    runs-on: ubuntu-latest
+    needs: migrate
+    environment: dev
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Deploy all edge functions
+        run: |
+          npx supabase functions deploy \
+            --project-ref ${{ vars.DEV_SUPABASE_PROJECT_REF }} \
+            --dns-resolver https

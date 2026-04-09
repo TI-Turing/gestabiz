@@ -78,7 +78,7 @@ jobs:
 
 
   deploy-edge-functions:
-    name: Deploy Changed Edge Functions to PROD
+    name: Deploy All Edge Functions to PROD
     runs-on: ubuntu-latest
     needs: [typecheck, migrate]
     environment: Production
@@ -88,63 +88,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Detect changed edge functions
-        id: changed_functions
+      - name: Deploy all edge functions
         run: |
-          set -euo pipefail
-
-          BEFORE_SHA="${{ github.event.before }}"
-
-          if [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
-            CHANGED_FILES="$(git diff --name-only "$BEFORE_SHA" ${{ github.sha }})"
-          else
-            CHANGED_FILES="$(git show --name-only --pretty='' ${{ github.sha }})"
-          fi
-
-          if echo "$CHANGED_FILES" | grep -q '^supabase/functions/_shared/'; then
-            echo "Shared changed. Deploying all functions."
-
-            FUNCTIONS=$(find supabase/functions -mindepth 1 -maxdepth 1 -type d -printf '%f\n' \
-              | grep -v '^_shared$' \
-              | sort)
-
-          else
-            FUNCTIONS=$(echo "$CHANGED_FILES" \
-              | grep '^supabase/functions/' \
-              | cut -d'/' -f3 \
-              | grep -v '^_shared$' \
-              | sort -u || true)
-          fi
-
-          if [ -z "$FUNCTIONS" ]; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-          else
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-
-            {
-              echo "functions<<EOF"
-              echo "$FUNCTIONS"
-              echo "EOF"
-            } >> $GITHUB_OUTPUT
-          fi
-
-      - name: Deploy changed functions
-        if: steps.changed_functions.outputs.has_changes == 'true'
-        run: |
-          while IFS= read -r fn; do
-            [ -z "$fn" ] && continue
-            echo "Deploying $fn"
-
-            npx supabase functions deploy "$fn" \
-              --project-ref ${{ vars.PROD_SUPABASE_PROJECT_REF }}
-
-          done << 'EOF'
-          ${{ steps.changed_functions.outputs.functions }}
-          EOF
+          npx supabase functions deploy \
+            --project-ref ${{ vars.PROD_SUPABASE_PROJECT_REF }} \
+            --dns-resolver https
