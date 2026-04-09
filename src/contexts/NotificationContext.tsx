@@ -109,7 +109,7 @@ export const NotificationProvider = React.memo<NotificationProviderProps>(functi
 
           // Evita duplicar avisos de citas: el wizard ya muestra su toast de exito.
           // Estas notificaciones siguen visibles en NotificationCenter/Bell.
-          if (notification.type === 'appointment_created' || notification.type === 'appointment_confirmed') {
+          if (notification.type === 'appointment_new_client' || notification.type === 'appointment_new_employee' || notification.type === 'appointment_new_business' || notification.type === 'appointment_confirmation') {
             return
           }
           

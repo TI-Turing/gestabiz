@@ -58,7 +58,7 @@ export function NotificationBell({
     autoFetch: true,
     limit: 50, // Aumentado para capturar todas las notificaciones no leídas
     excludeChatMessages: true, // Nueva opción para excluir mensajes de chat
-    excludeTypes: ['appointment_created'], // Mantener una sola notificación por cita
+    excludeTypes: ['appointment_new_client', 'appointment_new_employee', 'appointment_new_business'], // Mantener solo la confirmación, evitar duplicado visual
     suppressToasts: true
   })
   
