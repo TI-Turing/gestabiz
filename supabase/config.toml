@@ -140,9 +140,161 @@ url = ""
 
 # Edge Function configuration — verify_jwt controls whether the Supabase gateway
 # validates the caller's JWT before executing the function.
-# Public functions (search, booking landing) must have verify_jwt = false so that
-# unauthenticated users can call them. The CLI reads these values on every deploy.
+# With sb_publishable_* keys (ES256), gateway JWT verification is incompatible.
+# Functions that handle auth internally via SUPABASE_SERVICE_ROLE_KEY can safely
+# disable gateway verification. The CLI reads these values on every deploy.
+
+# --- Public / unauthenticated ---
 [functions.search_businesses]
+verify_jwt = false
+
+# --- Invoked from frontend (authenticated users, auth handled internally) ---
+[functions.send-notification]
+verify_jwt = false
+
+[functions.send-appointment-confirmation]
+verify_jwt = false
+
+[functions.approve-reject-absence]
+verify_jwt = false
+
+[functions.request-absence]
+verify_jwt = false
+
+[functions.send-bug-report-email]
+verify_jwt = false
+
+[functions.get-client-dashboard-data]
+verify_jwt = false
+
+[functions.send-selection-notifications]
+verify_jwt = false
+
+[functions.send-employee-request-notification]
+verify_jwt = false
+
+[functions.appointment-actions]
+verify_jwt = false
+
+[functions.calendar-integration]
+verify_jwt = false
+
+[functions.send-message]
+verify_jwt = false
+
+[functions.update-hierarchy]
+verify_jwt = false
+
+[functions.activate-free-trial]
+verify_jwt = false
+
+[functions.refresh-permissions-cache]
+verify_jwt = false
+
+# --- Payment gateways (frontend-invoked) ---
+[functions.create-checkout-session]
+verify_jwt = false
+
+[functions.create-setup-intent]
+verify_jwt = false
+
+[functions.manage-subscription]
+verify_jwt = false
+
+[functions.payu-create-checkout]
+verify_jwt = false
+
+[functions.mercadopago-create-preference]
+verify_jwt = false
+
+[functions.mercadopago-manage-subscription]
+verify_jwt = false
+
+# --- Webhooks (external services, no JWT) ---
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.payu-webhook]
+verify_jwt = false
+
+[functions.mercadopago-webhook]
+verify_jwt = false
+
+# --- Cron / internal (called by Supabase scheduler or other functions) ---
+[functions.process-reminders]
+verify_jwt = false
+
+[functions.schedule-reminders]
+verify_jwt = false
+
+[functions.refresh-ratings-stats]
+verify_jwt = false
+
+[functions.process-expired-plans]
+verify_jwt = false
+
+[functions.process-pending-transfers]
+verify_jwt = false
+
+[functions.check-business-inactivity]
+verify_jwt = false
+
+[functions.daily-digest]
+verify_jwt = false
+
+[functions.appointment-status-updater]
+verify_jwt = false
+
+[functions.cancel-appointments-on-emergency-absence]
+verify_jwt = false
+
+[functions.cancel-future-appointments-on-transfer]
+verify_jwt = false
+
+[functions.notify-business-unconfigured]
+verify_jwt = false
+
+[functions.send-renewal-reminder]
+verify_jwt = false
+
+# --- Email/SMS/WhatsApp senders (called by other functions or cron) ---
+[functions.send-email]
+verify_jwt = false
+
+[functions.send-email-reminder]
+verify_jwt = false
+
+[functions.send-sms-reminder]
+verify_jwt = false
+
+[functions.send-whatsapp]
+verify_jwt = false
+
+[functions.send-whatsapp-reminder]
+verify_jwt = false
+
+[functions.send-notification-reminders]
+verify_jwt = false
+
+[functions.send-notifications]
+verify_jwt = false
+
+[functions.send-reminders]
+verify_jwt = false
+
+[functions.send-unread-chat-emails]
+verify_jwt = false
+
+[functions.send-confirmation]
+verify_jwt = false
+
+[functions.send-phone-otp]
+verify_jwt = false
+
+[functions.verify-phone-otp]
+verify_jwt = false
+
+[functions.create-test-users]
 verify_jwt = false
 
 [analytics]
