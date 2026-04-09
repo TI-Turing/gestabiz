@@ -58,6 +58,24 @@ interface ExistingAppointment {
 }
 
 /**
+ * Convierte una fecha/hora local de Bogotá a UTC para comparar con timestamptz de BD.
+ */
+function toBogotaLocalAsUTC(date: Date): Date {
+  const BOGOTA_UTC_OFFSET = 5;
+  return new Date(
+    Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      date.getHours() + BOGOTA_UTC_OFFSET,
+      date.getMinutes(),
+      date.getSeconds(),
+      date.getMilliseconds(),
+    ),
+  );
+}
+
+/**
  * Helper para convertir hora a formato 12h
  */
 function formatHourTo12h(hour: number): string {
@@ -214,6 +232,7 @@ export function DateTimeSelection({
     openingTime.setHours(openH, openM, 0, 0);
     const closingTime = new Date(selectedDate);
     closingTime.setHours(closeH, closeM, 0, 0);
+    const closingTimeUtc = toBogotaLocalAsUTC(new Date(closingTime));
 
     // Validar disponibilidad por traslado
     const transferValidation = await validateAvailability(employeeId || resourceId || '', businessId || '', selectedDate, locationId || '');
@@ -288,10 +307,10 @@ export function DateTimeSelection({
 
       // Regla 5: Validar citas existentes del empleado/recurso Y cliente
       if (isAvailable && service) {
-        const slotStartTime = new Date(current);
+        const slotStartTime = toBogotaLocalAsUTC(new Date(current));
         const slotEndTime = addMinutes(slotStartTime, serviceDuration);
 
-        if (slotEndTime > closingTime) {
+        if (slotEndTime > closingTimeUtc) {
           isAvailable = false;
           unavailableReason = 'Fuera del horario de la sede';
         } else {
@@ -453,6 +472,7 @@ export function DateTimeSelection({
         openingTime.setHours(openH, openM, 0, 0);
         const closingTime = new Date(dayCursor);
         closingTime.setHours(closeH, closeM, 0, 0);
+        const closingTimeUtc = toBogotaLocalAsUTC(new Date(closingTime));
 
         let anyAvailable = false;
         let cursor = new Date(openingTime);
@@ -474,10 +494,13 @@ export function DateTimeSelection({
             continue;
           }
 
-          const slotEnd = addMinutes(cursor, serviceDuration);
-          if (slotEnd > closingTime) break;
+            const slotStartUtc = toBogotaLocalAsUTC(new Date(cursor));
+            const slotEnd = addMinutes(slotStartUtc, serviceDuration);
+          if (slotEnd > closingTimeUtc) {
+            break;
+          }
 
-          const occupied = isSlotOccupied(cursor, slotEnd, dayAppointments);
+            const occupied = isSlotOccupied(slotStartUtc, slotEnd, dayAppointments);
           if (!occupied) {
             anyAvailable = true;
             break;

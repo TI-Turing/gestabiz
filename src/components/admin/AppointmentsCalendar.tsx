@@ -496,7 +496,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   const [isLoading, setIsLoading] = useState(true);
   const timelineRef = useRef<HTMLDivElement>(null);
   const statusBtnRef = useRef<HTMLButtonElement>(null);
-  const locationBtnRef = useRef<HTMLButtonElement>(null);
   const serviceBtnRef = useRef<HTMLButtonElement>(null);
   const employeeBtnRef = useRef<HTMLButtonElement>(null);
   const [showServices, setShowServices] = useState(true);
@@ -505,7 +504,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
 
   // Filter states - now as arrays for multi-select
   const [filterStatus, setFilterStatus] = useState<string[]>(['confirmed', 'pending']);
-  const [filterLocation, setFilterLocation] = useState<string[]>([]);
   const [filterService, setFilterService] = useState<string[]>([]);
   const [filterEmployee, setFilterEmployee] = useState<string[]>([]);
   const [locations, setLocations] = useState<LocationWithHours[]>([]);
@@ -514,13 +512,15 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   // Dropdown open/close states
   const [openDropdowns, setOpenDropdowns] = useState({
     status: false,
-    location: false,
     service: false,
     employee: false
   });
   // Obtener la configuración de sede preferida
   const [currentBusinessId, setCurrentBusinessId] = useState<string | undefined>(undefined);
-  const { preferredLocationId } = usePreferredLocation(currentBusinessId);
+  // ✅ Usar propBusinessId inmediatamente (disponible desde el render inicial desde AdminDashboard)
+  // para que el hook quede suscrito al evento 'preferred-location-changed' desde el principio,
+  // sin esperar a que fetchData asigne currentBusinessId de forma async.
+  const { preferredLocationId } = usePreferredLocation(propBusinessId ?? currentBusinessId);
   const { calculateTaxes } = useTaxCalculation(currentBusinessId);
 
   const formatFiscalPeriod = (date: Date) => {
@@ -547,7 +547,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       const target = event.target as HTMLElement;
 
       // If click is inside any anchor button, do nothing
-      if (statusBtnRef.current?.contains(target) || locationBtnRef.current?.contains(target) || serviceBtnRef.current?.contains(target) || employeeBtnRef.current?.contains(target)) {
+      if (statusBtnRef.current?.contains(target) || serviceBtnRef.current?.contains(target) || employeeBtnRef.current?.contains(target)) {
         return;
       }
 
@@ -556,7 +556,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         return;
       }
 
-      setOpenDropdowns({ status: false, location: false, service: false, employee: false });
+      setOpenDropdowns({ status: false, service: false, employee: false });
     };
 
     document.addEventListener('click', handleClickOutside);
@@ -571,7 +571,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed.status) setFilterStatus(parsed.status);
-        if (parsed.location) setFilterLocation(parsed.location);
         if (parsed.service) setFilterService(parsed.service);
         if (parsed.employee) setFilterEmployee(parsed.employee);
       }
@@ -583,13 +582,13 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   // Persist filters to localStorage when they change
   useEffect(() => {
     if (!currentBusinessId) return;
-    const payload = { status: filterStatus, location: filterLocation, service: filterService, employee: filterEmployee };
+    const payload = { status: filterStatus, service: filterService, employee: filterEmployee };
     try {
       localStorage.setItem(`appointments-filters-${currentBusinessId}`, JSON.stringify(payload));
     } catch (e) {
       Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
     }
-  }, [currentBusinessId, filterStatus, filterLocation, filterService, filterEmployee]);
+  }, [currentBusinessId, filterStatus, filterService, filterEmployee]);
 
   // useRef para prevenir llamados duplicados simultáneos
   const isFetchingRef = useRef(false);
@@ -843,12 +842,9 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         });
 
         setEmployees(formattedEmployees);
-        if (DEBUG_MODE) {
-          const selectedLocationId = filterLocation.length > 0 ? filterLocation[0] : null;
-        }
 
-        // Get services - FILTERED by both location AND employee if selected
-        const selectedLocationId = filterLocation.length > 0 ? filterLocation[0] : null;
+        // Get services - FILTERED by sede seleccionada en header y empleado si aplica
+        const selectedLocationId = preferredLocationId ?? null;
         let availableServices: Array<{ id: string; name: string }> = [];
         
         // Strategy: If both employee and location are selected, use employee_services
@@ -948,7 +944,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     };
 
     fetchData();
-  }, [user, propBusinessId, filterLocation, filterEmployee]); // ✅ Dependencias: user, business ID, filtro ubicación y filtro empleados
+  }, [user, propBusinessId, preferredLocationId, filterEmployee]); // ✅ Dependencias: user, business ID, sede del header y filtro empleados
 
   // Fetch appointments cuando currentBusinessId o selectedDate cambian
   useEffect(() => {
@@ -958,34 +954,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   }, [currentBusinessId, selectedDate, fetchAppointments]);
 
   // Persist filters to localStorage when they change
-  useEffect(() => {
-    if (!currentBusinessId) return;
-    const payload = { status: filterStatus, location: filterLocation, service: filterService, employee: filterEmployee };
-    try {
-      localStorage.setItem(`appointments-filters-${currentBusinessId}`, JSON.stringify(payload));
-    } catch (e) {
-      Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
-    }
-  }, [currentBusinessId, filterStatus, filterLocation, filterService, filterEmployee]);
-
-  // Sincronizar filtros de sede con las sedes disponibles
-  // Evita que IDs obsoletos en localStorage oculten todas las citas
-  useEffect(() => {
-    // Si no hay sedes cargadas, limpiar el filtro de sede para no filtrar todo
-    if (!locations || locations.length === 0) {
-      if (filterLocation.length > 0) {
-        setFilterLocation([]);
-      }
-      return;
-    }
-
-    const availableIds = new Set(locations.map(l => l.id));
-    const validSelected = filterLocation.filter(id => availableIds.has(id));
-    if (validSelected.length !== filterLocation.length) {
-      setFilterLocation(validSelected);
-    }
-  }, [locations]);
-
   const handleCompleteAppointment = async (appointmentId: string, tip: number) => {
     try {
       // Get appointment details first
@@ -1214,18 +1182,15 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     // Determinar qué sedes considerar
     let selectedLocations: LocationWithHours[] = [];
     
-    if (preferredLocationId && filterLocation.length === 0) {
-      // Si hay sede configurada y no hay filtros, usar solo esa
+    if (preferredLocationId) {
+      // Si hay sede configurada en header, usar solo esa
       const preferred = locations.find(l => l.id === preferredLocationId);
       if (preferred) {
         selectedLocations = [preferred];
       } else {
       }
-    } else if (filterLocation.length > 0) {
-      // Si hay filtros aplicados, usar solo las sedes filtradas
-      selectedLocations = locations.filter(l => filterLocation.includes(l.id));
     } else {
-      // Si no hay filtros ni sede preferida, usar todas
+      // Si no hay sede preferida, usar todas
       selectedLocations = locations;
     }
 
@@ -1263,7 +1228,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     }
     
     return { openHour, closeHour };
-  }, [locations, preferredLocationId, filterLocation]);
+  }, [locations, preferredLocationId]);
 
   // Check if hour is within business hours (for styling)
   const isBusinessHour = (hour: number): boolean => {
@@ -1282,8 +1247,8 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         return false;
       }
 
-      // ✅ Filtro de ubicación - si está vacío, mostrar todas (pass-through)
-      if (filterLocation.length > 0 && !filterLocation.includes(apt.location_id || '')) {
+      // ✅ Sede desde header - si hay sede activa, filtrar solo por esa
+      if (preferredLocationId && apt.location_id !== preferredLocationId) {
         return false;
       }
 
@@ -1292,17 +1257,14 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         return false;
       }
 
-      // ✅ Filtro de empleado - si está vacío, NO mostrar nada (requiere selección para columnas)
-      if (filterEmployee.length === 0) {
-        return false;
-      }
-      if (!filterEmployee.includes(apt.employee_id)) {
+      // ✅ Filtro de empleado - si está vacío, mostrar todos (sin filtro activo)
+      if (filterEmployee.length > 0 && !filterEmployee.includes(apt.employee_id)) {
         return false;
       }
 
       return true;
     });
-  }, [appointments, filterStatus, filterLocation, filterService, filterEmployee]);
+  }, [appointments, filterStatus, preferredLocationId, filterService, filterEmployee]);
 
   // ✅ Filtrar empleados a mostrar basado en filterEmployee
   // Días del mini-calendario mensual
@@ -1354,16 +1316,13 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   }, [employeesEligible]);
 
   const employeesToDisplay = useMemo(() => {
-    // Si el filtro está vacío, no mostrar ningún empleado
-    if (filterEmployee.length === 0) {
-      return [];
-    }
-    // Mostrar solo empleados seleccionados en el filtro
-    // Solo empleados seleccionados que ofrezcan al menos un servicio activo
-    const byEmployee = employees.filter(emp =>
-      filterEmployee.includes(emp.user_id) &&
-      (emp.services ?? []).length > 0
-    );
+    // Si el filtro está vacío → mostrar todos los elegibles (sin filtro activo)
+    const byEmployee = filterEmployee.length === 0
+      ? employees.filter(emp => (emp.services ?? []).length > 0)
+      : employees.filter(emp =>
+          filterEmployee.includes(emp.user_id) &&
+          (emp.services ?? []).length > 0
+        );
 
     // Si hay filtro de servicios activo, ocultar empleados que no ofrecen ninguno
     if (filterService.length > 0) {
@@ -1638,7 +1597,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                 e.stopPropagation();
                 setFilterStatus(['confirmed']);
                 setFilterService([]);
-                setFilterLocation([]);
                 setFilterEmployee([]);
               }}
               className="px-3 py-1.5 text-xs bg-background hover:bg-muted text-muted-foreground hover:text-foreground rounded-md transition-colors font-medium border border-border cursor-pointer"
@@ -1649,7 +1607,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                   e.stopPropagation();
                   setFilterStatus(['confirmed']);
                   setFilterService([]);
-                  setFilterLocation([]);
                   setFilterEmployee([]);
                 }
               }}
@@ -1712,54 +1669,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                         </span>
                       </label>
                     ))}
-                  </div>
-                </DropdownPortal>
-              </div>
-
-              {/* Sede Dropdown */}
-              <div className="relative">
-                <label className="block text-xs font-bold text-foreground uppercase tracking-wide mb-1">Sede</label>
-                <button
-                  ref={locationBtnRef}
-                  onClick={() => setOpenDropdowns(prev => ({ ...prev, location: !prev.location }))}
-                  className="px-3 py-2 pr-8 text-sm border border-border rounded-md bg-background text-foreground hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all min-w-[160px] flex items-center justify-between"
-                >
-                  <span className="truncate">
-                    {filterLocation.length === 0 ? 'Todas' : `${filterLocation.length} seleccionadas`}
-                  </span>
-                  <ChevronRight className={`h-4 w-4 text-muted-foreground ml-2 transition-transform ${openDropdowns.location ? 'rotate-90' : ''}`} />
-                </button>
-                <DropdownPortal anchorRef={locationBtnRef} isOpen={openDropdowns.location} onClose={() => setOpenDropdowns(prev => ({ ...prev, location: false }))}>
-                  <div className="bg-background border border-border rounded-md shadow-lg max-h-64 overflow-y-auto">
-                    <div className="px-2 py-2 border-b border-border">
-                      <button
-                        className="w-full text-left px-3 py-2 text-sm font-medium hover:bg-muted/40 rounded"
-                        onClick={() => setFilterLocation(locations.map(l => l.id))}
-                      >
-                        Seleccionar Todos
-                      </button>
-                    </div>
-                    {locations.length === 0 ? (
-                      <div className="px-3 py-2 text-sm text-muted-foreground italic">Sin sedes</div>
-                    ) : (
-                      locations.map(location => (
-                        <label key={location.id} className="flex items-center px-3 py-2 hover:bg-muted/50 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={filterLocation.includes(location.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFilterLocation([...filterLocation, location.id]);
-                              } else {
-                                setFilterLocation(filterLocation.filter(l => l !== location.id));
-                              }
-                            }}
-                            className="w-4 h-4 rounded border-2 border-muted-foreground/40 bg-background checked:bg-primary checked:border-primary focus:ring-2 focus:ring-primary/30 transition-all cursor-pointer"
-                          />
-                          <span className="ml-2 text-sm text-foreground truncate">{location.name}</span>
-                        </label>
-                      ))
-                    )}
                   </div>
                 </DropdownPortal>
               </div>
