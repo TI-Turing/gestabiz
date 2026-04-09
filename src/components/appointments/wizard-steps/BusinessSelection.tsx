@@ -550,7 +550,7 @@ export function BusinessSelection({
       <div className="p-8 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-[#8b5cf6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#94a3b8]">Loading businesses...</p>
+          <p className="text-[#94a3b8]">Cargando negocios...</p>
         </div>
       </div>
     );
@@ -747,11 +747,11 @@ export function BusinessSelection({
       ) : (
         <div className="p-8 text-center border border-border rounded-lg bg-muted/30">
           <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">{isSearching ? 'No results found' : 'No Businesses Available'}</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-2">{isSearching ? 'Sin resultados' : 'No hay negocios disponibles'}</h3>
           <p className="text-muted-foreground">
             {isSearching
-              ? 'No businesses match your search. Try different keywords.'
-              : 'There are no active businesses at the moment.'}
+              ? 'Ningún negocio coincide con tu búsqueda. Intenta con otras palabras.'
+              : 'No hay negocios activos en este momento.'}
           </p>
         </div>
       )}

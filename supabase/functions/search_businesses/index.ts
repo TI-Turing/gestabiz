@@ -709,7 +709,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ businesses: paginated, total: totalOriginal, locationsCountMap, cityBusinessIds, cityLocationIds, cityNameMap, matchSourcesByBusinessId: matchSourcesReduced, ratingStatsByBusinessId }), { headers: corsHeaders })
+    return new Response(JSON.stringify({ businesses: paginated, total: totalOriginal, locationsCountMap, cityBusinessIds, cityLocationIds, cityNameMap, matchSourcesByBusinessId: matchSourcesReduced, ratingStatsByBusinessId }), { headers: { ...corsHeaders, 'content-type': 'application/json' } })
   } catch (err) {
     captureEdgeFunctionError(err as Error, { functionName: 'search_businesses' })
     await flushSentry()

@@ -138,6 +138,13 @@ url = ""
 # [edge_functions]
 # enabled = true
 
+# Edge Function configuration — verify_jwt controls whether the Supabase gateway
+# validates the caller's JWT before executing the function.
+# Public functions (search, booking landing) must have verify_jwt = false so that
+# unauthenticated users can call them. The CLI reads these values on every deploy.
+[functions.search_businesses]
+verify_jwt = false
+
 [analytics]
 enabled = false
 
