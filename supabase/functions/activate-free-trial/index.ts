@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
     captureEdgeFunctionError(err instanceof Error ? err : new Error(String(err)), { functionName: 'activate-free-trial' })
     await flushSentry()
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 })
