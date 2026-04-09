@@ -141,7 +141,6 @@ serve(async (req: Request) => {
       .eq('business_id', business_id)
 
     if (updateError) {
-      console.error('[update-hierarchy] Update error:', updateError.code)
       return new Response(
         JSON.stringify({ error: 'Failed to update hierarchy level' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -153,7 +152,6 @@ serve(async (req: Request) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('[update-hierarchy] Unexpected error:', error instanceof Error ? error.message : 'unknown')
     captureEdgeFunctionError(error as Error, { functionName: 'update-hierarchy' })
     await flushSentry()
     return new Response(

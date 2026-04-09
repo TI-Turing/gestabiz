@@ -93,7 +93,6 @@ export class PermissionRPCService {
       });
 
       if (error) {
-        console.error('RPC Error (revoke_user_permission):', error);
         Sentry.captureException(new Error(error.message), {
           tags: { service: 'permissions', operation: 'revoke_permission' },
           extra: { businessId, userId, permission },
@@ -156,7 +155,6 @@ export class PermissionRPCService {
       });
 
       if (error) {
-        console.error('RPC Error (assign_user_permission):', error);
         Sentry.captureException(new Error(error.message), {
           tags: { service: 'permissions', operation: 'assign_permission' },
           extra: { businessId, userId, permission },
@@ -217,7 +215,6 @@ export class PermissionRPCService {
       });
 
       if (error) {
-        console.error('RPC Error (bulk_assign_permissions_from_template):', error);
         Sentry.captureException(new Error(error.message), {
           tags: { service: 'permissions', operation: 'apply_template' },
           extra: { businessId, userId, templateId },

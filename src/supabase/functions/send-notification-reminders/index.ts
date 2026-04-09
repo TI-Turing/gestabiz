@@ -59,7 +59,6 @@ serve(async (req) => {
       throw fetchError
     }
 
-    console.log(`Processing ${notifications?.length || 0} notifications`)
 
     const results = []
 
@@ -106,7 +105,6 @@ serve(async (req) => {
         })
 
       } catch (error) {
-        console.error(`Error processing notification ${notification.id}:`, error)
         
         // Mark as failed
         await supabase
@@ -136,7 +134,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error in send-notification-reminders function:', error)
     return new Response(
       JSON.stringify({ 
         error: error.message,
@@ -210,11 +207,9 @@ async function sendEmailNotification(notification: Notification): Promise<boolea
     }
 
     // Fallback: log email content (for development)
-    console.log('Email notification:', emailData)
     return true
 
   } catch (error) {
-    console.error('Error sending email:', error)
     return false
   }
 }
@@ -224,17 +219,11 @@ async function sendPushNotification(notification: Notification): Promise<boolean
     // Implement push notification logic here
     // You can use Firebase Cloud Messaging, OneSignal, or similar services
     
-    console.log('Push notification:', {
-      userId: notification.user_id,
-      title: notification.title,
-      body: notification.message
-    })
     
     // For now, just return true (implement actual push notification service)
     return true
     
   } catch (error) {
-    console.error('Error sending push notification:', error)
     return false
   }
 }
@@ -244,16 +233,10 @@ async function sendBrowserNotification(notification: Notification): Promise<bool
     // Browser notifications are typically handled on the client side
     // This could trigger a real-time event via Supabase realtime
     
-    console.log('Browser notification:', {
-      userId: notification.user_id,
-      title: notification.title,
-      body: notification.message
-    })
     
     return true
     
   } catch (error) {
-    console.error('Error sending browser notification:', error)
     return false
   }
 }

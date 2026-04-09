@@ -134,7 +134,7 @@ async function deleteTableData(table: string): Promise<number> {
   }
 }
 
-async function cleanTransactionalData(dryRun = false): Promise<void> {  console.log('='.repeat(60))
+async function cleanTransactionalData(dryRun = false): Promise<void> {  
 
   // Obtener estadísticas actuales  const beforeStats = await getTableStats()
   const retainedStats = await getRetainedStats()
@@ -142,12 +142,9 @@ async function cleanTransactionalData(dryRun = false): Promise<void> {  console
   const totalRows = Object.values(beforeStats).reduce((a, b) => a + b, 0)
   const totalRetained = Object.values(retainedStats).reduce((a, b) => a + b, 0)
 
-  console.log(`\n✅ Data a LIMPIAR (${TRANSACTIONAL_TABLES.length} tablas):`)
   Object.entries(beforeStats).forEach(([table, count]) => {
-    if (count > 0) console.log(`   ${table}: ${count} registros`)
-  })  console.log(`\n📌 Data a PRESERVAR (${RETAINED_TABLES.length} tablas):`)
+  })  
   Object.entries(retainedStats).forEach(([table, count]) => {
-    if (count > 0) console.log(`   ${table}: ${count} registros`)
   })  if (totalRows === 0) {    return
   }  if (dryRun) {    return
   }
@@ -167,11 +164,10 @@ async function cleanTransactionalData(dryRun = false): Promise<void> {  console
     deletedStats[table] = deleted
     totalDeleted += deleted
 
-    console.log(`✓ (${deleted} registros eliminados)`)
   }
 
   // Estadísticas finales
-  console.log('\n' + '='.repeat(60))  console.log('='.repeat(60))  Object.entries(deletedStats)
+      Object.entries(deletedStats)
     .filter(([, count]) => count > 0)
     .forEach(([table, count]) => {    })}
 
@@ -182,7 +178,6 @@ async function main() {
   const isDryRun = args.includes('--dry-run')
 
   if (isDryRun) {
-    console.log('🔍 Ejecutando en modo DRY-RUN (sin cambios reales)')
   }
 
   try {

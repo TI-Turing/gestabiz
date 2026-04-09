@@ -28,31 +28,14 @@ interface BrevoEmailResponse {
  * Envía un email usando Brevo SMTP
  */
 export async function sendBrevoEmail(params: BrevoEmailParams): Promise<BrevoEmailResponse> {
-  console.log('🚀 [BREVO] Iniciando sendBrevoEmail')
-  console.log('📧 [BREVO] Parámetros recibidos:', {
-    to: params.to,
-    subject: params.subject,
-    fromEmail: params.fromEmail,
-    fromName: params.fromName,
-    htmlBodyLength: params.htmlBody?.length,
-    textBodyLength: params.textBody?.length,
-    replyTo: params.replyTo
-  })
 
   const smtpHost = Deno.env.get('BREVO_SMTP_HOST') || 'smtp-relay.brevo.com'
   const smtpPort = parseInt(Deno.env.get('BREVO_SMTP_PORT') || '587')
   const smtpUser = Deno.env.get('BREVO_SMTP_USER') || 'no-reply@gestabiz.com'
   const smtpPass = Deno.env.get('BREVO_SMTP_PASSWORD')
   
-  console.log('⚙️ [BREVO] Configuración SMTP:', {
-    smtpHost,
-    smtpPort,
-    smtpUser,
-    smtpPassConfigured: !!smtpPass
-  })
   
   if (!smtpPass) {
-    console.error('❌ [BREVO] BREVO_SMTP_PASSWORD no configurado')
     return { 
       success: false, 
       error: 'BREVO_SMTP_PASSWORD not configured' 
@@ -63,30 +46,20 @@ export async function sendBrevoEmail(params: BrevoEmailParams): Promise<BrevoEma
   const fromName = params.fromName || 'Gestabiz'
   const recipients = Array.isArray(params.to) ? params.to : [params.to]
 
-  console.log('📮 [BREVO] Configuración final:', {
-    fromEmail,
-    fromName,
-    recipients,
-    recipientCount: recipients.length
-  })
 
   try {
     // Usamos la API de Brevo en lugar de SMTP directo (más confiable en edge functions)
     const brevoApiKey = Deno.env.get('BREVO_API_KEY')
     
-    console.log('🔑 [BREVO] API Key configurada:', !!brevoApiKey)
     
     if (brevoApiKey) {
-      console.log('🌐 [BREVO] Usando Brevo API (método preferido)')
       // Usar API si está disponible (preferido)
       return await sendViaBrevoAPI(params, brevoApiKey, fromEmail, fromName)
     } else {
-      console.log('📡 [BREVO] Fallback a SMTP')
       // Fallback a SMTP usando fetch (menos confiable pero funciona)
       return await sendViaSMTP(params, smtpHost, smtpPort, smtpUser, smtpPass, fromEmail, fromName)
     }
   } catch (error) {
-    console.error('❌ [BREVO] Error enviando email:', error)
     return { 
       success: false, 
       error: error.message || 'Unknown error sending email' 
@@ -103,11 +76,9 @@ async function sendViaBrevoAPI(
   fromEmail: string,
   fromName: string
 ): Promise<BrevoEmailResponse> {
-  console.log('🌐 [BREVO-API] Iniciando sendViaBrevoAPI')
   
   const recipients = Array.isArray(params.to) ? params.to : [params.to]
   
-  console.log('👥 [BREVO-API] Destinatarios procesados:', recipients)
   
   const payload = {
     sender: {
@@ -121,16 +92,7 @@ async function sendViaBrevoAPI(
     ...(params.replyTo && { replyTo: { email: params.replyTo } })
   }
 
-  console.log('📦 [BREVO-API] Payload preparado:', {
-    sender: payload.sender,
-    to: payload.to,
-    subject: payload.subject,
-    htmlContentLength: payload.htmlContent.length,
-    textContentLength: payload.textContent.length,
-    hasReplyTo: !!payload.replyTo
-  })
 
-  console.log('🔗 [BREVO-API] Enviando request a Brevo API...')
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
@@ -141,24 +103,13 @@ async function sendViaBrevoAPI(
     body: JSON.stringify(payload)
   })
 
-  console.log('📡 [BREVO-API] Respuesta recibida:', {
-    status: response.status,
-    statusText: response.statusText,
-    ok: response.ok
-  })
 
   if (!response.ok) {
     const error = await response.text()
-    console.error('❌ [BREVO-API] Error en la respuesta:', {
-      status: response.status,
-      statusText: response.statusText,
-      error: error
-    })
     throw new Error(`Brevo API error: ${response.status} - ${error}`)
   }
 
   const data = await response.json()
-  console.log('✅ [BREVO-API] Respuesta exitosa:', data)
   
   return {
     success: true,
@@ -181,7 +132,6 @@ async function sendViaSMTP(
 ): Promise<BrevoEmailResponse> {
   // En Deno Edge Functions no tenemos acceso directo a SMTP
   // Esta función está aquí como referencia, pero SIEMPRE usa la API
-  console.warn('[Brevo] SMTP directo no soportado en Edge Functions, usa BREVO_API_KEY')
   
   return {
     success: false,

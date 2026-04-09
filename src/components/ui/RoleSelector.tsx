@@ -126,7 +126,6 @@ export function RoleSelector({
           ) : (
             <DropdownMenuItem
               onClick={() => {
-                console.log('[RoleSelector] Direct onClick - Switching to admin (create business)')
                 onRoleChange('admin', undefined)
                 setIsOpen(false)
               }}
@@ -179,7 +178,6 @@ export function RoleSelector({
           ) : (
             <DropdownMenuItem
               onClick={() => {
-                console.log('[RoleSelector] Direct onClick - Switching to employee (join business)')
                 onRoleChange('employee', undefined)
                 setIsOpen(false)
               }}

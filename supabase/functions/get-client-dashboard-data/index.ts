@@ -98,7 +98,6 @@ serve(async (req) => {
     );
 
     if (queryError) {
-      console.error('[get-client-dashboard-data] RPC Error:', queryError.code);
       return new Response(
         JSON.stringify({ error: 'Failed to load dashboard data' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -124,7 +123,6 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('[get-client-dashboard-data] Unexpected error:', error instanceof Error ? error.message : 'unknown');
     captureEdgeFunctionError(error as Error, { functionName: 'get-client-dashboard-data' })
     await flushSentry()
     return new Response(

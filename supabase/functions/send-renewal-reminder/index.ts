@@ -168,7 +168,6 @@ Deno.serve(async (_req) => {
   const appUrl = (Deno.env.get('APP_URL') ?? 'https://gestabiz.com').replace(/\/$/, '')
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('[send-renewal-reminder] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
     return new Response(JSON.stringify({ error: 'Server misconfigured' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -176,7 +175,6 @@ Deno.serve(async (_req) => {
   }
 
   if (!mpAccessToken) {
-    console.error('[send-renewal-reminder] Missing MERCADOPAGO_ACCESS_TOKEN')
     return new Response(JSON.stringify({ error: 'MERCADOPAGO_ACCESS_TOKEN not configured' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -199,7 +197,6 @@ Deno.serve(async (_req) => {
     .lte('end_date', twodays.toISOString())
 
   if (plansError) {
-    console.error('[send-renewal-reminder] Error fetching plans:', plansError)
     return new Response(JSON.stringify({ error: plansError.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -207,13 +204,11 @@ Deno.serve(async (_req) => {
   }
 
   if (!plans || plans.length === 0) {
-    console.log('[send-renewal-reminder] No plans due for renewal reminder')
     return new Response(JSON.stringify({ success: true, processed: 0 }), {
       headers: { 'Content-Type': 'application/json' },
     })
   }
 
-  console.log(`[send-renewal-reminder] Processing ${plans.length} plan(s)`)
 
   let successCount = 0
   let errorCount = 0
@@ -228,7 +223,6 @@ Deno.serve(async (_req) => {
         .single()
 
       if (bizError || !business) {
-        console.error(`[send-renewal-reminder] Business not found for plan ${plan.id}`)
         errorCount++
         continue
       }
@@ -240,7 +234,6 @@ Deno.serve(async (_req) => {
         .single()
 
       if (profileError || !profile?.email) {
-        console.error(`[send-renewal-reminder] Owner profile not found for business ${plan.business_id}`)
         errorCount++
         continue
       }
@@ -296,7 +289,6 @@ Deno.serve(async (_req) => {
 
       if (!mpResponse.ok) {
         const mpError = await mpResponse.text()
-        console.error(`[send-renewal-reminder] MercadoPago error for plan ${plan.id}: ${mpError}`)
         errorCount++
         continue
       }
@@ -323,7 +315,6 @@ Deno.serve(async (_req) => {
       })
 
       if (!brevoResult.success) {
-        console.error(`[send-renewal-reminder] Email failed for ${ownerEmail}: ${brevoResult.error}`)
         errorCount++
         continue
       }
@@ -339,13 +330,10 @@ Deno.serve(async (_req) => {
       })
 
       if (logError) {
-        console.warn(`[send-renewal-reminder] Failed to log notification: ${logError.message}`)
       }
 
-      console.log(`[send-renewal-reminder] Reminder sent to ${ownerEmail} for business ${plan.business_id}`)
       successCount++
     } catch (err) {
-      console.error(`[send-renewal-reminder] Unexpected error for plan ${plan.id}:`, err)
       errorCount++
     }
   }

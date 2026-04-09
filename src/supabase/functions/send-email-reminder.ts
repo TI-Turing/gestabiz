@@ -144,7 +144,6 @@ serve(async (req) => {
       .eq('id', notificationId)
 
     if (updateError) {
-      console.error('Failed to update notification status:', updateError)
     }
 
     return new Response(
@@ -160,7 +159,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error sending email reminder:', error)
 
     // Update notification status to failed if we have the notificationId
     if (req.method === 'POST') {
@@ -181,7 +179,6 @@ serve(async (req) => {
             .eq('id', notificationId)
         }
       } catch (updateError) {
-        console.error('Failed to update notification status:', updateError)
       }
     }
 

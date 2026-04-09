@@ -204,7 +204,6 @@ serve(async (req) => {
     }
 
     // Log execution stats
-    console.log('Business inactivity check completed:', stats)
 
     return new Response(
       JSON.stringify({ 
@@ -220,7 +219,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error checking business inactivity:', error)
     
     captureEdgeFunctionError(error as Error, { functionName: 'check-business-inactivity' })
     await flushSentry()

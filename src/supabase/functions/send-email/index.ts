@@ -39,10 +39,6 @@ serve(async (req) => {
     const sendGridApiKey = Deno.env.get('SENDGRID_API_KEY')
     
     if (!sendGridApiKey) {
-      console.log('SendGrid API key not configured. Email simulation only.')
-      console.log(`Would send email to: ${to}`)
-      console.log(`Subject: ${subject}`)
-      console.log(`Content: ${text || html}`)
       
       return new Response(
         JSON.stringify({ 
@@ -105,7 +101,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error sending email:', error)
     
     return new Response(
       JSON.stringify({ 

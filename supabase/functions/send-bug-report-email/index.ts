@@ -356,7 +356,6 @@ Este email fue generado automaticamente por el sistema de reporte de bugs de Ges
     )
 
   } catch (error) {
-    console.error('Error sending bug report email:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'send-bug-report-email' })
     await flushSentry()
     return new Response(

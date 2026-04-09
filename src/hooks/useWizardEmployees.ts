@@ -16,6 +16,10 @@ interface EmployeeDataFromRPC {
   review_count: number;
 }
 
+interface WorkScheduleData {
+  employee_id: string;
+}
+
 /**
  * Hook para obtener empleados del wizard con React Query
  * Usa RPC consolidada get_wizard_employees_data para reducir requests
@@ -45,8 +49,30 @@ export function useWizardEmployees(
       if (rpcError) throw new Error(`RPC error: ${rpcError.message}`);
       if (!employees) return [];
 
+      const rawEmployees = employees as EmployeeDataFromRPC[];
+      if (rawEmployees.length === 0) return [];
+
+      // Regla de negocio: sin horario configurado no puede recibir citas.
+      // Se exige al menos un día laboral activo en work_schedules.
+      const employeeIds = rawEmployees.map((e) => e.employee_id);
+      const { data: schedules, error: schedulesError } = await supabase
+        .from('work_schedules')
+        .select('employee_id')
+        .in('employee_id', employeeIds)
+        .eq('is_working', true);
+
+      if (schedulesError) {
+        throw new Error(`Work schedules error: ${schedulesError.message}`);
+      }
+
+      const eligibleEmployeeIds = new Set(
+        (schedules as WorkScheduleData[] | null)?.map((s) => s.employee_id) ?? [],
+      );
+
       // Transform RPC response to WizardEmployee format
-      return (employees as EmployeeDataFromRPC[]).map(e => ({
+      return rawEmployees
+        .filter((e) => eligibleEmployeeIds.has(e.employee_id))
+        .map(e => ({
         id: e.employee_id,
         full_name: e.full_name,
         avatar_url: e.avatar_url,

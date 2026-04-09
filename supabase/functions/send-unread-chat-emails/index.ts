@@ -32,7 +32,6 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    console.log('[send-unread-chat-emails] 🔍 Buscando mensajes no leídos mayores a 15 minutos...')
 
     // Query para obtener clientes con mensajes no leídos > 15 minutos
     // 1. Obtener notificaciones de chat_message no leídas > 15 minutos
@@ -54,12 +53,10 @@ serve(async (req) => {
       .order('created_at', { ascending: false })
 
     if (notifError) {
-      console.error('[send-unread-chat-emails] ❌ Error fetching notifications:', notifError)
       throw notifError
     }
 
     if (!unreadNotifications || unreadNotifications.length === 0) {
-      console.log('[send-unread-chat-emails] ✅ No hay mensajes no leídos > 15 minutos')
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -70,7 +67,6 @@ serve(async (req) => {
       )
     }
 
-    console.log(`[send-unread-chat-emails] 📊 Found ${unreadNotifications.length} unread notifications`)
 
     // 2. Agrupar por user_id
     const groupedByUser = new Map<string, typeof unreadNotifications>()
@@ -83,7 +79,6 @@ serve(async (req) => {
       groupedByUser.get(userId)!.push(notif)
     }
 
-    console.log(`[send-unread-chat-emails] 👥 Agrupados en ${groupedByUser.size} usuarios`)
 
     // 3. Para cada usuario, verificar que sea CLIENTE (no admin ni employee)
     const clientsToNotify: ClientWithUnreadMessages[] = []
@@ -97,7 +92,6 @@ serve(async (req) => {
         .single()
 
       if (profileError || !profile) {
-        console.warn(`[send-unread-chat-emails] ⚠️ Usuario ${userId} no encontrado`)
         continue
       }
 
@@ -119,11 +113,9 @@ serve(async (req) => {
       const isEmployee = employeeLinks && employeeLinks.length > 0
 
       if (isAdmin || isEmployee) {
-        console.log(`[send-unread-chat-emails] ⏭️ Usuario ${profile.full_name} es admin/employee, omitiendo`)
         continue
       }
 
-      console.log(`[send-unread-chat-emails] ✅ Usuario ${profile.full_name} es CLIENTE`)
 
       // Verificar preferencias de notificación (si quiere emails)
       const { data: preferences } = await supabase
@@ -134,14 +126,12 @@ serve(async (req) => {
 
       // Si tiene email_enabled = false, omitir
       if (preferences && !preferences.email_enabled) {
-        console.log(`[send-unread-chat-emails] ⏭️ Usuario ${profile.full_name} deshabilitó todos los emails`)
         continue
       }
 
       // Si tiene preferencia específica para chat_message con email = false, respetar
       const chatEmailPref = preferences?.notification_preferences?.chat_message?.email
       if (chatEmailPref === false) {
-        console.log(`[send-unread-chat-emails] ⏭️ Usuario ${profile.full_name} deshabilitó emails de chat`)
         continue
       }
 
@@ -184,7 +174,6 @@ serve(async (req) => {
     }
 
     if (clientsToNotify.length === 0) {
-      console.log('[send-unread-chat-emails] ✅ No hay clientes para notificar')
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -195,7 +184,6 @@ serve(async (req) => {
       )
     }
 
-    console.log(`[send-unread-chat-emails] 📧 Enviando emails a ${clientsToNotify.length} clientes...`)
 
     // 4. Enviar emails
     const emailResults = []
@@ -227,14 +215,12 @@ serve(async (req) => {
         })
 
         if (sendError) {
-          console.error(`[send-unread-chat-emails] ❌ Error enviando email a ${client.email}:`, sendError)
           emailResults.push({
             email: client.email,
             success: false,
             error: sendError.message
           })
         } else {
-          console.log(`[send-unread-chat-emails] ✅ Email enviado a ${client.email}`)
           
           // Marcar notificaciones como "email_sent" en data
           const notificationIds = unreadNotifications
@@ -260,7 +246,6 @@ serve(async (req) => {
         }
 
       } catch (err: any) {
-        console.error(`[send-unread-chat-emails] ❌ Error procesando cliente ${client.email}:`, err)
         emailResults.push({
           email: client.email,
           success: false,
@@ -271,7 +256,6 @@ serve(async (req) => {
 
     const successCount = emailResults.filter(r => r.success).length
 
-    console.log(`[send-unread-chat-emails] 🎉 Completado: ${successCount}/${clientsToNotify.length} emails enviados`)
 
     return new Response(
       JSON.stringify({
@@ -285,7 +269,6 @@ serve(async (req) => {
     )
 
   } catch (error: any) {
-    console.error('[send-unread-chat-emails] ❌ Error general:', error)
     captureEdgeFunctionError(err as Error, { functionName: 'send-unread-chat-emails' })
     await flushSentry()
     return new Response(

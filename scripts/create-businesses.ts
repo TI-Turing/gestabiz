@@ -50,7 +50,6 @@ async function createBusinesses() {  // Obtener los primeros 25 usuarios como o
     .limit(25);
 
   if (!owners || owners.length < 25) {
-    console.error('❌ No hay suficientes usuarios (se necesitan al menos 25)');
     return;
   }  let businessIndex = 0;
   const createdBusinesses = [];

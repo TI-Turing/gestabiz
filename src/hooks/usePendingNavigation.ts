@@ -39,7 +39,6 @@ export function usePendingNavigation(
           sessionStorage.removeItem('pending-navigation')
         } else {
           // eslint-disable-next-line no-console
-          console.warn(`⚠️ Pending navigation too old (${age}ms), discarding`)
           sessionStorage.removeItem('pending-navigation')
         }
       } catch (error) {

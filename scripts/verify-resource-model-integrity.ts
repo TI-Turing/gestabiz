@@ -161,10 +161,8 @@ async function verifyResourceModelIntegrity(): Promise<VerificationResult> {
   const { count: appointmentsWithResource } = await supabase
     .from('appointments')
     .select('*', { count: 'exact', head: true })
-    .not('resource_id', 'is', null)  console.log(`  ├─ Profesionales: ${professionalBusinesses || 0} (${((professionalBusinesses || 0) / (totalBusinesses || 1) * 100).toFixed(1)}%)`)
-  console.log(`  ├─ Recursos Físicos: ${resourceBusinesses || 0} (${((resourceBusinesses || 0) / (totalBusinesses || 1) * 100).toFixed(1)}%)`)
-  console.log(`  ├─ Híbridos: ${hybridBusinesses || 0} (${((hybridBusinesses || 0) / (totalBusinesses || 1) * 100).toFixed(1)}%)`)
-  console.log(`  └─ Clases Grupales: ${groupClassBusinesses || 0} (${((groupClassBusinesses || 0) / (totalBusinesses || 1) * 100).toFixed(1)}%)`)  return result
+    .not('resource_id', 'is', null)  
+    return result
 }
 
 // Ejecutar verificación
@@ -172,21 +170,19 @@ async function main() {
   try {
     const result = await verifyResourceModelIntegrity()
 
-    console.log('\n' + '='.repeat(50))    console.log('='.repeat(50))
+        
 
-    if (result.info.length > 0) {      result.info.forEach(info => console.log(`   ${info}`))
+    if (result.info.length > 0) {      result.info.forEach(info => )
     }
 
-    if (result.warnings.length > 0) {      result.warnings.forEach(warning => console.log(`   ${warning}`))
+    if (result.warnings.length > 0) {      result.warnings.forEach(warning => )
     }
 
-    if (result.errors.length > 0) {      result.errors.forEach(error => console.log(`   ${error}`))
+    if (result.errors.length > 0) {      result.errors.forEach(error => )
     }
 
-    console.log('\n' + '='.repeat(50))
     if (result.passed) {    } else {      process.exit(1)
     }
-    console.log('='.repeat(50) + '\n')
 
   } catch (error) {    process.exit(1)
   }

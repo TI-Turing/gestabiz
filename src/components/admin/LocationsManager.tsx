@@ -106,6 +106,16 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
 
   const [locations, setLocations] = useState<Location[]>([])
   const locationsAtLimit = quotaInfo('locations', locations.length).isAtLimit
+  // Sedes visibles según el límite del plan: primaria primero, luego recortadas al límite
+  const { limit: locationsLimit } = quotaInfo('locations', locations.length)
+  const visibleLocations = React.useMemo(() => {
+    const sorted = [...locations].sort((a, b) => {
+      if (a.is_primary && !b.is_primary) return -1
+      if (!a.is_primary && b.is_primary) return 1
+      return 0
+    })
+    return locationsLimit === null ? sorted : sorted.slice(0, locationsLimit)
+  }, [locations, locationsLimit])
   // ID de la sede que pasará a ser principal cuando se desmarca la actual
   const [newPrimaryId, setNewPrimaryId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -116,6 +126,7 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
   const { preferredLocationId } = usePreferredLocation(businessId)
   const [locationBanners, setLocationBanners] = useState<Record<string, string>>({})
   const [locationPrimaryVideos, setLocationPrimaryVideos] = useState<Record<string, string>>({})
+  const [locationsWithServices, setLocationsWithServices] = useState<Set<string>>(new Set())
   const [profileLocation, setProfileLocation] = useState<Location | null>(null)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   
@@ -172,7 +183,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
 
       if (error) throw error
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })    }
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })
+    }
 
     return mediaItems.map((media) =>
       duplicateIds.includes(media.id) ? { ...media, is_banner: false } : media
@@ -192,7 +204,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       const normalized = await normalizeBannerDuplicates(data || [])
       setExistingMedia(normalized)
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })      toast.error('Error al cargar multimedia existente')
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })
+      toast.error('Error al cargar multimedia existente')
       setExistingMedia([])
     } finally {
       setIsLoadingMedia(false)
@@ -209,7 +222,21 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setLocations(data || [])
+      const locationRows = data || []
+      setLocations(locationRows)
+
+      const locationIds = locationRows.map((location) => location.id)
+      if (locationIds.length === 0) {
+        setLocationsWithServices(new Set())
+      } else {
+        const { data: locationServices } = await supabase
+          .from('location_services')
+          .select('location_id')
+          .in('location_id', locationIds)
+
+        const rows = (locationServices as Array<{ location_id: string }> | null) ?? []
+        setLocationsWithServices(new Set(rows.map((row) => row.location_id)))
+      }
     } catch {
       toast.error('Error al cargar las sedes')
     } finally {
@@ -377,7 +404,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       setIsBannerCropperOpen(false)
       setBannerImageToEdit(null)
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'LocationsManager' } })      toast.error('Error al procesar el banner')
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'LocationsManager' } })
+      toast.error('Error al procesar el banner')
     }
   }
 
@@ -509,7 +537,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
               toast.info(`Dirección actualizada: se notificó por email a ${notifiedCount} cliente(s) con citas pendientes`)
             }
           } catch (notifyErr) {
-            Sentry.captureException(notifyErr instanceof Error ? notifyErr : new Error(String(notifyErr)), { tags: { component: 'LocationsManager' } })            toast.error('La sede fue actualizada, pero hubo un error enviando notificaciones de reubicación')
+            Sentry.captureException(notifyErr instanceof Error ? notifyErr : new Error(String(notifyErr)), { tags: { component: 'LocationsManager' } })
+            toast.error('La sede fue actualizada, pero hubo un error enviando notificaciones de reubicación')
           }
         }
       } else {
@@ -568,7 +597,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
           setCroppedBannerPreview(null)
           setBannerImageToEdit(null)
         } catch (bannerError) {
-          Sentry.captureException(bannerError instanceof Error ? bannerError : new Error(String(bannerError)), { tags: { component: 'LocationsManager' } })          toast.error('Sede guardada, pero hubo un error al guardar el banner')
+          Sentry.captureException(bannerError instanceof Error ? bannerError : new Error(String(bannerError)), { tags: { component: 'LocationsManager' } })
+          toast.error('Sede guardada, pero hubo un error al guardar el banner')
         }
       }
 
@@ -577,14 +607,16 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
         try {
           await uploadMediaFn()
         } catch (mediaError) {
-          Sentry.captureException(mediaError instanceof Error ? mediaError : new Error(String(mediaError)), { tags: { component: 'LocationsManager' } })          toast.error('Sede guardada, pero hubo un error al subir la multimedia')
+          Sentry.captureException(mediaError instanceof Error ? mediaError : new Error(String(mediaError)), { tags: { component: 'LocationsManager' } })
+          toast.error('Sede guardada, pero hubo un error al subir la multimedia')
         }
       }
 
       await fetchLocations()
       handleCloseDialog()
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })      // Mostrar mensaje de error específico
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })
+      // Mostrar mensaje de error específico
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
       const isUpdate = !!editingLocation
       
@@ -673,7 +705,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       )
       await fetchLocations()
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })      toast.error('Error al eliminar la sede')
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })
+      toast.error('Error al eliminar la sede')
     }
   }
 
@@ -707,7 +740,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       // Recargar ubicaciones para actualizar las tarjetas
       await fetchLocations()
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })      toast.error('Error al eliminar multimedia')
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })
+      toast.error('Error al eliminar multimedia')
     }
   }
 
@@ -725,7 +759,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       ))
       toast.success('Descripción actualizada')
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })      toast.error('Error al actualizar descripción')
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })
+      toast.error('Error al actualizar descripción')
     }
   }
 
@@ -760,7 +795,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       // Refrescar banderas para que las tarjetas se actualicen
       await refreshMediaFlags()
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })      toast.error('Error al cambiar banner')
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })
+      toast.error('Error al cambiar banner')
     }
   }
 
@@ -795,7 +831,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       // Recargar ubicaciones para actualizar las tarjetas
       await fetchLocations()
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })      toast.error('Error al cambiar video principal')
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })
+      toast.error('Error al cambiar video principal')
     }
   }
 
@@ -834,7 +871,8 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
       
       toast.success('Descripción guardada')
     } catch (err) {
-      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })      toast.error('Error al guardar descripción')
+      Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'LocationsManager' } })
+      toast.error('Error al guardar descripción')
     } finally {
       setSavingDescriptions(prev => ({ ...prev, [mediaId]: false }))
     }
@@ -906,7 +944,7 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {locations.map((location) => (
+          {visibleLocations.map((location) => (
             <Card
               key={location.id}
               className={`relative overflow-hidden cursor-pointer group ${locationBanners[location.id] ? 'bg-transparent' : ''}`}
@@ -944,6 +982,11 @@ export function LocationsManager({ businessId }: LocationsManagerProps) {
                       {preferredLocationId === location.id && (
                         <Badge variant="outline" className="text-[10px] sm:text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-300 dark:border-green-700 flex items-center gap-1">
                           <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" /> Administrada
+                        </Badge>
+                      )}
+                      {!locationsWithServices.has(location.id) && (
+                        <Badge variant="outline" className="text-[10px] sm:text-xs border-amber-500/40 text-amber-400">
+                          Sin servicios asignados
                         </Badge>
                       )}
                     </div>

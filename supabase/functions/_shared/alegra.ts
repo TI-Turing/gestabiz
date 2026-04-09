@@ -109,14 +109,10 @@ export class AlegraClient {
           `/contacts?identifications=${encodeURIComponent(params.identification)}&fields=id,name,identification`,
         )
         if (Array.isArray(contacts) && contacts.length > 0) {
-          console.log(
-            `[alegra] Contact found id=${contacts[0].id} identification=${params.identification}`,
-          )
           return contacts[0].id
         }
       } catch (err) {
         // No encontrado o error de red — continuamos creando
-        console.warn('[alegra] upsertContact search error (will create):', (err as Error).message)
       }
     }
 
@@ -140,7 +136,6 @@ export class AlegraClient {
       body: JSON.stringify(body),
     })
 
-    console.log(`[alegra] Contact created id=${contact.id} name="${params.name}"`)
     return contact.id
   }
 
@@ -155,11 +150,9 @@ export class AlegraClient {
         `/items?name=${encodeURIComponent(itemName)}&fields=id,name,price`,
       )
       if (Array.isArray(items) && items.length > 0) {
-        console.log(`[alegra] Item found id=${items[0].id} name="${itemName}"`)
         return items[0].id
       }
     } catch (err) {
-      console.warn('[alegra] getOrCreateItem search error (will create):', (err as Error).message)
     }
 
     const item = await this.request<AlegraItem>('/items', {
@@ -173,7 +166,6 @@ export class AlegraClient {
       }),
     })
 
-    console.log(`[alegra] Item created id=${item.id} name="${itemName}"`)
     return item.id
   }
 
@@ -212,9 +204,6 @@ export class AlegraClient {
       body: JSON.stringify(body),
     })
 
-    console.log(
-      `[alegra] Invoice created id=${invoice.id} number=${invoice.number} total=${invoice.total}`,
-    )
     return invoice
   }
 }
@@ -230,7 +219,6 @@ export class AlegraClient {
 export function getAlegraClient(): AlegraClient | null {
   const token = Deno.env.get('ALEGRA_TOKEN')
   if (!token) {
-    console.warn('[alegra] ALEGRA_TOKEN not set — electronic invoicing disabled')
     return null
   }
   return new AlegraClient(token)

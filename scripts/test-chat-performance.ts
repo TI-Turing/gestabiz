@@ -70,7 +70,6 @@ async function measureTime<T>(
   const start = performance.now();
   const result = await fn();
   const duration = performance.now() - start;
-  console.log(`⏱️  ${label}: ${duration.toFixed(2)}ms`);
   return { result, duration };
 }
 
@@ -89,7 +88,6 @@ async function setupTestData() {  // Nota: En producción necesitarías crear u
 
   if (usersError || !users || users.length < 2) {    process.exit(1);
   }  users.forEach((u, i) => {
-    console.log(`   ${i + 1}. ${u.full_name || u.email} (${u.id})`);
   });
 
   // Crear conversación de prueba
@@ -189,11 +187,7 @@ async function generateMessages(conversationId: string, userIds: string[]) {  c
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
-  stats.avgBatchTime = stats.totalTime / batches;  console.log(`   Tiempo total: ${stats.totalTime.toFixed(2)}ms`);
-  console.log(`   Avg batch: ${stats.avgBatchTime.toFixed(2)}ms`);
-  console.log(`   Min batch: ${stats.minBatchTime.toFixed(2)}ms`);
-  console.log(`   Max batch: ${stats.maxBatchTime.toFixed(2)}ms`);
-  console.log(`   Throughput: ${(stats.totalMessages / (stats.totalTime / 1000)).toFixed(2)} msg/s\n`);
+  stats.avgBatchTime = stats.totalTime / batches;  
 
   return stats;
 }
@@ -289,7 +283,6 @@ async function testQueryPerformance(conversationId: string) {  const results: R
   );
   results.withJoin = d5;  Object.entries(results).forEach(([key, duration]) => {
     const status = duration < 100 ? '✅' : duration < 500 ? '⚠️' : '❌';
-    console.log(`   ${status} ${key}: ${duration.toFixed(2)}ms`);
   });  return results;
 }
 
@@ -344,16 +337,13 @@ function analyzeResults(
 
   // Print results
   if (criticals.length > 0) {
-    console.log('🔴 CRÍTICOS (Requieren atención inmediata):');
-    criticals.forEach((c) => console.log(`   - ${c}`));  }
+    criticals.forEach((c) => );  }
 
   if (warnings.length > 0) {
-    console.log('⚠️  ADVERTENCIAS (Mejoras recomendadas):');
-    warnings.forEach((w) => console.log(`   - ${w}`));  }
+    warnings.forEach((w) => );  }
 
   if (recommendations.length > 0) {
-    console.log('💡 RECOMENDACIONES (Optimizaciones opcionales):');
-    recommendations.forEach((r) => console.log(`   - ${r}`));  }
+    recommendations.forEach((r) => );  }
 
   if (criticals.length === 0 && warnings.length === 0) {  }
 
@@ -377,7 +367,6 @@ async function cleanup(conversationId: string) {  const { duration } = await me
     }
   );
 
-  console.log(`✅ Datos de prueba eliminados en ${duration.toFixed(2)}ms\n`);
 }
 
 // ============================================================================

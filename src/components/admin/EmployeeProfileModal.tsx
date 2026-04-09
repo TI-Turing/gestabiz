@@ -254,11 +254,6 @@ export function EmployeeProfileModal({
       if (error) throw error
       // Si no se actualizó ninguna fila, avisar en consola para diagnóstico
       if (!updatedRows || updatedRows.length === 0) {
-        console.warn('[handleSaveCargo] Update ejecutado sin error pero sin filas actualizadas.', {
-          employee_id: employee.user_id,
-          business_id: employee.business_id,
-          newValue: cargoValue.trim() || null,
-        })
       }
       toast.success(t('employeeProfile.modal.cargo.updated'))
       await queryClient.invalidateQueries({ queryKey: ['employee-modal-detail', employee.user_id, employee.business_id] })

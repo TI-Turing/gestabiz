@@ -42,7 +42,6 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('Error in calendar-integration function:', error)
     return new Response(
       JSON.stringify({ error: error.message, success: false }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

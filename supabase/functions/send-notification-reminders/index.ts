@@ -94,7 +94,6 @@ serve(async (req) => {
             break
 
           default:
-            console.warn(`Unknown delivery method: ${notification.delivery_method}`)
         }
 
         // Update notification status
@@ -119,7 +118,6 @@ serve(async (req) => {
           status: success ? 'sent' : 'failed'
         })
       } catch (notificationError) {
-        console.error(`Error processing notification ${notification.id}:`, notificationError)
         captureEdgeFunctionError(notificationError as Error, { functionName: 'send-notification-reminders', notificationId: notification.id })
 
         await supabase
@@ -150,7 +148,6 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   } catch (error) {
-    console.error('Error processing notification reminders:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'send-notification-reminders' })
     await flushSentry()
     return new Response(

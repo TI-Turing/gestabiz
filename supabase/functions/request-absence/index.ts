@@ -67,13 +67,6 @@ serve(async (req) => {
     const requestData: AbsenceRequest = await req.json();
     const { businessId, absenceType, startDate, endDate, reason, employeeNotes } = requestData;
 
-    console.log('[request-absence] Parsed data:', {
-      businessId,
-      absenceType,
-      startDate,
-      endDate,
-      hasReason: !!reason,
-    });
 
     // 1. Validar fechas
     const start = new Date(startDate);
@@ -81,12 +74,6 @@ serve(async (req) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    console.log('[request-absence] Date validation:', {
-      start: start.toISOString(),
-      end: end.toISOString(),
-      today: today.toISOString(),
-      startGreaterThanEnd: start > end,
-    });
 
     if (start > end) {
       throw new Error('Fecha de inicio no puede ser después de fecha de fin');
@@ -215,7 +202,6 @@ serve(async (req) => {
         });
 
       if (approvalError) {
-        console.error('Error creating approval request:', approvalError);
       }
 
       // 8. Obtener perfil del empleado para el nombre
@@ -281,7 +267,6 @@ serve(async (req) => {
           .from('in_app_notifications')
           .insert(notificationsToInsert)
         if (notifError) {
-          console.error('Error creating absence request notifications:', notifError)
         }
       }
 
@@ -318,7 +303,6 @@ serve(async (req) => {
           )
         )
       } catch (emailError) {
-        console.error('Error sending notification emails:', emailError);
         // No fallar si el email no se envía (la notificación in-app sigue siendo válida)
       }
     } else {
@@ -333,7 +317,6 @@ serve(async (req) => {
         .eq('id', absence.id);
 
       // Cancelar citas si aplica
-      console.log('TODO: Trigger Edge Function cancel-appointments-on-absence');
     }
 
     return new Response(
@@ -352,7 +335,6 @@ serve(async (req) => {
     );
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[request-absence] Error:', errorMessage);
     captureEdgeFunctionError(error as Error, { functionName: 'request-absence', operation: 'processAbsenceRequest' })
     await flushSentry()
 

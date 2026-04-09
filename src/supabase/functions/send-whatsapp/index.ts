@@ -42,9 +42,6 @@ serve(async (req) => {
     const whatsappPhoneId = Deno.env.get('WHATSAPP_PHONE_ID')
     
     if (!whatsappToken || !whatsappPhoneId) {
-      console.log('WhatsApp API not configured. Message simulation only.')
-      console.log(`Would send WhatsApp to: ${to}`)
-      console.log(`Message: ${message}`)
       
       return new Response(
         JSON.stringify({ 
@@ -123,7 +120,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error sending WhatsApp message:', error)
     
     return new Response(
       JSON.stringify({ 

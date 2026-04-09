@@ -110,7 +110,8 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
       }, 2000)
       
     } catch (error: any) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AuthScreen' } })      toast.error('Error al enviar email', {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'AuthScreen' } })
+      toast.error('Error al enviar email', {
         description: error.message || 'Por favor intenta nuevamente',
         duration: 5000
       })
@@ -385,15 +386,6 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
               className="h-28 w-auto max-w-[320px] object-contain"
             />
           </div>
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            {APP_CONFIG.NAME}
-          </h1>
-          <p className="text-muted-foreground text-sm mb-4">
-            {isSignUpMode 
-              ? t('auth.signUpDescription')
-              : t('auth.signInDescription')
-            }
-          </p>
           
           {/* Service Status Badge */}
           <div className="flex justify-center mb-4">

@@ -340,23 +340,23 @@ export function EmployeeManagementHierarchy({
               <div className="grid grid-cols-5 gap-0.5 sm:gap-1 text-xs">
                 <div className="text-center">
                   <div className="font-bold text-base sm:text-lg">{stats.byLevel[0]}</div>
-                  <div className="text-muted-foreground text-[10px] sm:text-xs">Own</div>
+                  <div className="text-muted-foreground text-[10px] sm:text-xs">Prop.</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-base sm:text-lg">{stats.byLevel[1]}</div>
-                  <div className="text-muted-foreground text-[10px] sm:text-xs">Adm</div>
+                  <div className="text-muted-foreground text-[10px] sm:text-xs">Admin</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-base sm:text-lg">{stats.byLevel[2]}</div>
-                  <div className="text-muted-foreground text-[10px] sm:text-xs">Mgr</div>
+                  <div className="text-muted-foreground text-[10px] sm:text-xs">Ger.</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-base sm:text-lg">{stats.byLevel[3]}</div>
-                  <div className="text-muted-foreground text-[10px] sm:text-xs">Lead</div>
+                  <div className="text-muted-foreground text-[10px] sm:text-xs">Líder</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-base sm:text-lg">{stats.byLevel[4]}</div>
-                  <div className="text-muted-foreground text-[10px] sm:text-xs">Staff</div>
+                  <div className="text-muted-foreground text-[10px] sm:text-xs">Pers.</div>
                 </div>
               </div>
             </div>

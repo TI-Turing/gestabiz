@@ -597,7 +597,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   const fetchAppointments = useCallback(async (businessId: string, date: Date) => {
     // Protección contra llamados duplicados
     if (isFetchingRef.current) {
-      if (DEBUG_MODE) console.log('⚠️ [fetchAppointments] Ya hay un fetch en progreso, ignorando...');
       return;
     }
 
@@ -614,13 +613,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       const end = new Date(Date.UTC(year, month - 1, day + 1, 4, 59, 59, 999)); // UTC+5 = Colombia 23:59:59
 
       if (DEBUG_MODE) {
-        console.log('📅 [fetchAppointments] Buscando citas para:', {
-          fecha: format(date, 'yyyy-MM-dd'),
-          colombiaStart: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} 00:00:00`,
-          colombiaEnd: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} 23:59:59`,
-          utcStart: start.toISOString(),
-          utcEnd: end.toISOString()
-        });
       }
 
       const { data, error } = await supabase
@@ -685,7 +677,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           return acc;
         }, {} as Record<string, string>);
         
-        if (DEBUG_MODE) console.log('👥 [fetchAppointments] Nombres de empleados cargados:', employeeNames);
       }
 
       const formattedAppointments: Appointment[] = (data || []).map((apt: Record<string, unknown>) => ({
@@ -711,25 +702,8 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       }));
 
       if (DEBUG_MODE) {
-        console.log('📊 [fetchAppointments] Resumen:', {
-          total: formattedAppointments.length,
-          employees: employeeIds,
-          employeeNames: employeeNames,
-          appointments: formattedAppointments.map(a => ({
-            id: a.id,
-            cliente: a.client_name,
-            empleado: a.employee_name,
-            employee_id: a.employee_id,
-            hora: a.start_time,
-            estado: a.status
-          }))
-        });
         
         // DEBUG: Mostrar employee_ids de las citas vs los cargados
-        console.log('🔴 [DEBUG] Comparar employee_ids:', {
-          appointmentEmployeeIds: formattedAppointments.map(a => a.employee_id),
-          loadedEmployees: employees.map(e => ({ id: e.id, user_id: e.user_id }))
-        });
       }
 
       setAppointments(formattedAppointments);
@@ -768,12 +742,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           }
         }
         
-        console.log('🔍 [AppointmentsCalendar] Resolviendo business_id:', {
-          'propBusinessId': propBusinessId,
-          'user.activeBusiness?.id': user.activeBusiness?.id,
-          'user.role': user.role,
-          'resolvedBusinessId (final)': resolvedBusinessId
-        });
 
         if (!resolvedBusinessId) {
           throw new Error('No se pudo determinar el negocio actual para este usuario');
@@ -877,15 +845,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         setEmployees(formattedEmployees);
         if (DEBUG_MODE) {
           const selectedLocationId = filterLocation.length > 0 ? filterLocation[0] : null;
-          console.log('👨‍💼 [AppointmentsCalendar] Empleados cargados:', {
-            total: formattedEmployees.length,
-            ubicacion_filtrada: selectedLocationId || 'TODAS',
-            empleados: formattedEmployees.map(e => ({ 
-              id: e.id, 
-              nombre: e.profile_name,
-              servicios: e.services // All services in the business (not location-filtered)
-            }))
-          });
         }
 
         // Get services - FILTERED by both location AND employee if selected
@@ -1260,23 +1219,18 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       const preferred = locations.find(l => l.id === preferredLocationId);
       if (preferred) {
         selectedLocations = [preferred];
-        if (DEBUG_MODE) console.log('  ✅ Usando sede preferida:', preferred.name, preferred);
       } else {
-        if (DEBUG_MODE) console.log('  ⚠️ Sede preferida no encontrada en locations');
       }
     } else if (filterLocation.length > 0) {
       // Si hay filtros aplicados, usar solo las sedes filtradas
       selectedLocations = locations.filter(l => filterLocation.includes(l.id));
-      if (DEBUG_MODE) console.log('  ✅ Usando sedes filtradas:', selectedLocations.map(l => l.name));
     } else {
       // Si no hay filtros ni sede preferida, usar todas
       selectedLocations = locations;
-      if (DEBUG_MODE) console.log('  ✅ Usando todas las sedes:', selectedLocations.map(l => l.name));
     }
 
     // Si no hay sedes o más de una sede con horarios diferentes, no hacer scroll automático
     if (selectedLocations.length === 0) {
-      if (DEBUG_MODE) console.log('  ❌ No hay sedes seleccionadas');
       return null;
     }
     
@@ -1285,11 +1239,9 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     const firstCloses = selectedLocations[0]?.closes_at;
     
     if (!firstOpens || !firstCloses) {
-      if (DEBUG_MODE) console.log('  ❌ Primera sede no tiene horarios definidos');
       return null;
     }
     
-    if (DEBUG_MODE) console.log('  - Primer horario encontrado:', { opens_at: firstOpens, closes_at: firstCloses });
     
     const allSameSchedule = selectedLocations.every(
       loc => loc.opens_at === firstOpens && loc.closes_at === firstCloses
@@ -1461,10 +1413,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       return apt.status === 'confirmed' && isWithinInterval(now, { start, end });
     });
     if (DEBUG_MODE) {
-      console.log('🎯 [activeAppointments] Citas en proceso:', {
-        total: result.length,
-        citas: result.map(a => ({ id: a.id, cliente: a.client_name, hora: a.start_time }))
-      });
     }
     return result;
   }, [appointments]);
@@ -1476,10 +1424,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
       return apt.status === 'confirmed' && end < now;
     });
     if (DEBUG_MODE) {
-      console.log('⏰ [overdueAppointments] Citas pendientes de confirmar:', {
-        total: result.length,
-        citas: result.map(a => ({ id: a.id, cliente: a.client_name, horaFin: a.end_time }))
-      });
     }
     return result;
   }, [appointments]);
@@ -1493,7 +1437,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     
     // Log detallado para debugging (solo en dev)
     if (DEBUG_MODE) {
-      console.log('  - Hora sistema (UTC):', now.toISOString());
     }
     
     // Calcular posición relativa a las 24 horas completas
@@ -1502,7 +1445,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     const percentage = (currentMinutes / totalMinutesInDay) * 100;
     
     if (DEBUG_MODE) {
-      console.log('  - Porcentaje calculado:', `${percentage.toFixed(2)}%`);
     }
 
     return percentage;
@@ -1519,13 +1461,11 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     // Usar múltiples intentos para asegurar que el DOM esté listo
     const attemptScroll = (attempt = 0, maxAttempts = 5) => {
       if (!timelineRef.current && attempt < maxAttempts) {
-        if (DEBUG_MODE) console.log(`  🔄 Reintentando (${attempt + 1}/${maxAttempts})...`);
         setTimeout(() => attemptScroll(attempt + 1, maxAttempts), 200);
         return;
       }
 
       if (!timelineRef.current) {
-        if (DEBUG_MODE) console.log('  ❌ No se pudo acceder al ref después de intentos');
         return;
       }
 
@@ -1551,13 +1491,10 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
         // Dejar un poco de margen arriba (restar 50px)
         scrollPosition = Math.max(0, openPxPosition - 50);
         if (DEBUG_MODE) {
-          console.log('    - scrollPosition final (con margen -50px):', scrollPosition);
         }
       } else {
-        if (DEBUG_MODE) console.log('  ⏭️ Sin condiciones de scroll, permanece en top');
       }
 
-      if (DEBUG_MODE) console.log('  🎯 Aplicando scrollTo:', Math.max(0, scrollPosition));
       if (timelineRef.current) {
         timelineRef.current.scrollTo({
           top: Math.max(0, scrollPosition),
@@ -2076,7 +2013,6 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                       
                       // DEBUG: Log appointments for this employee/hour combo
                       if (slotAppointments.length > 0) {
-                        console.log(`📍 Slot [${hour}:00] - Empleado: ${employee.user_id} (${employee.profile_name}) - Citas: ${slotAppointments.length}`, slotAppointments);
                       }
                       
                       return (

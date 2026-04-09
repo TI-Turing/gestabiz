@@ -121,14 +121,6 @@ export function trackEvent(event: AnalyticsEvent) {
   // Log en consola si debug está habilitado
   if (config.debug) {
     // eslint-disable-next-line no-console
-    console.log('[Analytics]', {
-      category,
-      action,
-      label,
-      value,
-      properties,
-      timestamp: new Date().toISOString(),
-    })
   }
 
   // Enviar a cada proveedor activo

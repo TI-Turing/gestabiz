@@ -124,10 +124,6 @@ serve(async (req) => {
     }
 
     // ─── 5. CANCELAR CITAS FUTURAS ──────────────────────────────────────────────
-    console.log('[cancel-future-appointments-on-transfer] Starting cancellation', {
-      businessEmployeeId,
-      effectiveDate: effectiveDateObj.toISOString(),
-    })
 
     const { data: appointmentsToCancel, error: fetchError } = await supabase
       .from('appointments')
@@ -147,7 +143,6 @@ serve(async (req) => {
       .in('status', ['pending', 'confirmed'])
 
     if (fetchError) {
-      console.error('[cancel-future-appointments-on-transfer] Fetch error:', fetchError.code)
       throw new Error('Failed to fetch appointments')
     }
 
@@ -170,7 +165,6 @@ serve(async (req) => {
       .in('id', appointmentIds)
 
     if (updateError) {
-      console.error('[cancel-future-appointments-on-transfer] Update error:', updateError.code)
       throw new Error('Failed to cancel appointments')
     }
 
@@ -225,10 +219,8 @@ serve(async (req) => {
             }),
           })
         } catch (emailError) {
-          console.error('[cancel-future-appointments-on-transfer] Email error:', emailError instanceof Error ? emailError.message : 'unknown')
         }
       } catch (error) {
-        console.error('[cancel-future-appointments-on-transfer] Notification error:', error instanceof Error ? error.message : 'unknown')
       }
     }
 
@@ -237,7 +229,6 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('[cancel-future-appointments-on-transfer] Unexpected error:', error instanceof Error ? error.message : 'unknown')
     captureEdgeFunctionError(error as Error, { functionName: 'cancel-future-appointments-on-transfer' })
     await flushSentry()
     return new Response(

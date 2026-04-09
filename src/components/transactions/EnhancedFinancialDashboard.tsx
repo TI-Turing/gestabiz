@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import * as Sentry from '@sentry/react'
 import {
   DollarSign,
@@ -9,9 +9,13 @@ import {
   Filter,
   BarChart3,
   PieChart as PieChartIcon,
+  Loader2,
+  ChevronDown,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import supabase from '@/lib/supabase';
 import { PermissionGate } from '@/components/ui/PermissionGate';
 import {
@@ -23,6 +27,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getCategoryLabel } from '@/lib/categoryLabels';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useChartData } from '@/hooks/useChartData';
 import { useFinancialReports } from '@/hooks/useFinancialReports';
@@ -36,31 +41,56 @@ import {
 } from '@/components/accounting';
 import { formatCOP } from '@/lib/accounting/colombiaTaxes';
 import { cn } from '@/lib/utils';
-import type { Location, Service } from '@/types/types';
+import type { Service, TransactionCategory } from '@/types/types';
 
 interface EnhancedFinancialDashboardProps {
   businessId: string;
   locationId?: string;
-  locations?: Location[];
   services?: Service[];
 }
 
 type Period = '1m' | '3m' | '6m' | '1y' | 'custom';
 
+const CATEGORY_OPTIONS = [
+  { value: 'appointment_payment', label: 'Pagos de citas' },
+  { value: 'product_sale', label: 'Venta de productos' },
+  { value: 'service_sale', label: 'Venta de servicios' },
+  { value: 'membership', label: 'Membresías' },
+  { value: 'salary', label: 'Salarios' },
+  { value: 'commission', label: 'Comisiones' },
+  { value: 'rent', label: 'Alquiler' },
+  { value: 'utilities', label: 'Servicios públicos' },
+  { value: 'supplies', label: 'Suministros' },
+  { value: 'equipment', label: 'Equipos' },
+  { value: 'marketing', label: 'Marketing' },
+  { value: 'maintenance', label: 'Mantenimiento' },
+  { value: 'tax', label: 'Impuestos' },
+] as const;
+
 export function EnhancedFinancialDashboard({
   businessId,
   locationId,
-  locations = [],
   services = [],
 }: EnhancedFinancialDashboardProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [period, setPeriod] = useState<Period>('1m');
-  const [selectedLocation, setSelectedLocation] = useState<string>(locationId || 'all');
-  const [selectedEmployee, setSelectedEmployee] = useState<string>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [employees, setEmployees] = useState<Array<{ id: string; name: string }>>([]);
+  const effectiveLocation = locationId || 'all';
+  const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  // Calculate date range based on period
+  const toggleEmployee = useCallback((empId: string) => {
+    setSelectedEmployees(prev =>
+      prev.includes(empId) ? prev.filter(id => id !== empId) : [...prev, empId]
+    );
+  }, []);
+
+  const toggleCategory = useCallback((catValue: string) => {
+    setSelectedCategories(prev =>
+      prev.includes(catValue) ? prev.filter(v => v !== catValue) : [...prev, catValue]
+    );
+  }, []);
+
+  const [employees, setEmployees] = useState<Array<{id: string; name: string}>>([]);
   const dateRange = useMemo(() => {
     const end = new Date();
     const start = new Date();
@@ -91,20 +121,29 @@ export function EnhancedFinancialDashboard({
   // Fetch transactions with filters
   const txFilters = useMemo(() => ({
     business_id: businessId,
-    location_id: selectedLocation !== 'all' ? selectedLocation : undefined,
+    location_id: effectiveLocation !== 'all' ? effectiveLocation : undefined,
+    employee_id: selectedEmployees.length > 0 ? selectedEmployees : undefined,
+    category: selectedCategories.length > 0 ? (selectedCategories as TransactionCategory[]) : undefined,
     date_range: dateRange,
-  }), [businessId, selectedLocation, dateRange]);
+  }), [businessId, effectiveLocation, selectedEmployees, selectedCategories, dateRange]);
 
   const { summary, loading } = useTransactions(txFilters);
 
-  // Cargar empleados del negocio
+  // Cargar empleados del negocio filtrando por sede seleccionada
   useEffect(() => {
     const loadEmployees = async () => {
-      const { data } = await supabase
+      let query = supabase
         .from('business_employees')
         .select('employee_id, profiles!business_employees_employee_id_fkey(id, full_name)')
-        .eq('business_id', businessId);
-      
+        .eq('business_id', businessId)
+        .eq('is_active', true);
+
+      if (effectiveLocation !== 'all') {
+        query = query.eq('location_id', effectiveLocation);
+      }
+
+      const { data } = await query;
+
       if (data && Array.isArray(data)) {
         const empList = data.map((emp) => {
           const profile = Array.isArray(emp.profiles) ? emp.profiles[0] : emp.profiles;
@@ -114,20 +153,21 @@ export function EnhancedFinancialDashboard({
           };
         });
         setEmployees(empList);
+        // Limpiar empleados seleccionados que ya no están en la sede
+        setSelectedEmployees(prev => prev.filter(id => empList.some(e => e.id === id)));
       }
     };
     loadEmployees();
-  }, [businessId]);
+  }, [businessId, effectiveLocation]);
 
   // Process chart data - usa filtros de tipo ReportFilters
   const reportFilters = useMemo(() => ({
     business_id: businessId,
-    start_date: dateRange.start,
-    end_date: dateRange.end,
-    location_id: selectedLocation !== 'all' ? [selectedLocation] : undefined,
-    employee_id: selectedEmployee !== 'all' ? [selectedEmployee] : undefined,
-    category: selectedCategory !== 'all' ? [selectedCategory] : undefined,
-  }), [businessId, dateRange, selectedLocation, selectedEmployee, selectedCategory]);
+    date_range: { start: dateRange.start, end: dateRange.end },
+    location_id: effectiveLocation !== 'all' ? [effectiveLocation] : undefined,
+    employee_id: selectedEmployees.length > 0 ? selectedEmployees : undefined,
+    category: selectedCategories.length > 0 ? selectedCategories : undefined,
+  }), [businessId, dateRange, effectiveLocation, selectedEmployees, selectedCategories]);
   
   const {
     incomeVsExpenseData,
@@ -135,10 +175,24 @@ export function EnhancedFinancialDashboard({
     monthlyTrendData,
     locationComparisonData,
     employeePerformanceData,
+    loading: chartsLoading,
   } = useChartData(businessId, reportFilters);
   
   // Financial reports hook
   const { generateProfitAndLoss, exportToCSV, exportToExcel, exportToPDF } = useFinancialReports();
+
+  // Labels for multi-select triggers (avoid nested ternaries in JSX)
+  const employeeLabel = useMemo(() => {
+    if (selectedEmployees.length === 0) return t('common.placeholders.allEmployees');
+    if (selectedEmployees.length === 1) return employees.find(e => e.id === selectedEmployees[0])?.name ?? '1 empleado';
+    return `${selectedEmployees.length} empleados`;
+  }, [selectedEmployees, employees, t]);
+
+  const categoryLabel = useMemo(() => {
+    if (selectedCategories.length === 0) return t('common.placeholders.allCategories');
+    if (selectedCategories.length === 1) return CATEGORY_OPTIONS.find(c => c.value === selectedCategories[0])?.label ?? '1 categoría';
+    return `${selectedCategories.length} categorías`;
+  }, [selectedCategories, t]);
 
   // Stats calculations
   const profitMargin = summary.total_income > 0
@@ -153,12 +207,12 @@ export function EnhancedFinancialDashboard({
       const dataArray = [
         { item: 'Ingresos Totales', monto: report.total_income },
         ...report.income_by_category.map(cat => ({
-          item: `  - ${cat.category}`,
+          item: `  - ${getCategoryLabel(cat.category, language)}`,
           monto: cat.amount
         })),
         { item: 'Egresos Totales', monto: report.total_expenses },
         ...report.expenses_by_category.map(cat => ({
-          item: `  - ${cat.category}`,
+          item: `  - ${getCategoryLabel(cat.category, language)}`,
           monto: cat.amount
         })),
         { item: 'Utilidad Bruta', monto: report.gross_profit },
@@ -179,12 +233,12 @@ export function EnhancedFinancialDashboard({
       const dataArray = [
         { item: 'Ingresos Totales', monto: report.total_income },
         ...report.income_by_category.map(cat => ({
-          item: `  - ${cat.category}`,
+          item: `  - ${getCategoryLabel(cat.category, language)}`,
           monto: cat.amount
         })),
         { item: 'Egresos Totales', monto: report.total_expenses },
         ...report.expenses_by_category.map(cat => ({
-          item: `  - ${cat.category}`,
+          item: `  - ${getCategoryLabel(cat.category, language)}`,
           monto: cat.amount
         })),
         { item: 'Utilidad Bruta', monto: report.gross_profit },
@@ -202,7 +256,7 @@ export function EnhancedFinancialDashboard({
     const toastId = toast.loading('Generando PDF...');
     try {
       const report = await generateProfitAndLoss(reportFilters);
-      exportToPDF(report, report.business_name, `reporte_${period}.pdf`);
+      exportToPDF(report, report.business_name, `reporte_${period}.pdf`, language);
       toast.success('Reporte PDF generado exitosamente', { id: toastId });
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'EnhancedFinancialDashboard' } })
@@ -263,61 +317,87 @@ export function EnhancedFinancialDashboard({
               </SelectContent>
             </Select>
 
-            {/* Location Filter */}
-            {locations.length > 0 && (
-              <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder={t('common.placeholders.allLocations')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('common.placeholders.allLocations')}</SelectItem>
-                  {locations.map((loc) => (
-                    <SelectItem key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            {/* Employee Filter */}
+            {/* Employee Multi-Select */}
             {employees.length > 0 && (
-              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder={t('common.placeholders.allEmployees')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t('common.placeholders.allEmployees')}</SelectItem>
-                  {employees.map((emp) => (
-                    <SelectItem key={emp.id} value={emp.id}>
-                      {emp.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 w-52 justify-between font-normal">
+                    <span className="truncate text-sm">{employeeLabel}</span>
+                    <ChevronDown className="h-4 w-4 opacity-50 shrink-0 ml-1" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2" align="start">
+                  <div className="space-y-1 max-h-60 overflow-y-auto">
+                    {employees.map(emp => (
+                      <button
+                        key={emp.id}
+                        type="button"
+                        className="flex w-full items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted cursor-pointer text-left"
+                        onClick={() => toggleEmployee(emp.id)}
+                      >
+                        <Checkbox
+                          checked={selectedEmployees.includes(emp.id)}
+                          onCheckedChange={() => toggleEmployee(emp.id)}
+                        />
+                        <span className="truncate">{emp.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {selectedEmployees.length > 0 && (
+                    <div className="border-t mt-1 pt-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full h-7 text-xs"
+                        onClick={() => setSelectedEmployees([])}
+                      >
+                        Limpiar selección
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
             )}
 
-            {/* Category Filter */}
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder={t('common.placeholders.allCategories')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('common.placeholders.allCategories')}</SelectItem>
-                <SelectItem value="appointment_payment">Pagos de citas</SelectItem>
-                <SelectItem value="product_sale">Venta de productos</SelectItem>
-                <SelectItem value="membership">Membresías</SelectItem>
-                <SelectItem value="salary">Salarios</SelectItem>
-                <SelectItem value="commission">Comisiones</SelectItem>
-                <SelectItem value="rent">Alquiler</SelectItem>
-                <SelectItem value="utilities">Servicios públicos</SelectItem>
-                <SelectItem value="supplies">Suministros</SelectItem>
-                <SelectItem value="equipment">Equipos</SelectItem>
-                <SelectItem value="marketing">Marketing</SelectItem>
-                <SelectItem value="maintenance">Mantenimiento</SelectItem>
-                <SelectItem value="tax">Impuestos</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Category Multi-Select */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 w-52 justify-between font-normal">
+                  <span className="truncate text-sm">{categoryLabel}</span>
+                  <ChevronDown className="h-4 w-4 opacity-50 shrink-0 ml-1" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2" align="start">
+                <div className="space-y-1 max-h-60 overflow-y-auto">
+                  {CATEGORY_OPTIONS.map(cat => (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      className="flex w-full items-center gap-2 px-2 py-1.5 rounded text-sm hover:bg-muted cursor-pointer text-left"
+                      onClick={() => toggleCategory(cat.value)}
+                    >
+                      <Checkbox
+                        checked={selectedCategories.includes(cat.value)}
+                        onCheckedChange={() => toggleCategory(cat.value)}
+                      />
+                      <span className="truncate">{cat.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {selectedCategories.length > 0 && (
+                  <div className="border-t mt-1 pt-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full h-7 text-xs"
+                      onClick={() => setSelectedCategories([])}
+                    >
+                      Limpiar selección
+                    </Button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
           </div>
         </Card>
       </div>
@@ -417,6 +497,14 @@ export function EnhancedFinancialDashboard({
       </div>
 
       {/* Charts Section */}
+      <div className="relative">
+        {/* Loading overlay */}
+        {chartsLoading && (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-lg bg-background/70 backdrop-blur-sm">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="mt-3 text-sm font-medium text-muted-foreground">Cargando datos...</p>
+          </div>
+        )}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="bg-muted">
           <TabsTrigger value="overview">
@@ -519,6 +607,7 @@ export function EnhancedFinancialDashboard({
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

@@ -194,7 +194,6 @@ serve(async (req) => {
       )
 
       if (discountError) {
-        console.warn('[Checkout] Invalid discount code:', discountCode)
       } else if (discountData?.is_valid) {
         // Buscar promocode de Stripe
         try {
@@ -209,10 +208,8 @@ serve(async (req) => {
               promotion_code: promoCodes.data[0].id,
             }]
           } else {
-            console.warn('[Checkout] Stripe promo code not found:', discountCode)
           }
         } catch (err) {
-          console.error('[Checkout] Error fetching promo code:', err)
         }
       }
     }
@@ -259,7 +256,6 @@ serve(async (req) => {
       }
     )
   } catch (err) {
-    console.error('[Checkout] Error:', err)
     captureEdgeFunctionError(err as Error, { functionName: 'create-checkout-session' })
     await flushSentry()
     return new Response(

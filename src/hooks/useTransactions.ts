@@ -16,6 +16,7 @@ function buildQueryKey(filters?: TransactionFilters) {
     'transactions',
     filters?.business_id ?? null,
     filters?.location_id ?? null,
+    filters?.employee_id ?? null,
     filters?.type ?? null,
     filters?.category ?? null,
     filters?.is_verified ?? null,
@@ -38,6 +39,7 @@ async function fetchTransactionsData(filters?: TransactionFilters) {
 
   if (filters?.business_id) query = query.eq('business_id', filters.business_id);
   if (filters?.location_id) query = query.or(`location_id.eq.${filters.location_id},location_id.is.null`);
+  if (filters?.employee_id && filters.employee_id.length > 0) query = query.in('employee_id', filters.employee_id);
   if (filters?.type && filters.type.length > 0) query = query.in('type', filters.type);
   if (filters?.category && filters.category.length > 0) query = query.in('category', filters.category);
   if (filters?.is_verified !== undefined) query = query.eq('is_verified', filters.is_verified);
@@ -49,7 +51,9 @@ async function fetchTransactionsData(filters?: TransactionFilters) {
       .lte('transaction_date', filters.date_range.end);
   }
 
-  query = query.order('transaction_date', { ascending: false });
+  query = query
+    .order('transaction_date', { ascending: false })
+    .limit(50000);
 
   const { data, error } = await query;
   if (error) throw error;

@@ -17,7 +17,6 @@ interface AuthState {
 // Helper para logs de debug (solo en dev)
 const isDev = import.meta.env.DEV
 const debugLog = (...args: unknown[]) => {
-  if (isDev) console.log(...args)
 }
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row']

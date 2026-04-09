@@ -53,7 +53,7 @@ async function applyFix() {  try {
           query: statement 
         });
 
-        if (stmtError) {          console.log('Statement:', statement.substring(0, 100) + '...');
+        if (stmtError) {          
         }
       }
     }

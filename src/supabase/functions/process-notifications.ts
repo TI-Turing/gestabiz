@@ -231,7 +231,6 @@ serve(async (req) => {
         }
 
       } catch (error) {
-        console.error(`Failed to process notification ${notification.id}:`, error)
         
         // Mark notification as failed
         await supabaseClient
@@ -261,7 +260,6 @@ serve(async (req) => {
       .lt('created_at', thirtyDaysAgo.toISOString())
 
     if (cleanupError) {
-      console.error('Failed to clean up old notifications:', cleanupError)
     }
 
     return new Response(
@@ -278,7 +276,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error processing notifications:', error)
 
     return new Response(
       JSON.stringify({

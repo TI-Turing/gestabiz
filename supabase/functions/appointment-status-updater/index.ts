@@ -22,7 +22,6 @@ serve(async (req) => {
     const now = new Date()
     const nowIso = now.toISOString()
 
-    console.log(`Running appointment status updater at ${nowIso}`)
 
     // CASO 1: Auto-completar citas que estaban 'in_progress' y ya pasó su end_time.
     // El cliente SÍ se presentó (por eso estaba en progreso), el admin olvidó marcarla.
@@ -37,9 +36,7 @@ serve(async (req) => {
       .select('id, client_id, start_time, end_time')
 
     if (autoCompleteError) {
-      console.error('Error auto-completing in_progress appointments:', autoCompleteError)
     } else {
-      console.log(`Auto-completed ${autoCompleted?.length || 0} in_progress appointments`)
     }
 
     // CASO 2: Marcar como 'no_show' citas que el cliente no confirmó ni se presentó.
@@ -57,9 +54,7 @@ serve(async (req) => {
       .select('id, client_id, start_time, end_time')
 
     if (noShowError) {
-      console.error('Error updating no-show appointments:', noShowError)
     } else {
-      console.log(`Marked ${noShowAppointments?.length || 0} appointments as no_show`)
     }
 
     // Nota: la inserción de notificaciones se omite aquí para evitar desalineaciones
@@ -84,7 +79,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error in appointment status updater:', error)
     
     captureEdgeFunctionError(error as Error, { functionName: 'appointment-status-updater' })
     await flushSentry()

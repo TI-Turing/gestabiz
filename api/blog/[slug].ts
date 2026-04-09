@@ -191,6 +191,30 @@ const BLOG_POSTS: Record<string, BlogPostSeoData> = {
     authorName: 'Equipo Gestabiz',
     category: 'guias',
   },
+  'crm-para-negocios-servicios-colombia-2026': {
+    slug: 'crm-para-negocios-servicios-colombia-2026',
+    title: 'CRM para Negocios de Servicios en Colombia: La Guía Completa 2026',
+    metaTitle: 'CRM para Negocios de Servicios Colombia 2026 | Guía Completa',
+    metaDescription: 'Guía completa de CRM para negocios de servicios en Colombia en 2026. Cómo retener clientes, automatizar seguimientos y aumentar ingresos sin más publicidad.',
+    metaKeywords: ['crm para negocios de servicios colombia', 'crm pyme colombia 2026', 'software crm colombia pyme', 'retención clientes negocio servicios'],
+    ogImage: 'https://gestabiz.com/og-image.png',
+    canonicalPath: '/blog/crm-para-negocios-servicios-colombia-2026',
+    publishedAt: '2026-04-08',
+    authorName: 'Equipo Gestabiz',
+    category: 'guias',
+  },
+  'software-gimnasios-centros-deportivos-colombia-2026': {
+    slug: 'software-gimnasios-centros-deportivos-colombia-2026',
+    title: 'Software para Gimnasios en Colombia: Los 5 Mejores en 2026',
+    metaTitle: 'Top 5 Software para Gimnasios Colombia 2026',
+    metaDescription: 'Los 5 mejores software para gimnasios en Colombia en 2026. Gestión de recursos físicos, reservas de canchas, pagos COP, recordatorios WhatsApp. Guía comparativa completa.',
+    metaKeywords: ['software gimnasios colombia', 'app para gimnasio colombia', 'sistema gestión gimnasio colombia 2026', 'software centro deportivo colombia'],
+    ogImage: 'https://gestabiz.com/og-image.png',
+    canonicalPath: '/blog/software-gimnasios-centros-deportivos-colombia-2026',
+    publishedAt: '2026-04-08',
+    authorName: 'Equipo Gestabiz',
+    category: 'comparativas',
+  },
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

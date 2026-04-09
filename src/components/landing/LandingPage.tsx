@@ -17,6 +17,7 @@ import {
   Zap,
   Star,
   ArrowRight,
+  BookOpen,
 } from 'lucide-react'
 import { PricingPlans } from './PricingPlans'
 import { LandingFooter } from './LandingFooter'
@@ -554,6 +555,113 @@ export function LandingPage({ onNavigateToAuth, onNavigateToRegister }: Readonly
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </section>
+
+        {/* ── Blog ── */}
+        <section className="py-20 bg-gray-50">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <BookOpen className="h-6 w-6 text-purple-600" />
+                <span className="text-sm font-semibold uppercase tracking-wider text-purple-600">
+                  Blog
+                </span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+                Recursos para Hacer Crecer tu Negocio
+              </h2>
+              <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+                Guías prácticas, comparativas y estrategias para negocios de servicios en Colombia.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Post 1 */}
+              <Card
+                className="group cursor-pointer border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
+                onClick={() => navigate('/blog/crm-para-negocios-servicios-colombia-2026')}
+              >
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs font-medium">
+                      Guías
+                    </Badge>
+                    <span className="text-xs text-gray-400">9 min lectura</span>
+                  </div>
+                  <h3 className="font-bold text-gray-900 text-lg leading-snug mb-3 group-hover:text-purple-700 transition-colors">
+                    CRM para Negocios de Servicios en Colombia: La Guía Completa 2026
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed flex-1">
+                    El 68% de los negocios colombianos pierde clientes por falta de seguimiento.
+                    Descubre cómo un CRM integrado puede aumentar la retención hasta un 27%.
+                  </p>
+                  <div className="flex items-center gap-1 mt-4 text-purple-600 text-sm font-medium">
+                    Leer artículo <ArrowRight className="h-4 w-4" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Post 2 */}
+              <Card
+                className="group cursor-pointer border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
+                onClick={() => navigate('/blog/software-gimnasios-centros-deportivos-colombia-2026')}
+              >
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs font-medium">
+                      Comparativas
+                    </Badge>
+                    <span className="text-xs text-gray-400">9 min lectura</span>
+                  </div>
+                  <h3 className="font-bold text-gray-900 text-lg leading-snug mb-3 group-hover:text-blue-700 transition-colors">
+                    Software para Gimnasios en Colombia: Los 5 Mejores en 2026
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed flex-1">
+                    Comparamos los 5 mejores software para gimnasios y centros deportivos:
+                    reservas de canchas, pagos en COP y recordatorios por WhatsApp.
+                  </p>
+                  <div className="flex items-center gap-1 mt-4 text-blue-600 text-sm font-medium">
+                    Leer artículo <ArrowRight className="h-4 w-4" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Post 3 */}
+              <Card
+                className="group cursor-pointer border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
+                onClick={() => navigate('/blog/gestabiz-vs-agendapro-colombia')}
+              >
+                <CardContent className="p-6 flex flex-col h-full">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs font-medium">
+                      Comparativas
+                    </Badge>
+                    <span className="text-xs text-gray-400">8 min lectura</span>
+                  </div>
+                  <h3 className="font-bold text-gray-900 text-lg leading-snug mb-3 group-hover:text-blue-700 transition-colors">
+                    Gestabiz vs AgendaPro en Colombia 2026: Comparativa Completa
+                  </h3>
+                  <p className="text-gray-500 text-sm leading-relaxed flex-1">
+                    Comparamos precios, funciones, soporte y pagos. ¿Cuál conviene para
+                    tu negocio en Colombia? Respuesta honesta con datos reales.
+                  </p>
+                  <div className="flex items-center gap-1 mt-4 text-blue-600 text-sm font-medium">
+                    Leer artículo <ArrowRight className="h-4 w-4" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="text-center mt-10">
+              <Button
+                variant="outline"
+                className="border-purple-300 text-purple-700 hover:bg-purple-50 px-8"
+                onClick={() => navigate('/blog')}
+              >
+                Ver todos los artículos <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </section>
 

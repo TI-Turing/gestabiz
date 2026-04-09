@@ -174,7 +174,6 @@ Si necesitas cancelar o reprogramar, por favor responde a este mensaje.
     )
 
   } catch (error) {
-    console.error('Error sending WhatsApp message:', error)
 
     captureEdgeFunctionError(error as Error, { functionName: 'send-whatsapp' })
     await flushSentry()

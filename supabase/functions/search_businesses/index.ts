@@ -711,7 +711,6 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ businesses: paginated, total: totalOriginal, locationsCountMap, cityBusinessIds, cityLocationIds, cityNameMap, matchSourcesByBusinessId: matchSourcesReduced, ratingStatsByBusinessId }), { headers: corsHeaders })
   } catch (err) {
-    console.error('search_businesses error', err)
     captureEdgeFunctionError(err as Error, { functionName: 'search_businesses' })
     await flushSentry()
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: { 'content-type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'authorization, content-type, x-client-info, apikey' } })

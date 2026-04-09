@@ -334,6 +334,62 @@ export const BLOG_POSTS: BlogPost[] = [
     featured: false,
     published: true,
   },
+  {
+    slug: 'crm-para-negocios-servicios-colombia-2026',
+    title: 'CRM para Negocios de Servicios en Colombia: La Guía Completa 2026',
+    excerpt:
+      'El 68% de los negocios colombianos pierde clientes por falta de seguimiento. Descubre cómo un CRM integrado con tu agenda puede aumentar la retención hasta un 27% y generar ingresos adicionales sin invertir en publicidad.',
+    metaTitle: 'CRM para Negocios de Servicios Colombia 2026 | Guía Completa',
+    metaDescription:
+      'Guía completa de CRM para negocios de servicios en Colombia en 2026. Cómo retener clientes, automatizar seguimientos y aumentar ingresos sin más publicidad.',
+    metaKeywords: [
+      'crm para negocios de servicios colombia',
+      'crm pyme colombia 2026',
+      'software crm colombia pyme',
+      'retención clientes negocio servicios',
+      'crm salón belleza colombia',
+      'crm clínica colombia',
+    ],
+    ogImage: OG_IMAGE,
+    canonicalPath: '/blog/crm-para-negocios-servicios-colombia-2026',
+    publishedAt: '2026-04-08',
+    updatedAt: '2026-04-08',
+    author: GESTABIZ_AUTHOR,
+    category: 'guias',
+    readingTimeMinutes: 9,
+    tags: ['crm', 'retención de clientes', 'fidelización', 'colombia', 'pyme'],
+    relatedVerticals: ['salones', 'clinicas', 'gimnasios', 'barberias', 'spas'],
+    featured: true,
+    published: true,
+  },
+  {
+    slug: 'software-gimnasios-centros-deportivos-colombia-2026',
+    title: 'Software para Gimnasios en Colombia: Los 5 Mejores en 2026',
+    excerpt:
+      'Los gimnasios colombianos ya no se gestionan con hojas de Excel. Comparamos los 5 mejores software para gimnasios y centros deportivos: gestión de recursos físicos, reservas de canchas, pagos en COP y control de acceso.',
+    metaTitle: 'Top 5 Software para Gimnasios Colombia 2026',
+    metaDescription:
+      'Los 5 mejores software para gimnasios en Colombia en 2026. Gestión de recursos físicos, reservas de canchas, pagos COP, recordatorios WhatsApp. Guía comparativa completa.',
+    metaKeywords: [
+      'software gimnasios colombia',
+      'app para gimnasio colombia',
+      'sistema gestión gimnasio colombia 2026',
+      'software centro deportivo colombia',
+      'gestión membresías gimnasio',
+      'programa para gimnasio colombia',
+    ],
+    ogImage: OG_IMAGE,
+    canonicalPath: '/blog/software-gimnasios-centros-deportivos-colombia-2026',
+    publishedAt: '2026-04-08',
+    updatedAt: '2026-04-08',
+    author: GESTABIZ_AUTHOR,
+    category: 'comparativas',
+    readingTimeMinutes: 9,
+    tags: ['gimnasios', 'centros deportivos', 'software', 'colombia', 'fitness'],
+    relatedVerticals: ['gimnasios', 'academias', 'yoga', 'crossfit'],
+    featured: true,
+    published: true,
+  },
 ]
 
 // ─── Map for O(1) lookup by slug ──────────────────────────────────────────────

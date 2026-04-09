@@ -38,6 +38,7 @@ interface EmployeeCardProps {
   onViewProfile?: (employee: EmployeeHierarchy) => void
   onAssignSupervisor?: (employee: EmployeeHierarchy) => void
   compact?: boolean
+  missingConfigItems?: string[]
 }
 
 // =====================================================
@@ -105,6 +106,7 @@ export function EmployeeCard({
   onViewProfile,
   onAssignSupervisor,
   compact = false,
+  missingConfigItems = [],
 }: Readonly<EmployeeCardProps>) {
   const { t } = useLanguage()
   const queryClient = useQueryClient()
@@ -208,7 +210,21 @@ export function EmployeeCard({
                     {t('employees.card.inactive')}
                   </Badge>
                 )}
+                {missingConfigItems.length > 0 && (
+                  <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-400">
+                    Configuración pendiente
+                  </Badge>
+                )}
               </div>
+              {missingConfigItems.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-1">
+                  {missingConfigItems.map((item) => (
+                    <Badge key={item} variant="outline" className="text-[10px] border-amber-500/40 text-amber-400">
+                      {item}
+                    </Badge>
+                  ))}
+                </div>
+              )}
               <p className="text-sm text-muted-foreground">
                 {employee.job_title || getEmployeeTypeLabel(employee.employee_type, t)}
               </p>

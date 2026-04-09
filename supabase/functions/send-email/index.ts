@@ -278,7 +278,6 @@ serve(async (req) => {
           sent_at: new Date().toISOString()
         })
     } catch (logError) {
-      console.warn('Failed to log email:', logError)
     }
 
     return new Response(
@@ -294,7 +293,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error sending email:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'send-email' })
     await flushSentry()
     return new Response(

@@ -24,7 +24,6 @@ const STATUS_MAPPING: Record<string, string> = {
 
 Deno.serve(async (req) => {
   try {
-    console.log('[mercadopago-webhook] Request:', { method: req.method, url: req.url })
 
     if (req.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
@@ -37,7 +36,6 @@ Deno.serve(async (req) => {
     const id = url.searchParams.get('id') || url.searchParams.get('data.id')
     const topic = url.searchParams.get('topic') || url.searchParams.get('type')
 
-    console.log('[mercadopago-webhook] Parsed:', { id, topic })
 
     if (!id || !topic) {
       return new Response(JSON.stringify({ error: 'Missing id or topic' }), {
@@ -48,7 +46,6 @@ Deno.serve(async (req) => {
 
     // Aceptar tanto 'payment' como 'merchant_order'
     if (topic !== 'payment' && topic !== 'merchant_order') {
-      console.log('[mercadopago-webhook] Ignoring topic:', topic)
       return new Response(JSON.stringify({ status: 'ok', ignored: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -61,7 +58,6 @@ Deno.serve(async (req) => {
     const accessToken = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN')
 
     if (!supabaseUrl || !supabaseServiceKey || !accessToken) {
-      console.error('[mercadopago-webhook] Missing env vars')
       return new Response(JSON.stringify({ status: 'ok' }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -71,13 +67,11 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // Fetch payment details from MercadoPago API
-    console.log('[mercadopago-webhook] Fetching payment:', id)
     const paymentResponse = await fetch(`https://api.mercadopago.com/v1/payments/${id}`, {
       headers: { 'Authorization': `Bearer ${accessToken}` },
     })
 
     if (!paymentResponse.ok) {
-      console.error('[mercadopago-webhook] Failed to fetch payment:', paymentResponse.status)
       return new Response(JSON.stringify({ status: 'ok' }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -85,11 +79,6 @@ Deno.serve(async (req) => {
     }
 
     const payment = await paymentResponse.json()
-    console.log('[mercadopago-webhook] Payment:', {
-      id: payment.id,
-      status: payment.status,
-      metadata: payment.metadata,
-    })
 
     // Extraer businessId/plan desde external_reference (confiable) con fallback a metadata
     // external_reference formato: "{businessId}::{planType}::{billingCycle}"
@@ -98,10 +87,8 @@ Deno.serve(async (req) => {
     const planType = payment.metadata?.plan_type || refParts[1] || 'basico'
     const billingCycle = payment.metadata?.billing_cycle || refParts[2] || 'monthly'
 
-    console.log('[mercadopago-webhook] Extracted:', { businessId, planType, billingCycle, external_reference: payment.external_reference })
 
     if (!businessId) {
-      console.error('[mercadopago-webhook] Missing business_id in both metadata and external_reference')
       return new Response(JSON.stringify({ status: 'ok' }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -124,7 +111,6 @@ Deno.serve(async (req) => {
     const dbPlanType = PLAN_TYPE_MAPPING[planType] || planType
 
     // Update business_plans
-    console.log('[mercadopago-webhook] Updating plan:', { businessId, planType, dbPlanType, subscriptionStatus })
 
     const { error } = await supabase
       .from('business_plans')
@@ -143,9 +129,7 @@ Deno.serve(async (req) => {
       )
 
     if (error) {
-      console.error('[mercadopago-webhook] Update error:', error)
     } else {
-      console.log('[mercadopago-webhook] Plan updated successfully')
     }
 
     return new Response(JSON.stringify({ status: 'ok', processed: true }), {
@@ -153,7 +137,6 @@ Deno.serve(async (req) => {
       headers: { 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error('[mercadopago-webhook] Error:', error)
     return new Response(JSON.stringify({ error: 'Internal error' }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

@@ -92,7 +92,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Function error:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'send-confirmation' })
     await flushSentry()
     return new Response(
@@ -241,17 +240,10 @@ async function sendConfirmationEmail({
       return response.ok
     } else {
       // Development fallback
-      console.log('📧 Confirmation email (dev mode):', {
-        to,
-        subject,
-        isClientEmail,
-        appointment: appointment.title
-      })
       return true
     }
 
   } catch (error) {
-    console.error('Email send error:', error)
     return false
   }
 }

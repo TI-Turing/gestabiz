@@ -123,7 +123,7 @@ function NotificationItem({
       <div className="flex items-start gap-2 sm:gap-3">
         {/* Icono */}
         <div className={cn(
-          'flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center',
+          'shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center',
           isUnread ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
         )}>
           <NotificationIcon type={notification.type} />
@@ -245,6 +245,7 @@ export function NotificationCenter({
     autoFetch: true,
     limit: 50,
     excludeChatMessages: true, // Excluir mensajes de chat del centro de notificaciones
+    excludeTypes: ['appointment_created'], // Evita duplicado visual por cita creada + confirmada
     suppressToasts: true
   })
 
@@ -282,7 +283,8 @@ export function NotificationCenter({
         {
           availableRoles,
           onError: (error) => {
-            // eslint-disable-next-line no-console            // Fallback a navegación tradicional
+            // eslint-disable-next-line no-console
+            // Fallback a navegación tradicional
             fallbackNavigate(notification)
           }
         }
@@ -339,18 +341,18 @@ export function NotificationCenter({
   return (
     <div className="flex flex-col h-[500px] sm:h-[550px] max-h-[90vh]">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 sm:p-4 border-b border-border flex-shrink-0">
+      <div className="flex items-center justify-between p-3 sm:p-4 border-b border-border shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <Bell className="h-5 w-5 text-foreground flex-shrink-0" />
+          <Bell className="h-5 w-5 text-foreground shrink-0" />
           <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">Notificaciones</h3>
           {unreadCount > 0 && (
-            <Badge variant="secondary" className="text-xs flex-shrink-0">
+            <Badge variant="secondary" className="text-xs shrink-0">
               {unreadCount}
             </Badge>
           )}
         </div>
         
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           {unreadCount > 0 && (
             <Button
               variant="ghost"

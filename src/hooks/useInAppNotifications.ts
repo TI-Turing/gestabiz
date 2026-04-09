@@ -15,6 +15,7 @@ interface UseInAppNotificationsOptions {
   limit?: number
   status?: NotificationStatus
   type?: InAppNotificationType
+  excludeTypes?: InAppNotificationType[]
   businessId?: string
   excludeChatMessages?: boolean
   suppressToasts?: boolean
@@ -41,6 +42,7 @@ export function useInAppNotifications(
     limit = 50,
     status,
     type,
+    excludeTypes = [],
     businessId,
     excludeChatMessages = false,
   } = options
@@ -89,10 +91,14 @@ export function useInAppNotifications(
     if (status) filtered = filtered.filter(n => n.status === status)
     if (type) filtered = filtered.filter(n => n.type === type)
     if (excludeChatMessages) filtered = filtered.filter(n => n.type !== 'chat_message')
+    if (excludeTypes.length > 0) {
+      const excluded = new Set(excludeTypes)
+      filtered = filtered.filter(n => !excluded.has(n.type))
+    }
     if (businessId) filtered = filtered.filter(n => n.business_id === businessId)
 
     return filtered
-  }, [baseNotifications, status, type, excludeChatMessages, businessId])
+  }, [baseNotifications, status, type, excludeChatMessages, excludeTypes, businessId])
 
   // ✅ Derivar unreadCount con useMemo (evita useState + useEffect → elimina render extra)
   const unreadCount = useMemo(
@@ -105,7 +111,7 @@ export function useInAppNotifications(
     if (!userId) return
 
     // instanceId garantiza nombre único aunque el hook se use en múltiples componentes
-    const channelName = `notifications:${userId}:${instanceId.replace(/:/g, '')}`
+    const channelName = `notifications:${userId}:${instanceId.replaceAll(':', '')}`
     const channel = supabase
       .channel(channelName)
       .on(

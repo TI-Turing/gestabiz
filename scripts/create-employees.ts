@@ -50,7 +50,6 @@ async function createEmployees() {  // Obtener 15 usuarios para usar como emple
     // Los primeros 12 trabajan en 1 negocio, los últimos 3 en 2-3 negocios
     const numBusinesses = i < 12 ? 1 : randomInt(2, 3);
     
-    console.log(`👤 ${employee.full_name}: ${numBusinesses} negocio(s)`);
 
     // Seleccionar negocios aleatorios
     const selectedBusinesses = businesses

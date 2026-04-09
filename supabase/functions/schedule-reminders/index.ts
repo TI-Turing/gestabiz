@@ -71,7 +71,6 @@ serve(async (req) => {
             })
 
           if (emailError) {
-            console.error('Error scheduling email reminder:', emailError)
           } else {
             results.push({
               type: 'reminder',
@@ -96,7 +95,6 @@ serve(async (req) => {
             })
 
           if (smsError) {
-            console.error('Error scheduling SMS reminder:', smsError)
           } else {
             results.push({
               type: 'reminder',
@@ -145,7 +143,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error in schedule-reminders function:', error)
     
     captureEdgeFunctionError(error as Error, { functionName: 'schedule-reminders' })
     await flushSentry()

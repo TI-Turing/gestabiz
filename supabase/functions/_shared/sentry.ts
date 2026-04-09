@@ -30,7 +30,6 @@ export function initSentry(
 
   // Solo inicializar si hay DSN configurado
   if (!SENTRY_DSN || SENTRY_DSN.includes('your-dsn-here')) {
-    console.warn(`[${functionName}] Sentry DSN not configured, skipping initialization`)
     return
   }
 
@@ -80,7 +79,6 @@ export function initSentry(
   })
 
   sentryInitialized = true
-  console.log(`[${functionName}] Sentry initialized successfully`)
 }
 
 /**
@@ -101,7 +99,6 @@ export function captureEdgeFunctionError(
   }
 ) {
   if (!sentryInitialized) {
-    console.error('Sentry not initialized, logging error locally:', error)
     return
   }
 
@@ -148,7 +145,6 @@ export function captureEdgeFunctionMessage(
   context?: Record<string, any>
 ) {
   if (!sentryInitialized) {
-    console.log(`[${level.toUpperCase()}] ${message}`, context)
     return
   }
 

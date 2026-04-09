@@ -18,6 +18,21 @@ async function fetchLocation(locationId: string): Promise<Location> {
   return data as Location;
 }
 
+async function fetchLocationBanner(locationId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('location_media')
+    .select('url, description')
+    .eq('location_id', locationId)
+    .eq('is_banner', true)
+    .eq('type', 'image')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  if (!data || data.length === 0) return null;
+  const chosen = data.find(x => (x.description ?? '').trim() !== 'Banner de prueba') ?? data[0];
+  return chosen ? chosen.url.trim().replaceAll(/^[`'"]+|[`'"]+$/g, '') : null;
+}
+
 interface LocationCardProps {
   /** ID de la ubicación — el card resuelve sus datos internamente */
   locationId?: string;
@@ -61,6 +76,14 @@ export function LocationCard({
     queryFn: () => fetchLocation(resolvedId!),
     initialData: seed,
     enabled: !!resolvedId,
+    ...QUERY_CONFIG.STABLE,
+  });
+
+  // Si no se provee bannerUrl externamente, lo carga desde location_media
+  const { data: fetchedBannerUrl } = useQuery({
+    queryKey: ['location-banner', resolvedId],
+    queryFn: () => fetchLocationBanner(resolvedId!),
+    enabled: !!resolvedId && bannerUrl === undefined,
     ...QUERY_CONFIG.STABLE,
   });
 
@@ -132,7 +155,7 @@ export function LocationCard({
   }
 
   // ── Default variant (wizard / selection) ──
-  const effectiveBannerUrl = bannerUrl ?? location.banner_url;
+  const effectiveBannerUrl = bannerUrl ?? fetchedBannerUrl ?? location.banner_url;
   const hasBanner = !!effectiveBannerUrl;
 
   return (

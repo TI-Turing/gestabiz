@@ -49,7 +49,6 @@ serve(async (req) => {
     } = await supabaseClient.auth.getUser()
 
     if (authError || !user) {
-      console.error('[create-setup-intent] Error de autenticación:', authError)
       return new Response(
         JSON.stringify({ error: 'No autorizado' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -66,7 +65,6 @@ serve(async (req) => {
       )
     }
 
-    console.log(`[create-setup-intent] Creando Setup Intent para business ${businessId}, usuario ${user.id}`)
 
     // 4. Verificar que el usuario es owner del negocio
     const { data: business, error: businessError } = await supabaseClient
@@ -76,7 +74,6 @@ serve(async (req) => {
       .single()
 
     if (businessError || !business) {
-      console.error('[create-setup-intent] Error al obtener negocio:', businessError)
       return new Response(
         JSON.stringify({ error: 'Negocio no encontrado' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -84,7 +81,6 @@ serve(async (req) => {
     }
 
     if (business.owner_id !== user.id) {
-      console.error(`[create-setup-intent] Usuario ${user.id} no es owner del negocio ${businessId}`)
       return new Response(
         JSON.stringify({ error: 'No autorizado para este negocio' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -95,7 +91,6 @@ serve(async (req) => {
     let stripeCustomerId = business.stripe_customer_id
 
     if (!stripeCustomerId) {
-      console.log(`[create-setup-intent] Creando nuevo Stripe Customer para business ${businessId}`)
       
       const { data: profile } = await supabaseClient
         .from('profiles')
@@ -121,10 +116,8 @@ serve(async (req) => {
         .eq('id', businessId)
 
       if (updateError) {
-        console.error('[create-setup-intent] Error al guardar stripe_customer_id:', updateError)
       }
 
-      console.log(`[create-setup-intent] Stripe Customer creado: ${stripeCustomerId}`)
     }
 
     // 6. Crear Setup Intent
@@ -138,7 +131,6 @@ serve(async (req) => {
       },
     })
 
-    console.log(`[create-setup-intent] Setup Intent creado: ${setupIntent.id}`)
 
     // 7. Retornar client_secret
     const response: CreateSetupIntentResponse = {
@@ -151,7 +143,6 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error('[create-setup-intent] Error:', error)
     captureEdgeFunctionError(error as Error, { functionName: 'create-setup-intent' })
     await flushSentry()
     return new Response(

@@ -20,7 +20,6 @@ serve(async (req) => {
 
     // Get current time
     const now = new Date()
-    console.log(`Processing notifications at: ${now.toISOString()}`)
 
     // Get pending notifications that are due to be sent
     const { data: notifications, error } = await supabaseClient
@@ -54,7 +53,6 @@ serve(async (req) => {
       throw new Error(`Error fetching notifications: ${error.message}`)
     }
 
-    console.log(`Found ${notifications?.length || 0} notifications to process`)
 
     const results = {
       processed: 0,
@@ -193,7 +191,6 @@ serve(async (req) => {
     // Generate follow-up notifications for inactive clients
     await generateFollowUpNotifications(supabaseClient)
 
-    console.log('Processing completed:', results)
 
     return new Response(
       JSON.stringify({
@@ -208,7 +205,6 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error processing notifications:', error)
     
     return new Response(
       JSON.stringify({
@@ -386,7 +382,6 @@ async function generateFollowUpNotifications(supabaseClient: any): Promise<void>
       }
     }
   } catch (error) {
-    console.error('Error generating follow-up notifications:', error)
   }
 }
 

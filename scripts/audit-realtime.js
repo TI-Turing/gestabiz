@@ -12,7 +12,6 @@ const path = require('path');
 const { execSync } = require('child_process');const issues = [];
 
 // 1. Buscar todos los .subscribe()
-console.log('1️⃣ Buscando todos los .subscribe()...');
 try {
   const result = execSync('git grep -n "\\.subscribe()" -- "src/**/*.ts" "src/**/*.tsx"', { encoding: 'utf8' });
   const lines = result.trim().split('\n');
