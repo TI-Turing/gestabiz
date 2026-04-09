@@ -329,8 +329,9 @@ serve(async (req) => {
         })
 
       // Ejecutar notificaciones en paralelo (sin await para no bloquear)
-      Promise.all(notifyPromises).catch((err) =>
-      )
+      Promise.all(notifyPromises).catch((err) => {
+        console.error('Error sending participant notifications:', err)
+      })
     }
 
     // ============================================================================
