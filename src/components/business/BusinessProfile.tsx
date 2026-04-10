@@ -514,6 +514,8 @@ export default function BusinessProfile({
       <DialogContent hideClose className="max-w-[98vw] sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] p-0 overflow-hidden flex flex-col">
         <DialogHeader className="sr-only"><DialogTitle>{business.name}</DialogTitle></DialogHeader>
       <Card className="w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden bg-card flex flex-col shadow-2xl border-0">
+        {/* Contenido con scroll - Mobile Optimized */}
+        <div className="flex-1 overflow-auto">
         {/* Header con banner - 16:9 Aspect Ratio */}
         <div className="relative aspect-video">
           {business.banner_url ? (
@@ -589,8 +591,6 @@ export default function BusinessProfile({
           </div>
         </div>
 
-        {/* Contenido con scroll - Mobile Optimized */}
-        <div className="flex-1 overflow-auto">
           {/* Información de contacto - Responsive Grid */}
           <div className="p-3 sm:p-6 border-b border-border">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm">
