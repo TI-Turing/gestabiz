@@ -10,11 +10,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { EmployeeCalendarView } from './EmployeeCalendarView'
 import { EmployeeAppointmentsList } from './EmployeeAppointmentsList'
+import { AppointmentsCalendar } from '@/components/admin/AppointmentsCalendar'
 import { useEmployeeAppointments } from '@/hooks/useEmployeeAppointments'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { supabase } from '@/lib/supabase'
+import type { Appointment } from '@/types'
+
+const COLOMBIA_TIME_ZONE = 'America/Bogota'
+
+const getDateKeyInColombia = (value: Date | string) => {
+  const date = value instanceof Date ? value : new Date(value)
+  return date.toLocaleDateString('en-CA', { timeZone: COLOMBIA_TIME_ZONE })
+}
+
+const isScheduledStatus = (status: Appointment['status']) => {
+  return status === 'scheduled' || status === 'rescheduled'
+}
+
+const isConfirmedStatus = (status: Appointment['status']) => {
+  return status === 'confirmed' || status === 'in_progress'
+}
 
 interface Service {
   id: string
@@ -22,17 +38,17 @@ interface Service {
 }
 
 interface EmployeeAppointmentsPageProps {
-  employeeId: string
-  businessId: string
+  readonly employeeId: string
+  readonly businessId: string
 }
 
 type ViewMode = 'list' | 'calendar'
-type StatusFilter = 'all' | 'pending' | 'confirmed' | 'completed' | 'cancelled'
+type StatusFilter = 'all' | 'scheduled' | 'confirmed' | 'completed' | 'cancelled'
 
 export function EmployeeAppointmentsPage({ 
   employeeId, 
   businessId
-}: EmployeeAppointmentsPageProps) {
+}: Readonly<EmployeeAppointmentsPageProps>) {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [serviceFilter, setServiceFilter] = useState<string>('all')
@@ -77,9 +93,14 @@ export function EmployeeAppointmentsPage({
     // Filtro por estado
     if (statusFilter !== 'all') {
       filtered = filtered.filter(apt => {
-        if (statusFilter === 'pending') {
-          return apt.status === 'pending' || apt.status === 'pending_confirmation'
+        if (statusFilter === 'scheduled') {
+          return isScheduledStatus(apt.status)
         }
+
+        if (statusFilter === 'confirmed') {
+          return isConfirmedStatus(apt.status)
+        }
+
         return apt.status === statusFilter
       })
     }
@@ -102,10 +123,10 @@ export function EmployeeAppointmentsPage({
 
   // Contar citas de hoy (usando zona horaria de Colombia)
   const todayAppointments = useMemo(() => {
-    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })
+    const todayStr = getDateKeyInColombia(new Date())
 
     return appointments.filter(apt => {
-      const aptStr = new Date(apt.start_time).toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })
+      const aptStr = getDateKeyInColombia(apt.start_time)
       return aptStr === todayStr
     })
   }, [appointments])
@@ -115,12 +136,18 @@ export function EmployeeAppointmentsPage({
     return {
       total: appointments.length,
       today: todayAppointments.length,
-      pending: appointments.filter(a => a.status === 'pending' || a.status === 'pending_confirmation').length,
-      confirmed: appointments.filter(a => a.status === 'confirmed').length,
+      scheduled: appointments.filter(a => isScheduledStatus(a.status)).length,
+      confirmed: appointments.filter(a => isConfirmedStatus(a.status)).length,
       completed: appointments.filter(a => a.status === 'completed').length,
       cancelled: appointments.filter(a => a.status === 'cancelled').length,
     }
   }, [appointments, todayAppointments])
+
+  const hasSingleResult = filteredAppointments.length === 1
+  const resultPluralSuffix = hasSingleResult ? '' : 's'
+  const resultsLabel = filteredAppointments.length === 0
+    ? 'No se encontraron citas'
+    : `${filteredAppointments.length} cita${resultPluralSuffix} encontrada${resultPluralSuffix}`
 
   if (loading) {
     return (
@@ -179,6 +206,7 @@ export function EmployeeAppointmentsPage({
         </div>
 
         {/* Stats Cards */}
+        {viewMode === 'list' && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
@@ -188,8 +216,8 @@ export function EmployeeAppointmentsPage({
           </Card>
           <Card>
             <CardContent className="p-4">
-              <div className="text-2xl font-bold">{stats.pending}</div>
-              <div className="text-sm text-muted-foreground">Pendientes</div>
+              <div className="text-2xl font-bold">{stats.scheduled}</div>
+              <div className="text-sm text-muted-foreground">Programadas</div>
             </CardContent>
           </Card>
           <Card>
@@ -205,9 +233,11 @@ export function EmployeeAppointmentsPage({
             </CardContent>
           </Card>
         </div>
+        )}
       </div>
 
       {/* Filters */}
+      {viewMode === 'list' && (
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
@@ -231,8 +261,8 @@ export function EmployeeAppointmentsPage({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="pending">Pendientes</SelectItem>
-                <SelectItem value="confirmed">Confirmadas</SelectItem>
+                <SelectItem value="scheduled">Programadas</SelectItem>
+                <SelectItem value="confirmed">Confirmadas / En curso</SelectItem>
                 <SelectItem value="completed">Completadas</SelectItem>
                 <SelectItem value="cancelled">Canceladas</SelectItem>
               </SelectContent>
@@ -271,16 +301,14 @@ export function EmployeeAppointmentsPage({
           </div>
         </CardContent>
       </Card>
+      )}
 
       {/* Resultados count */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {filteredAppointments.length === 0 
-            ? 'No se encontraron citas' 
-            : `${filteredAppointments.length} cita${filteredAppointments.length !== 1 ? 's' : ''} encontrada${filteredAppointments.length !== 1 ? 's' : ''}`
-          }
-        </p>
-      </div>
+      {viewMode === 'list' && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">{resultsLabel}</p>
+        </div>
+      )}
 
       {/* Content - List or Calendar */}
       {viewMode === 'list' ? (
@@ -289,9 +317,9 @@ export function EmployeeAppointmentsPage({
           onRefresh={refetch}
         />
       ) : (
-        <EmployeeCalendarView
-          appointments={filteredAppointments}
-          onRefresh={refetch}
+        <AppointmentsCalendar
+          businessId={businessId}
+          employeeId={employeeId}
         />
       )}
     </div>

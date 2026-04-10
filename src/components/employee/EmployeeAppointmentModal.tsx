@@ -1,6 +1,4 @@
 import { X } from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +7,29 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import type { Appointment } from '@/types';
+
+const COLOMBIA_TIME_ZONE = 'America/Bogota';
+
+const formatDateInColombia = (value: string) => {
+  const date = new Date(value);
+  return date.toLocaleDateString('es-CO', {
+    timeZone: COLOMBIA_TIME_ZONE,
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+const formatTimeInColombia = (value: string) => {
+  return new Date(value).toLocaleTimeString('es-CO', {
+    timeZone: COLOMBIA_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
 
 interface AppointmentWithRelations {
   id: string;
@@ -19,7 +40,7 @@ interface AppointmentWithRelations {
   employee_id?: string;
   start_time: string;
   end_time: string;
-  status: 'pending' | 'pending_confirmation' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
+  status: Appointment['status'];
   notes?: string;
   price?: number;
   currency?: string;
@@ -53,8 +74,8 @@ export function EmployeeAppointmentModal({
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'pending': return 'Pendiente';
-      case 'pending_confirmation': return 'Pendiente de confirmación';
+      case 'scheduled': return 'Programada';
+      case 'rescheduled': return 'Reprogramada';
       case 'confirmed': return 'Confirmada';
       case 'in_progress': return 'En progreso';
       case 'completed': return 'Completada';
@@ -118,10 +139,10 @@ export function EmployeeAppointmentModal({
           <div>
             <div className="text-sm font-medium text-muted-foreground">Fecha y Hora</div>
             <p className="mt-1 text-sm font-medium text-foreground">
-              {format(new Date(appointment.start_time), "EEEE, d 'de' MMMM 'de' yyyy", { locale: es })}
+              {formatDateInColombia(appointment.start_time)}
             </p>
             <p className="text-sm text-muted-foreground">
-              {format(new Date(appointment.start_time), 'HH:mm', { locale: es })} - {format(new Date(appointment.end_time), 'HH:mm', { locale: es })}
+              {formatTimeInColombia(appointment.start_time)} - {formatTimeInColombia(appointment.end_time)}
             </p>
           </div>
 

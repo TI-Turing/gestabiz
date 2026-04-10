@@ -477,8 +477,14 @@ const AppointmentModal = React.memo<AppointmentModalProps>(({
   );
 });
 
-export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ businessId: propBusinessId }) => {
+interface AppointmentsCalendarProps {
+  businessId?: string;
+  employeeId?: string;
+}
+
+export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ businessId: propBusinessId, employeeId: scopedEmployeeId }) => {
   const { user } = useAuth();
+  const isEmployeeScoped = Boolean(scopedEmployeeId);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showMiniCalendar, setShowMiniCalendar] = useState(false);
   const [miniCalendarMonth, setMiniCalendarMonth] = useState(new Date());
@@ -504,7 +510,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   // Filter states - now as arrays for multi-select
   const [filterStatus, setFilterStatus] = useState<string[]>(['confirmed', 'pending']);
   const [filterService, setFilterService] = useState<string[]>([]);
-  const [filterEmployee, setFilterEmployee] = useState<string[]>([]);
+  const [filterEmployee, setFilterEmployee] = useState<string[]>(scopedEmployeeId ? [scopedEmployeeId] : []);
   const [locations, setLocations] = useState<LocationWithHours[]>([]);
   const [services, setServices] = useState<Array<{ id: string; name: string }>>([]);
   
@@ -592,6 +598,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
 
   // Load cached filters when businessId becomes available
   useEffect(() => {
+    if (isEmployeeScoped) return;
     if (!currentBusinessId) return;
     try {
       const raw = localStorage.getItem(`appointments-filters-${currentBusinessId}`);
@@ -604,10 +611,11 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     } catch (e) {
       Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
     }
-  }, [currentBusinessId]);
+  }, [currentBusinessId, isEmployeeScoped]);
 
   // Persist filters to localStorage when they change
   useEffect(() => {
+    if (isEmployeeScoped) return;
     if (!currentBusinessId) return;
     const payload = { status: filterStatus, service: filterService, employee: filterEmployee };
     try {
@@ -615,7 +623,13 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     } catch (e) {
       Sentry.captureException(e instanceof Error ? e : new Error(String(e)), { tags: { component: 'AppointmentsCalendar' } })
     }
-  }, [currentBusinessId, filterStatus, filterService, filterEmployee]);
+  }, [currentBusinessId, filterStatus, filterService, filterEmployee, isEmployeeScoped]);
+
+  useEffect(() => {
+    if (!scopedEmployeeId) return;
+
+    setFilterEmployee([scopedEmployeeId]);
+  }, [scopedEmployeeId]);
 
   // useRef para prevenir llamados duplicados simultáneos
   const isFetchingRef = useRef(false);
@@ -1392,9 +1406,15 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   }, [appointmentsBySlot]);
 
   // Get active and overdue appointments
+  const scopedAppointments = useMemo(() => {
+    if (!scopedEmployeeId) return appointments;
+
+    return appointments.filter(apt => apt.employee_id === scopedEmployeeId);
+  }, [appointments, scopedEmployeeId]);
+
   const activeAppointments = useMemo(() => {
     const now = new Date();
-    const result = appointments.filter(apt => {
+    const result = scopedAppointments.filter(apt => {
       const start = parseISO(apt.start_time);
       const end = parseISO(apt.end_time);
       return apt.status === 'confirmed' && isWithinInterval(now, { start, end });
@@ -1402,18 +1422,18 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
     if (DEBUG_MODE) {
     }
     return result;
-  }, [appointments]);
+  }, [scopedAppointments]);
 
   const overdueAppointments = useMemo(() => {
     const now = new Date();
-    const result = appointments.filter(apt => {
+    const result = scopedAppointments.filter(apt => {
       const end = parseISO(apt.end_time);
       return apt.status === 'confirmed' && end < now;
     });
     if (DEBUG_MODE) {
     }
     return result;
-  }, [appointments]);
+  }, [scopedAppointments]);
 
   // Calculate current time position using Colombia timezone
   const currentTimePosition = useMemo(() => {
@@ -1625,7 +1645,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                 e.stopPropagation();
                 setFilterStatus(['confirmed']);
                 setFilterService([]);
-                setFilterEmployee([]);
+                setFilterEmployee(scopedEmployeeId ? [scopedEmployeeId] : []);
               }}
               className="px-3 py-1.5 text-xs bg-background hover:bg-muted text-muted-foreground hover:text-foreground rounded-md transition-colors font-medium border border-border cursor-pointer"
               role="button"
@@ -1635,7 +1655,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                   e.stopPropagation();
                   setFilterStatus(['confirmed']);
                   setFilterService([]);
-                  setFilterEmployee([]);
+                  setFilterEmployee(scopedEmployeeId ? [scopedEmployeeId] : []);
                 }
               }}
             >
@@ -1748,6 +1768,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
               </div>
 
               {/* Profesional Dropdown */}
+              {!isEmployeeScoped && (
               <div className="relative">
                 <label className="block text-xs font-bold text-foreground uppercase tracking-wide mb-1">Profesional</label>
                 <button
@@ -1792,6 +1813,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
                   </div>
                 </DropdownPortal>
               </div>
+              )}
             </div>
           </div>
         )}

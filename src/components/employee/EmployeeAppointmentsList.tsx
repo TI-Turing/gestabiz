@@ -7,6 +7,23 @@ import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { AppointmentCard, type AppointmentCardData } from '@/components/cards/AppointmentCard'
+import type { Appointment } from '@/types'
+
+const COLOMBIA_TIME_ZONE = 'America/Bogota'
+
+const getDateKeyInColombia = (value: Date | string) => {
+  const date = value instanceof Date ? value : new Date(value)
+  return date.toLocaleDateString('en-CA', { timeZone: COLOMBIA_TIME_ZONE })
+}
+
+const formatTimeInColombia = (value: string) => {
+  return new Date(value).toLocaleTimeString('es-CO', {
+    timeZone: COLOMBIA_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+}
 
 interface AppointmentWithRelations {
   id: string
@@ -17,7 +34,7 @@ interface AppointmentWithRelations {
   employee_id?: string
   start_time: string
   end_time: string
-  status: 'pending' | 'pending_confirmation' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show'
+  status: Appointment['status']
   notes?: string
   price?: number
   currency?: string
@@ -30,21 +47,20 @@ interface AppointmentWithRelations {
 }
 
 interface EmployeeAppointmentsListProps {
-  appointments: AppointmentWithRelations[]
-  onRefresh?: () => void
+  readonly appointments: AppointmentWithRelations[]
+  readonly onRefresh?: () => void
 }
 
-export function EmployeeAppointmentsList({ appointments, onRefresh }: EmployeeAppointmentsListProps) {
+export function EmployeeAppointmentsList({ appointments, onRefresh }: Readonly<EmployeeAppointmentsListProps>) {
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithRelations | null>(null)
 
   // Get status badge variant
   const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
+      case 'scheduled':
+      case 'rescheduled':
       case 'confirmed':
         return 'default'
-      case 'pending_confirmation':
-      case 'pending':
-        return 'outline'
       case 'completed':
         return 'secondary'
       case 'cancelled':
@@ -59,8 +75,8 @@ export function EmployeeAppointmentsList({ appointments, onRefresh }: EmployeeAp
 
   const getStatusLabel = (status: string): string => {
     const labels: Record<string, string> = {
-      pending: 'Pendiente',
-      pending_confirmation: 'Por Confirmar',
+      scheduled: 'Programada',
+      rescheduled: 'Reprogramada',
       confirmed: 'Confirmada',
       in_progress: 'En Proceso',
       completed: 'Completada',
@@ -72,15 +88,15 @@ export function EmployeeAppointmentsList({ appointments, onRefresh }: EmployeeAp
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case 'scheduled':
+      case 'rescheduled':
+        return <AlertCircle className="h-4 w-4" />
       case 'confirmed':
       case 'completed':
         return <CheckCircle className="h-4 w-4" />
       case 'cancelled':
       case 'no_show':
         return <XCircle className="h-4 w-4" />
-      case 'pending':
-      case 'pending_confirmation':
-        return <AlertCircle className="h-4 w-4" />
       default:
         return <Clock className="h-4 w-4" />
     }
@@ -91,7 +107,7 @@ export function EmployeeAppointmentsList({ appointments, onRefresh }: EmployeeAp
     const groups: Record<string, AppointmentWithRelations[]> = {}
     
     appointments.forEach(apt => {
-      const date = format(new Date(apt.start_time), 'yyyy-MM-dd')
+      const date = getDateKeyInColombia(apt.start_time)
       if (!groups[date]) {
         groups[date] = []
       }
@@ -105,19 +121,20 @@ export function EmployeeAppointmentsList({ appointments, onRefresh }: EmployeeAp
   }, [appointments])
 
   const formatTime = (dateString: string) => {
-    return format(new Date(dateString), 'HH:mm', { locale: es })
+    return formatTimeInColombia(dateString)
   }
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const today = new Date()
-    const tomorrow = new Date(today)
+    const date = new Date(`${dateString}T12:00:00`)
+    const todayKey = getDateKeyInColombia(new Date())
+    const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowKey = getDateKeyInColombia(tomorrow)
 
-    if (format(date, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) {
+    if (dateString === todayKey) {
       return 'Hoy'
     }
-    if (format(date, 'yyyy-MM-dd') === format(tomorrow, 'yyyy-MM-dd')) {
+    if (dateString === tomorrowKey) {
       return 'Mañana'
     }
     return format(date, "EEEE, d 'de' MMMM", { locale: es })
@@ -140,7 +157,12 @@ export function EmployeeAppointmentsList({ appointments, onRefresh }: EmployeeAp
   return (
     <>
       <div className="space-y-6">
-        {groupedAppointments.map(([date, dateAppointments]) => (
+        {groupedAppointments.map(([date, dateAppointments]) => {
+          const sortedDateAppointments = [...dateAppointments].sort(
+            (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+          )
+
+          return (
           <div key={date} className="space-y-3">
             {/* Date Header */}
             <div className="flex items-center gap-2 px-2">
@@ -153,9 +175,7 @@ export function EmployeeAppointmentsList({ appointments, onRefresh }: EmployeeAp
 
             {/* Appointments for this date */}
             <div className="space-y-3">
-              {dateAppointments
-                .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-                .map(appointment => (
+              {sortedDateAppointments.map(appointment => (
                   <AppointmentCard
                     key={appointment.id}
                     appointmentId={appointment.id}
@@ -202,7 +222,8 @@ export function EmployeeAppointmentsList({ appointments, onRefresh }: EmployeeAp
                 ))}
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Appointment Detail Modal */}

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { normalizeAppointmentStatus } from '@/lib/normalizers'
+import type { Appointment } from '@/types'
 
 interface AppointmentWithRelations {
   id: string
@@ -11,7 +13,7 @@ interface AppointmentWithRelations {
   employee_id?: string
   start_time: string
   end_time: string
-  status: 'pending' | 'pending_confirmation' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show'
+  status: Appointment['status']
   notes?: string
   price?: number
   currency?: string
@@ -111,7 +113,7 @@ export function useEmployeeAppointments(
           employee_id: apt.employee_id,
           start_time: apt.start_time,
           end_time: apt.end_time,
-          status: apt.status as AppointmentWithRelations['status'],
+          status: normalizeAppointmentStatus(String(apt.status || 'scheduled')),
           notes: apt.notes,
           price: apt.price,
           currency: apt.currency,
