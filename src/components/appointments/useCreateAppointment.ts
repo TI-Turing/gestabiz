@@ -97,7 +97,6 @@ export function useCreateAppointment({
         end_time: endDateTime.toISOString(),
         status: 'pending' as const,
         notes: wizardData.notes || null,
-        price: wizardData.service?.price ?? null,
       }
 
       if (appointmentToEdit) {
