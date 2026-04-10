@@ -4,10 +4,49 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
-import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from 'date-fns'
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { EmployeeAppointmentsList } from './EmployeeAppointmentsList'
 import { EmployeeAppointmentModal } from './EmployeeAppointmentModal'
+import type { Appointment } from '@/types'
+
+const COLOMBIA_TIME_ZONE = 'America/Bogota'
+
+const getDateKeyInColombia = (value: Date | string) => {
+  const date = value instanceof Date ? value : new Date(value)
+  return date.toLocaleDateString('en-CA', { timeZone: COLOMBIA_TIME_ZONE })
+}
+
+const getCalendarDateKey = (date: Date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+const getTimePartsInColombia = (value: Date | string) => {
+  const date = value instanceof Date ? value : new Date(value)
+  const formatted = date.toLocaleString('en-US', {
+    timeZone: COLOMBIA_TIME_ZONE,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const [datePart, timePart] = formatted.split(', ')
+  const [month, day, year] = datePart.split('/').map(Number)
+  const [hour, minute] = timePart.split(':').map(Number)
+
+  return { year, month, day, hour, minute }
+}
+
+const formatTimeInColombia = (value: string) => {
+  const { hour, minute } = getTimePartsInColombia(value)
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
 
 interface AppointmentWithRelations {
   id: string
@@ -18,7 +57,7 @@ interface AppointmentWithRelations {
   employee_id?: string
   start_time: string
   end_time: string
-  status: 'pending' | 'pending_confirmation' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show'
+  status: Appointment['status']
   notes?: string
   price?: number
   currency?: string
@@ -31,13 +70,13 @@ interface AppointmentWithRelations {
 }
 
 interface EmployeeCalendarViewProps {
-  appointments: AppointmentWithRelations[]
-  onRefresh?: () => void
+  readonly appointments: AppointmentWithRelations[]
+  readonly onRefresh?: () => void
 }
 
 type CalendarView = 'day' | 'week' | 'month'
 
-export function EmployeeCalendarView({ appointments, onRefresh }: EmployeeCalendarViewProps) {
+export function EmployeeCalendarView({ appointments, onRefresh }: Readonly<EmployeeCalendarViewProps>) {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState<CalendarView>('month')
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithRelations | null>(null)
@@ -95,27 +134,17 @@ export function EmployeeCalendarView({ appointments, onRefresh }: EmployeeCalend
   // Filter appointments by date range
   const filteredAppointments = useMemo(() => {
     const { start, end } = getDateRange
+    const rangeKeys = new Set(eachDayOfInterval({ start, end }).map(getCalendarDateKey))
+
     return appointments.filter(apt => {
-      const aptDate = new Date(apt.start_time)
-      return aptDate >= start && aptDate <= end
+      return rangeKeys.has(getDateKeyInColombia(apt.start_time))
     })
   }, [appointments, getDateRange])
 
   // Get appointments for a specific date
   const getAppointmentsForDate = (date: Date): AppointmentWithRelations[] => {
-    return appointments.filter(apt => {
-      const aptDate = new Date(apt.start_time)
-      // Comparar solo año, mes y día para evitar problemas de zona horaria
-      const aptYear = aptDate.getFullYear()
-      const aptMonth = aptDate.getMonth()
-      const aptDay = aptDate.getDate()
-      
-      const targetYear = date.getFullYear()
-      const targetMonth = date.getMonth()
-      const targetDay = date.getDate()
-      
-      return aptYear === targetYear && aptMonth === targetMonth && aptDay === targetDay
-    })
+    const targetDateKey = getCalendarDateKey(date)
+    return filteredAppointments.filter(apt => getDateKeyInColombia(apt.start_time) === targetDateKey)
   }
 
   // Format header title
@@ -152,14 +181,14 @@ export function EmployeeCalendarView({ appointments, onRefresh }: EmployeeCalend
 
         {/* Calendar days */}
         <div className="grid grid-cols-7 gap-2">
-          {days.map((day, idx) => {
+          {days.map((day) => {
             const dayAppointments = getAppointmentsForDate(day)
             const isToday = isSameDay(day, new Date())
             const isCurrentMonth = isSameMonth(day, currentDate)
 
             return (
               <Card
-                key={idx}
+                key={day.toISOString()}
                 className={cn(
                   "min-h-[100px] cursor-pointer hover:shadow-md transition-all",
                   !isCurrentMonth && "opacity-40",
@@ -185,13 +214,13 @@ export function EmployeeCalendarView({ appointments, onRefresh }: EmployeeCalend
                           key={apt.id}
                           className={cn(
                             "text-xs p-1 rounded truncate",
-                            apt.status === 'confirmed' && "bg-green-100 text-green-800",
-                            apt.status === 'pending' && "bg-yellow-100 text-yellow-800",
+                            (apt.status === 'scheduled' || apt.status === 'rescheduled') && "bg-yellow-100 text-yellow-800",
+                            (apt.status === 'confirmed' || apt.status === 'in_progress') && "bg-green-100 text-green-800",
                             apt.status === 'completed' && "bg-blue-100 text-blue-800",
                             apt.status === 'cancelled' && "bg-red-100 text-red-800"
                           )}
                         >
-                          {format(new Date(apt.start_time), 'HH:mm')}
+                          {formatTimeInColombia(apt.start_time)}
                         </div>
                       ))}
                       {dayAppointments.length > 2 && (
@@ -249,7 +278,7 @@ export function EmployeeCalendarView({ appointments, onRefresh }: EmployeeCalend
 
   // Get appointment status class (mismos estilos del admin)
   const getAppointmentClass = (status: string): string => {
-    if (status === 'pending' || status === 'pending_confirmation') {
+    if (status === 'scheduled' || status === 'rescheduled') {
       return 'bg-yellow-50 border border-yellow-500 text-yellow-900 font-semibold dark:bg-yellow-900/30 dark:border-yellow-600 dark:text-yellow-100';
     }
     if (status === 'confirmed') {
@@ -263,6 +292,29 @@ export function EmployeeCalendarView({ appointments, onRefresh }: EmployeeCalend
     }
     // Default para in_progress
     return 'bg-purple-100 border border-purple-500 text-purple-950 font-semibold dark:bg-purple-900/30 dark:border-purple-600 dark:text-purple-100';
+  }
+
+  const renderDayAppointment = (appointment: AppointmentWithRelations) => {
+    const appointmentClass = getAppointmentClass(appointment.status)
+
+    return (
+      <button
+        key={appointment.id}
+        onClick={() => setSelectedAppointment(appointment)}
+        className={`w-full p-2 rounded-md text-left text-xs hover:opacity-80 transition-opacity shadow-sm ${appointmentClass}`}
+      >
+        <div className="font-medium truncate">{appointment.client_name || 'Cliente sin nombre'}</div>
+        <div className="truncate">{appointment.service_name || 'Servicio no especificado'}</div>
+        <div className="text-xs opacity-75">
+          {formatTimeInColombia(appointment.start_time)} - {formatTimeInColombia(appointment.end_time)}
+        </div>
+        {appointment.location_name && (
+          <div className="text-xs opacity-60 truncate mt-1 flex items-center gap-1">
+            <MapPin size={12} /> {appointment.location_name}
+          </div>
+        )}
+      </button>
+    )
   }
 
   // Render day view con línea de tiempo (24 horas)
@@ -279,7 +331,7 @@ export function EmployeeCalendarView({ appointments, onRefresh }: EmployeeCalend
     // Obtener citas para una hora específica
     const getAppointmentsForHour = (hour: number): AppointmentWithRelations[] => {
       return dayAppointments.filter(apt => {
-        const aptHour = new Date(apt.start_time).getHours()
+        const aptHour = getTimePartsInColombia(apt.start_time).hour
         return aptHour === hour
       })
     }
@@ -319,28 +371,7 @@ export function EmployeeCalendarView({ appointments, onRefresh }: EmployeeCalend
                 <div className="flex-1 flex items-start gap-2">
                   {hourAppointments.length > 0 ? (
                     <div className="flex-1 space-y-2">
-                      {hourAppointments.map(apt => {
-                        const appointmentClass = getAppointmentClass(apt.status)
-                        
-                        return (
-                          <button
-                            key={apt.id}
-                            onClick={() => setSelectedAppointment(apt)}
-                            className={`w-full p-2 rounded-md text-left text-xs hover:opacity-80 transition-opacity shadow-sm ${appointmentClass}`}
-                          >
-                            <div className="font-medium truncate">{apt.client_name || 'Cliente sin nombre'}</div>
-                            <div className="truncate">{apt.service_name || 'Servicio no especificado'}</div>
-                            <div className="text-xs opacity-75">
-                              {format(new Date(apt.start_time), 'HH:mm', { locale: es })} - {format(new Date(apt.end_time), 'HH:mm', { locale: es })}
-                            </div>
-                            {apt.location_name && (
-                              <div className="text-xs opacity-60 truncate mt-1 flex items-center gap-1">
-                                <MapPin size={12} /> {apt.location_name}
-                              </div>
-                            )}
-                          </button>
-                        )
-                      })}
+                      {hourAppointments.map(renderDayAppointment)}
                     </div>
                   ) : (
                     <div className="flex-1 text-xs text-muted-foreground py-2">
@@ -407,15 +438,15 @@ export function EmployeeCalendarView({ appointments, onRefresh }: EmployeeCalend
           {/* Appointments count */}
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
-              {filteredAppointments.length} cita{filteredAppointments.length !== 1 ? 's' : ''}
+              {filteredAppointments.length} cita{filteredAppointments.length === 1 ? '' : 's'}
             </span>
             {filteredAppointments.length > 0 && (
               <div className="flex gap-2">
                 <Badge variant="default">
-                  {filteredAppointments.filter(a => a.status === 'confirmed').length} Confirmadas
+                  {filteredAppointments.filter(a => a.status === 'confirmed' || a.status === 'in_progress').length} Confirmadas
                 </Badge>
                 <Badge variant="outline">
-                  {filteredAppointments.filter(a => a.status === 'pending' || a.status === 'pending_confirmation').length} Pendientes
+                  {filteredAppointments.filter(a => a.status === 'scheduled' || a.status === 'rescheduled').length} Programadas
                 </Badge>
               </div>
             )}
