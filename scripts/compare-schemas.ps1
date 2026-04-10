@@ -1,8 +1,17 @@
 
 # Script para extraer y comparar schemas de DEV y PROD
 # Usa la Management API de Supabase
+#
+# CONFIGURACIÓN: establecer la variable de entorno antes de ejecutar:
+#   $env:SUPABASE_ACCESS_TOKEN = "sbp_..."
+# O agregar al archivo .env y cargar con: . .\environments\local\.env.ps1
 
-$token = "sbp_939fa09fd90a56950b2b2e6d4fbb8a8a2f743e19"
+$token = $env:SUPABASE_ACCESS_TOKEN
+if (-not $token) {
+    Write-Error "SUPABASE_ACCESS_TOKEN no está configurado. Establecer la variable de entorno antes de ejecutar."
+    exit 1
+}
+
 $devRef = "dkancockzvcqorqbwtyh"
 $prodRef = "emknatoknbomvmyumqju"
 $apiBase = "https://api.supabase.com/v1/projects"
