@@ -70,19 +70,16 @@ jobs:
 
       - name: Link to DEV Supabase
         run: |
-          # TEMPORARILY DISABLED
-          # npx supabase link \
-          #   --project-ref ${{ vars.SUPABASE_PROJECT_REF }}
+          npx supabase link \
+            --project-ref ${{ vars.SUPABASE_PROJECT_REF }}
 
       - name: Apply migrations
         run: |
-          # TEMPORARILY DISABLED
-          # npx supabase db push --dns-resolver https --yes
+          npx supabase db push --dns-resolver https --yes
 
       - name: Verify migration status
         run: |
-          # TEMPORARILY DISABLED
-          # npx supabase migration list --dns-resolver https
+          npx supabase migration list --dns-resolver https
 
   deploy-edge-functions:
     name: Deploy All Edge Functions to DEV
