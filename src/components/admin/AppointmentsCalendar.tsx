@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import { format, addDays, subDays, parseISO, isWithinInterval, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { usePreferredLocation } from '@/hooks/usePreferredLocation';
-import { useTaxCalculation } from '@/hooks/useTaxCalculation';
 import type { TaxType } from '@/types/accounting.types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -521,12 +520,40 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
   // para que el hook quede suscrito al evento 'preferred-location-changed' desde el principio,
   // sin esperar a que fetchData asigne currentBusinessId de forma async.
   const { preferredLocationId } = usePreferredLocation(propBusinessId ?? currentBusinessId);
-  const { calculateTaxes } = useTaxCalculation(currentBusinessId);
 
   const formatFiscalPeriod = (date: Date) => {
     const year = date.getUTCFullYear();
     const month = String(date.getUTCMonth() + 1).padStart(2, '0');
     return `${year}-${month}`;
+  };
+
+  const calculateIncludedTaxBreakdown = (amount: number, taxType: TaxType) => {
+    let ivaRate = 0;
+    if (taxType === 'iva_5') {
+      ivaRate = 0.05;
+    } else if (taxType === 'iva_19') {
+      ivaRate = 0.19;
+    }
+
+    if (ivaRate <= 0) {
+      return {
+        subtotal: amount,
+        taxAmount: 0,
+        taxRate: 0,
+        totalAmount: amount,
+      };
+    }
+
+    const subtotal = Number((amount / (1 + ivaRate)).toFixed(2));
+    const taxAmount = Number((amount - subtotal).toFixed(2));
+    const taxRate = subtotal > 0 ? taxAmount / subtotal : 0;
+
+    return {
+      subtotal,
+      taxAmount,
+      taxRate,
+      totalAmount: amount,
+    };
   };
 
   // Colores pastel para las columnas de empleados
@@ -1003,10 +1030,11 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
 
       // Calcular impuestos según el tipo del servicio
       const taxType: TaxType = appointment.service_tax_type || 'none';
-      const taxes = calculateTaxes(grossAmount, taxType);
-      const taxAmount = taxes.total_tax;
-      const taxRate = grossAmount > 0 ? taxAmount / grossAmount : 0;
-      const totalAmount = taxes.total_amount;
+      // El valor de la cita ya incluye IVA; no se debe sumar impuesto adicional.
+      const taxBreakdown = calculateIncludedTaxBreakdown(grossAmount, taxType);
+      const taxAmount = taxBreakdown.taxAmount;
+      const taxRate = taxBreakdown.taxRate;
+      const totalAmount = taxBreakdown.totalAmount;
 
       const baseTxn = {
         business_id: currentBusinessId!,
@@ -1023,7 +1051,7 @@ export const AppointmentsCalendar: React.FC<{ businessId?: string }> = ({ busine
           ...baseTxn,
           employee_id: appointment.employee_id ?? null,
           type: 'income' as const,
-          subtotal: grossAmount,
+          subtotal: taxBreakdown.subtotal,
           tax_type: taxType,
           tax_rate: taxRate,
           tax_amount: taxAmount,

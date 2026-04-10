@@ -5,7 +5,6 @@ import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { PermissionGate } from '@/components/ui/PermissionGate'
@@ -17,8 +16,6 @@ import {
   WhatsappLogo,
   ArrowUp,
   ArrowDown,
-  Trash,
-  Plus
 } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 
@@ -71,8 +68,6 @@ export function BusinessNotificationSettings({ businessId }: { businessId: strin
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState<BusinessNotificationSettings | null>(null)
-  const [newReminderTime, setNewReminderTime] = useState('')
-
   useEffect(() => {
     loadSettings()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -94,9 +89,9 @@ export function BusinessNotificationSettings({ businessId }: { businessId: strin
             business_id: businessId,
             email_enabled: true,
             sms_enabled: false,
-            whatsapp_enabled: false,
+            whatsapp_enabled: true,
             channel_priority: ['whatsapp', 'email', 'sms'],
-            reminder_times: [1440, 60], // 24h y 1h antes
+            reminder_times: [1440, 120], // 24h y 2h antes
             notification_types: {
               appointment_reminder: { enabled: true, channels: ['email', 'whatsapp'] },
               appointment_confirmation: { enabled: true, channels: ['email', 'whatsapp'] },
@@ -185,49 +180,6 @@ export function BusinessNotificationSettings({ businessId }: { businessId: strin
     updateSettings({ channel_priority: newPriority })
   }
 
-  function addReminderTime() {
-    if (!settings || !newReminderTime) return
-    const minutes = parseInt(newReminderTime)
-    if (isNaN(minutes) || minutes <= 0) {
-      toast.error('Ingrese un número de minutos válido')
-      return
-    }
-    if (settings.reminder_times.includes(minutes)) {
-      toast.error('Este tiempo ya está en la lista')
-      return
-    }
-    const newTimes = [...settings.reminder_times, minutes].sort((a, b) => b - a)
-    updateSettings({ reminder_times: newTimes })
-    setNewReminderTime('')
-  }
-
-  function removeReminderTime(minutes: number) {
-    if (!settings) return
-    const newTimes = settings.reminder_times.filter(t => t !== minutes)
-    updateSettings({ reminder_times: newTimes })
-  }
-
-  function updateNotificationType(key: string, field: 'enabled' | 'channels', value: boolean | string[]) {
-    if (!settings) return
-    const newTypes = {
-      ...settings.notification_types,
-      [key]: {
-        ...settings.notification_types[key],
-        [field]: value,
-      },
-    }
-    updateSettings({ notification_types: newTypes })
-  }
-
-  function toggleNotificationChannel(notifKey: string, channel: string) {
-    if (!settings) return
-    const currentChannels = settings.notification_types[notifKey]?.channels || []
-    const newChannels = currentChannels.includes(channel)
-      ? currentChannels.filter(c => c !== channel)
-      : [...currentChannels, channel]
-    updateNotificationType(notifKey, 'channels', newChannels)
-  }
-
   const getChannelIcon = (channel: string) => {
     switch (channel) {
       case 'email': return <Envelope weight="fill" />
@@ -296,6 +248,7 @@ export function BusinessNotificationSettings({ businessId }: { businessId: strin
               <Switch
                 checked={settings.sms_enabled}
                 onCheckedChange={(checked) => updateSettings({ sms_enabled: checked })}
+                disabled
               />
             </div>
 
@@ -379,20 +332,6 @@ export function BusinessNotificationSettings({ businessId }: { businessId: strin
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              placeholder="Minutos (ej: 1440 para 24h)"
-              value={newReminderTime}
-              onChange={(e) => setNewReminderTime(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && addReminderTime()}
-            />
-            <Button onClick={addReminderTime}>
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar
-            </Button>
-          </div>
-
           <div className="space-y-2">
             {settings.reminder_times.sort((a, b) => b - a).map(minutes => (
               <div key={minutes} className="flex items-center justify-between p-3 border border-border rounded-lg bg-background">
@@ -401,13 +340,7 @@ export function BusinessNotificationSettings({ businessId }: { businessId: strin
                   <span className="font-medium">{formatMinutesToHuman(minutes)} antes</span>
                   <Badge variant="secondary">{minutes} min</Badge>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeReminderTime(minutes)}
-                >
-                  <Trash className="h-4 w-4 text-destructive" />
-                </Button>
+
               </div>
             ))}
             {settings.reminder_times.length === 0 && (
@@ -415,159 +348,6 @@ export function BusinessNotificationSettings({ businessId }: { businessId: strin
                 No hay recordatorios configurados
               </p>
             )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tipos de Notificación */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground">Configuración por Tipo de Notificación</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Personaliza qué canales usar para cada tipo de notificación
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {NOTIFICATION_TYPE_CONFIGS.map(config => {
-              const notifSettings = settings.notification_types[config.key] || { enabled: false, channels: [] }
-            return (
-              <div key={config.key} className="space-y-3 pb-4 border-b border-border last:border-0">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-foreground">{config.label}</Label>
-                    <p className="text-sm text-muted-foreground">{config.description}</p>
-                  </div>
-                  <Switch
-                    checked={notifSettings.enabled}
-                    onCheckedChange={(checked) => updateNotificationType(config.key, 'enabled', checked)}
-                  />
-                </div>
-                {notifSettings.enabled && (
-                  <div className="flex gap-2 ml-4">
-                    <Button
-                      variant={notifSettings.channels.includes('email') ? 'default' : 'outline'}
-                      size="sm"
-                      disabled={!settings.email_enabled}
-                      onClick={() => toggleNotificationChannel(config.key, 'email')}
-                    >
-                      <Envelope className="h-4 w-4 mr-1" />
-                      Email
-                    </Button>
-                    <Button
-                      variant={notifSettings.channels.includes('sms') ? 'default' : 'outline'}
-                      size="sm"
-                      disabled={!settings.sms_enabled}
-                      onClick={() => toggleNotificationChannel(config.key, 'sms')}
-                    >
-                      <Phone className="h-4 w-4 mr-1" />
-                      SMS
-                    </Button>
-                    <Button
-                      variant={notifSettings.channels.includes('whatsapp') ? 'default' : 'outline'}
-                      size="sm"
-                      disabled={!settings.whatsapp_enabled}
-                      onClick={() => toggleNotificationChannel(config.key, 'whatsapp')}
-                    >
-                      <WhatsappLogo className="h-4 w-4 mr-1" />
-                      WhatsApp
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </CardContent>
-      </Card>
-
-      {/* Horarios de Envío */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground">Horarios de Envío</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Define el rango horario en que se pueden enviar notificaciones
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-foreground">Desde</Label>
-              <Input
-                type="time"
-                value={settings.send_notifications_from}
-                onChange={(e) => updateSettings({ send_notifications_from: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-foreground">Hasta</Label>
-              <Input
-                type="time"
-                value={settings.send_notifications_until}
-                onChange={(e) => updateSettings({ send_notifications_until: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-foreground">Zona Horaria</Label>
-            <select
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={settings.timezone}
-              onChange={(e) => updateSettings({ timezone: e.target.value })}
-            >
-              {TIMEZONES.map(tz => (
-                <option key={tz.value} value={tz.value}>{tz.label}</option>
-              ))}
-            </select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Configuración de Contactos */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-foreground">Configuración de Contactos</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Datos de contacto del remitente para cada canal
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-foreground">Nombre del remitente (Email)</Label>
-            <Input
-              placeholder="Mi Negocio"
-              value={settings.email_from_name}
-              onChange={(e) => updateSettings({ email_from_name: e.target.value })}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-foreground">Email del remitente</Label>
-            <Input
-              type="email"
-              placeholder="noreply@minegocio.com"
-              value={settings.email_from_address}
-              onChange={(e) => updateSettings({ email_from_address: e.target.value })}
-            />
-          </div>
-
-          <Separator className="bg-border" />
-
-          <div className="space-y-2">
-            <Label className="text-foreground">Número de teléfono AWS SNS (SMS)</Label>
-            <Input
-              placeholder="+1234567890"
-              value={settings.twilio_phone_number}
-              onChange={(e) => updateSettings({ twilio_phone_number: e.target.value })}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-foreground">Número de WhatsApp Business</Label>
-            <Input
-              placeholder="+1234567890"
-              value={settings.whatsapp_phone_number}
-              onChange={(e) => updateSettings({ whatsapp_phone_number: e.target.value })}
-            />
           </div>
         </CardContent>
       </Card>
