@@ -88,6 +88,7 @@ function getStatusBadge(status: string) {
 export function BillingDashboard({ businessId, ownerId }: Readonly<BillingDashboardProps>) {
   const { plan, usage, isLoading, cancelPlan, refetch } = useBillingPlan(businessId)
   const trial = useFreeTrial(businessId, ownerId, refetch, plan)
+
   const [showPricingPage, setShowPricingPage] = useState(false)
   const [recentPayments, setRecentPayments] = useState<RecentPayment[]>([])
   const [paymentsLoading, setPaymentsLoading] = useState(false)
@@ -328,6 +329,51 @@ export function BillingDashboard({ businessId, ownerId }: Readonly<BillingDashbo
             </CardContent>
           </Card>
         </div>
+
+        {/* Free Trial Confirmation Dialog */}
+        <AlertDialog open={showFreeTrialConfirmation} onOpenChange={(open) => { if (!trial.isActivating) setShowFreeTrialConfirmation(open) }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <Gift className="h-5 w-5 text-primary" />
+                Activar Mes Gratis
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3 pt-2">
+                <div>
+                  <p className="font-medium text-foreground">
+                    Este mes gratis se aplicará al negocio:
+                  </p>
+                  <p className="text-primary font-semibold mt-1">
+                    {loadingBusinessName ? '...' : businessName || 'Negocio'}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-3">
+                  <p className="text-sm text-foreground">
+                    <span className="font-semibold">Importante:</span> Solo puedes utilizar el mes gratis una sola vez. 
+                    Después de vencer, deberás activar un plan de pago para mantener el acceso.
+                  </p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  ¿Deseas proceder con la activación?
+                </p>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="flex gap-3 justify-end">
+              <AlertDialogCancel disabled={trial.isActivating}>Cancelar</AlertDialogCancel>
+              <Button
+                onClick={async () => {
+                  await trial.activateFreeTrial()
+                  setShowFreeTrialConfirmation(false)
+                }}
+                disabled={trial.isActivating}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {trial.isActivating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Activar
+              </Button>
+            </div>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     )
   }
@@ -616,50 +662,6 @@ export function BillingDashboard({ businessId, ownerId }: Readonly<BillingDashbo
         </CardContent>
       </Card>
 
-      {/* Free Trial Confirmation Dialog */}
-      <AlertDialog open={showFreeTrialConfirmation} onOpenChange={(open) => { if (!trial.isActivating) setShowFreeTrialConfirmation(open) }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-primary" />
-              Activar Mes Gratis
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3 pt-2">
-              <div>
-                <p className="font-medium text-foreground">
-                  Este mes gratis se aplicará al negocio:
-                </p>
-                <p className="text-primary font-semibold mt-1">
-                  {loadingBusinessName ? '...' : businessName || 'Negocio'}
-                </p>
-              </div>
-              <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 p-3">
-                <p className="text-sm text-foreground">
-                  <span className="font-semibold">Importante:</span> Solo puedes utilizar el mes gratis una sola vez. 
-                  Después de vencer, deberás activar un plan de pago para mantener el acceso.
-                </p>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                ¿Deseas proceder con la activación?
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex gap-3 justify-end">
-            <AlertDialogCancel disabled={trial.isActivating}>Cancelar</AlertDialogCancel>
-            <Button
-              onClick={async () => {
-                await trial.activateFreeTrial()
-                setShowFreeTrialConfirmation(false)
-              }}
-              disabled={trial.isActivating}
-              className="bg-primary hover:bg-primary/90"
-            >
-              {trial.isActivating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Activar
-            </Button>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }
