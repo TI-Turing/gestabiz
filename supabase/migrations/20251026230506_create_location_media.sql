@@ -1,1 +1,0 @@
--- Placeholder: location_media was included in initial_schema
