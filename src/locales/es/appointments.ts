@@ -63,6 +63,25 @@ export const appointments = {
     modified: '¡Cita modificada exitosamente!',
   },
 
+  toasts: {
+    cancelled: 'Cita cancelada',
+    cancelError: 'Error al cancelar la cita',
+    confirmed: 'Cita confirmada manualmente',
+    confirmError: 'Error al confirmar la cita',
+    noShowMarked: 'Cita marcada como sin asistencia',
+    noShowError: 'Error al marcar sin asistencia',
+    confirmationResent: 'Email de confirmación reenviado',
+    confirmationResendError: 'Error al reenviar email de confirmación',
+    cancelSuccess: 'Cita cancelada exitosamente',
+    cancelFailed: 'No se pudo cancelar la cita. Intenta de nuevo.',
+    chatStarted: 'Chat iniciado con el profesional',
+    chatFailed: 'No se pudo iniciar el chat. Por favor, intenta de nuevo.',
+    chatUnavailable: 'No se puede iniciar el chat en este momento',
+    editHint: 'Modifica los datos de tu cita y confirma los cambios',
+    thankReview: '¡Gracias por tu reseña!',
+    availabilityError: 'No se pudo cargar la disponibilidad',
+  },
+
   // Wizard UI
   wizard: {
     newAppointment: 'Nueva Cita',
