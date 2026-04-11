@@ -358,7 +358,7 @@ export function AppointmentCard({
         <div className="flex-1 min-w-0 space-y-2">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-base truncate">{serviceName}</h3>
-            <Badge variant={statusCfg.variant} className="shrink-0">{statusCfg.label}</Badge>
+            {!renderActions && <Badge variant={statusCfg.variant} className="shrink-0">{statusCfg.label}</Badge>}
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
