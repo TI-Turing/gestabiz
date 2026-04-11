@@ -461,6 +461,15 @@ export function BusinessSelection({
       if (error) throw error as Error;
       const result = (data as any) || {};
       const nextRows = (result.businesses || []) as Business[];
+
+      if (nextRows.length === 0) {
+        // No more results available — advance page counter and cap totalResults
+        // so the "Cargar más" button hides itself.
+        setCurrentPage(nextPage);
+        setTotalResults(displayedBusinesses.length);
+        return;
+      }
+
       // Merge maps to preserve data for previously loaded businesses
       setLocationsCountMap(prev => ({ ...prev, ...(result.locationsCountMap || {}) }));
       setCityNameMap(prev => ({ ...prev, ...(result.cityNameMap || {}) }));
@@ -471,8 +480,7 @@ export function BusinessSelection({
       setRatingStatsByBusinessId(prev => ({ ...prev, ...(result.ratingStatsByBusinessId || {}) }));
       setDisplayedBusinesses(prev => [...prev, ...nextRows]);
       setCurrentPage(nextPage);
-      // If no new rows came back, correct totalResults so the button disappears
-      setTotalResults(nextRows.length === 0 ? displayedBusinesses.length : (result.total || totalResults));
+      setTotalResults(result.total || totalResults);
     } catch {
       // No-op: no avanzamos de página si falla
     }
