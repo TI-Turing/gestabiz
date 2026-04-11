@@ -241,16 +241,15 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
     return parseInt(value.replace(/\./g, ''), 10) || 0
   }
 
+  const parsedPriceMin = useMemo(() => (priceMin !== '' ? parseCOP(priceMin) : null), [priceMin])
+  const parsedPriceMax = useMemo(() => (priceMax !== '' ? parseCOP(priceMax) : null), [priceMax])
+
   const matchesPriceRange = useCallback((apt: AppointmentWithRelations): boolean => {
     const price = apt.service?.price || apt.price || 0
-    if (priceMin !== '') {
-      if (price < parseCOP(priceMin)) return false
-    }
-    if (priceMax !== '') {
-      if (price > parseCOP(priceMax)) return false
-    }
+    if (parsedPriceMin !== null && price < parsedPriceMin) return false
+    if (parsedPriceMax !== null && price > parsedPriceMax) return false
     return true
-  }, [priceMin, priceMax])
+  }, [parsedPriceMin, parsedPriceMax])
 
   const matchesSearch = useCallback((apt: AppointmentWithRelations): boolean => {
     if (!searchTerm) return true
