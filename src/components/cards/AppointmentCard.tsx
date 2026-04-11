@@ -159,33 +159,49 @@ export function AppointmentCard({
   const servicePrice = appointment.service?.price ?? appointment.price;
 
   if (compact) {
+    const compactIsButton = !!onClick;
+    const CompactTag = compactIsButton ? 'button' : 'div';
     return (
-      <div className={cn('rounded-xl border bg-card p-3 hover:shadow-sm transition-shadow', className)}>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="flex items-center gap-1 text-sm font-medium truncate">
-              <Briefcase className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span className="truncate">{serviceName}</span>
-            </div>
-            <Badge variant={statusCfg.variant} className="text-xs shrink-0">{statusCfg.label}</Badge>
-          </div>
+      <CompactTag
+        {...(compactIsButton ? { type: 'button' as const } : {})}
+        className={cn(
+          'rounded-xl border bg-card p-3 hover:shadow-sm transition-shadow w-full text-left',
+          compactIsButton && 'cursor-pointer',
+          className,
+        )}
+        onClick={onClick}
+      >
+        {/* Status + time row – flex-wrap prevents overlap in narrow columns */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant={statusCfg.variant} className="text-xs shrink-0">{statusCfg.label}</Badge>
           <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
             <Clock className="h-3 w-3" />
             {formatTime(appointment.start_time)}
           </div>
         </div>
+        {/* Service name row */}
+        <div className="flex items-center gap-1 text-sm font-medium mt-1 min-w-0">
+          <Briefcase className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="truncate">{serviceName}</span>
+        </div>
         {(appointment.business || appointment.employee) && (
-          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-muted-foreground">
             {appointment.business && (
-              <span className="flex items-center gap-1"><Building2 className="h-3 w-3" />{appointment.business.name}</span>
+              <span className="flex items-center gap-1 min-w-0">
+                <Building2 className="h-3 w-3 shrink-0" />
+                <span className="truncate">{appointment.business.name}</span>
+              </span>
             )}
             {appointment.employee && (
-              <span className="flex items-center gap-1"><User className="h-3 w-3" />{appointment.employee.full_name}</span>
+              <span className="flex items-center gap-1 min-w-0">
+                <User className="h-3 w-3 shrink-0" />
+                <span className="truncate">{appointment.employee.full_name}</span>
+              </span>
             )}
           </div>
         )}
         {children}
-      </div>
+      </CompactTag>
     );
   }
 
