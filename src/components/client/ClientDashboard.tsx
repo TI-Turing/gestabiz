@@ -822,6 +822,7 @@ export function ClientDashboard({
             favorites={dashboardData?.favorites || []}
             loading={isDashboardLoading}
             onBookAppointment={handleBookAppointment}
+            onViewProfile={setSelectedBusinessId}
           />
         )
       case 'history':
