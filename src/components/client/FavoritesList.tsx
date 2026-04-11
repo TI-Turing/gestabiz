@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import * as Sentry from '@sentry/react'
 import { useQueryClient } from '@tanstack/react-query';
 import { FavoriteBusiness, useFavorites } from '@/hooks/useFavorites';
@@ -7,13 +7,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Heart, Loader2 } from 'lucide-react';
 import { Lightbulb } from '@phosphor-icons/react';
-import BusinessProfile from '@/components/business/BusinessProfile';
 import { BusinessCard } from '@/components/cards/BusinessCard';
 
 interface FavoritesListProps {
   favorites: FavoriteBusiness[];
   loading: boolean;
   onBookAppointment?: (businessId?: string, serviceId?: string, locationId?: string, employeeId?: string) => void;
+  /** Callback para abrir el perfil de un negocio (manejado por el padre ClientDashboard) */
+  onViewProfile?: (businessId: string) => void;
 }
 
 /**
@@ -27,10 +28,9 @@ interface FavoritesListProps {
  * - Empty state cuando no hay favoritos
  * - Loading states
  */
-export default function FavoritesList({ favorites, loading, onBookAppointment }: FavoritesListProps) {
+export default function FavoritesList({ favorites, loading, onBookAppointment, onViewProfile }: FavoritesListProps) {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
   const { toggleFavorite } = useFavorites(user?.id);
   const queryClient = useQueryClient();
 
@@ -65,7 +65,7 @@ export default function FavoritesList({ favorites, loading, onBookAppointment }:
         total_reviews: business.review_count,
       }}
       panoramic
-      onSelect={() => setSelectedBusinessId(business.id)}
+      onSelect={() => onViewProfile?.(business.id)}
       renderActions={(id) => (
         <button
           onClick={(e) => {
@@ -84,13 +84,13 @@ export default function FavoritesList({ favorites, loading, onBookAppointment }:
         className="w-full bg-primary hover:bg-primary/90 shadow-lg"
         onClick={(e) => {
           e.stopPropagation();
-          setSelectedBusinessId(business.id);
+          onViewProfile?.(business.id);
         }}
       >
         {t('favoritesList.bookButton')}
       </Button>
     </BusinessCard>
-  ), [t, handleRemoveFavorite]);
+  ), [t, handleRemoveFavorite, onViewProfile]);
 
   // Loading state
   if (loading) {
@@ -125,43 +125,31 @@ export default function FavoritesList({ favorites, loading, onBookAppointment }:
   }
 
   return (
-    <>
-      <div className="space-y-6 p-4 pt-8 sm:pt-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <Heart className="h-6 w-6 text-primary fill-primary" />
-              {t('favoritesList.myFavorites')}
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {favorites.length} {favorites.length === 1 ? t('favoritesList.businessMarked') : t('favoritesList.businessesMarked')} {t('favoritesList.tipDescription')}
-            </p>
-          </div>
-        </div>
-
-        {/* Grid de tarjetas - 2 columnas máximo para cards más anchas y mostrar banner completo */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {favorites.map(business => renderBusinessCard(business))}
-        </div>
-
-        {/* Info adicional */}
-        <div className="bg-muted/50 border border-border rounded-lg p-4 text-sm text-muted-foreground">
-          <p className="flex items-center gap-2">
-            <Lightbulb size={18} weight="fill" /> <strong className="text-foreground">Tip:</strong> {t('favoritesList.tipDescription')}
+    <div className="space-y-6 p-4 pt-8 sm:pt-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Heart className="h-6 w-6 text-primary fill-primary" />
+            {t('favoritesList.myFavorites')}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {favorites.length} {favorites.length === 1 ? t('favoritesList.businessMarked') : t('favoritesList.businessesMarked')} {t('favoritesList.tipDescription')}
           </p>
         </div>
       </div>
 
-      {/* Business Profile Modal */}
-      {selectedBusinessId && (
-        <BusinessProfile
-          businessId={selectedBusinessId}
-          userId={user?.id} // CRITICAL FIX: Pass userId explicitly
-          onClose={() => setSelectedBusinessId(null)}
-          onBookAppointment={onBookAppointment}
-        />
-      )}
-    </>
+      {/* Grid de tarjetas - 2 columnas máximo para cards más anchas y mostrar banner completo */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {favorites.map(business => renderBusinessCard(business))}
+      </div>
+
+      {/* Info adicional */}
+      <div className="bg-muted/50 border border-border rounded-lg p-4 text-sm text-muted-foreground">
+        <p className="flex items-center gap-2">
+          <Lightbulb size={18} weight="fill" /> <strong className="text-foreground">Tip:</strong> {t('favoritesList.tipDescription')}
+        </p>
+      </div>
+    </div>
   );
 }
