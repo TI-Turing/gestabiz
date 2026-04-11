@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import * as Sentry from '@sentry/react'
-import { Search, Building2, Briefcase, User, ChevronDown, Loader2 } from 'lucide-react'
+import { Search, Building2, Briefcase, User, ChevronDown, Loader2, Star } from 'lucide-react'
 import { MapPin } from '@phosphor-icons/react'
 import {
   DropdownMenu,
@@ -24,6 +24,7 @@ interface SearchResult {
   location?: string
   logo_url?: string
   businessId?: string
+  rating?: number
 }
 
 interface SearchBarProps {
@@ -88,7 +89,8 @@ export function SearchBar({ onResultSelect, onViewMore, className, autoFocus }: 
               description,
               business:businesses!services_business_id_fkey (
                 id,
-                name
+                name,
+                average_rating
               )
             `)
             .ilike('name', `%${term}%`)
@@ -103,7 +105,8 @@ export function SearchBar({ onResultSelect, onViewMore, className, autoFocus }: 
             type: 'services' as SearchType,
             subtitle: service.business?.name || t('search.results.independentService'),
             category: service.description,
-            businessId: service.business?.id
+            businessId: service.business?.id,
+            rating: service.business?.average_rating
           }))
           break
         }
@@ -116,6 +119,7 @@ export function SearchBar({ onResultSelect, onViewMore, className, autoFocus }: 
               name,
               description,
               logo_url,
+              average_rating,
               category:business_categories!businesses_category_id_fkey (
                 name
               ),
@@ -159,7 +163,8 @@ export function SearchBar({ onResultSelect, onViewMore, className, autoFocus }: 
               type: 'businesses' as SearchType,
               subtitle: business.category?.name || t('search.results.noCategory'),
               location: cityName || loc?.name || t('search.results.locationNotSpecified'),
-              logo_url: business.logo_url
+              logo_url: business.logo_url,
+              rating: business.average_rating
             }
           })
           break
@@ -169,20 +174,21 @@ export function SearchBar({ onResultSelect, onViewMore, className, autoFocus }: 
 
         case 'users': {
           // Search for users who are employees (have services)
+          // Use !inner to perform an inner join so only profiles with at least
+          // one business_employees record are returned
           const { data: usersData, error } = await supabase
             .from('profiles')
             .select(`
               id,
               full_name,
               bio,
-              business_employees!business_employees_employee_id_fkey (
+              business_employees!inner (
                 business:businesses!business_employees_business_id_fkey (
                   name
                 )
               )
             `)
             .ilike('full_name', `%${term}%`)
-            .not('business_employees', 'is', null)
             .limit(5)
 
           if (error) throw error
@@ -373,6 +379,12 @@ export function SearchBar({ onResultSelect, onViewMore, className, autoFocus }: 
                         </p>
                       )}
                     </div>
+                    {result.rating != null && result.rating > 0 && (
+                      <div className="flex-shrink-0 flex items-center gap-0.5 text-amber-500 ml-2 self-center">
+                        <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-amber-500" />
+                        <span className="text-xs sm:text-sm font-medium">{Number(result.rating).toFixed(1)}</span>
+                      </div>
+                    )}
                   </button>
                 )
               })}
