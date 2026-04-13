@@ -104,14 +104,37 @@ Contenido de la nota...
 
 **Agentes especializados** (usan el `Agent tool` internamente):
 
+> Los agentes de Claude Code están en `.claude/agents/`. Los de GitHub Copilot están en `.github/agents/`.
+
+### Técnicos
 | Agente | Cuándo usarlo |
 |--------|---------------|
 | `supabase-agent` | Migraciones SQL, Edge Functions Deno, RLS, triggers, optimización de queries |
 | `qa-reviewer` | Revisar código antes de commit — detecta anti-patterns de Gestabiz |
 | `i18n-gestabiz` | Agregar/auditar claves de traducción ES/EN en los ~44 archivos de locales |
 | `launch-checker` | Verificar checklist de lanzamiento a producción |
+| `security-auditor` | Auditar seguridad: RLS, webhooks, CORS, secrets, OWASP. Usar antes de cada deploy a prod |
+| `performance-auditor` | Detectar re-renders, N+1 queries, bundle pesado, Core Web Vitals. Usar en páginas de alto tráfico |
+
+### Producto y UX
+| Agente | Cuándo usarlo |
+|--------|---------------|
+| `product-manager` | Priorizar features, escribir user stories, evaluar si una idea vale la pena (RICE score) |
+| `ux-reviewer` | Revisar flujos de usuario, onboarding, conversión y fricción — perspectiva del dueño de negocio colombiano |
+
+### Negocio y Crecimiento
+| Agente | Cuándo usarlo |
+|--------|---------------|
+| `startup-advisor` | Evaluar decisiones desde perspectiva de inversor/fundador: ROI, PMF, moat, LATAM |
+| `sales-agent` | Crear scripts de ventas, propuestas comerciales, manejo de objeciones, proceso comercial |
+| `seo-content-agent` | Estrategia SEO, posts de blog, landing pages por ciudad/vertical, copy web |
+| `support-agent` | Documentación de soporte, respuestas WhatsApp/email, FAQs, guías de configuración |
+| `marketing-agent` | Crear piezas visuales para redes sociales usando Canva MCP y Pencil MCP. Entrega diseño + caption + hashtags |
 | `gtm-instagram-outreach` | Generar DMs de Instagram para outreach de Gestabiz en Colombia |
-| `marketing-agent` | Crear piezas visuales para redes sociales (Instagram, Facebook, TikTok) usando Canva MCP y Pencil MCP. Entrega diseño + caption + hashtags listos para publicar |
+
+### Exploración y Planificación
+| Agente | Cuándo usarlo |
+|--------|---------------|
 | `Explore` | Exploración de codebase por patrón, keyword o pregunta arquitectónica |
 | `Plan` | Diseñar plan de implementación antes de codear |
 | `claude-code-guide` | Responder preguntas sobre Claude Code CLI, MCP servers, API de Anthropic |
