@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { DollarSign, Clock, MapPin, X, Calendar } from 'lucide-react'
+import { DollarSign, Clock, MapPin, X, Calendar, Image as ImageIcon } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { ImageLightbox } from '@/components/ui/ImageLightbox'
 import { LocationProfileModal } from '@/components/admin/LocationProfileModal'
 import UserProfile from '@/components/user/UserProfile'
 import BusinessProfile from '@/components/business/BusinessProfile'
@@ -111,6 +112,7 @@ export function ServiceProfileModal({
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null)
   const [businessProfileId, setBusinessProfileId] = useState<string | null>(null)
+  const [showServiceLightbox, setShowServiceLightbox] = useState(false)
 
   // Cargar datos cada vez que cambia el serviceId
   useEffect(() => {
@@ -304,6 +306,17 @@ export function ServiceProfileModal({
           )}
           <div className="absolute inset-0 bg-black/40" />
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+          {/* Botón expandir imagen del servicio */}
+          {service?.image_url && (
+            <button
+              type="button"
+              aria-label="Ver imagen completa"
+              onClick={() => setShowServiceLightbox(true)}
+              className="absolute bottom-3 right-3 z-20 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors"
+            >
+              <ImageIcon className="h-4 w-4" />
+            </button>
+          )}
           {/* Badge negocio - top left */}
           {businessInfo && (
             <button
@@ -496,6 +509,13 @@ export function ServiceProfileModal({
       <BusinessProfile
         businessId={businessProfileId}
         onClose={() => setBusinessProfileId(null)}
+      />
+    )}
+    {/* Lightbox imagen del servicio */}
+    {showServiceLightbox && service?.image_url && (
+      <ImageLightbox
+        images={[{ url: service.image_url, description: service.name }]}
+        onClose={() => setShowServiceLightbox(false)}
       />
     )}
   </>

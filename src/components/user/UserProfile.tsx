@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import { ImageLightbox } from '@/components/ui/ImageLightbox';
 import { useAuth } from '@/hooks/useAuth';
 import { useEmployeeBusinesses } from '@/hooks/useEmployeeBusinesses';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
@@ -96,6 +97,7 @@ export default function UserProfile({
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [eligibleAppointmentId, setEligibleAppointmentId] = useState<string | null>(null);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null);
+  const [showAvatarLightbox, setShowAvatarLightbox] = useState(false);
 
   // Obtener negocios del profesional
   const { businesses: employeeBusinesses, isEmployeeOfAnyBusiness } = useEmployeeBusinesses(userId, true);
@@ -228,7 +230,8 @@ export default function UserProfile({
         expertise: [], // TODO: Implement expertise tracking
       });
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })    } finally {
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
+    } finally {
       setLoading(false);
     }
   }, [userId, employeeBusinesses]);
@@ -277,7 +280,8 @@ export default function UserProfile({
       }
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
-      if (error instanceof Error) {      }
+      if (error instanceof Error) {
+      }
     }
   }, [user, userId]);
 
@@ -305,7 +309,8 @@ export default function UserProfile({
       // Refresh user data to update review count and rating
       fetchUserData();
     } catch (error) {
-      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })    }
+      Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'UserProfile' } })
+    }
   };
 
   useEffect(() => {
@@ -368,15 +373,34 @@ export default function UserProfile({
           {/* Profile Info */}
           <div className="flex items-center gap-6">
             {/* Avatar */}
-            <ProfileAvatar
-              src={userData.avatar_url}
-              alt={userData.full_name}
-              fallbackText={userData.full_name}
-              size="2xl"
-              className="border-4 border-background"
-              maxRetries={5}
-              retryDelay={800}
-            />
+            {userData.avatar_url ? (
+              <button
+                type="button"
+                aria-label="Ver foto de perfil"
+                onClick={() => setShowAvatarLightbox(true)}
+                className="shrink-0 focus:outline-none"
+              >
+                <ProfileAvatar
+                  src={userData.avatar_url}
+                  alt={userData.full_name}
+                  fallbackText={userData.full_name}
+                  size="2xl"
+                  className="border-4 border-background cursor-pointer hover:opacity-90 transition-opacity"
+                  maxRetries={5}
+                  retryDelay={800}
+                />
+              </button>
+            ) : (
+              <ProfileAvatar
+                src={userData.avatar_url}
+                alt={userData.full_name}
+                fallbackText={userData.full_name}
+                size="2xl"
+                className="border-4 border-background"
+                maxRetries={5}
+                retryDelay={800}
+              />
+            )}
 
             {/* Name and Stats */}
             <div className="flex-1">
@@ -581,6 +605,12 @@ export default function UserProfile({
       <ServiceProfileModal
         serviceId={profileServiceId}
         onClose={() => setProfileServiceId(null)}
+      />
+    )}
+    {showAvatarLightbox && userData?.avatar_url && (
+      <ImageLightbox
+        images={[{ url: userData.avatar_url, description: userData.full_name }]}
+        onClose={() => setShowAvatarLightbox(false)}
       />
     )}
     </>

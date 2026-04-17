@@ -20,8 +20,9 @@ export function FloatingChatButton({
   businessId,
   initialConversationId = null,
   onOpenChange
-}: FloatingChatButtonProps) {
+}: Readonly<FloatingChatButtonProps>) {
   const [isOpen, setIsOpen] = useState(false)
+  const previousOpenRef = React.useRef(isOpen)
   const { t } = useLanguage()
   
   // Contexto de notificaciones
@@ -37,16 +38,24 @@ export function FloatingChatButton({
   })
   
   // Abrir chat cuando se proporciona conversación inicial
-  React.useEffect(() => {    if (initialConversationId) {
+  React.useEffect(() => {
+    if (initialConversationId) {
       // Pequeño delay para asegurar que el prop se propague correctamente
-      const timer = setTimeout(() => {        setIsOpen(true)
+      const timer = setTimeout(() => {
+        setIsOpen(true)
       }, 100)
       return () => clearTimeout(timer)
     }
   }, [initialConversationId])
   
-  // Notificar cambios en estado de apertura
+  // Notificar cambios en estado de apertura solo cuando realmente cambie,
+  // evitando el falso "closed" del primer render.
   React.useEffect(() => {
+    if (previousOpenRef.current === isOpen) {
+      return
+    }
+
+    previousOpenRef.current = isOpen
     onOpenChange?.(isOpen)
     setChatOpen(isOpen) // ✨ Notificar al contexto global
   }, [isOpen, onOpenChange, setChatOpen])
@@ -61,7 +70,8 @@ export function FloatingChatButton({
   }, [refetch])
   
   // ✨ Refrescar badge cuando se marcan mensajes como leídos (en tiempo real)
-  const handleMessagesRead = React.useCallback(() => {    refetch();
+  const handleMessagesRead = React.useCallback(() => {
+    refetch();
   }, [refetch]);
 
   return (

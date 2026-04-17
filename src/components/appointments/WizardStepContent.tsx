@@ -112,6 +112,7 @@ export function WizardStepContent({
       {currentStep === getStepNumber('service') && (
         <ServiceSelection
           businessId={effectiveBusiness}
+          locationId={wizardData.locationId}
           selectedServiceId={wizardData.serviceId}
           onSelectService={(service) => updateWizardData({ serviceId: service.id, service })}
           preloadedServices={dataCache.services as Parameters<typeof ServiceSelection>[0]['preloadedServices']}
