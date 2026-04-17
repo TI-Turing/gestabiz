@@ -22,35 +22,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Create .env.staging from secrets
-        run: |
-          cat > .env.staging << EOF
-          VITE_SUPABASE_URL=${{ secrets.SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
-          VITE_APP_URL=${{ secrets.APP_URL }}
-          VITE_APP_NAME=Gestabiz [DEV]
-          VITE_DEMO_MODE=false
-          VITE_PAYMENT_GATEWAY=${{ secrets.PAYMENT_GATEWAY }}
-          VITE_MERCADOPAGO_PUBLIC_KEY=${{ secrets.MERCADOPAGO_PUBLIC_KEY }}
-          VITE_SENTRY_DSN=${{ secrets.SENTRY_DSN }}
-          VITE_SENTRY_SAMPLE_RATE=1.0
-          VITE_GA_MEASUREMENT_ID=${{ secrets.GA_MEASUREMENT_ID }}
-          EOF
-
-      - name: Build for staging
-        run: npm run build:dev
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-
       - name: Deploy to Vercel (DEV)
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          scope: ${{ secrets.VERCEL_ORG_ID }}
-          alias-domains: dev.gestabiz.com
-          working-directory: ./
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npx vercel@latest pull --yes --environment=preview \
+            --token=${{ secrets.VERCEL_TOKEN }}
+          npx vercel@latest build \
+            --token=${{ secrets.VERCEL_TOKEN }}
+          DEPLOY_URL=$(npx vercel@latest deploy --prebuilt \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --scope=${{ secrets.VERCEL_ORG_ID }})
+          echo "Deployed to: $DEPLOY_URL"
+          npx vercel@latest alias set "$DEPLOY_URL" dev.gestabiz.com \
+            --token=${{ secrets.VERCEL_TOKEN }} \
+            --scope=${{ secrets.VERCEL_ORG_ID }}
 
   migrate:
     name: Apply Supabase Migrations to DEV
