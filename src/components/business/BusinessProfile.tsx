@@ -803,16 +803,17 @@ export default function BusinessProfile({
         </div>
 
         {/* Footer sticky con botones principales */}
-        {!hideBooking && (
         <div className="border-t border-border p-4 bg-background space-y-3">
-          <Button 
-            onClick={() => onBookAppointment?.(businessId)}
-            className="w-full"
-            size="lg"
-          >
-            <Calendar className="h-5 w-5 mr-2" />
-            Agendar Cita
-          </Button>
+          {!hideBooking && (
+            <Button 
+              onClick={() => onBookAppointment?.(businessId)}
+              className="w-full"
+              size="lg"
+            >
+              <Calendar className="h-5 w-5 mr-2" />
+              Agendar Cita
+            </Button>
+          )}
           
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground text-center">
@@ -829,7 +830,6 @@ export default function BusinessProfile({
             </Button>
           </div>
         </div>
-        )}
       </Card>
 
       {/* Chat Modal - inside DialogContent to stay within Radix focus scope */}

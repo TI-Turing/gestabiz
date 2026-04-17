@@ -36,6 +36,7 @@ export function AppointmentWizard({
   preselectedDate,
   preselectedTime,
   appointmentToEdit,
+  onStartChat,
 }: Readonly<AppointmentWizardProps>) {
   const { t } = useLanguage()
   const { preferredCityName, preferredRegionName } = usePreferredCity()
@@ -152,6 +153,7 @@ export function AppointmentWizard({
           preselectedTime={preselectedTime}
           onSubmit={handleConfirm}
           onClose={handleClose}
+          onStartChat={onStartChat}
         />
 
         {!isSuccess && (

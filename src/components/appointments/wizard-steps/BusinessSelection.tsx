@@ -35,6 +35,8 @@ interface BusinessSelectionProps {
   readonly onSelectBusiness: (business: Business) => void;
   // Nuevo: controlar si se debe cargar automáticamente al montar
   readonly autoLoad?: boolean;
+  // Para cerrar el wizard al iniciar un chat desde el perfil del negocio
+  readonly onStartChat?: (conversationId: string) => void;
 }
 
 export function BusinessSelection({
@@ -43,6 +45,7 @@ export function BusinessSelection({
   preferredRegionName: propRegionName,
   onSelectBusiness,
   autoLoad = true,
+  onStartChat,
 }: BusinessSelectionProps) {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([]);
@@ -771,6 +774,10 @@ export function BusinessSelection({
         <BusinessProfile
           businessId={profileBusinessId}
           onClose={() => setProfileBusinessId(null)}
+          onChatStarted={(conversationId) => {
+            setProfileBusinessId(null);
+            onStartChat?.(conversationId);
+          }}
           hideBooking
         />
       )}

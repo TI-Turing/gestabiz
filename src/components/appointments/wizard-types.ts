@@ -15,6 +15,7 @@ export interface AppointmentWizardProps {
   preselectedDate?: Date
   preselectedTime?: string
   appointmentToEdit?: Appointment | null
+  onStartChat?: (conversationId: string) => void
 }
 
 export interface WizardBusiness {
