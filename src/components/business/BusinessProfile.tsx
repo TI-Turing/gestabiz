@@ -23,6 +23,7 @@ import { ServiceProfileModal } from '@/components/admin/ServiceProfileModal';
 import { ServiceCard } from '@/components/cards/ServiceCard';
 import { LocationCard } from '@/components/cards/LocationCard';
 import { EmployeeCard } from '@/components/cards/EmployeeCard';
+import { ImageLightbox } from '@/components/ui/ImageLightbox';
 import UserProfile from '@/components/user/UserProfile';
 import type { Location } from '@/types/types';
 
@@ -131,6 +132,7 @@ export default function BusinessProfile({
   const [selectedLocation, setSelectedLocation] = useState<ComponentProps<typeof LocationProfileModal>['location'] | null>(null);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string | null>(null);
   const [locationBanners, setLocationBanners] = useState<Record<string, string>>({});
+  const [showBannerLightbox, setShowBannerLightbox] = useState(false);
 
   // DEBUG: Log auth state
   // Use effectiveUserId which can come from context or props
@@ -519,11 +521,18 @@ export default function BusinessProfile({
         {/* Header con banner - 16:9 Aspect Ratio */}
         <div className="relative aspect-video">
           {business.banner_url ? (
-            <img 
-              src={business.banner_url} 
-              alt={business.name}
-              className="w-full h-full object-cover"
-            />
+            <button
+              type="button"
+              aria-label="Ver banner en pantalla completa"
+              className="absolute inset-0 w-full h-full focus:outline-none"
+              onClick={() => setShowBannerLightbox(true)}
+            >
+              <img 
+                src={business.banner_url} 
+                alt={business.name}
+                className="w-full h-full object-cover cursor-pointer"
+              />
+            </button>
           ) : (
             <div className="w-full h-full bg-linear-to-r from-primary/20 to-secondary/20" />
           )}
@@ -862,6 +871,13 @@ export default function BusinessProfile({
           userId={selectedProfessionalId}
           onClose={() => setSelectedProfessionalId(null)}
           hideBooking
+        />
+      )}
+      {/* Lightbox banner del negocio */}
+      {showBannerLightbox && business?.banner_url && (
+        <ImageLightbox
+          images={[{ url: business.banner_url, description: business.name }]}
+          onClose={() => setShowBannerLightbox(false)}
         />
       )}
     </>

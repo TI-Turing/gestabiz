@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import * as Sentry from '@sentry/react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ImageLightbox } from '@/components/ui/ImageLightbox'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -66,6 +67,7 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
   const [primaryVideo, setPrimaryVideo] = useState<string | undefined>(primaryVideoUrl)
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [businessInfo, setBusinessInfo] = useState<{ id: string; name: string; logo_url: string | null } | null>(null)
   const [businessProfileId, setBusinessProfileId] = useState<string | null>(null)
   
@@ -163,6 +165,17 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
           <div className="absolute inset-0 bg-black/40" />
           {/* Gradiente en la parte inferior para mejorar legibilidad */}
           <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+          {/* Botón expandir banner */}
+          {banner && (
+            <button
+              type="button"
+              aria-label="Ver imagen completa"
+              onClick={() => setLightboxIndex(0)}
+              className="absolute bottom-3 right-3 z-20 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-colors"
+            >
+              <ImageIcon className="h-4 w-4" />
+            </button>
+          )}
           {/* Badge negocio - top left */}
           {businessInfo && (
             <button
@@ -233,9 +246,20 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
                   <div>
                     <h4 className="text-sm font-medium mb-2 text-muted-foreground">Otras fotos ({images.length})</h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {images.map((img) => (
+                      {images.map((img, idx) => (
                         <div key={img.id} className="space-y-1">
-                          <img src={img.url} alt="foto" className="w-full h-28 object-cover rounded" />
+                            <button
+                              type="button"
+                              aria-label={`Ver imagen: ${img.description ?? 'foto'}`}
+                              className="w-full focus:outline-none focus:ring-2 focus:ring-primary rounded"
+                              onClick={() => setLightboxIndex(banner ? idx + 1 : idx)}
+                            >
+                              <img
+                                src={img.url}
+                                alt={img.description ?? 'foto'}
+                                className="w-full h-28 object-cover rounded cursor-pointer hover:opacity-90 transition-opacity"
+                              />
+                            </button>
                           {img.description && (
                             <p className="text-xs text-muted-foreground">{img.description}</p>
                           )}
@@ -443,6 +467,20 @@ export function LocationProfileModal({ open, onOpenChange, location, bannerUrl, 
         onClose={() => setBusinessProfileId(null)}
       />
     )}
+    {/* Lightbox de imágenes */}
+    {lightboxIndex !== null && (() => {
+      const lightboxImages = [
+        ...(banner ? [{ url: banner, description: location.name }] : []),
+        ...images.map((img) => ({ url: img.url, description: img.description ?? undefined })),
+      ]
+      return lightboxImages.length > 0 ? (
+        <ImageLightbox
+          images={lightboxImages}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      ) : null
+    })()}
   </>
   )
 }
