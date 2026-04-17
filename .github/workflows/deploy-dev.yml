@@ -6,46 +6,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Build & Deploy to DEV
-    runs-on: ubuntu-latest
-    environment: dev
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install pnpm
-        run: npm install -g pnpm@10
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Deploy to Vercel (DEV)
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          npx vercel@latest pull --yes --environment=preview \
-            --token=${{ secrets.VERCEL_TOKEN }}
-          npx vercel@latest build \
-            --token=${{ secrets.VERCEL_TOKEN }}
-          DEPLOY_URL=$(npx vercel@latest deploy --prebuilt \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --scope=${{ secrets.VERCEL_ORG_ID }})
-          echo "Deployed to: $DEPLOY_URL"
-          npx vercel@latest alias set "$DEPLOY_URL" dev.gestabiz.com \
-            --token=${{ secrets.VERCEL_TOKEN }} \
-            --scope=${{ secrets.VERCEL_ORG_ID }}
-
   migrate:
     name: Apply Supabase Migrations to DEV
     runs-on: ubuntu-latest
-    needs: deploy
     environment: dev
 
     env:
@@ -74,7 +37,6 @@ jobs:
   deploy-edge-functions:
     name: Deploy All Edge Functions to DEV
     runs-on: ubuntu-latest
-    needs: deploy
     environment: dev
 
     env:
