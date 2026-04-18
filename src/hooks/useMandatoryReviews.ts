@@ -15,9 +15,9 @@ export interface PendingReviewCheck {
   shouldShowModal: boolean;
 }
 
-const REMIND_LATER_KEY = 'appointsync_remind_later_reviews';
+const REMIND_LATER_KEY = 'gestabiz_remind_later_reviews';
 const REMIND_LATER_DURATION = 5 * 60 * 1000; // 5 minutes
-const LAST_CHECK_KEY = 'appointsync_last_review_check';
+const LAST_CHECK_KEY = 'gestabiz_last_review_check';
 const CHECK_THROTTLE_DURATION = 60 * 60 * 1000; // 1 hour
 
 interface RemindLaterEntry {
@@ -132,7 +132,8 @@ export function useMandatoryReviews(
       setShouldShowModal(false);
     } catch (error) {
       void logger.error('useMandatoryReviews: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useMandatoryReviews' })
-      // eslint-disable-next-line no-console    }
+      // eslint-disable-next-line no-console
+    }
   }, [userId]);
 
   const clearRemindLater = useCallback(() => {
@@ -152,7 +153,8 @@ export function useMandatoryReviews(
       }
     } catch (error) {
       void logger.error('useMandatoryReviews: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useMandatoryReviews' })
-      // eslint-disable-next-line no-console    }
+      // eslint-disable-next-line no-console
+    }
   }, [userId]);
 
   return {
@@ -194,7 +196,8 @@ function getRemindLaterStatus(userId: string): boolean {
     return true;
   } catch (error) {
     void logger.error('useMandatoryReviews: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useMandatoryReviews' })
-    // eslint-disable-next-line no-console    return false;
+    // eslint-disable-next-line no-console
+    return false;
   }
 }
 
@@ -219,7 +222,8 @@ export function cleanupExpiredRemindLater() {
     }
   } catch (error) {
     void logger.error('useMandatoryReviews: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useMandatoryReviews' })
-    // eslint-disable-next-line no-console  }
+    // eslint-disable-next-line no-console
+  }
 }
 
 // ✅ NEW: Helper para obtener el timestamp del último check
@@ -234,7 +238,8 @@ function getLastCheckTime(userId: string): number {
     return userEntry?.timestamp || 0;
   } catch (error) {
     void logger.error('useMandatoryReviews: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useMandatoryReviews' })
-    // eslint-disable-next-line no-console    return 0;
+    // eslint-disable-next-line no-console
+    return 0;
   }
 }
 
@@ -256,5 +261,6 @@ function updateLastCheckTime(userId: string): void {
     localStorage.setItem(LAST_CHECK_KEY, JSON.stringify(filtered));
   } catch (error) {
     void logger.error('useMandatoryReviews: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useMandatoryReviews' })
-    // eslint-disable-next-line no-console  }
+    // eslint-disable-next-line no-console
+  }
 }

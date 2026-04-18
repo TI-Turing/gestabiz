@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger'
+import { useAuth } from '@/contexts/AuthContext'
 
 export interface MatchingVacancy {
   id: string;
@@ -42,6 +43,7 @@ export interface VacancyFilters {
 }
 
 export function useMatchingVacancies() {
+  const { user } = useAuth();
   const [vacancies, setVacancies] = useState<MatchingVacancy[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,11 +60,10 @@ export function useMatchingVacancies() {
       let targetUserId = userId;
 
       if (!targetUserId) {
-        const { data: session } = await supabase.auth.getSession();
-        if (!session?.session?.user) {
+        if (!user?.id) {
           throw new Error('Usuario no autenticado');
         }
-        targetUserId = session.session.user.id;
+        targetUserId = user.id;
       }
 
       // Call RPC function

@@ -8,9 +8,9 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { isValidHierarchyLevel } from '@/lib/hierarchyLevelUtils'
+import { useAuth } from '@/contexts/AuthContext'
 
 // =====================================================
 // TIPOS
@@ -33,6 +33,7 @@ interface UpdateHierarchyLevelResponse {
 // =====================================================
 
 export function useUpdateEmployeeHierarchy() {
+  const { session } = useAuth()
   const queryClient = useQueryClient()
 
   const mutation = useMutation<
@@ -48,8 +49,7 @@ export function useUpdateEmployeeHierarchy() {
 
       // WORKAROUND: Usar Edge Function en lugar de RPC
       // PostgREST está corrupto, así que usamos una función serverless
-      const { data } = await supabase.auth.getSession()
-      const accessToken = data?.session?.access_token
+      const accessToken = session?.access_token
       
       if (!accessToken) {
         throw new Error('No autenticado - no se pudo obtener token')
@@ -66,7 +66,8 @@ export function useUpdateEmployeeHierarchy() {
         lvl: newLevel,
       }
 
-  // eslint-disable-next-line no-console  const response = await fetch(`${supabaseUrl}/functions/v1/update-hierarchy`, {
+  // eslint-disable-next-line no-console
+  const response = await fetch(`${supabaseUrl}/functions/v1/update-hierarchy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

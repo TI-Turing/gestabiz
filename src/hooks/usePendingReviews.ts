@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger'
+import { useAuth } from '@/contexts/AuthContext'
 
 export interface PendingReview {
   appointment_id: string;
@@ -15,7 +16,7 @@ export interface PendingReview {
   completed_at: string;
 }
 
-const REMIND_LATER_KEY = 'appointsync_remind_later_reviews';
+const REMIND_LATER_KEY = 'gestabiz_remind_later_reviews';
 const REMIND_LATER_TIMEOUT = 5 * 60 * 1000; // 5 minutos en milisegundos
 
 interface RemindLaterEntry {
@@ -24,6 +25,7 @@ interface RemindLaterEntry {
 }
 
 export function usePendingReviews() {
+  const { user } = useAuth();
   const [pendingReviews, setPendingReviews] = useState<PendingReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,8 +35,7 @@ export function usePendingReviews() {
       setLoading(true);
       setError(null);
 
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) {
+      if (!user?.id) {
         setLoading(false);
         return;
       }
@@ -62,7 +63,7 @@ export function usePendingReviews() {
             name
           )
         `)
-        .eq('client_id', session.session.user.id)
+        .eq('client_id', user.id)
         .eq('status', 'completed')
         .order('start_time', { ascending: false })
         .limit(20);
