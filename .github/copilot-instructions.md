@@ -2,7 +2,7 @@
 
 > **Sistema integral de gestión de citas y negocios** - FASE BETA COMPLETADA  
 > **Stack**: React 19 + TypeScript 5.7 + Vite 6 + Supabase + Tailwind 4  
-> **Última actualización**: Marzo 2026  
+> **Última actualización**: Abril 2026  
 > **Estado del Proyecto**: ✅ Funcionalidad completa | 🐛 Solo bugs y optimizaciones
 
 ---
@@ -16,7 +16,7 @@
 - **30+ Edge Functions desplegadas**: Notificaciones multicanal, pagos (Stripe/PayU/MercadoPago), chat, reviews
 - **Arquitectura multi-rol**: Admin/Employee/Client calculados dinámicamente (NO guardados en BD)
 - **Sistema de permisos granulares**: 79 tipos de permisos, 1,919 registros, 25 módulos protegidos ⭐ NUEVO
-- **58 hooks personalizados**: useAuth, useSupabaseData, useBusinessProfileData, useJobVacancies, useBusinessEmployeesForChat, **useBusinessResources**, **useAssigneeAvailability** ⭐ NUEVOS
+- **70+ hooks personalizados**: useAuth, useBusinessProfileData, useJobVacancies, useBusinessEmployeesForChat, useBusinessResources, useAssigneeAvailability, useInAppNotifications, usePermissions, y más
 - **Base de código**: ~151k líneas TypeScript, 1,060 archivos .ts/.tsx
 
 ### Principios de Desarrollo
@@ -27,11 +27,17 @@
 5. **Roles dinámicos** - Calculados en tiempo real, no persistidos
 6. **TypeScript strict** - Cero `any`, tipado completo
 7. **Proteger con PermissionGate** - TODOS los botones de acción deben estar protegidos con PermissionGate ⭐ NUEVO
-8. **Incrementar versión en cada commit** - Versión actual: **0.0.70**. Patrón: `MAJOR.MINOR.PATCH`. Cada commit aumenta PATCH (0.0.70 → 0.0.71...). MINOR se incrementa en releases planificadas. MAJOR para cambios disruptivos. Actualizar versión en `package.json`
+8. **Incrementar versión en cada commit** - Versión actual: **1.0.3**. Patrón: `MAJOR.MINOR.PATCH`. Cada commit aumenta PATCH. MINOR se incrementa en releases planificadas. MAJOR para cambios disruptivos. Actualizar versión en `package.json`
 9. **Reutilización obligatoria de Card Components** ⭐ CRÍTICO - Ver sección "Sistema de Cards Reutilizables" más abajo
 10. **NUNCA modificar Supabase de producción directamente** ⭐ CRÍTICO - Cualquier cambio en base de datos (tablas, funciones, RLS, seeds) o Edge Functions que afecte producción DEBE hacerse mediante una migración SQL en `supabase/migrations/` o mediante un deploy de Edge Function que el usuario ejecutará manualmente al desplegar a producción. NUNCA ejecutar `npx supabase db push` ni `npx supabase functions deploy` apuntando al proyecto PROD (`emknatoknbomvmyumqju`) sin autorización explícita del usuario. Ante un bug en producción: identificar la causa y mostrar el fix, el usuario decide cuándo desplegarlo.
 11. **NUNCA deployar Edge Functions directamente** ⭐ CRÍTICO - Las Edge Functions DEBEN desplegarse SIEMPRE a través del pipeline de CI/CD: push a `dev` → workflow despliega todas las funciones a DEV; push a `main` → workflow despliega todas las funciones a PROD. NUNCA sugerir ni ejecutar `npx supabase functions deploy` manualmente salvo autorización explícita del usuario para un fix puntual de emergencia. El flujo correcto: editar la función → commit → push a la rama correspondiente → el workflow hace el deploy automáticamente.
 12. **NUNCA aplicar migraciones a produccion o dev directamente** ⭐ CRÍTICO - Solo aplicar migraciones de supabase de manera local. El flujo correcto: crear migración SQL → commit → push a la rama correspondiente → el usuario ejecuta `npx supabase db push` localmente para aplicar los cambios. NUNCA ejecutar migraciones directamente en Supabase UI ni con `npx supabase db push` apuntando a PROD o DEV sin autorización explícita del usuario. Ante un bug en producción: identificar la causa y mostrar el fix, el usuario decide cuándo aplicar la migración.
+13. **Documentar cada cambio funcional** ⭐ NUEVO - cada nuevo feat, cambio de flujo, creación/eliminación de flujo debe actualizar los dos documentos del producto: `docs/Manual_Usuario_Gestabiz.docx` (guía funcional de usuario) y `docs/Propuesta_Valor_Gestabiz.docx` (pitch comercial). Cambios UI/UX menores no requieren update; cambios de comportamiento, permisos, planes, o flujos sí. Mantener ambos en sincronía con el código.
+    - **Fuente única de verdad**: `scripts/generate_product_docs.py` — los .docx se regeneran ejecutando `python scripts/generate_product_docs.py`. No editar los .docx a mano: editar el script y regenerar.
+    - **Estructura obligatoria en ambos documentos**: (a) Portada con logo Gestabiz + atribución a Ti Turing; (b) Índice con hipervínculos internos; (c) **Parte 1 — Resumen Ejecutivo** (alto nivel, con hipervínculos al detalle); (d) **Parte 2 — Detalle Exhaustivo** (mucho más extensa en el Manual: reglas, excepciones, flujos normales y alternos, cada botón/acción, validaciones); (e) Placeholders de capturas de pantalla donde corresponda; (f) Pie con logo Ti Turing.
+    - **Agrupación por planes**: todas las features agrupadas por plan (Gratuito → Básico → Pro), aclarando que cada plan incluye todo lo del anterior más sus exclusivas.
+    - **Propuesta de Valor orientada a ventas**: diagnóstico del problema, solución, ROI, comparativa competitiva (Calendly, Booksy, Fresha, y locales), verticales atendidos, roadmap, CTA. Resaltar que Gestabiz es más completa y robusta que los líderes del mercado.
+    - **Al documentar un cambio**: actualizar el script `generate_product_docs.py` en las secciones correspondientes (resumen + detalle + pitch si aplica), regenerar los .docx, y verificar que ambos archivos quedaron actualizados antes del commit.
 
 ---
 
@@ -739,7 +745,7 @@ Objetivo: que un agente pueda contribuir de inmediato entendiendo la arquitectur
 - Monorepo con 3 superficies: web (React + Vite), móvil (Expo/React Native) y extensión de navegador; backend en Supabase (solo en la nube).
 - Ejes clave:
   - Cliente Supabase y utilidades: `src/lib/supabase.ts` (modo demo incluido), tipos en `src/types/**`, utilidades en `src/lib/**`.
-  - Data hooks y servicios: `src/hooks/useSupabase.ts`, `src/hooks/useSupabaseData.ts` (fetch + mapping + reglas por rol).
+  - Data hooks: `src/hooks/` — 70+ hooks con React Query para fetching, mutaciones y cache (ver sección Hooks en arquitectura).
   - Estado/UI: `src/contexts/AppStateContext.tsx` (loading/error/toasts), i18n `src/contexts/LanguageContext.tsx` con persistencia local (hook `useKV`), estilos con Tailwind y util `cn` (`src/lib/utils.ts`).
   - Integraciones: Google Calendar (`src/lib/googleCalendar.ts`), permisos (`src/lib/permissions.ts`).
   - **MCP de Supabase**: Servidor Model Context Protocol configurado para operaciones directas de base de datos.
@@ -1043,21 +1049,30 @@ Objetivo: que un agente pueda contribuir de inmediato entendiendo la arquitectur
 ### Sistema de Bug Reports
 **Reporte de errores con evidencias**
 
-- **Componente**: BugReportModal (FloatingBugReportButton)
+- **Componentes**: `src/components/bug-report/BugReportModal.tsx`, `FloatingBugReportButton.tsx`
+- **Hook**: `src/hooks/useBugReports.ts`
 - **Tablas**: bug_reports, bug_report_evidences, bug_report_comments
-- **Storage**: Bucket `bug-report-evidences`
+- **Storage**: Bucket `bug-report-evidences` (private)
 - **Edge Function**: send-bug-report-email
 - **Severidades**: Critical, High, Medium, Low
-- **Ver**: `SISTEMA_REPORTE_BUGS.md`
 
 ### Sistema de Logging Centralizado
 **Logs de errores y auditoría**
 
 - **Tablas**: error_logs, login_logs
-- **Hook**: `src/lib/logger.ts` - Logger centralizado
+- **Lib**: `src/lib/logger.ts` — Logger centralizado
 - **Integración**: Sentry (plan gratuito) configurado
 - **Características**: Stack traces, context data, user tracking
-- **Ver**: `ANALISIS_LOGS_Y_OBSERVABILIDAD_2025-10-18.md`
+
+### Sistema i18n Modular — COMPLETADO (Nov 2025)
+**~2,200 claves de traducción type-safe en español e inglés**
+
+- **Ubicación**: `src/locales/`
+- **Idiomas**: Español (default) e Inglés
+- **~44 archivos por idioma**: absences.ts, admin.ts, adminDashboard.ts, appointments.ts, auth.ts, business.ts, jobs.ts, etc.
+- **~2,200 claves** de traducción, type-safe con auto-completado TypeScript
+- **Hook**: `const { t } = useLanguage()` → `t('clave.anidada')`
+- **Legacy**: `src/lib/translations.ts` sigue existiendo por compatibilidad
 
 
 
@@ -1074,9 +1089,7 @@ Objetivo: que un agente pueda contribuir de inmediato entendiendo la arquitectur
 
 ### Prácticas de Código
 - **TypeScript strict**: Todos los archivos tipados, sin `any` (usar `unknown`)
-- **Hooks de datos**:
-  - `useSupabaseData(...)` centraliza lecturas y aplica filtros por rol
-  - `useSupabase.ts` ofrece hooks de auth, appointments, settings
+- **Hooks de datos**: React Query con hooks en `src/hooks/` — cada dominio tiene su hook (useTransactions, useJobVacancies, useBusinessResources, etc.)
 - **Estado y feedback**: 
   - `useAppState()` para controles de carga/errores
   - `useAsyncOperation()` para envolver operaciones async con toasts
@@ -1150,7 +1163,7 @@ Objetivo: que un agente pueda contribuir de inmediato entendiendo la arquitectur
 ## Prácticas específicas al añadir/editar código
 - **Operaciones con Supabase**: 
   - Usar el **servidor MCP disponible** para consultas SQL directas, migraciones, y operaciones de base de datos complejas cuando sea más eficiente que el cliente JavaScript.
-  - Para código de aplicación: sigue el patrón de `useSupabaseData.fetch*` construyendo la query base (`supabase.from('table')...`), filtra por rol/negocio, ordena, y mapea a los tipos de `src/types`.
+  - Para código de aplicación: usar hooks específicos del dominio en `src/hooks/` (ej: `useTransactions`, `useJobVacancies`). Construir queries con `supabase.from('table')...`, filtrar por rol/negocio, y mapear a los tipos de `src/types`.
   - **MCP Commands ejemplos**: `SELECT * FROM profiles WHERE role = 'client'`, `INSERT INTO businesses (name, owner_id) VALUES (?, ?)`, `UPDATE appointments SET status = ? WHERE id = ?`.
   - **REGLA CRÍTICA**: Cada vez que hagas un push a Supabase, SIEMPRE agregar `--dns-resolver https --yes`: `npx supabase db push --dns-resolver https --yes`
 - Realtime: para colecciones por usuario, suscribe con filtro `filter: user_id=eq.${userId}` y maneja `INSERT/UPDATE/DELETE` actualizando el estado local.
@@ -1164,7 +1177,7 @@ Objetivo: que un agente pueda contribuir de inmediato entendiendo la arquitectur
   - Operaciones complejas: `UPDATE appointments SET status = 'confirmed' WHERE business_id IN (SELECT id FROM businesses WHERE owner_id = ?)`
   - Agregaciones: `SELECT DATE(start_time), COUNT(*) FROM appointments GROUP BY DATE(start_time)`
 - Obtener citas del mes aplicando rol:
-  - Ver `useSupabaseData.fetchAppointments` y `fetchDashboardStats` para filtros por `employee_id/client_id` o por negocios del admin.
+  - Filtrar `appointments` por `employee_id` (empleado), `client_id` (cliente) o por `business_id` (admin). Usar hook dedicado si existe.
 - Sincronizar con Google Calendar:
   - Usa `googleCalendarService.syncAppointments(appointments, settings)` tras autenticar y seleccionar `calendarId`.
 - Internacionalización en componentes:
@@ -1180,16 +1193,16 @@ Objetivo: que un agente pueda contribuir de inmediato entendiendo la arquitectur
   - **Solución**: Trigger automático `sync_business_roles_from_business_employees()` mantiene ambas tablas sincronizadas (migración `20251020180000_*`)
   - **Garantía**: Cualquier INSERT/UPDATE en `business_employees` automáticamente sincroniza `business_roles`
   - **Ver**: `docs/FIX_INCONSISTENCIA_BUSINESS_ROLES_2025-10-20.md`
-- `useSupabase.ts` importa `authService/appointmentService/...` desde `@/lib/supabase`, pero la implementación de referencia de estos servicios está en `src/mobile/src/lib/supabase.ts`. Si trabajas en web, duplica o mueve esos servicios a `src/lib/` para mantener consistencia y evitar errores de import.
+- Para web: los servicios viven en `src/lib/services/` (appointments.ts, businesses.ts, clients.ts, etc.). Para móvil: `src/mobile/src/lib/supabase.ts`. No mezclar servicios entre superficies.
 - Zonas horarias: el código usa valores como `America/Bogota` y `America/New_York` en distintas utilidades; al persistir o mostrar fechas, pasa explícitamente la TZ correcta.
 - No expongas claves de servicio (service_role) en cliente; usa Edge Functions para operaciones privilegiadas.
 - **MCP vs Cliente JS**: Prefiere MCP para operaciones complejas, migraciones y consultas directas. Usa cliente JS para operaciones de UI en tiempo real.
 
 ## Archivos clave de referencia
 - Tipos y contratos: `src/types/types.ts`
-- **AdminDashboard**: Header con dropdown integrado para cambiar entre negocios y crear nuevos (12/10/2025). Ver `DROPDOWN_NEGOCIOS_HEADER.md`
+- **AdminDashboard**: Header con dropdown integrado para cambiar entre negocios y crear nuevos
 - Cliente Supabase: `src/lib/supabase.ts` (y servicios móviles: `src/mobile/src/lib/supabase.ts`)
-- Hooks de datos: `src/hooks/useSupabaseData.ts`, `src/hooks/useSupabase.ts`
+- Hooks de datos: `src/hooks/` — hooks por dominio con React Query
 - Estado/toasts: `src/contexts/AppStateContext.tsx`
 - Permisos: `src/lib/permissions.ts`
 - Google Calendar: `src/lib/googleCalendar.ts`
@@ -1366,7 +1379,7 @@ npm run test:coverage    # Cobertura de tests
    - Agregar traducciones en `src/lib/translations.ts`
 
 2. **Trabajar con datos de Supabase**:
-   - Usar `useSupabaseData` para queries con filtros por rol
+   - Usar hooks específicos del dominio en `src/hooks/` para queries con React Query
    - Para operaciones complejas, usar MCP o crear RPC function
    - Siempre aplicar RLS policies en migraciones
 
