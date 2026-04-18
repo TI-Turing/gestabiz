@@ -7,6 +7,7 @@ import type { Service } from '@/types/types';
 
 interface ServiceSelectionProps {
   readonly businessId: string;
+  readonly locationId?: string | null;
   readonly selectedServiceId: string | null;
   readonly onSelectService: (service: Service) => void;
   readonly preloadedServices?: Service[]; // Datos pre-cargados
@@ -18,6 +19,7 @@ interface ServiceSelectionProps {
 
 export function ServiceSelection({
   businessId,
+  locationId,
   selectedServiceId,
   onSelectService,
   preloadedServices,
@@ -50,6 +52,35 @@ export function ServiceSelection({
         })) as Service[];
       }
 
+      // If location is selected, restrict to services that have at least one
+      // active approved professional in that location.
+      if (locationId) {
+        const [employeesRes, employeeServicesRes] = await Promise.all([
+          supabase
+            .from('business_employees')
+            .select('employee_id')
+            .eq('business_id', businessId)
+            .eq('location_id', locationId)
+            .eq('status', 'approved')
+            .eq('is_active', true),
+          supabase
+            .from('employee_services')
+            .select('employee_id, service_id')
+            .eq('business_id', businessId)
+            .eq('location_id', locationId)
+            .eq('is_active', true),
+        ]);
+
+        const activeEmployeeIds = new Set((employeesRes.data ?? []).map((row: any) => row.employee_id));
+        const allowedServiceIds = new Set(
+          (employeeServicesRes.data ?? [])
+            .filter((row: any) => activeEmployeeIds.has(row.employee_id))
+            .map((row: any) => row.service_id)
+        );
+
+        allServices = allServices.filter((service) => allowedServiceIds.has(service.id));
+      }
+
       // If filtering by employee, restrict to services that employee offers
       if (filterByEmployeeId) {
         const { data: empSvcRows } = await supabase
@@ -68,7 +99,7 @@ export function ServiceSelection({
     } finally {
       setLoading(false);
     }
-  }, [businessId, preloadedServices, filterByEmployeeId]);
+  }, [businessId, preloadedServices, filterByEmployeeId, locationId]);
 
   useEffect(() => {
     loadServices();

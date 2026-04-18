@@ -1,17 +1,18 @@
 /**
- * ChatWithAdminModal Component (v3.0.0)
- * 
+ * ChatWithAdminModal Component (v4.0.0)
+ *
  * Modal para ver empleados disponibles e iniciar chat.
- * 
+ *
  * FLUJO PRINCIPAL:
  * 1. Si el usuario es el OWNER: Muestra un botón directo "Chatear"
- * 2. Si el usuario es CLIENT: Muestra lista de empleados disponibles (con allow_client_messages=true)
- *    - Cada empleado muestra: [Avatar] [Nombre] - [Sede] + botón "Chatear"
- *    - IMPORTANTE: Se muestra empleados, NO sedes
- * 
+ * 2. Si allow_professional_chat = false: Solo muestra el admin de chat asignado a la sede
+ *    (o el propietario del negocio como fallback)
+ * 3. Si allow_professional_chat = true: Muestra la lista de empleados disponibles
+ *    (con allow_client_messages=true)
+ *
  * @author Gestabiz Team
- * @version 3.0.0
- * @date 2025-10-19
+ * @version 4.0.0
+ * @date 2026-07-03
  */
 
 import { useState } from 'react';
@@ -22,6 +23,7 @@ import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useBusinessAdmins } from '@/hooks/useBusinessAdmins';
 import { useBusinessEmployeesForChat } from '@/hooks/useBusinessEmployeesForChat';
+import { useBusinessChatConfig } from '@/hooks/useBusinessChatConfig';
 import { useChat } from '@/hooks/useChat';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -49,6 +51,7 @@ export default function ChatWithAdminModal({
   const { user } = useAuth();
   const { admins, loading: adminLoading, error: adminError } = useBusinessAdmins({ businessId, userLocation });
   const { employees, loading: employeesLoading, error: employeesError } = useBusinessEmployeesForChat({ businessId });
+  const { config, isLoading: chatConfigLoading } = useBusinessChatConfig(businessId);
   const { createOrGetConversation } = useChat(user?.id || null);
   const [creatingChat, setCreatingChat] = useState(false);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
@@ -56,29 +59,56 @@ export default function ChatWithAdminModal({
   const admin = admins[0];
   const isUserTheOwner = admin && user?.id === admin.user_id;
 
-  const loading = adminLoading || employeesLoading;
+  // Resolver el admin de chat para el modo sin-profesionales:
+  // Preferir la primera sede que tenga un admin asignado; si no, usar el propietario del negocio.
+  const locationWithAdmin = config.locations.find((loc) => !!loc.chat_admin_id) ?? null;
+  const ownerAsAdmin = admin
+    ? { user_id: admin.user_id, full_name: admin.full_name, email: admin.email, avatar_url: admin.avatar_url }
+    : null;
+  const resolvedChatAdmin: {
+    user_id: string;
+    full_name: string;
+    email: string;
+    avatar_url: string | null;
+  } | null = locationWithAdmin?.chat_admin_id
+    ? {
+        user_id: locationWithAdmin.chat_admin_id,
+        full_name: locationWithAdmin.chat_admin_profile?.full_name ?? 'Administrador',
+        email: locationWithAdmin.chat_admin_profile?.email ?? '',
+        avatar_url: locationWithAdmin.chat_admin_profile?.avatar_url ?? null,
+      }
+    : ownerAsAdmin;
+
+  const loading = adminLoading || employeesLoading || chatConfigLoading;
   const error = adminError || employeesError;
 
   const handleStartChat = async (employeeId: string, employeeName: string) => {
-    try {      setCreatingChat(true);
+    try {
+      setCreatingChat(true);
       setSelectedEmployeeId(employeeId);
 
       const conversationId = await createOrGetConversation({
         other_user_id: employeeId,
         business_id: businessId,
         initial_message: `Hola ${employeeName}, me interesa conocer más sobre ${businessName}`,
-      });      if (conversationId) {
-        toast.success(`Chat iniciado con ${employeeName}`);        // Cerrar el modal de chat
+      });
+      if (conversationId) {
+        toast.success(`Chat iniciado con ${employeeName}`);
+        // Cerrar el modal de chat
         onClose();
         // Cerrar el modal padre (BusinessProfile) si se proporcionó
-        if (onCloseParent) {          onCloseParent();
+        if (onCloseParent) {
+          onCloseParent();
         }
         // Llamar al callback de chat iniciado con la conversationId
-        onChatStarted(conversationId);      } else {        toast.error('No se pudo crear la conversación');
+        onChatStarted(conversationId);
+      } else {
+        toast.error('No se pudo crear la conversación');
       }
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ChatWithAdminModal' } })
-      // eslint-disable-next-line no-console      toast.error('No se pudo iniciar el chat. Intenta nuevamente.');
+      // eslint-disable-next-line no-console
+      toast.error('No se pudo iniciar el chat. Intenta nuevamente.');
     } finally {
       setCreatingChat(false);
       setSelectedEmployeeId(null);
@@ -93,7 +123,7 @@ export default function ChatWithAdminModal({
           <div>
             <h2 className="text-xl font-bold">Iniciar Chat</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {isUserTheOwner
+              {isUserTheOwner || !config.allow_professional_chat
                 ? `Administrador de ${businessName}`
                 : `Empleados disponibles de ${businessName}`}
             </p>
@@ -141,66 +171,78 @@ export default function ChatWithAdminModal({
 
           {!loading && !error && admin && (
             <div className="space-y-4">
-              {/* OWNER FLOW */}
-              {isUserTheOwner ? (
+              {/* OWNER FLOW o chat-admin exclusivo */}
+              {isUserTheOwner || !config.allow_professional_chat ? (
                 <div className="space-y-4">
-                  <Card className="p-4 bg-muted/50 border-2 border-border">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={admin.avatar_url || undefined} />
-                        <AvatarFallback>
-                          {admin.full_name
-                            .split(' ')
-                            .map(n => n[0])
-                            .join('')
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-base truncate">
-                          {admin.full_name}
-                        </h3>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {admin.email}
-                        </p>
+                  {resolvedChatAdmin && (
+                    <Card className="p-4 bg-muted/50 border-2 border-border">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={resolvedChatAdmin.avatar_url || undefined} />
+                          <AvatarFallback>
+                            {resolvedChatAdmin.full_name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                              .toUpperCase()
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base truncate">
+                            {resolvedChatAdmin.full_name}
+                          </h3>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {resolvedChatAdmin.email}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </Card>
+                    </Card>
+                  )}
 
                   <div className="text-center py-8 space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Como administrador de <span className="font-medium text-foreground">{businessName}</span>, puedes iniciar una conversación directamente.
-                    </p>
+                    {isUserTheOwner ? (
+                      <p className="text-sm text-muted-foreground">
+                        Como administrador de{' '}
+                        <span className="font-medium text-foreground">{businessName}</span>,
+                        puedes iniciar una conversación directamente.
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Chatea con el administrador de{' '}
+                        <span className="font-medium text-foreground">{businessName}</span>.
+                      </p>
+                    )}
                     <Button
                       onClick={async () => {
+                        if (!resolvedChatAdmin) return;
                         try {
                           setCreatingChat(true);
                           const conversationId = await createOrGetConversation({
-                            other_user_id: admin.user_id,
+                            other_user_id: resolvedChatAdmin.user_id,
                             business_id: businessId,
-                            initial_message: `Iniciando conversación como administrador de ${businessName}`,
+                            initial_message: isUserTheOwner
+                              ? `Iniciando conversación como administrador de ${businessName}`
+                              : `Hola ${resolvedChatAdmin.full_name}, me interesa conocer más sobre ${businessName}`,
                           });
 
                           if (conversationId) {
                             toast.success('Conversación iniciada');
-                            // Cerrar el modal de chat
                             onClose();
-                            // Cerrar el modal padre (BusinessProfile) si se proporcionó
-                            if (onCloseParent) {
-                              onCloseParent();
-                            }
-                            // Llamar al callback de chat iniciado con la conversationId
+                            if (onCloseParent) onCloseParent();
                             onChatStarted(conversationId);
                           }
                         } catch (err) {
-                          Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ChatWithAdminModal' } })
-                          // eslint-disable-next-line no-console                          toast.error('No se pudo iniciar el chat.');
+                          Sentry.captureException(
+                            err instanceof Error ? err : new Error(String(err)),
+                            { tags: { component: 'ChatWithAdminModal' } }
+                          );
+                          toast.error('No se pudo iniciar el chat.');
                         } finally {
                           setCreatingChat(false);
                         }
                       }}
-                      disabled={creatingChat}
+                      disabled={creatingChat || !resolvedChatAdmin}
                       size="lg"
                       className="w-full"
                     >

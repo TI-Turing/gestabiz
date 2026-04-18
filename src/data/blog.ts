@@ -390,6 +390,63 @@ export const BLOG_POSTS: BlogPost[] = [
     featured: true,
     published: true,
   },
+  // ── Nuevos posts Abr 2026 — spas/estética + comparativa Booksy ───────────────
+  {
+    slug: 'software-spas-centros-esteticos-colombia-2026',
+    title: 'Software para Spas y Centros Estéticos en Colombia: Los 5 Mejores en 2026',
+    excerpt:
+      'Los spas y centros estéticos en Colombia necesitan gestionar cabinas, equipos y múltiples esteticistas al mismo tiempo. Comparamos los 5 mejores software con gestión de recursos físicos, recordatorios WhatsApp, pagos en COP y contabilidad DIAN.',
+    metaTitle: 'Top 5 Software Spas y Centros Estéticos Colombia 2026',
+    metaDescription:
+      'Los 5 mejores software para spas y centros estéticos en Colombia en 2026. Gestión de cabinas, WhatsApp, pagos COP, contabilidad DIAN. Guía comparativa para spas colombianos.',
+    metaKeywords: [
+      'software spa colombia',
+      'app centro estético colombia',
+      'sistema gestión spa colombia 2026',
+      'software para spa colombia',
+      'programa centro estético colombia',
+      'gestión cabinas spa colombia',
+    ],
+    ogImage: OG_IMAGE,
+    canonicalPath: '/blog/software-spas-centros-esteticos-colombia-2026',
+    publishedAt: '2026-04-12',
+    updatedAt: '2026-04-12',
+    author: GESTABIZ_AUTHOR,
+    category: 'comparativas',
+    readingTimeMinutes: 9,
+    tags: ['spas', 'centros estéticos', 'software', 'colombia', 'belleza'],
+    relatedVerticals: ['spas', 'salones', 'clinicas', 'barberias'],
+    featured: true,
+    published: true,
+  },
+  {
+    slug: 'gestabiz-vs-booksy-colombia',
+    title: 'Gestabiz vs Booksy: ¿Cuál es Mejor para Barberías y Salones en Colombia? (2026)',
+    excerpt:
+      'Booksy es el software de reservas más popular del mundo para barberías. Pero ¿conviene para negocios colombianos? Comparamos precio en COP vs USD, WhatsApp, contabilidad DIAN, pagos locales y marketplace.',
+    metaTitle: 'Gestabiz vs Booksy para Barberías Colombia 2026',
+    metaDescription:
+      'Gestabiz vs Booksy para barberías y salones en Colombia. Precio COP vs USD, WhatsApp nativo, contabilidad DIAN, pagos locales. ¿Cuál conviene para tu negocio colombiano?',
+    metaKeywords: [
+      'gestabiz vs booksy',
+      'alternativa booksy colombia',
+      'booksy colombia precio',
+      'booksy vs gestabiz comparativa',
+      'software barberias colombia booksy',
+      'mejor app barberías colombia 2026',
+    ],
+    ogImage: OG_IMAGE,
+    canonicalPath: '/blog/gestabiz-vs-booksy-colombia',
+    publishedAt: '2026-04-12',
+    updatedAt: '2026-04-12',
+    author: GESTABIZ_AUTHOR,
+    category: 'comparativas',
+    readingTimeMinutes: 8,
+    tags: ['booksy', 'comparativa', 'barberías', 'salones', 'colombia'],
+    relatedVerticals: ['barberias', 'salones', 'spas'],
+    featured: false,
+    published: true,
+  },
 ]
 
 // ─── Map for O(1) lookup by slug ──────────────────────────────────────────────

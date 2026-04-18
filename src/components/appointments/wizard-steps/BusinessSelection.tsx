@@ -35,6 +35,8 @@ interface BusinessSelectionProps {
   readonly onSelectBusiness: (business: Business) => void;
   // Nuevo: controlar si se debe cargar automáticamente al montar
   readonly autoLoad?: boolean;
+  // Para cerrar el wizard al iniciar un chat desde el perfil del negocio
+  readonly onStartChat?: (conversationId: string) => void;
 }
 
 export function BusinessSelection({
@@ -43,6 +45,7 @@ export function BusinessSelection({
   preferredRegionName: propRegionName,
   onSelectBusiness,
   autoLoad = true,
+  onStartChat,
 }: BusinessSelectionProps) {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([]);
@@ -69,7 +72,8 @@ export function BusinessSelection({
   // Filtros y orden por calificación (solo primeros 12)
   const [minRating, setMinRating] = useState<number | ''>('');
   const [minReviewCount, setMinReviewCount] = useState<number | ''>('');
-  const [orderBestRated, setOrderBestRated] = useState<boolean>(false);
+  // Siempre ordenar por mejor calificados
+  const orderBestRated = true;
   const [ratingStatsByBusinessId, setRatingStatsByBusinessId] = useState<Record<string, { average_rating: number; review_count: number }>>({});
   const [filtersApplied, setFiltersApplied] = useState<boolean>(false);
   const [showFilters, setShowFilters] = useState<boolean>(false);
@@ -279,9 +283,8 @@ export function BusinessSelection({
     // no-op: ya usamos cityNameMap de la respuesta
   }, [filteredBusinesses]);
 
-  // Reordenar primeros 12 por mejor calificación si está activado
+  // Reordenar por mejor calificación (siempre activo)
   useEffect(() => {
-    if (!orderBestRated) return;
     if (displayedBusinesses.length === 0) return;
     const first = displayedBusinesses.slice(0, PAGE_SIZE);
     const rest = displayedBusinesses.slice(PAGE_SIZE);
@@ -295,7 +298,7 @@ export function BusinessSelection({
     });
     setDisplayedBusinesses([...sorted, ...rest]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderBestRated, ratingStatsByBusinessId, PAGE_SIZE]);
+  }, [ratingStatsByBusinessId, PAGE_SIZE]);
 
   // Cargar categorías y servicios para las tarjetas
   useEffect(() => {
@@ -461,12 +464,23 @@ export function BusinessSelection({
       if (error) throw error as Error;
       const result = (data as any) || {};
       const nextRows = (result.businesses || []) as Business[];
-      setLocationsCountMap(result.locationsCountMap || {});
-      setCityNameMap(result.cityNameMap || {});
+
+      if (nextRows.length === 0) {
+        // No more results available — advance page counter and cap totalResults
+        // so the "Cargar más" button hides itself.
+        setCurrentPage(nextPage);
+        setTotalResults(displayedBusinesses.length);
+        return;
+      }
+
+      // Merge maps to preserve data for previously loaded businesses
+      setLocationsCountMap(prev => ({ ...prev, ...(result.locationsCountMap || {}) }));
+      setCityNameMap(prev => ({ ...prev, ...(result.cityNameMap || {}) }));
       setMatchSourcesByBusinessId(prev => ({
         ...prev,
         ...(result.matchSourcesByBusinessId || {})
       }));
+      setRatingStatsByBusinessId(prev => ({ ...prev, ...(result.ratingStatsByBusinessId || {}) }));
       setDisplayedBusinesses(prev => [...prev, ...nextRows]);
       setCurrentPage(nextPage);
       setTotalResults(result.total || totalResults);
@@ -596,13 +610,6 @@ export function BusinessSelection({
               placeholder="e.g. 10"
             />
           </div>
-          <Button
-            variant={orderBestRated ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setOrderBestRated(prev => !prev)}
-          >
-            {orderBestRated ? 'Orden: mejor calificados' : 'Orden: por defecto'}
-          </Button>
         </div>
       </div>
 
@@ -736,12 +743,18 @@ export function BusinessSelection({
           );
         })}
         </div>
-        {(displayedBusinesses.length < totalResults) && (
+        {displayedBusinesses.length < totalResults ? (
           <div className="mt-4 flex justify-center">
             <Button variant="secondary" onClick={handleLoadMore}>
               Cargar más
             </Button>
           </div>
+        ) : (
+          currentPage > 1 && (
+            <div className="mt-4 flex justify-center">
+              <p className="text-sm text-muted-foreground">No hay más negocios a mostrar</p>
+            </div>
+          )
         )}
         </>
       ) : (
@@ -761,6 +774,10 @@ export function BusinessSelection({
         <BusinessProfile
           businessId={profileBusinessId}
           onClose={() => setProfileBusinessId(null)}
+          onChatStarted={(conversationId) => {
+            setProfileBusinessId(null);
+            onStartChat?.(conversationId);
+          }}
           hideBooking
         />
       )}

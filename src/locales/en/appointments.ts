@@ -63,6 +63,25 @@ export const appointments = {
     modified: 'Appointment modified successfully!',
   },
 
+  toasts: {
+    cancelled: 'Appointment cancelled',
+    cancelError: 'Error cancelling appointment',
+    confirmed: 'Appointment confirmed manually',
+    confirmError: 'Error confirming appointment',
+    noShowMarked: 'Appointment marked as no-show',
+    noShowError: 'Error marking as no-show',
+    confirmationResent: 'Confirmation email resent',
+    confirmationResendError: 'Error resending confirmation email',
+    cancelSuccess: 'Appointment cancelled successfully',
+    cancelFailed: 'Could not cancel appointment. Please try again.',
+    chatStarted: 'Chat started with professional',
+    chatFailed: 'Could not start chat. Please try again.',
+    chatUnavailable: 'Cannot start chat at this time',
+    editHint: 'Modify your appointment data and confirm changes',
+    thankReview: 'Thank you for your review!',
+    availabilityError: 'Could not load availability',
+  },
+
   // Wizard UI
   wizard: {
     newAppointment: 'New Appointment',

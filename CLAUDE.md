@@ -4,7 +4,7 @@
 
 > **Gestabiz** — Sistema SaaS de gestión de citas y negocios
 > **Stack**: React 19 + TypeScript 5.7 + Vite 6 + Supabase + Tailwind 4
-> **Versión actual**: 0.0.69 (incrementar PATCH en cada commit)
+> **Versión actual**: 1.0.3 (incrementar PATCH en cada commit)
 > **Estado**: BETA completada — solo bugs, optimizaciones y features puntuales
 
 ---
@@ -104,14 +104,37 @@ Contenido de la nota...
 
 **Agentes especializados** (usan el `Agent tool` internamente):
 
+> Los agentes de Claude Code están en `.claude/agents/`. Los de GitHub Copilot están en `.github/agents/`.
+
+### Técnicos
 | Agente | Cuándo usarlo |
 |--------|---------------|
 | `supabase-agent` | Migraciones SQL, Edge Functions Deno, RLS, triggers, optimización de queries |
 | `qa-reviewer` | Revisar código antes de commit — detecta anti-patterns de Gestabiz |
 | `i18n-gestabiz` | Agregar/auditar claves de traducción ES/EN en los ~44 archivos de locales |
 | `launch-checker` | Verificar checklist de lanzamiento a producción |
+| `security-auditor` | Auditar seguridad: RLS, webhooks, CORS, secrets, OWASP. Usar antes de cada deploy a prod |
+| `performance-auditor` | Detectar re-renders, N+1 queries, bundle pesado, Core Web Vitals. Usar en páginas de alto tráfico |
+
+### Producto y UX
+| Agente | Cuándo usarlo |
+|--------|---------------|
+| `product-manager` | Priorizar features, escribir user stories, evaluar si una idea vale la pena (RICE score) |
+| `ux-reviewer` | Revisar flujos de usuario, onboarding, conversión y fricción — perspectiva del dueño de negocio colombiano |
+
+### Negocio y Crecimiento
+| Agente | Cuándo usarlo |
+|--------|---------------|
+| `startup-advisor` | Evaluar decisiones desde perspectiva de inversor/fundador: ROI, PMF, moat, LATAM |
+| `sales-agent` | Crear scripts de ventas, propuestas comerciales, manejo de objeciones, proceso comercial |
+| `seo-content-agent` | Estrategia SEO, posts de blog, landing pages por ciudad/vertical, copy web |
+| `support-agent` | Documentación de soporte, respuestas WhatsApp/email, FAQs, guías de configuración |
+| `marketing-agent` | Crear piezas visuales para redes sociales usando Canva MCP y Pencil MCP. Entrega diseño + caption + hashtags |
 | `gtm-instagram-outreach` | Generar DMs de Instagram para outreach de Gestabiz en Colombia |
-| `marketing-agent` | Crear piezas visuales para redes sociales (Instagram, Facebook, TikTok) usando Canva MCP y Pencil MCP. Entrega diseño + caption + hashtags listos para publicar |
+
+### Exploración y Planificación
+| Agente | Cuándo usarlo |
+|--------|---------------|
 | `Explore` | Exploración de codebase por patrón, keyword o pregunta arquitectónica |
 | `Plan` | Diseñar plan de implementación antes de codear |
 | `claude-code-guide` | Responder preguntas sobre Claude Code CLI, MCP servers, API de Anthropic |
@@ -132,6 +155,15 @@ Contenido de la nota...
 8. **Incrementar versión en cada commit** — actualizar `package.json`. Patrón: PATCH en cada commit, MINOR en releases, MAJOR en cambios disruptivos
 9. **Reutilizar Card Components** — ver sección "Sistema de Cards Reutilizables"
 10. **useAuth() nunca useAuthSimple()** — siempre consumir desde el context
+11. **NUNCA modificar Supabase de producción directamente** — cualquier cambio en BD (tablas, funciones, RLS) o Edge Functions que afecte producción DEBE hacerse mediante migración SQL en `supabase/migrations/` o deploy de Edge Function. El usuario decide cuándo desplegarlo. Ante un bug en prod: identificar causa y mostrar el fix.
+12. **NUNCA deployar Edge Functions directamente** — el flujo correcto es: editar la función → commit → push a la rama correspondiente → el workflow CI/CD hace el deploy automáticamente. Solo se acepta `npx supabase functions deploy` manual con autorización explícita del usuario para un fix de emergencia puntual.
+13. **NUNCA aplicar migraciones a producción o DEV directamente** — crear la migración SQL → commit → push → el usuario ejecuta `npx supabase db push` localmente. Nunca ejecutar migraciones directamente en Supabase UI ni con `npx supabase db push` apuntando a PROD o DEV sin autorización explícita.
+14. **Documentar cada cambio funcional** — cada nuevo feat, cambio de flujo, creación/eliminación de flujo debe actualizar los dos documentos del producto: `docs/Manual_Usuario_Gestabiz.docx` (guía funcional de usuario) y `docs/Propuesta_Valor_Gestabiz.docx` (pitch comercial). Cambios UI/UX menores no requieren update; cambios de comportamiento, permisos, planes, o flujos sí. Mantener ambos en sincronía con el código.
+    - **Fuente única de verdad**: `scripts/generate_product_docs.py` — los .docx se regeneran con `python scripts/generate_product_docs.py`. No editar los .docx a mano: editar el script y regenerar.
+    - **Estructura obligatoria en ambos documentos**: Portada con logo Gestabiz + atribución a Ti Turing → Índice hipervinculado → **Parte 1: Resumen Ejecutivo** (alto nivel, con hipervínculos al detalle) → **Parte 2: Detalle Exhaustivo** (reglas, excepciones, flujos normales y alternos, cada botón y validación — mucho más extensa en el Manual) → Placeholders de capturas de pantalla → Pie con logo Ti Turing.
+    - **Agrupación por planes**: todas las features agrupadas por plan (Gratuito → Básico → Pro), aclarando que cada plan incluye lo del anterior más sus exclusivas.
+    - **Propuesta de Valor orientada a ventas**: diagnóstico del problema, solución, ROI, comparativa con Calendly/Booksy/Fresha y competidores locales, verticales, planes, roadmap, CTA. Enfatizar que Gestabiz supera en completitud y robustez a los líderes del mercado.
+    - **Workflow al cambiar algo**: editar `scripts/generate_product_docs.py` en las secciones correspondientes (resumen + detalle + pitch) → ejecutar `python scripts/generate_product_docs.py` → verificar ambos .docx → commit.
 
 ---
 
@@ -159,6 +191,7 @@ gestabiz/
 │   │   ├── billing/               # BillingDashboard, PaymentHistory, PlanUpgradeModal
 │   │   ├── business/              # BusinessProfile, BusinessRegistration, ChatWithAdminModal
 │   │   ├── cards/                 # Componentes self-fetch por ID (ver sección Cards)
+│   │   ├── bug-report/            # BugReportModal, FloatingBugReportButton
 │   │   ├── catalog/               # CitySelect, CountrySelect, DocumentTypeSelect, GenderSelect, etc.
 │   │   ├── chat/                  # ChatLayout, ChatWindow, ConversationList, FloatingChatButton
 │   │   ├── dashboard/             # ClientDashboard, AppointmentsView, AdvancedFilters, financial/
@@ -191,6 +224,7 @@ gestabiz/
 │   │   ├── pricingPlans.ts        # Definición centralizada de planes (Gratuito/Inicio/Pro/Empresarial)
 │   │   ├── notificationRoleMapping.ts  # Mapeo 30+ tipos notif → rol requerido
 │   │   ├── hierarchyService.ts    # Servicio para jerarquía de empleados
+│   │   ├── logger.ts              # Logger centralizado (error_logs, login_logs, Sentry)
 │   │   └── ...otros utils
 │   ├── locales/                   # Sistema i18n modular (ver sección i18n)
 │   │   ├── es/                    # ~44 archivos de traducción en español
@@ -539,6 +573,16 @@ import { PermissionGate } from '@/components/ui/PermissionGate'
 - **Admin**: Preferencias del Negocio (info, contacto, dirección, legal, operaciones)
 - **Employee**: Preferencias de Empleado (horarios 7 días, salarios, mensajes de clientes `allow_client_messages`)
 - **Client**: Preferencias de Cliente (anticipación, pago, historial)
+
+### 26. Sistema de Bug Reports — COMPLETADO
+
+- **Componentes**: `src/components/bug-report/BugReportModal.tsx`, `FloatingBugReportButton.tsx`
+- **Hook**: `src/hooks/useBugReports.ts`
+- **Tablas**: `bug_reports`, `bug_report_evidences`, `bug_report_comments`
+- **Storage**: bucket `bug-report-evidences` (private)
+- **Edge Function**: `send-bug-report-email`
+- **Severidades**: Critical, High, Medium, Low
+- **Logger**: `src/lib/logger.ts` — logger centralizado con integración a `error_logs`, `login_logs` y Sentry
 
 ---
 
@@ -986,7 +1030,7 @@ SUPABASE_SERVICE_ROLE_KEY  # Solo para scripts, nunca en frontend
 - **Deploy**: Vercel (configurado en `vercel.json`)
 - **Supabase DEV**: `dkancockzvcqorqbwtyh` (proyecto original, data de prueba)
 - **Supabase PROD**: `emknatoknbomvmyumqju` (proyecto nuevo, limpio)
-- **Versión**: 0.0.69
+- **Versión**: 1.0.3
 - **Fase**: BETA completada — no se agregan nuevos flujos funcionales; solo bugs, optimizaciones y features puntuales solicitadas
 
 ---

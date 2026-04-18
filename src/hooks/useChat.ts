@@ -137,6 +137,9 @@ export function useChat(userId: string | null) {
   
   // Ref for typing timeout (realtime refs removed - now using polling)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const realtimeInstanceIdRef = useRef<string>(
+    globalThis.crypto?.randomUUID?.() ?? `inst_${Math.random().toString(36).slice(2)}`
+  );
   
   // Ref for debounced mark as read (prevent excessive RPC calls)
   const markAsReadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -288,7 +291,8 @@ export function useChat(userId: string | null) {
         }));
       }
     } catch (err) {
-      const error = err as Error;      setError(error.message);
+      const error = err as Error;
+      setError(error.message);
     }
   }, [userId]);
   
@@ -318,7 +322,8 @@ export function useChat(userId: string | null) {
         }));
       }
     } catch (err) {
-      // Silently handle typing indicator errors    }
+      // Silently handle typing indicator errors
+    }
   }, [userId]);
   
   // ============================================================================
@@ -355,7 +360,8 @@ export function useChat(userId: string | null) {
       }
       
       return conversationId;
-    } catch (err: any) {      throw err;
+    } catch (err: any) {
+      throw err;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, fetchConversations]);
@@ -464,7 +470,8 @@ export function useChat(userId: string | null) {
       });
       
       return messageId;
-    } catch (err: any) {      throw err;
+    } catch (err: any) {
+      throw err;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
@@ -473,8 +480,10 @@ export function useChat(userId: string | null) {
    * Mark messages as read (with debounce to prevent excessive calls)
    */
   const markMessagesAsRead = useCallback(async (conversationId: string, lastMessageId?: string) => {
-    if (!userId) {      return;
-    }    try {
+    if (!userId) {
+      return;
+    }
+    try {
       const { data: count, error: rpcError } = await supabase
         .rpc('mark_messages_as_read', {
           p_conversation_id: conversationId,
@@ -482,8 +491,10 @@ export function useChat(userId: string | null) {
           p_message_id: lastMessageId || null,
         });
       
-      if (rpcError) {        throw rpcError;
-      }      // Update local unread count
+      if (rpcError) {
+        throw rpcError;
+      }
+      // Update local unread count
       setConversations(prev =>
         prev.map(conv =>
           conv.id === conversationId
@@ -508,12 +519,16 @@ export function useChat(userId: string | null) {
           .contains('data', { conversation_id: conversationId })
           .select('id');
         
-        if (notifError) {        } else {        }
+        if (notifError) {
+        } else {
+        }
       } catch (notifErr) {
-        // No bloquear si falla - logging solo      }
+        // No bloquear si falla - logging solo
+      }
       
       return count;
-    } catch (err: any) {    }
+    } catch (err: any) {
+    }
   }, [userId]);
   
   /**
@@ -531,7 +546,8 @@ export function useChat(userId: string | null) {
     // Programar ejecución después de 500ms de inactividad
     markAsReadTimeoutRef.current = setTimeout(() => {
       const pending = pendingMarkAsReadRef.current;
-      if (pending) {        markMessagesAsRead(pending.conversationId, pending.messageId);
+      if (pending) {
+        markMessagesAsRead(pending.conversationId, pending.messageId);
         pendingMarkAsReadRef.current = null;
       }
     }, 500);
@@ -560,7 +576,8 @@ export function useChat(userId: string | null) {
           updateTypingIndicator(conversationId, false);
         }, 10000);
       }
-    } catch (err: any) {    }
+    } catch (err: any) {
+    }
   }, [userId]);
   
   /**
@@ -599,7 +616,8 @@ export function useChat(userId: string | null) {
         message_id: messageId,
         content_length: newContent.length,
       });
-    } catch (err: any) {      throw err;
+    } catch (err: any) {
+      throw err;
     }
   }, [userId]);
   
@@ -633,7 +651,8 @@ export function useChat(userId: string | null) {
       trackChatEvent(ChatEvents.MESSAGE_DELETED, {
         message_id: messageId,
       });
-    } catch (err: any) {      throw err;
+    } catch (err: any) {
+      throw err;
     }
   }, [userId]);
   
@@ -657,7 +676,8 @@ export function useChat(userId: string | null) {
             : conv
         )
       );
-    } catch (err: any) {      throw err;
+    } catch (err: any) {
+      throw err;
     }
   }, []);
   
@@ -684,7 +704,8 @@ export function useChat(userId: string | null) {
             : conv
         )
       );
-    } catch (err: any) {      throw err;
+    } catch (err: any) {
+      throw err;
     }
   }, [userId]);
   
@@ -711,7 +732,8 @@ export function useChat(userId: string | null) {
             : conv
         )
       );
-    } catch (err: any) {      throw err;
+    } catch (err: any) {
+      throw err;
     }
   }, [userId]);
 
@@ -725,7 +747,8 @@ export function useChat(userId: string | null) {
    * se debe cargar automáticamente los mensajes iniciales
    */
   useEffect(() => {
-    if (activeConversationId && userId) {      fetchMessages(activeConversationId);
+    if (activeConversationId && userId) {
+      fetchMessages(activeConversationId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeConversationId, userId]);
@@ -741,8 +764,9 @@ export function useChat(userId: string | null) {
   useEffect(() => {
     if (!userId) return;
     
-    // ✅ FIX CRÍTICO: NO usar Date.now() - causa canales duplicados infinitos
-    const channelName = `chat_participants_${userId}`;
+    // ✅ FIX CRÍTICO: usar id estable por instancia para evitar colisiones
+    // cuando hay multiples hooks useChat montados al mismo tiempo.
+    const channelName = `chat_participants_${userId}_${realtimeInstanceIdRef.current}`;
     
     // Subscribe to participant changes (for unread count, etc.)
     const channel = supabase
@@ -755,7 +779,8 @@ export function useChat(userId: string | null) {
           table: 'chat_participants',
           filter: `user_id=eq.${userId}`,
         },
-        (payload) => {          // 🔥 FIX: NO hacer fetchConversations - causa 1000+ queries
+        (payload) => {
+          // 🔥 FIX: NO hacer fetchConversations - causa 1000+ queries
           // Solo actualizar el estado local con los nuevos datos
           const updated = payload.new as ChatParticipant;
           
@@ -783,9 +808,10 @@ export function useChat(userId: string | null) {
    * Subscribe to messages for active conversation - FIXED: removed Date.now() from channel names
    */
   useEffect(() => {
-    if (!userId || !activeConversationId) return;    // ✅ FIX CRÍTICO: NO usar Date.now() - causa canales duplicados infinitos
-    // Usar solo IDs estáticos para evitar re-crear el canal en cada render
-    const channelName = `chat_messages_${activeConversationId}`;
+    if (!userId || !activeConversationId) return;
+    // ✅ FIX CRÍTICO: usar id estable por instancia para evitar colisiones
+    // cuando hay multiples hooks useChat montados al mismo tiempo.
+    const channelName = `chat_messages_${activeConversationId}_${realtimeInstanceIdRef.current}`;
     
     // Subscribe to new messages
     const messagesChannel = supabase
@@ -798,7 +824,8 @@ export function useChat(userId: string | null) {
           table: 'chat_messages',
           filter: `conversation_id=eq.${activeConversationId}`,
         },
-        async (payload) => {          // Fetch full message with sender info
+        async (payload) => {
+          // Fetch full message with sender info
           const { data: newMessage } = await supabase
             .from('chat_messages')
             .select(`
@@ -820,7 +847,8 @@ export function useChat(userId: string | null) {
               sender:profiles(id, full_name, email, avatar_url)
             `)
             .eq('id', payload.new.id)
-            .single();          if (newMessage) {
+            .single();
+          if (newMessage) {
             const normalizedSender = Array.isArray(newMessage.sender)
               ? newMessage.sender[0]
               : newMessage.sender;
@@ -845,8 +873,10 @@ export function useChat(userId: string | null) {
               const existingMessages = prev[activeConversationId] || [];
               const messageExists = existingMessages.some(m => m.id === mappedMessage.id);
               
-              if (messageExists) {                return prev;
-              }              return {
+              if (messageExists) {
+                return prev;
+              }
+              return {
                 ...prev,
                 [activeConversationId]: [
                   ...existingMessages,
@@ -856,7 +886,8 @@ export function useChat(userId: string | null) {
             });
             
             // Mark as read SOLO si el mensaje es de otro usuario (con debounce)
-            if (mappedMessage.sender_id !== userId) {              debouncedMarkAsRead(activeConversationId, mappedMessage.id);
+            if (mappedMessage.sender_id !== userId) {
+              debouncedMarkAsRead(activeConversationId, mappedMessage.id);
             }
             
             // 🔥 OPTIMIZACIÓN: NO hacer fetchConversations completo
@@ -888,7 +919,8 @@ export function useChat(userId: string | null) {
           table: 'chat_messages',
           filter: `conversation_id=eq.${activeConversationId}`,
         },
-        (payload) => {          setMessages(prev => ({
+        (payload) => {
+          setMessages(prev => ({
             ...prev,
             [activeConversationId]: prev[activeConversationId]?.map(msg =>
               msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
@@ -896,10 +928,12 @@ export function useChat(userId: string | null) {
           }));
         }
       )
-      .subscribe((status) => {      });
+      .subscribe((status) => {
+      });
     
-    // ✅ FIX CRÍTICO: NO usar Date.now() - causa canales duplicados infinitos
-    const typingChannelName = `chat_typing_${activeConversationId}`;
+    // ✅ FIX CRÍTICO: usar id estable por instancia para evitar colisiones
+    // cuando hay multiples hooks useChat montados al mismo tiempo.
+    const typingChannelName = `chat_typing_${activeConversationId}_${realtimeInstanceIdRef.current}`;
     const typingChannel = supabase
       .channel(typingChannelName)
       .on(

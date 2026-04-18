@@ -171,6 +171,10 @@ export function useWizardState({
   const getStepNumber = React.useCallback((logicalStep: string): number => stepOrder.indexOf(logicalStep), [stepOrder])
 
   const getInitialStepLogical = React.useCallback(() => {
+    // When rescheduling (editing) an existing appointment, businessId plus
+    // serviceId / locationId / employeeId are always pre-filled by
+    // handleRescheduleAppointment — jump directly to date/time selection.
+    if (appointmentToEdit && businessId) return 'dateTime'
     if (preselectedDate || preselectedTime) return 'business'
     if (!businessId) return 'business'
     if (preselectedEmployeeId && preselectedServiceId) return 'dateTime'
@@ -179,6 +183,7 @@ export function useWizardState({
     if (preselectedLocationId) return 'service'
     return 'location'
   }, [
+    appointmentToEdit,
     preselectedDate,
     preselectedTime,
     businessId,

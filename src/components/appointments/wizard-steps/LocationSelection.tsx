@@ -89,16 +89,6 @@ export function LocationSelection({
   }, [filterByEmployeeId, businessId]);
 
   useEffect(() => {
-    // Si ya tenemos datos pre-cargados, usarlos directamente (MÁS RÁPIDO)
-    if (preloadedLocations) {
-      setLocations(preloadedLocations);
-      setLoading(false);
-      const ids = preloadedLocations.map(l => l.id);
-      refreshLocationBanners(ids).catch(() => {/* noop */});
-      return;
-    }
-
-    // Si no hay datos pre-cargados, hacer la consulta tradicional
     const fetchLocations = async () => {
       if (!businessId) {
         setLoading(false);
@@ -107,20 +97,23 @@ export function LocationSelection({
 
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('locations')
-          .select('id, business_id, name, address, city, state, country, postal_code, latitude, longitude, phone, email, description, images, business_hours, is_active, is_primary, opens_at, closes_at, created_at, updated_at')
-          .eq('business_id', businessId)
-          .eq('is_active', true)
-          .order('name');
+        const activeLocations = preloadedLocations
+          ? preloadedLocations
+          : await (async () => {
+              const { data, error } = await supabase
+                .from('locations')
+                .select('id, business_id, name, address, city, state, country, postal_code, latitude, longitude, phone, email, description, images, business_hours, is_active, is_primary, opens_at, closes_at, created_at, updated_at')
+                .eq('business_id', businessId)
+                .eq('is_active', true)
+                .order('name');
 
-        if (error) {
-          toast.error(`Error al cargar sedes: ${error.message}`);
-          setLocations([]);
-          return;
-        }
+              if (error) {
+                throw new Error(`Error al cargar sedes: ${error.message}`);
+              }
 
-        const activeLocations = (data || []) as Location[];
+              return (data || []) as Location[];
+            })();
+
         if (activeLocations.length === 0) {
           setLocations([]);
           return;
@@ -172,7 +165,7 @@ export function LocationSelection({
       } catch (error) {
         Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'LocationSelection' } })
         const message = error instanceof Error ? error.message : 'Error inesperado';
-        toast.error(`Error: ${message}`);
+        toast.error(message.startsWith('Error al cargar sedes') ? message : `Error: ${message}`);
         setLocations([]);
       } finally {
         setLoading(false);

@@ -17,6 +17,7 @@ import {
   Buildings as Building2,
   ImageSquare as ImageIcon,
   Calendar,
+  ChatText,
 } from '@phosphor-icons/react'
 import { supabase } from '@/lib/supabase'
 import type { Business } from '@/types/types'
@@ -26,6 +27,7 @@ import { NotificationTracking } from '../admin/settings/NotificationTracking'
 import { BusinessRecurringExpenses } from '../admin/settings/BusinessRecurringExpenses'
 import { BusinessBranding } from '../admin/settings/BusinessBranding'
 import { ClosedDaysManager } from '../admin/settings/ClosedDaysManager'
+import { BusinessChatSettings } from '../admin/settings/BusinessChatSettings'
 
 interface AdminRolePreferencesProps {
   business: Business
@@ -47,7 +49,7 @@ export function AdminRolePreferences({ business }: AdminRolePreferencesProps) {
   })
   const [phonePrefix, setPhonePrefix] = useState('+57')
   const [isSaving, setIsSaving] = useState(false)
-  const [activeSubTab, setActiveSubTab] = useState<'info' | 'branding' | 'notifications' | 'tracking' | 'calendario'>('info')
+  const [activeSubTab, setActiveSubTab] = useState<'info' | 'branding' | 'notifications' | 'tracking' | 'calendario' | 'chat'>('info')
   const [workOnHolidays, setWorkOnHolidays] = useState<boolean>(business.work_on_holidays ?? false)
   const [isSavingHolidays, setIsSavingHolidays] = useState(false)
 
@@ -152,6 +154,14 @@ export function AdminRolePreferences({ business }: AdminRolePreferencesProps) {
         >
           <Calendar className="h-4 w-4" />
           {t('settings.businessInfo.tabs.tracking')}
+        </Button>
+        <Button
+          variant={activeSubTab === 'chat' ? 'default' : 'outline'}
+          onClick={() => setActiveSubTab('chat')}
+          className="flex items-center gap-2"
+        >
+          <ChatText className="h-4 w-4" />
+          Chat
         </Button>
       </div>
 
@@ -338,6 +348,7 @@ export function AdminRolePreferences({ business }: AdminRolePreferencesProps) {
       {activeSubTab === 'branding' && <BusinessBranding businessId={business.id} />}
       {activeSubTab === 'notifications' && <BusinessNotificationSettings businessId={business.id} />}
       {activeSubTab === 'tracking' && <NotificationTracking businessId={business.id} />}
+      {activeSubTab === 'chat' && <BusinessChatSettings businessId={business.id} />}
       {activeSubTab === 'calendario' && (
         <div className="space-y-6">
           {/* Toggle: abrir en festivos */}

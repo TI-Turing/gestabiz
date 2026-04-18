@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger'
+import { useAuth } from '@/contexts/AuthContext'
 
 export interface WorkSchedule {
   [day: string]: {
@@ -40,13 +41,13 @@ const DAYS_OF_WEEK = [
 ];
 
 export function useScheduleConflicts() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const getCurrentEmployments = async (): Promise<BusinessEmployment[]> => {
     try {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) {
+      if (!user?.id) {
         throw new Error('Usuario no autenticado');
       }
 
@@ -56,7 +57,7 @@ export function useScheduleConflicts() {
           business_id,
           business:businesses!business_employees_business_id_fkey(name)
         `)
-  .eq('employee_id', session.session.user.id)
+  .eq('employee_id', user.id)
   .eq('status', 'approved');
 
       if (fetchError) throw fetchError;

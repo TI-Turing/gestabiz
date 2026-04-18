@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -52,7 +51,7 @@ interface AppointmentWithRelations {
     price?: number
     currency?: string
     duration_minutes?: number
-    category_id?: string
+    category?: string
     subcategory_id?: string
   }
   employee?: {
@@ -103,7 +102,8 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
   const [serviceFilters, setServiceFilters] = useState<string[]>([])
   const [categoryFilters, setCategoryFilters] = useState<string[]>([])
   const [employeeFilters, setEmployeeFilters] = useState<string[]>([])
-  const [priceRangeFilter, setPriceRangeFilter] = useState<string>('all')
+  const [priceMin, setPriceMin] = useState<string>('')
+  const [priceMax, setPriceMax] = useState<string>('')
   
   // Search states for typeahead
   const [businessSearch, setBusinessSearch] = useState('')
@@ -172,11 +172,11 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
         })
       }
 
-      // Extract categories
-      if (apt.service?.category_id) {
-        categoriesMap.set(apt.service.category_id, {
-          id: apt.service.category_id,
-          name: apt.service.name,
+      // Extract categories from service category name
+      if (apt.service?.category) {
+        categoriesMap.set(apt.service.category, {
+          id: apt.service.category,
+          name: apt.service.category,
           slug: ''
         })
       }
@@ -215,6 +215,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
       if (filter === 'attended') return apt.status === 'completed'
       if (filter === 'cancelled') return apt.status === 'cancelled'
       if (filter === 'no_show') return apt.status === 'no_show'
+      if (filter === 'pending') return ['pending', 'scheduled', 'confirmed', 'in_progress'].includes(apt.status)
       return false
     })
   }, [statusFilters])
@@ -223,20 +224,32 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
     if (businessFilters.length > 0 && !businessFilters.includes(apt.business_id)) return false
     if (locationFilters.length > 0 && !locationFilters.includes(apt.location_id ?? '')) return false
     if (serviceFilters.length > 0 && !serviceFilters.includes(apt.service_id ?? '')) return false
-    if (categoryFilters.length > 0 && !categoryFilters.includes(apt.service?.category_id ?? '')) return false
+    if (categoryFilters.length > 0 && !categoryFilters.includes(apt.service?.category ?? '')) return false
     if (employeeFilters.length > 0 && !employeeFilters.includes(apt.employee?.id ?? '')) return false
     return true
   }, [businessFilters, locationFilters, serviceFilters, categoryFilters, employeeFilters])
 
+  // Format a numeric string with Colombian thousands separator (dot, no decimals)
+  const formatCOP = (value: string): string => {
+    const digits = value.replace(/\D/g, '')
+    if (!digits) return ''
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  }
+
+  // Parse a COP-formatted string back to a number
+  const parseCOP = (value: string): number => {
+    return parseInt(value.replace(/\./g, ''), 10) || 0
+  }
+
+  const parsedPriceMin = useMemo(() => (priceMin !== '' ? parseCOP(priceMin) : null), [priceMin])
+  const parsedPriceMax = useMemo(() => (priceMax !== '' ? parseCOP(priceMax) : null), [priceMax])
+
   const matchesPriceRange = useCallback((apt: AppointmentWithRelations): boolean => {
-    if (priceRangeFilter === 'all') return true
     const price = apt.service?.price || apt.price || 0
-    if (priceRangeFilter === '0-500' && price > 500) return false
-    if (priceRangeFilter === '501-1000' && (price <= 500 || price > 1000)) return false
-    if (priceRangeFilter === '1001-2000' && (price <= 1000 || price > 2000)) return false
-    if (priceRangeFilter === '2001+' && price <= 2000) return false
+    if (parsedPriceMin !== null && price < parsedPriceMin) return false
+    if (parsedPriceMax !== null && price > parsedPriceMax) return false
     return true
-  }, [priceRangeFilter])
+  }, [parsedPriceMin, parsedPriceMax])
 
   const matchesSearch = useCallback((apt: AppointmentWithRelations): boolean => {
     if (!searchTerm) return true
@@ -399,7 +412,8 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
     setServiceFilters([])
     setCategoryFilters([])
     setEmployeeFilters([])
-    setPriceRangeFilter('all')
+    setPriceMin('')
+    setPriceMax('')
     setSearchTerm('')
     setCurrentPage(1)
   }, [])
@@ -442,7 +456,8 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
     serviceFilters.length > 0 ||
     categoryFilters.length > 0 ||
     employeeFilters.length > 0 ||
-    priceRangeFilter !== 'all' ||
+    priceMin !== '' ||
+    priceMax !== '' ||
     searchTerm !== ''
 
   // Pagination logic
@@ -451,7 +466,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
   const paginatedAppointments = filteredAppointments.slice(startIndex, startIndex + appointmentsPerPage)  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [statusFilters, businessFilters, locationFilters, serviceFilters, categoryFilters, employeeFilters, priceRangeFilter, searchTerm])
+  }, [statusFilters, businessFilters, locationFilters, serviceFilters, categoryFilters, employeeFilters, priceMin, priceMax, searchTerm])
 
   if (loading) {
     return (
@@ -573,7 +588,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
                     <label htmlFor="status-all" className="text-sm cursor-pointer">Todos los estados</label>
                   </div>
                   <div className="border-t pt-3 space-y-2">
-                    {['attended', 'cancelled', 'no_show'].map(status => (
+                    {['attended', 'pending', 'cancelled', 'no_show'].map(status => (
                       <div key={status} className="flex items-center space-x-2">
                         <Checkbox 
                           id={`status-${status}`}
@@ -591,6 +606,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
                           className="text-sm cursor-pointer"
                         >
                           {status === 'attended' && 'Asistidas'}
+                          {status === 'pending' && 'Pendientes'}
                           {status === 'cancelled' && 'Canceladas'}
                           {status === 'no_show' && 'Perdidas'}
                         </label>
@@ -657,8 +673,8 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
               </PopoverContent>
             </Popover>
 
-            {/* Location */}
-            <Popover open={locationPopoverOpen} onOpenChange={setLocationPopoverOpen}>
+            {/* Location - only show when a business is selected */}
+            {businessFilters.length > 0 && <Popover open={locationPopoverOpen} onOpenChange={setLocationPopoverOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
@@ -711,7 +727,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
                   </div>
                 </div>
               </PopoverContent>
-            </Popover>
+            </Popover>}
 
             {/* Service */}
             <Popover open={servicePopoverOpen} onOpenChange={setServicePopoverOpen}>
@@ -776,7 +792,7 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
                   variant="outline"
                   className="w-full justify-between"
                 >
-                  {categoryFilters.length === 0 ? 'Categoría' : `${categoryFilters.length} categoría(s)`}
+                  {categoryFilters.length === 0 ? 'Categoría del negocio' : `${categoryFilters.length} categoría(s)`}
                   <ChevronDown className="h-4 w-4 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -881,19 +897,24 @@ export function ClientHistory({ userId, appointments, loading }: ClientHistoryPr
               </PopoverContent>
             </Popover>
 
-            {/* Price Range */}
-            <Select value={priceRangeFilter} onValueChange={setPriceRangeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('common.placeholders.priceRange')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los precios</SelectItem>
-                <SelectItem value="0-500">$0 - $500</SelectItem>
-                <SelectItem value="501-1000">$501 - $1,000</SelectItem>
-                <SelectItem value="1001-2000">$1,001 - $2,000</SelectItem>
-                <SelectItem value="2001+">$2,001+</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Price Range - min/max inputs with Colombian thousands separator */}
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Precio mín."
+                value={priceMin}
+                onChange={(e) => setPriceMin(formatCOP(e.target.value))}
+                className="w-full"
+                inputMode="numeric"
+              />
+              <span className="text-muted-foreground text-sm shrink-0">—</span>
+              <Input
+                placeholder="Precio máx."
+                value={priceMax}
+                onChange={(e) => setPriceMax(formatCOP(e.target.value))}
+                className="w-full"
+                inputMode="numeric"
+              />
+            </div>
           </div>
         </CardContent>
         )}

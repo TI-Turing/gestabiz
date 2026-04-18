@@ -40,6 +40,7 @@ interface WizardStepContentProps {
   preselectedTime?: string
   onSubmit: () => Promise<void>
   onClose: () => void
+  onStartChat?: (conversationId: string) => void
 }
 
 export function WizardStepContent({
@@ -64,6 +65,7 @@ export function WizardStepContent({
   preselectedTime,
   onSubmit,
   onClose,
+  onStartChat,
 }: Readonly<WizardStepContentProps>) {
   const effectiveBusiness = wizardData.businessId || businessId || ''
 
@@ -75,6 +77,7 @@ export function WizardStepContent({
           selectedBusinessId={wizardData.businessId}
           preferredCityName={preferredCityName}
           preferredRegionName={preferredRegionName}
+          onStartChat={(conversationId) => { onClose(); onStartChat?.(conversationId); }}
           onSelectBusiness={(business) => {
             updateWizardData({
               businessId: business.id,
@@ -112,6 +115,7 @@ export function WizardStepContent({
       {currentStep === getStepNumber('service') && (
         <ServiceSelection
           businessId={effectiveBusiness}
+          locationId={wizardData.locationId}
           selectedServiceId={wizardData.serviceId}
           onSelectService={(service) => updateWizardData({ serviceId: service.id, service })}
           preloadedServices={dataCache.services as Parameters<typeof ServiceSelection>[0]['preloadedServices']}

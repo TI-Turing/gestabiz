@@ -822,6 +822,7 @@ export function ClientDashboard({
             favorites={dashboardData?.favorites || []}
             loading={isDashboardLoading}
             onBookAppointment={handleBookAppointment}
+            onViewProfile={setSelectedBusinessId}
           />
         )
       case 'history':
@@ -914,6 +915,10 @@ export function ClientDashboard({
           onSuccess={() => {
             handleCloseWizard()
             refetchDashboard() // ✅ Recargar dashboard después de crear cita
+          }}
+          onStartChat={(conversationId) => {
+            setChatConversationId(null)
+            setTimeout(() => setChatConversationId(conversationId), 0)
           }}
         />
         </SectionErrorBoundary>
