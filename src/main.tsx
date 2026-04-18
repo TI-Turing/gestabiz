@@ -26,7 +26,7 @@ if (SENTRY_DSN && SENTRY_DSN !== 'https://examplePublicKey@o0.ingest.sentry.io/0
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: IS_PRODUCTION ? 'production' : 'development',
-    release: `appointsync-pro@${APP_VERSION}`,
+    release: `gestabiz@${APP_VERSION}`,
     
     // Sampling
     tracesSampleRate: IS_PRODUCTION ? SAMPLE_RATE : 1, // 30% en prod, 100% en dev

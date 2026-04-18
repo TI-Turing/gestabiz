@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger'
+import { useAuth } from '@/contexts/AuthContext'
 
 export interface JobApplication {
   id: string;
@@ -58,6 +59,7 @@ export interface ApplicationFilters {
 }
 
 export function useJobApplications(filters?: ApplicationFilters) {
+  const { user } = useAuth();
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,8 +146,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
       }
 
       // Check if user already applied
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) {
+      if (!user?.id) {
         throw new Error('Usuario no autenticado');
       }
 
@@ -153,10 +154,11 @@ export function useJobApplications(filters?: ApplicationFilters) {
         .from('job_applications')
         .select('id')
         .eq('vacancy_id', input.vacancy_id)
-        .eq('user_id', session.session.user.id)
+        .eq('user_id', user.id)
         .maybeSingle();
 
-      if (checkError) {        // Continue anyway, backend will handle constraint violation
+      if (checkError) {
+        // Continue anyway, backend will handle constraint violation
       }
 
       if (existing) {
@@ -191,7 +193,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
 
         const timestamp = Date.now();
         const fileName = `${input.vacancy_id}_${timestamp}.${fileExt}`;
-        const filePath = `${session.session.user.id}/${fileName}`;
+        const filePath = `${user.id}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('cvs')
@@ -200,7 +202,8 @@ export function useJobApplications(filters?: ApplicationFilters) {
             upsert: false
           });
 
-        if (uploadError) {          throw new Error('Error al cargar el CV: ' + uploadError.message);
+        if (uploadError) {
+          throw new Error('Error al cargar el CV: ' + uploadError.message);
         }
 
         cvUrl = filePath; // Store the path in the database
@@ -357,8 +360,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
   const withdrawApplication = async (id: string): Promise<boolean> => {
     try {
       // Get application to check ownership
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) {
+      if (!user?.id) {
         throw new Error('Usuario no autenticado');
       }
 
@@ -369,7 +371,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
         .single();
 
       if (appError) throw appError;
-      if (application.user_id !== session.session.user.id) {
+      if (application.user_id !== user.id) {
         throw new Error('No tienes permiso para retirar esta aplicación');
       }
 
@@ -471,7 +473,8 @@ export function useJobApplications(filters?: ApplicationFilters) {
       });
 
       if (notifError) {
-        // eslint-disable-next-line no-console        // No fallar la operación si falla la notificación
+        // eslint-disable-next-line no-console
+        // No fallar la operación si falla la notificación
       }
 
       toast.success('Proceso de selección iniciado', {
@@ -650,7 +653,8 @@ export function useJobApplications(filters?: ApplicationFilters) {
       });
 
       if (notifError) {
-        // eslint-disable-next-line no-console        // No fallar la operación si falla la notificación
+        // eslint-disable-next-line no-console
+        // No fallar la operación si falla la notificación
       }
 
       toast.success('¡Empleado seleccionado!', {

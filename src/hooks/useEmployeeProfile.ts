@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger'
+import { useAuth } from '@/contexts/AuthContext'
 
 export interface Certification {
   id: string;
@@ -48,6 +49,7 @@ export interface UpdateProfileInput {
 }
 
 export function useEmployeeProfile(userId?: string) {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<EmployeeProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,11 +62,10 @@ export function useEmployeeProfile(userId?: string) {
       let queryUserId = targetUserId || userId;
 
       if (!queryUserId) {
-        const { data: session } = await supabase.auth.getSession();
-        if (!session?.session?.user) {
+        if (!user?.id) {
           throw new Error('Usuario no autenticado');
         }
-        queryUserId = session.session.user.id;
+        queryUserId = user.id;
       }
 
       const { data, error: fetchError } = await supabase
@@ -108,13 +109,12 @@ export function useEmployeeProfile(userId?: string) {
         }
       }
 
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session?.user) {
+      if (!user?.id) {
         throw new Error('Usuario no autenticado');
       }
 
       const profileData = {
-        user_id: session.session.user.id,
+        user_id: user.id,
         professional_summary: input.professional_summary,
         years_of_experience: input.years_of_experience,
         specializations: input.specializations,
