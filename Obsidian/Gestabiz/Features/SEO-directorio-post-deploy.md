@@ -40,3 +40,14 @@ Debe retornar XML con las URLs de directorio y los slugs de negocios públicos.
 ### 4. Monitorear en Search Console (1-2 semanas después)
 - Cobertura → verificar que las páginas de directorio estén "Válidas"
 - Rendimiento → observar si aparecen impresiones para queries como "barberías bogotá"
+
+## Notas Relacionadas
+
+- [[sistema-perfiles-publicos]] — Perfiles públicos y SEO
+- [[sistema-busqueda]] — RPCs search_businesses, índices trigram
+- [[sistema-categorias]] — Categorías y subcategorías para directorio
+- [[sectores-y-casos-de-uso]] — Verticales y ciudades
+- [[SEO-SEM-estrategia-2026]] — Estrategia SEO complementaria
+- [[SEO-SEM-Strategy-Colombia-LATAM]] — Estrategia SEO/SEM exhaustiva
+- [[Perfil-Publico-Profesional]] — Perfiles públicos indexables
+- [[landing-page-dark-mode-fixed]] — Landing page pública

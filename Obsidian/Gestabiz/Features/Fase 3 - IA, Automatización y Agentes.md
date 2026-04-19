@@ -114,3 +114,15 @@ Publicación automática en Instagram, Facebook, TikTok
 - Fase 2 completada (contabilidad + DIAN + mobile)
 - Al menos 50+ negocios activos para tener datos suficientes para ML/IA
 - Definición de plan de precios que incluya features de IA (probablemente solo Plan Pro/Empresarial)
+
+## Notas Relacionadas
+
+- [[sistema-notificaciones]] — WhatsApp Business API y email ya funcional
+- [[sistema-chat]] — Chat en tiempo real para agente conversacional
+- [[edge-functions]] — Runtime Deno para agentes IA
+- [[sistema-contable]] — Datos para análisis predictivo
+- [[planes-y-precios]] — Features IA en Plan Pro/Empresarial
+- [[base-de-datos]] — RAG sobre tablas de Supabase
+- [[Ideas Futuras - Social Media MCP y Marketing IA]] — Marketing con IA detallado
+- [[analisis-competitivo-roadmap]] — Features Fase 3-4 del roadmap
+- [[estrategia-producto-y-negocio]] — Marketing y automatización

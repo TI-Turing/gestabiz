@@ -31,3 +31,10 @@ Landing page now displays in light mode only. Dark mode support can be added bac
 
 ## Verification
 Nav link now correctly computes to `oklab(0.373...)` (dark gray) instead of `oklab(0.872...)` (light gray).
+
+## Notas Relacionadas
+
+- [[stack-tecnologico]] — Tailwind 4, CSS semánticas, ThemeProvider
+- [[sistema-perfiles-publicos]] — Área pública (landing, perfiles)
+- [[2026-04-17-exploracion-area-publica-y-cliente]] — Exploración del área pública incluyendo landing
+- [[SEO-directorio-post-deploy]] — Páginas públicas y post-deploy

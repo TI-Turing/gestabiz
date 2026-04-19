@@ -48,3 +48,13 @@ Los demás issues (tests, RLS cron_execution_logs, webhooks idempotencia) son pa
 - ¿Cuántos se registraron?
 - ¿Qué objeciones aparecieron más?
 - ¿Qué feature pidieron que no existe?
+
+## Notas Relacionadas
+
+- [[planes-y-precios]] — Pricing $89,900 COP/mes
+- [[propuesta-de-valor]] — Pitch comercial y ROI
+- [[comparativa-competidores]] — Competidores y diferenciadores
+- [[sectores-y-casos-de-uso]] — Verticales objetivo (Chapinero/Bogotá)
+- [[estrategia-producto-y-negocio]] — Estrategia de producto y go-to-market
+- [[free-trial-mes-gratis]] — Free trial como herramienta de ventas
+- [[analisis-competitivo-roadmap]] — Análisis competitivo y posicionamiento

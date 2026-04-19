@@ -59,6 +59,17 @@ Commits: `315af53`, `2691925`.
 
 Commit: `fb593dc`.
 
+## Notas Relacionadas
+
+- [[sistema-autenticacion]] — Auth, Google OAuth, GoTrueClient
+- [[stack-tecnologico]] — CI/CD, Vercel, entornos
+- [[base-de-datos]] — Supabase DEV/PROD
+- [[edge-functions]] — Secrets y Edge Functions
+- [[google-oauth-separacion-entornos]] — Decisión de separar OAuth implementada en esta sesión
+- [[secretos-en-scripts-gitguardian]] — Problema de secretos resuelto en esta sesión
+- [[bug-session-disconnection-on-tab-switch]] — Bug de auth mencionado
+- [[auditoria-completa-abril-2026]] — Auditoría completa de lo implementado
+
 ---
 
 ## 4. Supabase — Nuevas API Keys

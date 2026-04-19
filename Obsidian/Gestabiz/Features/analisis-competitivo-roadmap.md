@@ -148,6 +148,23 @@ Complementa el Google Calendar ya existente.
 | Paquetes y Membresías | 3 | Alto | Alto |
 | Formularios por Servicio | 3 | Medio-Alto | Medio |
 | Marketing Directo | 3 | Alto | Alto |
+
+## Notas Relacionadas
+
+- [[comparativa-competidores]] — Análisis detallado vs Fresha/Booksy/Mindbody
+- [[planes-y-precios]] — Modelo de precios actual
+- [[sistema-billing]] — Stripe/PayU/MercadoPago ya integrados
+- [[sistema-citas]] — AppointmentWizard y flujo de reserva
+- [[sistema-notificaciones]] — Email/WhatsApp ya funcional
+- [[sistema-contable]] — IVA/ICA/Retención automático
+- [[sectores-y-casos-de-uso]] — Verticales soportadas
+- [[Fase 2 - Contabilidad, DIAN y App Móvil]] — Roadmap Fase 2
+- [[Fase 3 - IA, Automatización y Agentes]] — Roadmap Fase 3
+- [[estrategia-producto-y-negocio]] — Estrategia de producto complementaria
+- [[SEO-SEM-estrategia-2026]] — Competidores y keywords
+- [[SEO-SEM-Strategy-Colombia-LATAM]] — Análisis competitivo SEO detallado
+- [[facturacion-electronica-matias-api]] — Feature Fase 2 referenciada
+- [[free-trial-mes-gratis]] — Feature de pricing/trial
 | Widget Embebible | 3 | Medio | Medio |
 | Sync Apple/Outlook | 3 | Medio | Bajo |
 | IA Reservas WhatsApp | 4 | Muy alto | Muy alto |

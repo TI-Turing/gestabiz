@@ -48,3 +48,10 @@ Generación de un QR personalizado que incluya el icono de Gestabiz centrado den
 - El QR debe apuntar a la URL pública del negocio (`/negocio/:slug`)
 - El icono central no debe superar ~20% del área del QR para mantener lectura correcta con corrección de errores nivel H
 - Verificar que la librería existente (`src/components/ui/QRScannerWeb.tsx`, `QRScanner.tsx`) no entre en conflicto
+
+## Notas Relacionadas
+
+- [[sistema-perfiles-publicos]] — Perfil público /negocio/:slug (URL del QR)
+- [[sistema-citas]] — Auto-book con `?book=true`
+- [[Perfil-Publico-Profesional]] — Perfil público de profesional
+- [[SEO-directorio-post-deploy]] — SEO y páginas públicas

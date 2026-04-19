@@ -39,3 +39,13 @@ Dos clientes OAuth en Google Cloud Console, configuración separada en Supabase 
 ## Por qué
 
 Sin esta separación, el login con Google desde `dev.gestabiz.com` redirigía a `www.gestabiz.com` porque Supabase DEV tenía configurado el `site_url` de producción.
+
+## Notas Relacionadas
+
+- [[sistema-autenticacion]] — Auth con Google OAuth
+- [[stack-tecnologico]] — Entornos DEV/PROD, Vercel env vars
+- [[base-de-datos]] — Supabase DEV vs PROD
+- [[secretos-en-scripts-gitguardian]] — Problema de secretos que motivó la separación
+- [[2026-03-31-infra-oauth-ci]] — Sesión donde se implementó
+- [[bug-session-disconnection-on-tab-switch]] — Bug de auth relacionado
+- [[auditoria-completa-abril-2026]] — Auditoría de seguridad e infraestructura
