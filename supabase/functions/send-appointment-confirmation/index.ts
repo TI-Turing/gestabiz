@@ -50,7 +50,7 @@ serve(async (req) => {
       .from("appointments")
       .select(
         `id, business_id, employee_id, start_time, end_time, confirmation_token, confirmation_deadline,
-         client:profiles!client_id(id, full_name, email, phone, whatsapp),
+         client:profiles!client_id(id, full_name, email, phone),
          employee:profiles!employee_id(id, full_name, email),
          service:services(id, name, duration_minutes, price),
          location:locations(id, name, address),
