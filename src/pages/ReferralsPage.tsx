@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Gift, Coins, Hourglass, ArrowsClockwise } from '@phosphor-icons/react'
+import { Gift, Coins, Hourglass, ArrowsClockwise, PencilSimple, EnvelopeSimple, Bank, IdentificationCard } from '@phosphor-icons/react'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -190,25 +190,60 @@ export function ReferralsPage({ user }: ReferralsPageProps) {
         )}
       </div>
 
-      {/* Payout setup */}
-      {!hasDetails && !isLoading && (
-        <Card className="border-amber-500/30 bg-amber-500/5">
-          <CardContent className="py-4 px-5">
-            <p className="text-sm font-medium text-foreground mb-1">
-              Configura tus datos de pago
-            </p>
-            <p className="text-xs text-muted-foreground mb-3">
-              Necesitas un email de MercadoPago para recibir tus comisiones.
-            </p>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowPayoutForm(true)}
-            >
-              Configurar ahora
-            </Button>
-          </CardContent>
-        </Card>
+      {/* Payout details — setup si no tiene, resumen editable si ya tiene */}
+      {!isLoading && (
+        hasDetails && details ? (
+          <Card className="border-border">
+            <CardContent className="py-4 px-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1.5 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Datos de pago</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <EnvelopeSimple size={13} />
+                    <span className="truncate">{details.mp_email}</span>
+                  </div>
+                  {details.bank_name && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Bank size={13} />
+                      <span>{details.bank_name}{details.account_type ? ` — ${details.account_type === 'savings' ? 'Ahorros' : 'Corriente'}` : ''}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <IdentificationCard size={13} />
+                    <span>{details.document_type} {details.document_number}</span>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="shrink-0 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowPayoutForm(true)}
+                >
+                  <PencilSimple size={15} className="mr-1.5" />
+                  Editar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border-amber-500/30 bg-amber-500/5">
+            <CardContent className="py-4 px-5">
+              <p className="text-sm font-medium text-foreground mb-1">
+                Configura tus datos de pago
+              </p>
+              <p className="text-xs text-muted-foreground mb-3">
+                Necesitas un email de MercadoPago para recibir tus comisiones.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowPayoutForm(true)}
+              >
+                Configurar ahora
+              </Button>
+            </CardContent>
+          </Card>
+        )
       )}
 
       {/* Earnings history */}

@@ -16,6 +16,7 @@ import { PRICING_PLANS } from '@/lib/pricingPlans'
 import type { Plan } from '@/lib/pricingPlans'
 import { toast } from 'sonner'
 import { formatCurrency } from '@/lib/utils'
+import supabase from '@/lib/supabase'
 
 type BillingCycle = 'monthly' | 'yearly'
 
@@ -36,6 +37,7 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
   const [appliedDiscount, setAppliedDiscount] = useState<{
     code: string
     discount: number
+    isReferral?: boolean
   } | null>(null)
   const [processingPlan, setProcessingPlan] = useState<string | null>(null)
 
@@ -50,15 +52,49 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
       return
     }
 
-    try {
-      // Validate discount code against selected plan and billing cycle
-      const result = await applyDiscount(discountCode, 'basico', 89900) // Example values
-      
-      if (result.isValid) {
-        setAppliedDiscount({
-          code: discountCode,
-          discount: result.discountAmount,
+    // Detectar si parece un cupón de referral (8 chars alfanuméricos en mayúsculas)
+    const isReferralPattern = /^[A-Z0-9]{8}$/.test(discountCode.trim())
+
+    if (isReferralPattern && businessId) {
+      try {
+        const { data, error } = await supabase.rpc('apply_referral_code', {
+          p_business_id: businessId,
+          p_code: discountCode.trim(),
         })
+
+        if (error) throw error
+
+        if (data?.isValid) {
+          setAppliedDiscount({
+            code: discountCode.trim(),
+            discount: data.discountAmount,
+            isReferral: true,
+          })
+          toast.success(`Cupón referido aplicado: ahorras ${formatCurrency(data.discountAmount)} en el Plan Básico`)
+          return
+        }
+
+        // Si no es válido como referral, intentar como código admin normal
+        const fallback = await applyDiscount(discountCode, 'basico', 89900)
+        if (fallback.isValid) {
+          setAppliedDiscount({ code: discountCode, discount: fallback.discountAmount })
+          toast.success(`Código aplicado: ${formatCurrency(fallback.discountAmount)} de descuento`)
+        } else {
+          toast.error(data?.message || fallback.message || 'Código inválido o expirado')
+        }
+        return
+      } catch {
+        // Si el RPC falla (ej. negocio ya pagó), mostrar error específico o continuar al fallback
+        toast.error('El cupón no es válido para este negocio')
+        return
+      }
+    }
+
+    // Código de descuento admin normal
+    try {
+      const result = await applyDiscount(discountCode, 'basico', 89900)
+      if (result.isValid) {
+        setAppliedDiscount({ code: discountCode, discount: result.discountAmount })
         toast.success(`Código aplicado: ${formatCurrency(result.discountAmount)} de descuento`)
       } else {
         toast.error(result.message || 'Código inválido o expirado')
@@ -148,8 +184,8 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
           )}
         </div>
 
-        {/* Discount Code Input */}
-        <div className="max-w-md mx-auto mb-12">
+        {/* Discount Code Input — solo en facturación mensual */}
+        {billingCycle === 'monthly' && <div className="max-w-md mx-auto mb-12">
           <Label htmlFor="discount-code" className="mb-2 block text-center">
             ¿Tienes un código de descuento?
           </Label>
@@ -177,11 +213,18 @@ export function PricingPage({ businessId: businessIdProp, onClose }: PricingPage
             </Button>
           </div>
           {appliedDiscount && (
-            <p className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">
-              Código "{appliedDiscount.code}" aplicado exitosamente
-            </p>
+            <div className="mt-2 text-center space-y-0.5">
+              <p className="text-sm text-green-600 dark:text-green-400">
+                Código "{appliedDiscount.code}" aplicado — {formatCurrency(appliedDiscount.discount)} de descuento
+              </p>
+              {appliedDiscount.isReferral && (
+                <p className="text-xs text-muted-foreground">
+                  Cupón referido · Solo aplica al Plan Básico por primera vez
+                </p>
+              )}
+            </div>
           )}
-        </div>
+        </div>}
 
         {/* Plans Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
