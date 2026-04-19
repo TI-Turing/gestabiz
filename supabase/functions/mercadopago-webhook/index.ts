@@ -132,6 +132,42 @@ Deno.serve(async (req) => {
     } else {
     }
 
+    // ─── Referral payout trigger ────────────────────────────────────────────
+    // Si el pago incluye un referral_code_id en metadata, procesamos el payout
+    if (payment.status === 'approved' && payment.metadata?.referral_code_id) {
+      try {
+        // Obtener owner_id del negocio para mark_referral_redeemed
+        const { data: business } = await supabase
+          .from('businesses')
+          .select('owner_id')
+          .eq('id', businessId)
+          .single()
+
+        if (business?.owner_id) {
+          const { data: referralResult } = await supabase.rpc('mark_referral_redeemed', {
+            p_code_id:     payment.metadata.referral_code_id,
+            p_business_id: businessId,
+            p_user_id:     business.owner_id,
+            p_payment_id:  payment.id.toString(),
+          })
+
+          // Disparar payout de forma asíncrona (fire-and-forget)
+          if (referralResult?.payoutId) {
+            fetch(`${supabaseUrl}/functions/v1/mercadopago-payout-referral`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ referralPayoutId: referralResult.payoutId }),
+            }).catch(() => { /* fire-and-forget, error se maneja en la EF destino */ })
+          }
+        }
+      } catch (_referralError) {
+        // No fallar el webhook principal por errores en referrals
+      }
+    }
+
     return new Response(JSON.stringify({ status: 'ok', processed: true }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

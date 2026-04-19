@@ -35,34 +35,34 @@ jobs:
         run: npm ci
       
       - name: Deploy send-email-reminder to Production
-        run: npx supabase functions deploy send-email-reminder --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_ID }} --dns-resolver https
+        run: npx supabase functions deploy send-email-reminder --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --dns-resolver https
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.PROD_SUPABASE_SECRET }}
       
       - name: Deploy send-whatsapp-reminder to Production
-        run: npx supabase functions deploy send-whatsapp-reminder --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_ID }} --dns-resolver https
+        run: npx supabase functions deploy send-whatsapp-reminder --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --dns-resolver https
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.PROD_SUPABASE_SECRET }}
       
       - name: Deploy send-sms-reminder to Production
-        run: npx supabase functions deploy send-sms-reminder --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_ID }} --dns-resolver https
+        run: npx supabase functions deploy send-sms-reminder --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --dns-resolver https
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.PROD_SUPABASE_SECRET }}
 
       - name: Deploy send-phone-otp to Production
-        run: npx supabase functions deploy send-phone-otp --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_ID }} --dns-resolver https
+        run: npx supabase functions deploy send-phone-otp --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --dns-resolver https
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.PROD_SUPABASE_SECRET }}
 
       - name: Deploy verify-phone-otp to Production
-        run: npx supabase functions deploy verify-phone-otp --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_ID }} --dns-resolver https
+        run: npx supabase functions deploy verify-phone-otp --project-ref ${{ vars.SUPABASE_PROJECT_REF }} --dns-resolver https
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.PROD_SUPABASE_SECRET }}
       
       - name: Verify deployments
-        run: npx supabase functions list --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_ID }}
+        run: npx supabase functions list --project-ref ${{ vars.SUPABASE_PROJECT_REF }}
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.PROD_SUPABASE_SECRET }}
       
       - name: Deployment Success
         if: success()

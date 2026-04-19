@@ -101,17 +101,32 @@ Deno.serve(async (req) => {
     let discountAmount = 0
 
     // Apply discount code if provided
+    let referralCodeId: string | null = null
+
     if (discountCode) {
-      const { data: discountData, error: discountError } = await supabase.rpc('apply_discount_code', {
+      // Try as referral code first
+      const { data: referralData, error: referralError } = await supabase.rpc('apply_referral_code', {
         p_business_id: businessId,
         p_code: discountCode,
-        p_plan_type: planType,
-        p_amount: basePrice,
       })
 
-      if (!discountError && discountData?.isValid) {
-        discountAmount = discountData.discountAmount
-        finalPrice = discountData.finalAmount
+      if (!referralError && referralData?.isValid) {
+        discountAmount = referralData.discountAmount
+        finalPrice = referralData.finalAmount
+        referralCodeId = referralData.referralCodeId
+      } else {
+        // Fallback: try as regular discount code
+        const { data: discountData, error: discountError } = await supabase.rpc('apply_discount_code', {
+          p_business_id: businessId,
+          p_code: discountCode,
+          p_plan_type: planType,
+          p_amount: basePrice,
+        })
+
+        if (!discountError && discountData?.isValid) {
+          discountAmount = discountData.discountAmount
+          finalPrice = discountData.finalAmount
+        }
       }
     }
 
@@ -155,6 +170,7 @@ Deno.serve(async (req) => {
         billing_cycle: billingCycle,
         discount_code: discountCode || null,
         discount_amount: discountAmount,
+        referral_code_id: referralCodeId,
       },
     }
 

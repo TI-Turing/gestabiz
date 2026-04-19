@@ -211,7 +211,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
 
       const applicationData = {
         vacancy_id: input.vacancy_id,
-        user_id: session.session.user.id,
+        user_id: user.id,
         business_id: vacancy.business_id,
         status: 'pending' as const,
         cover_letter: input.cover_letter,
@@ -239,7 +239,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
       const { data: userData } = await supabase
         .from('profiles')
         .select('id, full_name, email, avatar_url, phone')
-        .eq('id', session.session.user.id)
+        .eq('id', user.id)
         .single();
 
       // Add applicant data to response
