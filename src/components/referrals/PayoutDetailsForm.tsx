@@ -1,4 +1,5 @@
-import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
 import {
@@ -39,6 +40,49 @@ const DOCUMENT_TYPES = [
   { value: 'NIT', label: 'NIT Empresa' },
 ]
 
+const COLOMBIAN_BANKS = [
+  'Bancolombia',
+  'Banco de Bogotá',
+  'Davivienda',
+  'BBVA Colombia',
+  'Banco de Occidente',
+  'Banco Popular',
+  'Scotiabank Colpatria',
+  'AV Villas',
+  'Banco Agrario de Colombia',
+  'Banco Caja Social',
+  'Banco Falabella',
+  'Banco Finandina',
+  'Banco GNB Sudameris',
+  'Banco Itaú',
+  'Banco Mundo Mujer',
+  'Banco Pichincha',
+  'Banco Santander de Negocios Colombia',
+  'Banco Serfinanza',
+  'Banco W',
+  'Bancamía',
+  'Bancoomeva',
+  'BancoProcredit',
+  'Citibank Colombia',
+  'Confiar Cooperativa Financiera',
+  'Cooperativa Financiera de Antioquia (CFA)',
+  'Coopcentral',
+  'Coofinep Cooperativa Financiera',
+  'Credifamilia',
+  'Daviplata',
+  'Financiera Dann Regional',
+  'Fincomercio',
+  'Finantel',
+  'IRIS (Movii)',
+  'JFK Cooperativa Financiera',
+  'Lulo Bank',
+  'Nequi',
+  'Nubank Colombia',
+  'Pibank',
+  'Rappipay',
+  'Ualá Colombia',
+]
+
 export function PayoutDetailsForm({
   isOpen,
   onClose,
@@ -51,6 +95,8 @@ export function PayoutDetailsForm({
     register,
     handleSubmit,
     setValue,
+    control,
+    reset,
     formState: { errors },
   } = useForm<PayoutDetailsFormValues>({
     resolver: zodResolver(payoutDetailsSchema),
@@ -64,6 +110,20 @@ export function PayoutDetailsForm({
       account_type:    (defaultValues?.account_type   as PayoutDetailsFormValues['account_type']) ?? undefined,
     },
   })
+
+  useEffect(() => {
+    if (isOpen) {
+      reset({
+        full_name:       defaultValues?.full_name       ?? '',
+        document_type:   (defaultValues?.document_type  as PayoutDetailsFormValues['document_type']) ?? 'CC',
+        document_number: defaultValues?.document_number ?? '',
+        mp_email:        defaultValues?.mp_email        ?? '',
+        bank_name:       defaultValues?.bank_name       ?? '',
+        bank_account:    defaultValues?.bank_account    ?? '',
+        account_type:    (defaultValues?.account_type   as PayoutDetailsFormValues['account_type']) ?? undefined,
+      })
+    }
+  }, [isOpen])
 
   const handleFormSubmit = async (values: PayoutDetailsFormValues) => {
     await onSubmit(values)
@@ -157,11 +217,27 @@ export function PayoutDetailsForm({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="bank_name">Banco</Label>
-                <Input
-                  id="bank_name"
-                  placeholder="Ej: Bancolombia"
-                  {...register('bank_name')}
+                <Label>Banco</Label>
+                <Controller
+                  name="bank_name"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ?? ''}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un banco" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {COLOMBIAN_BANKS.map((bank) => (
+                          <SelectItem key={bank} value={bank}>
+                            {bank}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 />
               </div>
 

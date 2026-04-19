@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 // Hook simplificado de autenticación para debuggear
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { User as SupabaseUser, Session } from '@supabase/supabase-js'
 import * as Sentry from '@sentry/react'
 import { supabase } from '@/lib/supabase'
@@ -90,6 +90,9 @@ export function useAuthSimple() {
     error: null,
   })
 
+  // Keep session in sync with ref to avoid stale closure in listeners
+  const sessionRef = useRef<Session | null>(null)
+
   // Business context for permissions
   const [currentBusinessId, setCurrentBusinessId] = useState<string | undefined>()
   const [businessOwnerId, setBusinessOwnerId] = useState<string | undefined>()
@@ -156,6 +159,8 @@ export function useAuthSimple() {
             id: session.user.id,
             email: session.user.email,
           })
+          // Keep ref in sync
+          sessionRef.current = session
           // NO bajamos loading aquí: esperamos a que hydrateUserProfile complete
           // para evitar que EmployeeDashboard vea phone vacío momentáneamente.
           setState(prev => ({
@@ -196,6 +201,7 @@ export function useAuthSimple() {
           debugLog('👋 User signed out in listener')
           // Limpiar contexto de usuario en Sentry al hacer logout
           Sentry.setUser(null)
+          sessionRef.current = null
           setState(prev => ({
             ...prev,
             user: null,
@@ -212,6 +218,7 @@ export function useAuthSimple() {
             id: session.user.id,
             email: session.user.email,
           })
+          sessionRef.current = session
           setState(prev => {
             // TOKEN_REFRESHED: conservar el usuario hidratado para evitar regresión
             // de campos como `phone` y `avatar_url` mientras re-hidrata.
@@ -242,10 +249,32 @@ export function useAuthSimple() {
       }
     )
 
+    // Revalidate session when tab becomes visible (fix for disconnection on tab switch)
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && mounted && sessionRef.current) {
+        debugLog('🔄 Tab became visible, revalidating session...')
+        try {
+          const { data: { session: currentSession }, error } = await supabase.auth.getSession()
+          if (!currentSession && mounted) {
+            debugLog('❌ Session expired while tab was hidden')
+            sessionRef.current = null
+            setState(prev => ({ ...prev, user: null, session: null, loading: false }))
+          } else if (!error && mounted) {
+            debugLog('✅ Session still valid')
+          }
+        } catch (err) {
+          debugLog('⚠️ Error validating session on tab return:', err)
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     return () => {
       mounted = false
       debugLog('🧹 Cleaning up auth listener...')
       subscription.unsubscribe()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
 
