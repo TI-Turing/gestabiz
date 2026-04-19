@@ -716,7 +716,124 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
     message = generic
   }
 
-  return { subject, message }
+  return { subject, message, vars }
+}
+
+// Template HTML para confirmación de cita agendada
+function createAppointmentBookedEmail(vars: Record<string, string>, subject: string): string {
+  const clientName = vars['client_name'] || 'Cliente'
+  const date = vars['date'] || ''
+  const time = vars['time'] || ''
+  const location = vars['location'] || ''
+  const address = vars['address'] || ''
+  const city = vars['city'] || ''
+  const service = vars['service'] || ''
+  const employeeName = vars['employee_name'] || ''
+
+  const addressRow = (address || city) ? `
+                      <tr>
+                        <td style="padding:10px 0;color:#64748b;font-size:15px;border-bottom:1px solid #e2e8f0;vertical-align:middle;">📌 Dirección</td>
+                        <td style="padding:10px 0;color:#1e293b;font-weight:600;font-size:15px;text-align:right;border-bottom:1px solid #e2e8f0;vertical-align:middle;">${address}${city ? `, ${city}` : ''}</td>
+                      </tr>` : ''
+
+  const serviceBottomBorder = employeeName ? 'border-bottom:1px solid #e2e8f0;' : ''
+
+  const employeeRow = employeeName ? `
+                      <tr>
+                        <td style="padding:10px 0;color:#64748b;font-size:15px;vertical-align:middle;">👨‍💼 Profesional</td>
+                        <td style="padding:10px 0;color:#1e293b;font-weight:600;font-size:15px;text-align:right;vertical-align:middle;">${employeeName}</td>
+                      </tr>` : ''
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject} - Gestabiz</title>
+</head>
+<body style="margin:0;padding:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#a855f7 0%,#9333ea 100%);padding:40px 30px;text-align:center;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center">
+                    <div style="display:inline-block;width:80px;height:80px;background:white;border-radius:20px;font-size:40px;line-height:80px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.1);">📅</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding-top:16px;">
+                    <span style="color:white;font-size:32px;font-weight:700;letter-spacing:-0.5px;">Gestabiz</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px 30px;">
+              <h1 style="margin:0 0 12px;color:#1e293b;font-size:24px;font-weight:700;text-align:center;">✅ Cita Agendada Exitosamente</h1>
+              <p style="margin:0 0 32px;color:#64748b;font-size:16px;text-align:center;">Hola <strong style="color:#1e293b;">${clientName}</strong>, ¡tu cita ha sido agendada exitosamente!</p>
+              <!-- Detalles -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f8fafc;border-radius:12px;">
+                <tr>
+                  <td style="padding:20px 24px 0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding:10px 0;color:#64748b;font-size:15px;border-bottom:1px solid #e2e8f0;vertical-align:middle;">📅 Fecha</td>
+                        <td style="padding:10px 0;color:#1e293b;font-weight:600;font-size:15px;text-align:right;border-bottom:1px solid #e2e8f0;vertical-align:middle;">${date}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:10px 0;color:#64748b;font-size:15px;border-bottom:1px solid #e2e8f0;vertical-align:middle;">🕐 Hora</td>
+                        <td style="padding:10px 0;color:#1e293b;font-weight:600;font-size:15px;text-align:right;border-bottom:1px solid #e2e8f0;vertical-align:middle;">${time}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:10px 0;color:#64748b;font-size:15px;border-bottom:1px solid #e2e8f0;vertical-align:middle;">📍 Lugar</td>
+                        <td style="padding:10px 0;color:#1e293b;font-weight:600;font-size:15px;text-align:right;border-bottom:1px solid #e2e8f0;vertical-align:middle;">${location}</td>
+                      </tr>
+                      ${addressRow}
+                      <tr>
+                        <td style="padding:10px 0;color:#64748b;font-size:15px;${serviceBottomBorder}vertical-align:middle;">✂️ Servicio</td>
+                        <td style="padding:10px 0;color:#1e293b;font-weight:600;font-size:15px;text-align:right;${serviceBottomBorder}vertical-align:middle;">${service}</td>
+                      </tr>
+                      ${employeeRow}
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:16px 24px 20px;text-align:center;">
+                    <p style="margin:0;color:#64748b;font-size:15px;">¡Te esperamos! 🎉</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 30px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#e2e8f0,transparent);"></div></td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f8fafc;padding:24px 30px;text-align:center;">
+              <p style="margin:0 0 8px;color:#94a3b8;font-size:13px;">© 2026 Gestabiz. Todos los derechos reservados.</p>
+              <p style="margin:0 0 12px;color:#94a3b8;font-size:13px;">Gestiona tus citas de forma inteligente</p>
+              <p style="margin:0;">
+                <a href="https://gestabiz.com" style="color:#a855f7;font-size:13px;text-decoration:none;margin:0 8px;">Sitio Web</a>
+                <a href="mailto:soporte@gestabiz.com" style="color:#a855f7;font-size:13px;text-decoration:none;margin:0 8px;">Soporte</a>
+                <a href="https://gestabiz.com/privacidad" style="color:#a855f7;font-size:13px;text-decoration:none;margin:0 8px;">Privacidad</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
 }
 
 // Helper para cargar template HTML personalizado
@@ -770,8 +887,11 @@ async function sendEmail(request: NotificationRequest, content: any) {
     let htmlBody = ''
     
     
+    // Template especializado para cita agendada (cliente)
+    if (request.type === 'appointment_new_client') {
+      htmlBody = createAppointmentBookedEmail(content.vars || {}, content.subject)
     // Usar template HTML personalizado para job_application_new
-    if (request.type === 'job_application_new' || request.type === 'job_application_accepted' || request.type === 'job_application_interview') {
+    } else if (request.type === 'job_application_new' || request.type === 'job_application_accepted' || request.type === 'job_application_interview') {
       // Intentar cargar template HTML personalizado
       const templateName = request.type === 'job_application_new' ? 'job-application' : request.type
       const customTemplate = await loadHTMLTemplate(templateName, request.data)
