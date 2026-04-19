@@ -46,19 +46,21 @@ serve(async (req) => {
     }
 
     // Fetch updated appointment with joins for email content
+    // Note: use explicit FK hints to avoid PGRST201 when a table has multiple FKs to the same target
+    // appointments has two FKs to locations (location_id + original_location_id), so !location_id is required
     const { data: appt, error: apptErr } = await supabase
       .from("appointments")
       .select(
         `id, business_id, employee_id, start_time, end_time, confirmation_token, confirmation_deadline,
          client:profiles!client_id(id, full_name, email, phone),
          employee:profiles!employee_id(id, full_name, email),
-         service:services(id, name, duration_minutes, price),
-         location:locations(id, name, address),
-         business:businesses(id, name, email, phone)`
+         service:services!appointments_service_id_fkey(id, name, duration_minutes, price),
+         location:locations!location_id(id, name, address),
+         business:businesses!appointments_business_id_fkey(id, name, email, phone)`
       )
       .eq("id", appointmentId)
       .single();
-    if (apptErr || !appt) throw new Error("Appointment not found");
+    if (apptErr || !appt) throw new Error(`Appointment not found (id=${appointmentId}, err=${apptErr?.message ?? "no data"})`);
 
     const token: string | null = appt.confirmation_token ?? null;
     const deadline: string | null = appt.confirmation_deadline ?? null;
