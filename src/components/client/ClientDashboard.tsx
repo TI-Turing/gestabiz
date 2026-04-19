@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import * as Sentry from '@sentry/react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Calendar, User as UserIcon, Plus, Clock, MapPin, Phone, Mail, FileText, List, CalendarDays, History, MessageCircle, X, Heart, Gift } from 'lucide-react'
+import { Calendar, User as UserIcon, Plus, Clock, MapPin, Phone, Mail, FileText, List, CalendarDays, History, MessageCircle, X, Heart } from 'lucide-react'
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
 import { UnifiedLayout } from '@/components/layouts/UnifiedLayout'
 import { Button } from '@/components/ui/button'
@@ -568,11 +568,6 @@ export function ClientDashboard({
       id: 'history',
       label: t('navigation.nav.client.history'),
       icon: <History className="h-5 w-5" />
-    },
-    {
-      id: 'referrals',
-      label: 'Referrals',
-      icon: <Gift className="h-5 w-5" />
     }
   ]
 
