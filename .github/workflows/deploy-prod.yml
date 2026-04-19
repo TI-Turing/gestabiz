@@ -53,7 +53,7 @@ jobs:
       - name: Link to PROD Supabase
         run: |
           npx supabase link \
-            --project-ref ${{ vars.PROD_SUPABASE_PROJECT_REF }}
+            --project-ref ${{ vars.SUPABASE_PROJECT_REF }}
 
       - name: Check pending migrations
         id: check_migrations
@@ -96,5 +96,5 @@ jobs:
       - name: Deploy all edge functions
         run: |
           npx supabase functions deploy \
-            --project-ref ${{ vars.PROD_SUPABASE_PROJECT_REF }} \
+            --project-ref ${{ vars.SUPABASE_PROJECT_REF }} \
             --dns-resolver https
