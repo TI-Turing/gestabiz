@@ -119,6 +119,7 @@ serve(async (req) => {
     }
 
     // Enviar email de confirmación al cliente via Brevo
+    console.log(`[send-appointment-confirmation] Enviando email a ${toEmail} para cita ${appointmentId}`);
     const clientEmailResult = await sendBrevoEmail({
       to: toEmail,
       subject,
@@ -126,8 +127,22 @@ serve(async (req) => {
       fromName: businessName,
     });
     if (!clientEmailResult.success) {
-      throw new Error(`Failed to send client confirmation email: ${clientEmailResult.error}`);
+      console.error(
+        `[send-appointment-confirmation] Fallo Brevo para cita ${appointmentId}:`,
+        clientEmailResult.error
+      );
+      return new Response(
+        JSON.stringify({
+          success: false,
+          sent: false,
+          tokenSet: true,
+          emailError: clientEmailResult.error,
+          debug: "Verificar BREVO_API_KEY en Supabase secrets y que el sender no-reply@gestabiz.com esté verificado en Brevo",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      );
     }
+    console.log(`[send-appointment-confirmation] Email enviado correctamente a ${toEmail}`);
 
     // Enviar email de notificación al profesional/empleado (si tiene email)
     const employeeEmail: string | undefined = (appt.employee as { email?: string } | null)?.email ?? undefined;
