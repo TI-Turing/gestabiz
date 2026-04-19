@@ -54,6 +54,7 @@ import { employeeProfile } from './employeeProfile'
 // Other modules
 import { profilePage } from './profilePage'
 import { cookieConsent } from './cookieConsent'
+import { referrals } from './referrals'
 
 export const en = {
   common,
@@ -126,5 +127,7 @@ export const en = {
   employee,
   // Employee profile modals
   employeeProfile,
+  // Referral program
+  referrals,
 }
 

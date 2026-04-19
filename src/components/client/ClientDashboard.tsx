@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import * as Sentry from '@sentry/react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Calendar, User as UserIcon, Plus, Clock, MapPin, Phone, Mail, FileText, List, CalendarDays, History, MessageCircle, X, Heart } from 'lucide-react'
+import { Calendar, User as UserIcon, Plus, Clock, MapPin, Phone, Mail, FileText, List, CalendarDays, History, MessageCircle, X, Heart, Gift } from 'lucide-react'
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
 import { UnifiedLayout } from '@/components/layouts/UnifiedLayout'
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,8 @@ import ProfessionalProfile from '@/components/user/UserProfile'
 import { BusinessSuggestions } from '@/components/client/BusinessSuggestions'
 import FavoritesList from '@/components/client/FavoritesList'
 import { MandatoryReviewModal } from '@/components/jobs'
+import { ReferralBanner } from '@/components/referrals/ReferralBanner'
+import { ReferralsPage } from '@/pages/ReferralsPage'
 import { LocationAddress } from '@/components/ui/LocationAddress'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useChat } from '@/hooks/useChat'
@@ -566,6 +568,11 @@ export function ClientDashboard({
       id: 'history',
       label: t('navigation.nav.client.history'),
       icon: <History className="h-5 w-5" />
+    },
+    {
+      id: 'referrals',
+      label: 'Referrals',
+      icon: <Gift className="h-5 w-5" />
     }
   ]
 
@@ -668,6 +675,14 @@ export function ClientDashboard({
                 <Plus className="h-5 w-5 mr-2" />
                 {t('clientDashboard.bookAppointment')}
               </Button>
+            </div>
+
+            {/* Referral Banner */}
+            <div className="mb-4">
+              <ReferralBanner
+                userId={currentUser.id}
+                onNavigate={() => setActivePage('referrals')}
+              />
             </div>
 
             {/* Controles de vista: debajo del header, mejor para móviles */}
@@ -838,6 +853,8 @@ export function ClientDashboard({
             )}
           </div>
         )
+      case 'referrals':
+        return currentUser ? <ReferralsPage user={currentUser} /> : null
       default:
         return (
           <div className="p-4">

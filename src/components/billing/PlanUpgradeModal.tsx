@@ -209,6 +209,11 @@ export function PlanUpgradeModal({
               value={discountCode}
               onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
             />
+            {/^[A-Z0-9]{8}$/.test(discountCode) && (
+              <p className="text-xs text-emerald-600 font-medium">
+                Cupón referido — ahorras $15.000 COP
+              </p>
+            )}
           </div>
 
           {/* Información del cambio */}
