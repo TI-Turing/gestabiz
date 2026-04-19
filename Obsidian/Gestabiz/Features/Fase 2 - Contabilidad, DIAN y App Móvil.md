@@ -87,3 +87,15 @@ PDF enviado al cliente por email
 - Lanzamiento producción estable (Fase 1 completada)
 - Al menos 10 negocios activos para validar el módulo contable con datos reales
 - Decisión sobre proveedor DIAN (directo vs. habilitado)
+
+## Notas Relacionadas
+
+- [[sistema-contable]] — Módulo contable actual (IVA/ICA/Retención)
+- [[edge-functions]] — Edge Functions de Supabase para DIAN
+- [[base-de-datos]] — Tablas de transacciones y fiscal
+- [[stack-tecnologico]] — Expo/React Native, Vite, Supabase
+- [[planes-y-precios]] — Validar módulo con negocios activos
+- [[sistema-ventas-rapidas]] — Ventas como input para facturación
+- [[facturacion-electronica-matias-api]] — Matias API para facturación electrónica
+- [[analisis-competitivo-roadmap]] — Features de Fase 2 detalladas
+- [[estrategia-producto-y-negocio]] — Mobile-first y precios

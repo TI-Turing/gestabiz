@@ -29,3 +29,12 @@ En la **Fase 2** se integrará **Matias API** para permitir a los clientes de Ge
 - `src/lib/services/` — agregar `invoicing.ts` como capa de servicio
 - `src/components/settings/` — configuración de credenciales Matias API por negocio
 - `supabase/functions/` — Edge Function para llamadas a Matias API (nunca exponer keys en frontend)
+
+## Notas Relacionadas
+
+- [[sistema-contable]] — Sistema contable actual (IVA/ICA/Retención)
+- [[sistema-ventas-rapidas]] — Ventas rápidas (posible integración)
+- [[edge-functions]] — Edge Functions de Supabase
+- [[base-de-datos]] — Tablas de transacciones
+- [[Fase 2 - Contabilidad, DIAN y App Móvil]] — Fase 2 incluye facturación
+- [[analisis-competitivo-roadmap]] — Roadmap incluye facturación electrónica

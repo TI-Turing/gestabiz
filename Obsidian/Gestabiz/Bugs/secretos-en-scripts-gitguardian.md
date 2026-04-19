@@ -32,3 +32,12 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 - Nunca hardcodear tokens en scripts. Siempre `process.env.*`
 - GitGuardian escanea TODO el historial de commits de un PR, no solo el último
 - El prefijo `VITE_` expone variables al bundle del frontend — nunca usarlo para secrets
+
+## Notas Relacionadas
+
+- [[stack-tecnologico]] — Variables de entorno, seguridad
+- [[edge-functions]] — Edge Functions y secrets de Supabase
+- [[base-de-datos]] — Supabase (DEV/PROD)
+- [[google-oauth-separacion-entornos]] — Separación de credenciales por entorno
+- [[2026-03-31-infra-oauth-ci]] — Sesión donde se corrigió el problema
+- [[auditoria-completa-abril-2026]] — Auditoría documenta el riesgo de secretos en Git

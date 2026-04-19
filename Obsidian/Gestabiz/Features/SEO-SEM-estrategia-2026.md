@@ -93,3 +93,16 @@ tags: [seo, sem, marketing, keywords, competencia]
 5. Link building: guest posts en blogs de emprendimiento colombiano
 6. Considerar pre-rendering con vite-plugin-prerender para paginas estaticas
 7. Actualizar AggregateRating conforme se acumulen reviews reales
+
+## Notas Relacionadas
+
+- [[sistema-perfiles-publicos]] — SEO, JSON-LD, perfiles públicos
+- [[sistema-busqueda]] — RPCs search_businesses, índices trigram
+- [[comparativa-competidores]] — AgendaPro, Fresha, Booksy, Calendly
+- [[sistema-reviews]] — AggregateRating real
+- [[sistema-categorias]] — Directorio por categoría/ciudad
+- [[sectores-y-casos-de-uso]] — Verticales y keywords por industria
+- [[SEO-SEM-Strategy-Colombia-LATAM]] — Versión exhaustiva del análisis
+- [[SEO-directorio-post-deploy]] — Pasos post-deploy
+- [[analisis-competitivo-roadmap]] — Roadmap de features por competidor
+- [[estrategia-producto-y-negocio]] — Estrategia de producto y SEO

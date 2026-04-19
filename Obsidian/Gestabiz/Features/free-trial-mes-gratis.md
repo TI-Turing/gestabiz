@@ -42,3 +42,13 @@ free_trial_business_id uuid REFERENCES businesses(id) ON DELETE SET NULL
 - Migración: aplicada ✓
 - activate-free-trial: desplegada ✓ (v1)
 - process-expired-plans: actualizada en local, pendiente redeploy via CLI
+
+## Notas Relacionadas
+
+- [[sistema-billing]] — Triple gateway de pagos, suscripciones
+- [[planes-y-precios]] — Plan Gratuito, Inicio, Pro
+- [[edge-functions]] — Edge Functions desplegadas (activate-free-trial, process-expired-plans)
+- [[sistema-autenticacion]] — Campos de trial en profiles/useAuthSimple
+- [[estrategia-producto-y-negocio]] — Modelo de precios y retención
+- [[2026-04-13-primer-dia-ventas]] — Estrategia de ventas con trial
+- [[analisis-competitivo-roadmap]] — Competidores y pricing

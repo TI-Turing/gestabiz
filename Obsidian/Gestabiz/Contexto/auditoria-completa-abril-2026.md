@@ -98,6 +98,19 @@ tags: [auditoria, arquitectura, seguridad, testing, estrategia, roadmap, producc
 
 ---
 
+## Notas Relacionadas
+
+- [[sistema-permisos]] — Sistema de permisos granulares (doble sistema v1+v2)
+- [[sistema-autenticacion]] — Auth, sesión, QueryClient
+- [[base-de-datos]] — Tablas, RLS, cron_execution_logs
+- [[stack-tecnologico]] — Tests, CI/CD, console.logs
+- [[edge-functions]] — Webhooks sin idempotencia
+- [[sistema-billing]] — Stripe/PayU/MP webhooks
+- [[secretos-en-scripts-gitguardian]] — Detalle del problema de secretos
+- [[google-oauth-separacion-entornos]] — Separación de entornos OAuth
+- [[estrategia-producto-y-negocio]] — Estrategia de producto (partes 3-4 de la auditoría)
+- [[analisis-competitivo-roadmap]] — Competidores mencionados en la auditoría
+
 ## PARTE 2: ESTADO DE INFRAESTRUCTURA Y OPERACIONES
 
 ### 2.1 CI/CD — Gaps críticos

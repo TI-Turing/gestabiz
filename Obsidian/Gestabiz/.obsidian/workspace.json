@@ -4,17 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "ed60c1b833ec5cc1",
+        "id": "92346e5144712092",
         "type": "tabs",
         "children": [
           {
-            "id": "7a467134efca620e",
+            "id": "568acac8b16cfc3d",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Vista gráfica"
+              "type": "markdown",
+              "state": {
+                "file": "Contexto/auditoria-completa-abril-2026.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "auditoria-completa-abril-2026"
             }
           }
         ]
@@ -176,24 +180,42 @@
       "bases:Crear nueva base": false
     }
   },
-  "active": "7a467134efca620e",
+  "active": "568acac8b16cfc3d",
   "lastOpenFiles": [
-    "Features/Fase 2 - Contabilidad, DIAN y App Móvil.md",
-    "Contexto/estrategia-producto-y-negocio.md",
+    "Índice.md",
+    "crm-clientes.md",
+    "Negocio/diferenciacion-pricing.md",
+    "Negocio/go-to-market-2026.md",
+    "Índice.md.tmp.32108.1776607180569",
+    "Índice.md.tmp.52236.1776607108722",
+    "Índice.md.tmp.52236.1776607102361",
+    "Decisiones/decision-antifraude-referrals.md",
+    "Sistemas/sistema-referrals.md",
+    "sistema-ga4.md",
+    "Negocio/sectores-y-casos-de-uso.md",
+    "Negocio/comparativa-competidores.md",
+    "Negocio/propuesta-de-valor.md",
+    "Negocio/planes-y-precios.md",
+    "Negocio",
+    "Arquitectura/i18n.md",
+    "Arquitectura/sistema-cards.md",
+    "Arquitectura/react-query-cache.md",
+    "Arquitectura/edge-functions.md",
+    "Arquitectura/base-de-datos.md",
+    "Arquitectura/stack-tecnologico.md",
+    "Arquitectura",
+    "Sistemas/sistema-festivos.md",
+    "Sistemas/sistema-categorias.md",
+    "Sistemas/sistema-sede-preferida.md",
+    "Sistemas/sistema-configuraciones.md",
+    "Sistemas/sistema-autenticacion.md",
+    "Sistemas/sistema-perfiles-publicos.md",
+    "Sistemas/sistema-crm-clientes.md",
+    "Sistemas/sistema-ventas-rapidas.md",
+    "Sistemas",
     "Contexto",
-    "Features/analisis-competitivo-roadmap.md",
-    "Bienvenido.md",
-    "cree un enlace.md",
-    "Features/QR-con-branding-Gestabiz.md",
-    "Features/Ideas Futuras - Social Media MCP y Marketing IA.md",
     "Índice.md.tmp.26608.1774534841419",
     "Índice.md.tmp.7684.1774385592267",
-    "Features/Fase 3 - IA, Automatización y Agentes.md",
-    "Features",
-    "Índice.md",
-    "Índice.md.tmp.7684.1774383963800",
-    "Bugs",
-    "Decisiones",
-    "Sesiones Claude"
+    "Features"
   ]
 }
