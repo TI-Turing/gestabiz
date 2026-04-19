@@ -97,6 +97,16 @@ CREATE INDEX IF NOT EXISTS idx_referral_payouts_pending
   ON public.referral_payouts(status, attempt_count)
   WHERE status IN ('pending', 'failed');
 
+-- ─── Function: set_updated_at ────────────────────────────────────────────────
+-- Función genérica para actualizar el campo updated_at en triggers
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+  RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- ─── Triggers updated_at ─────────────────────────────────────────────────────
 DO $$
 BEGIN
