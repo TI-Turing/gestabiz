@@ -6,6 +6,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+import { sendBrevoEmail } from '../_shared/brevo.ts'
 
 // Initialize Sentry
 initSentry('send-appointment-confirmation')
@@ -48,8 +49,9 @@ serve(async (req) => {
     const { data: appt, error: apptErr } = await supabase
       .from("appointments")
       .select(
-        `id, business_id, start_time, end_time, confirmation_token, confirmation_deadline,
+        `id, business_id, employee_id, start_time, end_time, confirmation_token, confirmation_deadline,
          client:profiles!client_id(id, full_name, email, phone, whatsapp),
+         employee:profiles!employee_id(id, full_name, email),
          service:services(id, name, duration_minutes, price),
          location:locations(id, name, address),
          business:businesses(id, name, email, phone)`
@@ -109,15 +111,6 @@ serve(async (req) => {
       </html>
     `;
 
-    const resendApiKey = Deno.env.get("RESEND_API_KEY") ?? "";
-    if (!resendApiKey) {
-      // If provider not configured, return success with info
-      return new Response(
-        JSON.stringify({ success: true, sent: false, reason: "RESEND_API_KEY not configured", confirmUrl, cancelUrl }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
-    }
-
     if (!toEmail) {
       return new Response(
         JSON.stringify({ success: false, error: "Client email not available" }),
@@ -125,26 +118,55 @@ serve(async (req) => {
       );
     }
 
-    // Send email via Resend
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: `${businessName} <noreply@gestabiz.app>`,
-        to: [toEmail],
-        subject,
-        html,
-      }),
+    // Enviar email de confirmación al cliente via Brevo
+    const clientEmailResult = await sendBrevoEmail({
+      to: toEmail,
+      subject,
+      htmlBody: html,
+      fromName: businessName,
     });
-    if (!emailResponse.ok) {
-      const errText = await emailResponse.text();
-      throw new Error(`Failed to send email: ${errText}`);
+    if (!clientEmailResult.success) {
+      throw new Error(`Failed to send client confirmation email: ${clientEmailResult.error}`);
     }
 
-    return new Response(JSON.stringify({ success: true, sent: true }), {
+    // Enviar email de notificación al profesional/empleado (si tiene email)
+    const employeeEmail: string | undefined = (appt.employee as { email?: string } | null)?.email ?? undefined;
+    const employeeName: string = (appt.employee as { full_name?: string } | null)?.full_name ?? "Profesional";
+    if (employeeEmail) {
+      const employeeSubject = `Nueva cita: ${serviceName} con ${clientName}`;
+      const locationName = (appt.location as { name?: string } | null)?.name ?? "";
+      const employeeHtml = `
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 10px 10px 0 0; text-align: center;">
+              <h1 style="margin: 0; font-size: 22px;">Nueva Cita Agendada</h1>
+            </div>
+            <div style="background: white; padding: 24px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
+              <p>Hola ${employeeName},</p>
+              <p>Tienes una nueva cita programada:</p>
+              <ul>
+                <li><strong>Cliente:</strong> ${clientName}</li>
+                <li><strong>Servicio:</strong> ${serviceName}</li>
+                <li><strong>Fecha:</strong> ${localeDate} a las ${localeTime}</li>
+                ${locationName ? `<li><strong>Sede:</strong> ${locationName}</li>` : ""}
+              </ul>
+              <p style="color:#6b7280; font-size: 14px;">Este es un aviso automático de ${businessName}.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+      `;
+      // Notificación al empleado no bloquea la respuesta si falla
+      await sendBrevoEmail({
+        to: employeeEmail,
+        subject: employeeSubject,
+        htmlBody: employeeHtml,
+        fromName: businessName,
+      }).catch(() => { /* silent — no bloquear por email de empleado */ });
+    }
+
+    return new Response(JSON.stringify({ success: true, sent: true, employeeNotified: !!employeeEmail }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
