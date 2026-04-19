@@ -60,17 +60,17 @@ BEGIN
     END;
 
     -- Derivar límites del plan_type
-    v_max_locations := CASE v_plan.plan_type
-        WHEN 'basico', 'inicio'                     THEN 3
-        WHEN 'pro', 'profesional'                   THEN 10
-        WHEN 'empresarial', 'corporativo'            THEN 50
+    v_max_locations := CASE
+        WHEN v_plan.plan_type IN ('basico', 'inicio')              THEN 3
+        WHEN v_plan.plan_type IN ('pro', 'profesional')            THEN 10
+        WHEN v_plan.plan_type IN ('empresarial', 'corporativo')    THEN 50
         ELSE 1
     END;
 
-    v_max_employees := CASE v_plan.plan_type
-        WHEN 'basico', 'inicio'                     THEN 6
-        WHEN 'pro', 'profesional'                   THEN 15
-        WHEN 'empresarial', 'corporativo'            THEN 100
+    v_max_employees := CASE
+        WHEN v_plan.plan_type IN ('basico', 'inicio')              THEN 6
+        WHEN v_plan.plan_type IN ('pro', 'profesional')            THEN 15
+        WHEN v_plan.plan_type IN ('empresarial', 'corporativo')    THEN 100
         ELSE 3
     END;
 
