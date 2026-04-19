@@ -32,33 +32,27 @@ export async function sendBrevoEmail(params: BrevoEmailParams): Promise<BrevoEma
   const smtpHost = Deno.env.get('BREVO_SMTP_HOST') || 'smtp-relay.brevo.com'
   const smtpPort = parseInt(Deno.env.get('BREVO_SMTP_PORT') || '587')
   const smtpUser = Deno.env.get('BREVO_SMTP_USER') || 'no-reply@gestabiz.com'
-  const smtpPass = Deno.env.get('BREVO_SMTP_PASSWORD')
-  
-  
-  if (!smtpPass) {
-    return { 
-      success: false, 
-      error: 'BREVO_SMTP_PASSWORD not configured' 
-    }
-  }
 
   const fromEmail = params.fromEmail || smtpUser
   const fromName = params.fromName || 'Gestabiz'
   const recipients = Array.isArray(params.to) ? params.to : [params.to]
 
-
   try {
-    // Usamos la API de Brevo en lugar de SMTP directo (más confiable en edge functions)
+    // Preferir API key (más confiable, no requiere SMTP en Deno)
     const brevoApiKey = Deno.env.get('BREVO_API_KEY')
-    
-    
     if (brevoApiKey) {
-      // Usar API si está disponible (preferido)
       return await sendViaBrevoAPI(params, brevoApiKey, fromEmail, fromName)
-    } else {
-      // Fallback a SMTP usando fetch (menos confiable pero funciona)
-      return await sendViaSMTP(params, smtpHost, smtpPort, smtpUser, smtpPass, fromEmail, fromName)
     }
+
+    // Fallback a SMTP solo si API key no está disponible
+    const smtpPass = Deno.env.get('BREVO_SMTP_PASSWORD')
+    if (!smtpPass) {
+      return {
+        success: false,
+        error: 'Brevo no configurado: falta BREVO_API_KEY o BREVO_SMTP_PASSWORD'
+      }
+    }
+    return await sendViaSMTP(params, smtpHost, smtpPort, smtpUser, smtpPass, fromEmail, fromName)
   } catch (error) {
     return { 
       success: false, 

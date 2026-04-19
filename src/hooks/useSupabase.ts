@@ -475,13 +475,15 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
       }
 
       // Enviar email de confirmación al cliente y al profesional (no bloqueante)
-      try {
-        await supabase.functions.invoke('send-appointment-confirmation', {
-          body: { appointmentId: newAppointment.id }
-        })
-      } catch (confirmationError) {
-        void logger.error('useSupabase: confirmation email failed', confirmationError instanceof Error ? confirmationError : new Error(String(confirmationError)), { component: 'useSupabase' })
-      }
+      supabase.functions.invoke('send-appointment-confirmation', {
+        body: { appointmentId: newAppointment.id }
+      }).then(({ error: confirmError }) => {
+        if (confirmError) {
+          void logger.error('useSupabase: confirmation email failed', new Error(String(confirmError)), { component: 'useSupabase' })
+        }
+      }).catch((err: unknown) => {
+        void logger.error('useSupabase: confirmation email invoke failed', err instanceof Error ? err : new Error(String(err)), { component: 'useSupabase' })
+      })
 
       // Evitar duplicar notificaciones: el flujo de UI (p.ej., AppointmentWizard)
       // muestra su propio toast de éxito. No emitir otro aquí.
