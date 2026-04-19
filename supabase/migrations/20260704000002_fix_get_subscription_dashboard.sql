@@ -1,5 +1,9 @@
--- Fix get_subscription_dashboard: columns `price`, `currency` and `limits`
--- do not exist in business_plans. Derive them from plan_type instead.
+-- Fix 1: add payment_gateway column to subscription_payments (missing, causes 400 in BillingDashboard)
+ALTER TABLE public.subscription_payments
+    ADD COLUMN IF NOT EXISTS payment_gateway text DEFAULT 'mercadopago';
+
+-- Fix 2: get_subscription_dashboard references columns `price`, `currency`, `limits`
+-- that don't exist in business_plans. Derive them from plan_type instead.
 
 CREATE OR REPLACE FUNCTION public.get_subscription_dashboard(p_business_id uuid)
 RETURNS json
