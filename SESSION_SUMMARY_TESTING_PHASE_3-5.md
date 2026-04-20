@@ -143,11 +143,9 @@ Validate all tests against real components, achieve ≥90% pass rate and coverag
 - Props mismatches identified
 - Two implementation options
 - Recommendations per scenario
+- Quick reference of results, pass/fail summary, and next steps
 
-✅ [/memories/session/phase-3-5-testing-results.md](/memories/session/phase-3-5-testing-results.md)
-- Quick reference of results
-- Pass/fail summary
-- Next steps checklist
+> Note: Internal session-memory notes are not linked from this repository summary. Use the committed status document above as the canonical reference.
 
 ---
 
