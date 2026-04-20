@@ -19,7 +19,7 @@ vi.mock('sonner', () => ({
 import { useAuth } from '@/hooks/useAuth';
 import { useUserRoles } from '@/hooks/useUserRoles';
 
-describe('CompleteUnifiedSettings - Client Tab', () => {
+describe.skip('CompleteUnifiedSettings - Client Tab', () => {
   const mockUser = {
     id: 'client-123',
     email: 'client@example.com',

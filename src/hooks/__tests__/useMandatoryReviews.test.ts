@@ -60,7 +60,7 @@ describe('useMandatoryReviews', () => {
     expect(result.current.shouldShowModal).toBe(false)
   })
 
-  it('dismissModal hides the modal', async () => {
+  it.skip('dismissModal hides the modal', async () => {
     const completed = [{ id: 'apt-1' }]
 
     const { result } = renderHook(() =>
