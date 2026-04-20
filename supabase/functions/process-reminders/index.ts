@@ -29,12 +29,15 @@ serve(async (req) => {
     const now = new Date()
     const addMinutes = (d: Date, m: number) => new Date(d.getTime() + m * 60 * 1000)
 
-    // Windows to catch every-15-min cron — 15-minute slots to avoid duplicates
-    const windowStart24h = addMinutes(now, 24 * 60)
-    const windowEnd24h = addMinutes(now, 24 * 60 + 15)
+    // Windows to match the 30-minute cron interval.
+    // - Upper bound is +30min (covers the full cron interval, dedup prevents double-sends).
+    // - Lower bound has a 2-minute backward buffer to absorb cron jitter (cron may fire
+    //   at :30:01 so "now+2h" = 10:30:01 which misses an appointment at exactly 10:30:00).
+    const windowStart24h = addMinutes(now, 24 * 60 - 2)  // 2-min buffer
+    const windowEnd24h = addMinutes(now, 24 * 60 + 30)   // full 30-min interval
 
-    const windowStart2h = addMinutes(now, 120)
-    const windowEnd2h = addMinutes(now, 120 + 15)
+    const windowStart2h = addMinutes(now, 120 - 2)       // 2-min buffer
+    const windowEnd2h = addMinutes(now, 120 + 30)        // full 30-min interval
 
     // Fetch appointments in both windows
     const [{ data: appts24h, error: err24 }, { data: appts2h, error: err2 }] = await Promise.all([

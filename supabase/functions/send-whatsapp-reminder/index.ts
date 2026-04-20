@@ -162,8 +162,9 @@ serve(async (req) => {
       : (is24h
           ? (isConfirmed ? TEMPLATE_SID_24H_CONFIRMED : TEMPLATE_SID_24H_PENDING)
           : (isConfirmed ? TEMPLATE_SID_2H_CONFIRMED : TEMPLATE_SID_2H_PENDING))
-    // Template requires logo: if business has no logo, fall through to free-text fallback
-    const hasTemplate = !!templateSid && !!token
+    // Confirmed appointments don't need a confirmation_token (appointment already confirmed).
+    // Pending appointments need the token to build the confirmation link in the template.
+    const hasTemplate = !!templateSid && (isConfirmed || !!token)
 
     const timeLabel = formatTime(startDate)
     const fallbackMsg = is24h
@@ -202,9 +203,10 @@ serve(async (req) => {
         ContentVariables: JSON.stringify(contentVariables),
       }
     } else {
-      // No hay template disponible — los mensajes proactivos de WhatsApp SIEMPRE requieren template aprobado
-      // El fallback de texto libre falla con "Outside messaging window" fuera de la ventana de 24h
-      throw new Error('No WhatsApp template available (missing templateSid or confirmation_token). Proactive messages require an approved template.')
+      // No hay template disponible — los mensajes proactivos de WhatsApp SIEMPRE requieren template aprobado.
+      // Para citas 'confirmed' solo se necesita templateSid.
+      // Para citas 'pending' se necesita templateSid + confirmation_token (enlace de confirmación).
+      throw new Error('No WhatsApp template available: missing Twilio templateSid or (for pending appointments) confirmation_token. Proactive messages require an approved template.')
     }
 
     // ── 6. Send via Twilio ───────────────────────────────────────────────────
