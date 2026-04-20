@@ -317,19 +317,20 @@ export function EmployeeCalendarView({ appointments, onRefresh }: Readonly<Emplo
     )
   }
 
-  // Render day view con línea de tiempo (24 horas)
+  // Render day view con línea de tiempo estilo Google Calendar
+  const EMP_HOUR_HEIGHT = 80
   const renderDayView = () => {
     const dayAppointments = getAppointmentsForDate(currentDate)
     const hours = Array.from({ length: 24 }, (_, i) => i)
     const now = new Date()
-    const currentHour = now.getHours()
+    const { hour: currentHour, minute: currentMinute } = getTimePartsInColombia(now.toISOString())
     const isToday = 
       currentDate.getDate() === now.getDate() &&
       currentDate.getMonth() === now.getMonth() &&
       currentDate.getFullYear() === now.getFullYear()
 
-    // Obtener citas para una hora específica
-    const getAppointmentsForHour = (hour: number): AppointmentWithRelations[] => {
+    // Index: para cada hora, las citas que INICIAN en esa hora
+    const appointmentsStartingAtHour = (hour: number): AppointmentWithRelations[] => {
       return dayAppointments.filter(apt => {
         const aptHour = getTimePartsInColombia(apt.start_time).hour
         return aptHour === hour
@@ -337,52 +338,78 @@ export function EmployeeCalendarView({ appointments, onRefresh }: Readonly<Emplo
     }
 
     return (
-      <div className="space-y-1 max-h-[600px] overflow-y-auto">
-        {hours.map(hour => {
-          const hourAppointments = getAppointmentsForHour(hour)
-          const hourTime = `${hour.toString().padStart(2, '0')}:00`
-          const isCurrentHour = isToday && hour === currentHour
+      <div className="max-h-[600px] overflow-y-auto">
+        <div className="relative">
+          {hours.map(hour => {
+            const startingHere = appointmentsStartingAtHour(hour)
+            const hourTime = `${hour.toString().padStart(2, '0')}:00`
+            const isCurrentHour = isToday && hour === currentHour
 
-          return (
-            <div key={hour} className="relative" id={`day-hour-${hour}`}>
-              {/* Línea indicadora de hora actual */}
-              {isCurrentHour && (
-                <div className="absolute left-0 right-0 top-0 z-10 flex items-center">
-                  <div className="h-0.5 flex-1 bg-primary"></div>
-                  <div className="h-2 w-2 rounded-full bg-primary"></div>
-                </div>
-              )}
-              
+            return (
               <div
+                key={hour}
+                id={`day-hour-${hour}`}
                 className={cn(
-                  "flex items-start gap-2 border-b border-border p-2 min-h-[60px] transition-colors relative",
+                  "flex items-start gap-2 border-b border-border relative",
                   isCurrentHour && "bg-primary/5"
                 )}
+                style={{ minHeight: EMP_HOUR_HEIGHT, height: EMP_HOUR_HEIGHT }}
               >
-                {/* Hora */}
+                {/* Current time line */}
+                {isCurrentHour && (
+                  <div
+                    className="absolute left-0 right-0 z-20 flex items-center pointer-events-none"
+                    style={{ top: (currentMinute / 60) * EMP_HOUR_HEIGHT }}
+                  >
+                    <div className="h-2 w-2 rounded-full bg-primary" />
+                    <div className="h-0.5 flex-1 bg-primary" />
+                  </div>
+                )}
+
+                {/* Hora label */}
                 <div className={cn(
-                  "text-sm font-semibold w-16 shrink-0",
+                  "text-sm font-semibold w-16 shrink-0 pt-1 pl-2",
                   isCurrentHour ? "text-primary" : "text-muted-foreground"
                 )}>
                   {hourTime}
                 </div>
 
-                {/* Citas */}
-                <div className="flex-1 flex items-start gap-2">
-                  {hourAppointments.length > 0 ? (
-                    <div className="flex-1 space-y-2">
-                      {hourAppointments.map(renderDayAppointment)}
-                    </div>
-                  ) : (
-                    <div className="flex-1 text-xs text-muted-foreground py-2">
-                      Sin citas
-                    </div>
-                  )}
+                {/* Appointments container — relative for absolute children, overflow visible for multi-hour */}
+                <div className="flex-1 relative" style={{ height: EMP_HOUR_HEIGHT, overflow: 'visible' }}>
+                  {startingHere.map(apt => {
+                    const { minute: startMinute } = getTimePartsInColombia(apt.start_time)
+                    const startDate = new Date(apt.start_time)
+                    const endDate = new Date(apt.end_time)
+                    const durationMinutes = Math.max((endDate.getTime() - startDate.getTime()) / 60000, 15)
+                    const topPx = (startMinute / 60) * EMP_HOUR_HEIGHT
+                    const heightPx = Math.max((durationMinutes / 60) * EMP_HOUR_HEIGHT, 28)
+                    const appointmentClass = getAppointmentClass(apt.status)
+
+                    return (
+                      <button
+                        key={apt.id}
+                        onClick={() => setSelectedAppointment(apt)}
+                        className={`absolute left-1 right-1 z-[5] rounded-md text-left text-xs hover:opacity-80 transition-opacity shadow-sm overflow-hidden p-1.5 ${appointmentClass}`}
+                        style={{ top: topPx, height: heightPx }}
+                      >
+                        <div className="font-medium truncate">{apt.client_name || 'Cliente sin nombre'}</div>
+                        <div className="truncate">{apt.service_name || 'Servicio no especificado'}</div>
+                        <div className="text-xs opacity-75">
+                          {formatTimeInColombia(apt.start_time)} - {formatTimeInColombia(apt.end_time)}
+                        </div>
+                        {apt.location_name && (
+                          <div className="text-xs opacity-60 truncate mt-0.5 flex items-center gap-1">
+                            <MapPin size={10} /> {apt.location_name}
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
     )
   }

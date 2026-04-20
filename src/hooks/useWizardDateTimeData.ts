@@ -3,6 +3,30 @@ import supabase from '@/lib/supabase';
 import { QUERY_CONFIG } from '@/lib/queryConfig';
 import { format } from 'date-fns';
 
+/**
+ * Normaliza un timestamp string para que sea interpretado como UTC por `new Date()`.
+ * PostgreSQL al serializar timestamptz→JSONB puede emitir "2026-04-20 14:30:00"
+ * sin offset, que JS interpreta como hora local en vez de UTC.
+ * Esta función asegura que siempre termine en 'Z'.
+ */
+function ensureUTC(ts: string): string {
+  if (!ts) return ts;
+  // Si ya tiene timezone info (Z, +00, -05, etc.), no tocar
+  if (/[Zz]$/.test(ts) || /[+-]\d{2}(:\d{2})?$/.test(ts)) return ts;
+  // Reemplazar espacio entre fecha y hora con 'T' y añadir 'Z'
+  return ts.replace(' ', 'T') + 'Z';
+}
+
+function normalizeAppointmentTimestamps<T extends { start_time: string; end_time: string }>(
+  appointments: T[],
+): T[] {
+  return appointments.map(apt => ({
+    ...apt,
+    start_time: ensureUTC(apt.start_time),
+    end_time: ensureUTC(apt.end_time),
+  }));
+}
+
 interface LocationSchedule {
   opens_at: string;
   closes_at: string;
@@ -145,14 +169,14 @@ export function useWizardDateTimeData(
       locationSchedule: dayData?.location_schedule || null,
       employeeSchedule: dayData?.employee_schedule || null,
       workSchedules: dayData?.work_schedules || monthData?.work_schedules || [],
-      dayAppointments: dayData?.day_appointments || [],
-      clientDayAppointments: dayData?.client_day_appointments || [],
+      dayAppointments: normalizeAppointmentTimestamps(dayData?.day_appointments || []),
+      clientDayAppointments: normalizeAppointmentTimestamps(dayData?.client_day_appointments || []),
       employeeTransfer: dayData?.employee_transfer || null,
       isLoading: dayQuery.isLoading,
       error: dayQuery.error instanceof Error ? dayQuery.error.message : null,
     },
     month: {
-      monthAppointments: monthData?.month_appointments || [],
+      monthAppointments: normalizeAppointmentTimestamps(monthData?.month_appointments || []),
       monthAbsences: monthData?.month_absences || [],
       isLoading: monthQuery.isLoading,
       error: monthQuery.error instanceof Error ? monthQuery.error.message : null,

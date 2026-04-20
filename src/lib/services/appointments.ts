@@ -58,6 +58,8 @@ async function hasOverlap(params: {
     .from('appointments')
     .select('id, start_time, end_time, location_id, employee_id')
     .eq('employee_id', employeeId)
+    // Excluir citas canceladas o que no se presentaron — no bloquean disponibilidad
+    .not('status', 'in', '("cancelled","no_show")')
     // Overlap condition: existing.start < new.end && existing.end > new.start
     .lt('start_time', endWithBuffer)
     .gt('end_time', startWithBuffer)
@@ -206,7 +208,8 @@ export const appointmentsService = {
     if (appointment.status === 'scheduled') {
       try {
         await sendAppointmentConfirmationEmail(appointment.id)
-      } catch (emailError) {        // Capturar en Sentry pero no fallar la creación de la cita
+      } catch (emailError) {
+        // Capturar en Sentry pero no fallar la creación de la cita
         Sentry.captureException(emailError, {
           tags: { service: 'appointments', operation: 'send_confirmation_email' },
           extra: { appointmentId: appointment.id },

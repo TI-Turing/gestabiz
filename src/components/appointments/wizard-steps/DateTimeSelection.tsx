@@ -109,7 +109,9 @@ function isLunchBreakTime(
 }
 
 /**
- * Helper para validar si slot se superpone con citas existentes
+ * Helper para validar si slot se superpone con citas existentes.
+ * Incluye validación defensiva para timestamps que puedan haber
+ * perdido offset de timezone al serializar timestamptz→JSONB.
  */
 function isSlotOccupied(
   slotStartTime: Date,
@@ -119,7 +121,21 @@ function isSlotOccupied(
   return existingAppointments.some((apt) => {
     const aptStart = new Date(apt.start_time);
     const aptEnd = new Date(apt.end_time);
-    return slotStartTime < aptEnd && slotEndTime > aptStart;
+    // Defensa: si algún Date es inválido, ignorar la cita
+    if (isNaN(aptStart.getTime()) || isNaN(aptEnd.getTime())) {
+      if (import.meta.env.DEV) {
+        console.warn('[DateTimeSelection] Invalid appointment timestamp:', apt);
+      }
+      return false;
+    }
+    const overlaps = slotStartTime < aptEnd && slotEndTime > aptStart;
+    if (import.meta.env.DEV && overlaps) {
+      console.debug('[DateTimeSelection] Overlap detected:', {
+        slot: `${slotStartTime.toISOString()} – ${slotEndTime.toISOString()}`,
+        apt: `${aptStart.toISOString()} – ${aptEnd.toISOString()} (id: ${apt.id})`,
+      });
+    }
+    return overlaps;
   });
 }
 
@@ -522,7 +538,7 @@ export function DateTimeSelection({
     };
 
     computeMonthDisabled();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [employeeId, locationId, businessId, selectedDate, locationSchedule, employeeSchedule, serviceDuration, holidays, isHoliday, getHolidayName, employeeWorkingDays, validateAvailability, resourceId, monthAppointments, monthAbsences, holidayPolicy, isClosedDay, getClosedDayReason]);
 
   const handleTimeSelect = React.useCallback((slot: TimeSlot) => {
