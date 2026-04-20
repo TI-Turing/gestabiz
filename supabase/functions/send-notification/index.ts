@@ -38,6 +38,8 @@ interface NotificationRequest {
 
 serve(async (req) => {
   const requestId = crypto.randomUUID()
+  const origin = req.headers.get('origin')
+  const acrh = req.headers.get('Access-Control-Request-Headers')
   const corsPreFlight = handleCorsPreFlight(req)
   if (corsPreFlight) return corsPreFlight
   const corsHeaders = getCorsHeaders(req)
