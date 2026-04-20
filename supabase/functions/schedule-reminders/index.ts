@@ -46,7 +46,7 @@ serve(async (req) => {
       .single()
 
     // Use default settings if none exist
-    const reminderTimes = settings?.reminder_times || [1440, 60] // 24h and 1h before
+    const reminderTimes = settings?.reminder_times || [1440, 120] // 24h and 2h before
 
     const results = []
 
