@@ -1,27 +1,39 @@
 // Test setup file - runs before all tests
 import '@testing-library/jest-dom'
-import { afterEach, beforeAll, afterAll, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, afterAll, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
+
+// Mock window.matchMedia (re-applied before each test to survive vi.clearAllMocks
+// and avoid pollution by individual tests that overwrite window.matchMedia)
+const matchMediaImpl = (query: string) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: vi.fn(),
+  removeListener: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+})
+
+const installMatchMedia = () => {
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    configurable: true,
+    value: vi.fn().mockImplementation(matchMediaImpl),
+  })
+}
+
+installMatchMedia()
+
+beforeEach(() => {
+  installMatchMedia()
+})
 
 // Cleanup after each test
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
-})
-
-// Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: vi.fn().mockImplementation((query) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
 })
 
 // Mock IntersectionObserver
