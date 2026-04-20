@@ -138,7 +138,7 @@ serve(async (req) => {
     const businessName: string = business?.name ?? 'tu negocio'
     const location = appointment.location as { name?: string; address?: string; city?: string } | null
     const sedeLabel: string = location?.name ?? location?.city ?? businessName
-    const logoUrl: string = business?.logo_url ?? ''
+    const logoUrl: string = business?.logo_url ?? Deno.env.get('GESTABIZ_DEFAULT_LOGO_URL') ?? `${APP_URL}/logo-light.svg`
     const token: string = (appointment as { confirmation_token?: string }).confirmation_token ?? ''
 
     const to = `whatsapp:+${phoneDigits}`
@@ -163,7 +163,7 @@ serve(async (req) => {
           ? (isConfirmed ? TEMPLATE_SID_24H_CONFIRMED : TEMPLATE_SID_24H_PENDING)
           : (isConfirmed ? TEMPLATE_SID_2H_CONFIRMED : TEMPLATE_SID_2H_PENDING))
     // Template requires logo: if business has no logo, fall through to free-text fallback
-    const hasTemplate = !!templateSid && !!token && !!logoUrl
+    const hasTemplate = !!templateSid && !!token
 
     const timeLabel = formatTime(startDate)
     const fallbackMsg = is24h
@@ -202,8 +202,9 @@ serve(async (req) => {
         ContentVariables: JSON.stringify(contentVariables),
       }
     } else {
-      // ── Fallback: free-form text (used while templates are pending approval) ─
-      messageParams = { To: to, From: from, Body: fallbackMsg }
+      // No hay template disponible — los mensajes proactivos de WhatsApp SIEMPRE requieren template aprobado
+      // El fallback de texto libre falla con "Outside messaging window" fuera de la ventana de 24h
+      throw new Error('No WhatsApp template available (missing templateSid or confirmation_token). Proactive messages require an approved template.')
     }
 
     // ── 6. Send via Twilio ───────────────────────────────────────────────────
@@ -215,21 +216,7 @@ serve(async (req) => {
 
     if (!resp.ok) {
       const txt = await resp.text()
-
-      if (hasTemplate) {
-        const fallbackResp = await fetch(messagesUrl, {
-          method: 'POST',
-          headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ To: to, From: from, Body: fallbackMsg }),
-        })
-
-        if (!fallbackResp.ok) {
-          const fallbackTxt = await fallbackResp.text()
-          throw new Error(`Twilio error: ${txt}; fallback error: ${fallbackTxt}`)
-        }
-      } else {
-        throw new Error(`Twilio error: ${txt}`)
-      }
+      throw new Error(`Twilio error: ${txt}`)
     }
 
     await supabase.from('notifications')
