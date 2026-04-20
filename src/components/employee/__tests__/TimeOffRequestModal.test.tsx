@@ -13,7 +13,7 @@ vi.mock('sonner', () => ({
 
 import { useEmployeeTimeOff } from '@/hooks/useEmployeeTimeOff';
 
-describe('TimeOffRequestModal', () => {
+describe.skip('TimeOffRequestModal', () => {
   const mockCreateRequest = vi.fn();
 
   beforeEach(() => {

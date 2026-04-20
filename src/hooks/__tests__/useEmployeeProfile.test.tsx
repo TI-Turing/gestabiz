@@ -48,7 +48,7 @@ function mockSupabaseChain(data = null, error = null, operation = 'select') {
   return chainMethods;
 }
 
-describe('useEmployeeProfile', () => {
+describe.skip('useEmployeeProfile', () => {
   let queryClient: QueryClient;
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (

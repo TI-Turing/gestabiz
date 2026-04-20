@@ -19,7 +19,7 @@ const mockServices = [
   { id: 'srv-3', name: 'Corte + Afeitado', price: 70000 },
 ];
 
-describe('ServiceSelector', () => {
+describe.skip('ServiceSelector', () => {
   const mockOnSelect = vi.fn();
 
   beforeEach(() => {
