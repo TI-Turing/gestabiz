@@ -3,16 +3,14 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { useEmployeeAppointments } from '../useEmployeeAppointments';
 
 // Mock modules
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     from: vi.fn(),
     channel: vi.fn(() => ({
       on: vi.fn().mockReturnThis(),
       subscribe: vi.fn(),
     })),
     removeChannel: vi.fn(),
-  },
-}));
+  }; return { supabase: __sb, default: __sb } });
 
 vi.mock('@/lib/logger', () => ({
   logger: {

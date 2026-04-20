@@ -76,11 +76,9 @@ vi.mock('sonner', () => ({
   },
 }))
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     from: fromMock,
-  },
-}))
+  }; return { supabase: __sb, default: __sb } })
 
 const businessEmployeeResponse = {
   has_lunch_break: true,

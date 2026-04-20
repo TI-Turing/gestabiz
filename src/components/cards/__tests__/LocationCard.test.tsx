@@ -15,12 +15,10 @@ function buildChain(resolved: { data: unknown; error: unknown }) {
 }
 
 let chainData: { data: unknown; error: unknown } = { data: null, error: null }
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     from: vi.fn(() => buildChain(chainData)),
     auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null }, error: null }) },
-  },
-}))
+  }; return { supabase: __sb, default: __sb } })
 
 /* ── Mock LocationAddress to avoid complex rendering ── */
 vi.mock('@/components/ui/LocationAddress', () => ({

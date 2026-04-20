@@ -252,11 +252,9 @@ function createQueryBuilder(table: string) {
   return builder
 }
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     from: (table: string) => createQueryBuilder(table),
-  },
-}))
+  }; return { supabase: __sb, default: __sb } })
 
 describe('BusinessProfile', () => {
   beforeEach(() => {

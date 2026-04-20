@@ -22,11 +22,9 @@ import {
 // MOCKS
 // =====================================================
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     from: vi.fn(),
-  },
-}))
+  }; return { supabase: __sb, default: __sb } })
 
 // =====================================================
 // HELPERS

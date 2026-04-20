@@ -93,15 +93,13 @@ vi.mock('@/components/ui/select', () => {
   }
 })
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     from: fromMock,
     rpc: vi.fn(),
     functions: {
       invoke: invokeMock,
     },
-  },
-}))
+  }; return { supabase: __sb, default: __sb } })
 
 type QueryResult<T> = {
   data: T

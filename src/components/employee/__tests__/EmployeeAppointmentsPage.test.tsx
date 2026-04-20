@@ -64,11 +64,9 @@ vi.mock('@/components/ui/select', () => {
   }
 })
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     from: fromMock,
-  },
-}))
+  }; return { supabase: __sb, default: __sb } })
 
 function createThenableQuery<T>(result: { data: T; error: unknown }) {
   const query = {

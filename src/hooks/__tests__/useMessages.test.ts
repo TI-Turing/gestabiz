@@ -12,8 +12,7 @@ const mockChannel = vi.fn()
 const mockRemoveChannel = vi.fn()
 const mockFunctionsInvoke = vi.fn()
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     rpc: (...args: unknown[]) => mockRpc(...args),
     from: (...args: unknown[]) => mockFrom(...args),
     channel: (...args: unknown[]) => mockChannel(...args),
@@ -21,8 +20,7 @@ vi.mock('@/lib/supabase', () => ({
     functions: {
       invoke: (...args: unknown[]) => mockFunctionsInvoke(...args),
     },
-  },
-}))
+  }; return { supabase: __sb, default: __sb } })
 
 vi.mock('@/lib/analytics', () => ({
   trackChatEvent: vi.fn(),

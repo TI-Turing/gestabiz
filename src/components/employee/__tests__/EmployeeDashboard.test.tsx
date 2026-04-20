@@ -128,11 +128,9 @@ vi.mock('@/components/ui/loading-spinner', () => ({
   LoadingSpinner: () => <div>loading-spinner</div>,
 }))
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     from: fromMock,
-  },
-}))
+  }; return { supabase: __sb, default: __sb } })
 
 function createProfilesQuery(phone: string | null) {
   return {

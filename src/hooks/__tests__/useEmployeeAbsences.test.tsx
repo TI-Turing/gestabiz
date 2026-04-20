@@ -5,11 +5,9 @@ import { useEmployeeAbsences } from '../useEmployeeAbsences';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Mock modules
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     from: vi.fn(),
-  },
-}));
+  }; return { supabase: __sb, default: __sb } });
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: vi.fn(),

@@ -7,9 +7,7 @@ import { renderWithProviders } from '@/test-utils/render-with-providers'
 
 // Supabase mock
 const mockFrom = vi.fn()
-vi.mock('@/lib/supabase', () => ({
-  supabase: { from: (...a: unknown[]) => mockFrom(...a) },
-}))
+vi.mock('@/lib/supabase', () => { const __sb = { from: (...a: unknown[]) => mockFrom(...a) }; return { supabase: __sb, default: __sb } })
 
 // i18n — return key as text
 vi.mock('@/contexts/LanguageContext', () => ({

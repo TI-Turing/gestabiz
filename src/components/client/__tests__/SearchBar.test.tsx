@@ -57,13 +57,11 @@ vi.mock('lucide-react', () => {
   }
 })
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     from: fromMock,
     rpc: vi.fn(),
     functions: { invoke: vi.fn() },
-  },
-}))
+  }; return { supabase: __sb, default: __sb } })
 
 type QueryResult = {
   data: unknown
