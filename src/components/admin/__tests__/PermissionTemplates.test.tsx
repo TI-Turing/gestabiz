@@ -6,7 +6,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import { renderWithProviders } from '@/test-utils'
-import { renderWithProviders } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { PermissionTemplates } from '../PermissionTemplates'
 import * as usePermissionsModule from '@/hooks/usePermissions-v2'
@@ -94,10 +93,6 @@ function mockUsePermissions(
     isRevokingRole: false,
     ...overrides,
   } as ReturnType<typeof usePermissionsModule.usePermissions>
-}
-
-function renderWithProviders(ui: React.ReactElement) {
-  return renderWithProviders(ui)
 }
 
 // =====================================================

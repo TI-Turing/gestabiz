@@ -7,7 +7,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { screen, waitFor, within } from '@testing-library/react'
 import { renderWithProviders } from '@/test-utils'
-import { renderWithProviders } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { PermissionsManager } from '@/components/admin/PermissionsManager'
 import { usePermissions } from '@/hooks/usePermissions-v2'

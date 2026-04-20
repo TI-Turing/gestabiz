@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen } from '@testing-library/react'
 import { renderWithProviders } from '@/test-utils'
-import { renderWithProviders } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { ConfirmEndEmploymentDialog } from '../ConfirmEndEmploymentDialog';
 
