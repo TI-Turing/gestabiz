@@ -1,7 +1,7 @@
-/* eslint-disable no-console */
+ 
 import React, { useState, useEffect, useMemo, useRef, useLayoutEffect, useCallback } from 'react';
 import * as Sentry from '@sentry/react'
-import { Calendar, Clock, ChevronLeft, ChevronRight, User, X, Check, AlertCircle, Eye, EyeOff, DollarSign, Mail, Maximize2, Minimize2 } from 'lucide-react';
+import { Calendar, Clock, ChevronLeft, ChevronRight, User, X, Check, AlertCircle, Eye, EyeOff, DollarSign, Mail, Maximize2, Minimize2, Plus } from 'lucide-react';
 import { Money } from '@phosphor-icons/react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,10 +14,12 @@ import type { TaxType } from '@/types/accounting.types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { AppointmentWizard } from '@/components/appointments/AppointmentWizard';
 
 const DEFAULT_TIME_ZONE = 'America/Bogota';
 const COLOMBIA_UTC_OFFSET = -5; // GMT-5
 const DEBUG_MODE = import.meta.env.DEV; // Solo logs en desarrollo
+const HOUR_ROW_HEIGHT = 80; // px — altura de cada fila de hora en la vista diaria
 
 const extractTimeZoneParts = (date: Date, timeZone: string = DEFAULT_TIME_ZONE) => {
   // Método 1: Intentar con toLocaleString
@@ -520,6 +522,7 @@ export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ busi
     service: false,
     employee: false
   });
+  const [wizardOpen, setWizardOpen] = useState(false);
   // Obtener la configuración de sede preferida
   const [currentBusinessId, setCurrentBusinessId] = useState<string | undefined>(undefined);
   // ✅ Usar propBusinessId inmediatamente (disponible desde el render inicial desde AdminDashboard)
@@ -750,7 +753,7 @@ export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ busi
     } finally {
       isFetchingRef.current = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []); // ✅ SIN dependencias: fetch solo carga datos de BD, no usa state
 
   // Fetch business and location data - DEBE ESTAR DESPUÉS DE fetchAppointments
@@ -805,12 +808,24 @@ export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ busi
         setLocations(formattedLocations);
 
         // Get employees with lunch break info and their services
-        const { data: employeesData, error: employeesError } = await supabase
+        // When a specific location is selected, filter employees by that location
+        // (null location_id means the employee works across all locations)
+        const activeLocationId = preferredLocationId && preferredLocationId !== 'all'
+          ? preferredLocationId
+          : null;
+
+        let employeesQuery = supabase
           .from('business_employees')
           .select('id, employee_id, lunch_break_start, lunch_break_end, has_lunch_break')
           .eq('business_id', resolvedBusinessId)
           .eq('status', 'approved')
           .eq('is_active', true);
+
+        if (activeLocationId) {
+          employeesQuery = employeesQuery.or(`location_id.eq.${activeLocationId},location_id.is.null`);
+        }
+
+        const { data: employeesData, error: employeesError } = await employeesQuery;
 
         if (employeesError) throw employeesError;
 
@@ -885,7 +900,10 @@ export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ busi
         setEmployees(formattedEmployees);
 
         // Get services - FILTERED by sede seleccionada en header y empleado si aplica
-        const selectedLocationId = preferredLocationId ?? null;
+        // Use same pattern as employee filter: 'all' or null/undefined → no location filter
+        const selectedLocationId = preferredLocationId && preferredLocationId !== 'all'
+          ? preferredLocationId
+          : null;
         let availableServices: Array<{ id: string; name: string }> = [];
         
         // Strategy: If both employee and location are selected, use employee_services
@@ -1381,19 +1399,32 @@ export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ busi
     return byEmployee;
   }, [employees, filterEmployee, filterService, services]);
 
-  // Pre-calcular mapa de citas por empleado y hora (OPTIMIZACIÓN: evita 24+ filtros por render)
+  // Pre-calcular mapa de citas por empleado y hora (indexa en TODAS las horas que abarca la cita)
   const appointmentsBySlot = useMemo(() => {
     const map = new Map<string, Appointment[]>();
     
     filteredAppointments.forEach(apt => {
-      const aptDate = new Date(apt.start_time);
-      const { hour: aptHourColombia } = extractTimeZoneParts(aptDate, DEFAULT_TIME_ZONE);
-      const key = `${apt.employee_id}-${aptHourColombia}`;
-      
-      if (!map.has(key)) {
-        map.set(key, []);
+      const startDate = new Date(apt.start_time);
+      const endDate = new Date(apt.end_time);
+      const startParts = extractTimeZoneParts(startDate, DEFAULT_TIME_ZONE);
+      const endParts = extractTimeZoneParts(endDate, DEFAULT_TIME_ZONE);
+
+      // Indexar en cada hora que la cita abarca (e.g., cita 10:30-12:00 → horas 10, 11)
+      const startHour = startParts.hour;
+      // Si la cita termina exactamente en :00, no cuenta esa hora (e.g., 12:00 → última hora es 11)
+      const endHour = endParts.minute > 0 ? endParts.hour : endParts.hour - 1;
+
+      for (let h = startHour; h <= Math.min(endHour, 23); h++) {
+        const key = `${apt.employee_id}-${h}`;
+        if (!map.has(key)) {
+          map.set(key, []);
+        }
+        // Evitar duplicados — solo agregar si no existe ya
+        const arr = map.get(key)!;
+        if (!arr.includes(apt)) {
+          arr.push(apt);
+        }
       }
-      map.get(key)!.push(apt);
     });
     
     return map;
@@ -1571,7 +1602,13 @@ export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ busi
     <div className="space-y-6">
       {/* Header with date navigation */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">Calendario de Citas</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-foreground">Calendario de Citas</h2>
+          <Button size="sm" onClick={() => setWizardOpen(true)} className="gap-1">
+            <Plus className="h-4 w-4" />
+            Nueva Cita
+          </Button>
+        </div>
         
         <div className="flex items-center gap-4">
           <button
@@ -1949,14 +1986,15 @@ export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ busi
                 return (
                   <div
                     key={hour}
-                    className={`flex border-b border-border min-h-[80px] ${workHourClass} hover:bg-muted/20 transition-colors relative`}
+                    className={`flex border-b border-border ${workHourClass} hover:bg-muted/20 transition-colors relative`}
+                    style={{ minHeight: `${HOUR_ROW_HEIGHT}px`, height: `${HOUR_ROW_HEIGHT}px` }}
                   >
                     {/* Línea de hora actual - SOLO si es la hora correcta */}
                     {shouldShowLineInHour && currentTimePosition !== null && (
                       <div
                         className="absolute left-0 right-0 h-0.5 bg-blue-500 z-10 pointer-events-none"
                         style={{ 
-                          top: `${((currentTimePosition % (100 / 24)) / (100 / 24)) * 80}px`
+                          top: `${((currentTimePosition % (100 / 24)) / (100 / 24)) * HOUR_ROW_HEIGHT}px`
                         }}
                       >
                         <div className="absolute -left-2 -top-2 w-4 h-4 bg-blue-500 rounded-full shadow-lg"></div>
@@ -1970,18 +2008,22 @@ export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ busi
                       const slotAppointments = getAppointmentsForSlot(employee.user_id, hour);
                       const isLunch = isLunchBreak(hour, employee);
                       
-                      // DEBUG: Log appointments for this employee/hour combo
-                      if (slotAppointments.length > 0) {
-                      }
+                      // Filtrar: solo renderizar citas cuya hora de INICIO sea esta hora
+                      // (evita renderizar la misma cita múltiples veces en cada hora que abarca)
+                      const appointmentsStartingHere = slotAppointments.filter(apt => {
+                        const startParts = extractTimeZoneParts(new Date(apt.start_time), DEFAULT_TIME_ZONE);
+                        return startParts.hour === hour;
+                      });
                       
                       return (
                         <div
                           key={employee.id}
-                          className={`flex-1 min-w-[280px] p-2 border-r-2 border-border last:border-r-0 transition-colors ${
+                          className={`flex-1 min-w-[280px] border-r-2 border-border last:border-r-0 transition-colors relative ${
                             isLunch
                               ? 'bg-gray-100 dark:bg-gray-900 opacity-60 cursor-not-allowed'
                               : `hover:bg-accent/50 ${employeeColors[index % employeeColors.length]}`
                           }`}
+                          style={{ overflow: 'visible' }}
                         >
                           {isLunch ? (
                             <div className="flex items-center justify-center h-full text-xs text-muted-foreground italic">
@@ -1989,14 +2031,23 @@ export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ busi
                             </div>
                           ) : (
                             <>
-                              {slotAppointments.map(apt => {
+                              {appointmentsStartingHere.map(apt => {
                                 const appointmentClass = getAppointmentClass(apt.status);
+                                
+                                // Calcular posición y altura estilo Google Calendar
+                                const startParts = extractTimeZoneParts(new Date(apt.start_time), DEFAULT_TIME_ZONE);
+                                const endParts = extractTimeZoneParts(new Date(apt.end_time), DEFAULT_TIME_ZONE);
+                                const startMinute = startParts.minute;
+                                const durationMinutes = ((new Date(apt.end_time).getTime() - new Date(apt.start_time).getTime()) / 60000);
+                                const topPx = (startMinute / 60) * HOUR_ROW_HEIGHT;
+                                const heightPx = Math.max((durationMinutes / 60) * HOUR_ROW_HEIGHT, 20); // mínimo 20px
                                 
                                 return (
                                   <button
                                     key={apt.id}
                                     onClick={() => setSelectedAppointment(apt)}
-                                    className={`w-full p-2 rounded-md text-left text-xs hover:opacity-80 transition-opacity shadow-sm ${appointmentClass}`}
+                                    className={`absolute left-1 right-1 p-1.5 rounded-md text-left text-xs hover:opacity-80 transition-opacity shadow-sm z-[5] ${appointmentClass}`}
+                                    style={{ top: `${topPx}px`, height: `${heightPx}px`, overflow: 'hidden' }}
                                   >
                                     <div className="font-medium truncate">{apt.client_name}</div>
                                     <div className="truncate">{apt.service_name}</div>
@@ -2198,6 +2249,20 @@ export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ busi
         </div>,
         document.body
       )}
+
+      <AppointmentWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        isAdminBooking
+        adminPreferredLocationId={preferredLocationId && preferredLocationId !== 'all' ? preferredLocationId : undefined}
+        businessId={propBusinessId ?? currentBusinessId}
+        userId={user?.id}
+        onSuccess={() => {
+          setWizardOpen(false);
+          const bid = propBusinessId ?? currentBusinessId;
+          if (bid) fetchAppointments(bid, selectedDate);
+        }}
+      />
     </div>
   );
 };

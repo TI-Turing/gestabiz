@@ -59,6 +59,8 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
   const [view, setView] = useState<CalendarView>('month')
   const [hoveredDay, setHoveredDay] = useState<string | null>(null)
   const isMobile = useIsMobile()
+  
+  const CLIENT_HOUR_HEIGHT = 80 // px — altura de cada fila de hora en vista diaria
 
   // Navigation functions
   const navigatePrevious = () => {
@@ -236,7 +238,7 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
       return hourInMinutes >= nowInMinutes + 90
     }
 
-    // Obtener citas para una hora específica
+    // Obtener citas para una hora específica (solo las que INICIAN en esta hora)
     const getAppointmentsForHour = (hour: number): AppointmentWithRelations[] => {
       return dayAppointments.filter(apt => {
         const aptHour = new Date(apt.start_time).getHours()
@@ -245,7 +247,7 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
     }
 
     return (
-      <div className="space-y-1">
+      <div className="space-y-0">
         {hours.map(hour => {
           const hourAppointments = getAppointmentsForHour(hour)
           const hourTime = `${hour.toString().padStart(2, '0')}:00`
@@ -256,7 +258,10 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
             <div key={hour} className="relative" id={`day-hour-${hour}`}>
               {/* Línea indicadora de hora actual */}
               {isCurrentHour && (
-                <div className="absolute left-0 right-0 top-0 z-10 flex items-center">
+                <div 
+                  className="absolute left-0 right-0 z-10 flex items-center"
+                  style={{ top: `${(currentMinute / 60) * CLIENT_HOUR_HEIGHT}px` }}
+                >
                   <div className="h-0.5 flex-1 bg-primary"></div>
                   <div className="h-2 w-2 rounded-full bg-primary"></div>
                 </div>
@@ -264,31 +269,45 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
               
               <div
                 className={cn(
-                  "group flex items-start gap-2 border-b border-border p-2 min-h-[60px] transition-colors relative",
+                  "group flex items-start gap-2 border-b border-border transition-colors",
                   isCurrentHour && "bg-primary/5",
                   canCreateAppointment && "hover:bg-muted/30"
                 )}
+                style={{ minHeight: `${CLIENT_HOUR_HEIGHT}px`, height: `${CLIENT_HOUR_HEIGHT}px` }}
               >
                 {/* Hora */}
                 <div className={cn(
-                  "text-sm font-semibold w-16 flex-shrink-0",
+                  "text-sm font-semibold w-16 flex-shrink-0 p-2",
                   isCurrentHour ? "text-primary" : "text-muted-foreground"
                 )}>
                   {hourTime}
                 </div>
 
-                {/* Citas */}
-                <div className="flex-1 flex items-start gap-2">
+                {/* Citas — contenedor relativo para posicionamiento absoluto */}
+                <div className="flex-1 relative" style={{ height: `${CLIENT_HOUR_HEIGHT}px`, overflow: 'visible' }}>
                   {hourAppointments.length > 0 ? (
-                    <div className="flex-1 space-y-2">
-                      {hourAppointments.map(apt => (
-                        <div key={apt.id} className="w-full">
-                          {renderAppointmentCard(apt)}
-                        </div>
-                      ))}
-                    </div>
+                    <>
+                      {hourAppointments.map(apt => {
+                        const aptStart = new Date(apt.start_time)
+                        const aptEnd = new Date(apt.end_time)
+                        const startMinute = aptStart.getMinutes()
+                        const durationMinutes = (aptEnd.getTime() - aptStart.getTime()) / 60000
+                        const topPx = (startMinute / 60) * CLIENT_HOUR_HEIGHT
+                        const heightPx = Math.max((durationMinutes / 60) * CLIENT_HOUR_HEIGHT, 28) // mínimo 28px para legibilidad
+                        
+                        return (
+                          <div
+                            key={apt.id}
+                            className="absolute left-0 right-0 z-[5] pr-10"
+                            style={{ top: `${topPx}px`, height: `${heightPx}px`, overflow: 'hidden' }}
+                          >
+                            {renderAppointmentCard(apt)}
+                          </div>
+                        )
+                      })}
+                    </>
                   ) : (
-                    <div className="flex-1 text-xs text-muted-foreground py-2">
+                    <div className="text-xs text-muted-foreground py-2 px-1">
                       {canCreateAppointment ? 'Sin citas' : 'No disponible'}
                     </div>
                   )}
@@ -299,7 +318,7 @@ export function ClientCalendarView({ appointments, onAppointmentClick, onCreateA
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 w-8 p-0 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary hover:text-primary-foreground hover:border-primary"
+                    className="h-8 w-8 p-0 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary hover:text-primary-foreground hover:border-primary mt-2 mr-2"
                     onClick={(e) => {
                       e.stopPropagation()
                       onCreateAppointment(currentDate, hourTime)
