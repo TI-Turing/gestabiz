@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 // Hook simplificado de autenticación para debuggear
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { User as SupabaseUser, Session } from '@supabase/supabase-js'
@@ -366,7 +366,7 @@ export function useAuthSimple() {
       currentBusinessId,
       businessOwnerId,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     // avatar_url y phone se incluyen explícitamente porque hydrateUserProfile los actualiza
     // con el mismo user.id — sin ellos el memo no recomputa y los consumidores ven datos stale.
     [state.user?.id, state.user?.avatar_url, state.user?.phone, state.session?.access_token, state.loading, state.error, signOut, currentBusinessId, businessOwnerId],

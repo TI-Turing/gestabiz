@@ -3,7 +3,9 @@
 // Tests para la vista de lista de empleados con ordenamiento y expansión
 // ============================================================================
 
-import { render, screen, fireEvent } from '@testing-library/react'
+import { screen, fireEvent } from '@testing-library/react'
+import { renderWithProviders } from '@/test-utils'
+import { renderWithProviders } from '@/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { EmployeeListView } from '../EmployeeListView'
 import type { EmployeeHierarchy } from '@/types'
@@ -95,7 +97,7 @@ describe('EmployeeListView', () => {
 
   describe('Renderizado inicial', () => {
     it('debería renderizar la lista de empleados', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       expect(screen.getByText('Alice Owner')).toBeInTheDocument()
       expect(screen.getByText('Bob Manager')).toBeInTheDocument()
@@ -103,7 +105,7 @@ describe('EmployeeListView', () => {
     })
 
     it('debería renderizar botones de ordenamiento', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       expect(screen.getByText('Nombre')).toBeInTheDocument()
       expect(screen.getByText('Nivel')).toBeInTheDocument()
@@ -113,7 +115,7 @@ describe('EmployeeListView', () => {
     })
 
     it('debería mostrar empty state cuando no hay empleados', () => {
-      render(<EmployeeListView employees={[]} />)
+      renderWithProviders(<EmployeeListView employees={[]} />)
 
       expect(screen.getByText('No hay empleados para mostrar')).toBeInTheDocument()
     })
@@ -121,7 +123,7 @@ describe('EmployeeListView', () => {
 
   describe('Ordenamiento', () => {
     it('debería ordenar por nombre ascendente por defecto', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       const names = screen.getAllByText(/Owner|Manager|Staff/)
       // Por defecto ordena por nivel (level), no nombre
@@ -129,7 +131,7 @@ describe('EmployeeListView', () => {
     })
 
     it('debería cambiar orden al hacer clic en botón de ordenamiento', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       const nameButton = screen.getByText('Nombre')
       fireEvent.click(nameButton)
@@ -140,7 +142,7 @@ describe('EmployeeListView', () => {
     })
 
     it('debería alternar dirección de ordenamiento', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       const nameButton = screen.getByText('Nombre')
       
@@ -156,7 +158,7 @@ describe('EmployeeListView', () => {
     })
 
     it('debería ordenar por ocupación', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       const occupancyButton = screen.getByText('Ocupación')
       fireEvent.click(occupancyButton)
@@ -167,7 +169,7 @@ describe('EmployeeListView', () => {
     })
 
     it('debería ordenar por rating', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       const ratingButton = screen.getByText('Rating')
       fireEvent.click(ratingButton)
@@ -178,7 +180,7 @@ describe('EmployeeListView', () => {
     })
 
     it('debería ordenar por ingresos', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       const revenueButton = screen.getByText('Ingresos')
       fireEvent.click(revenueButton)
@@ -191,7 +193,7 @@ describe('EmployeeListView', () => {
 
   describe('Expansión de subordinados', () => {
     it('debería mostrar botón de expansión para empleados con subordinados', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       // Alice y Bob tienen subordinados
       const expandButtons = screen.getAllByRole('button', { name: /chevron/i })
@@ -199,7 +201,7 @@ describe('EmployeeListView', () => {
     })
 
     it('debería expandir subordinados al hacer clic', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       // Buscar el botón de expansión de Alice (que tiene a Bob como subordinado)
       const aliceCard = screen.getByText('Alice Owner').closest('div')
@@ -214,7 +216,7 @@ describe('EmployeeListView', () => {
     })
 
     it('debería colapsar subordinados al hacer clic nuevamente', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       const aliceCard = screen.getByText('Alice Owner').closest('div')
       const expandButton = aliceCard?.querySelector('button')
@@ -235,7 +237,7 @@ describe('EmployeeListView', () => {
 
   describe('Callbacks', () => {
     it('debería llamar a onEmployeeSelect al seleccionar empleado', () => {
-      render(
+      renderWithProviders(
         <EmployeeListView
           employees={mockEmployees}
           onEmployeeSelect={mockOnEmployeeSelect}
@@ -251,7 +253,7 @@ describe('EmployeeListView', () => {
     })
 
     it('debería pasar callbacks a EmployeeCard', () => {
-      render(
+      renderWithProviders(
         <EmployeeListView
           employees={mockEmployees}
           onEdit={mockOnEdit}
@@ -268,7 +270,7 @@ describe('EmployeeListView', () => {
 
   describe('Jerarquía de empleados', () => {
     it('debería mostrar empleados en orden jerárquico por defecto', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       const names = screen.getAllByText(/Owner|Manager|Staff/)
       
@@ -277,7 +279,7 @@ describe('EmployeeListView', () => {
     })
 
     it('debería identificar correctamente subordinados directos', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       // Alice (user-1) tiene 2 subordinados directos
       const aliceCard = screen.getByText('Alice Owner').closest('[data-testid="employee-row"]')
@@ -293,7 +295,7 @@ describe('EmployeeListView', () => {
 
   describe('Estados de empleados', () => {
     it('debería mostrar empleados activos', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       // Todos los empleados mock están activos
       expect(screen.queryByText('Inactivo')).not.toBeInTheDocument()
@@ -310,7 +312,7 @@ describe('EmployeeListView', () => {
         },
       ]
 
-      render(<EmployeeListView employees={employeesWithInactive} />)
+      renderWithProviders(<EmployeeListView employees={employeesWithInactive} />)
 
       expect(screen.getByText('David Inactive')).toBeInTheDocument()
       expect(screen.getByText('Inactivo')).toBeInTheDocument()
@@ -319,14 +321,14 @@ describe('EmployeeListView', () => {
 
   describe('Accessibility', () => {
     it('debería tener botones de ordenamiento accesibles', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       const sortButtons = screen.getAllByRole('button')
       expect(sortButtons.length).toBeGreaterThan(0)
     })
 
     it('debería tener estructura de lista navegable', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       // Verificar que hay múltiples cards renderizados
       const employeeCards = screen.getAllByText(/Owner|Manager|Staff/)
@@ -345,7 +347,7 @@ describe('EmployeeListView', () => {
         },
       ]
 
-      render(<EmployeeListView employees={employeesWithoutMetrics} />)
+      renderWithProviders(<EmployeeListView employees={employeesWithoutMetrics} />)
 
       expect(screen.getByText('Alice Owner')).toBeInTheDocument()
     })
@@ -359,13 +361,13 @@ describe('EmployeeListView', () => {
         },
       ]
 
-      render(<EmployeeListView employees={employeesWithoutDept} />)
+      renderWithProviders(<EmployeeListView employees={employeesWithoutDept} />)
 
       expect(screen.getByText('Sin departamento')).toBeInTheDocument()
     })
 
     it('debería manejar empleados sin supervisor', () => {
-      render(<EmployeeListView employees={mockEmployees} />)
+      renderWithProviders(<EmployeeListView employees={mockEmployees} />)
 
       // Alice no tiene supervisor (es owner)
       const aliceSection = screen.getByText('Alice Owner').closest('div')

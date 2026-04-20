@@ -7,3 +7,4 @@ export { DateTimeSelection } from './DateTimeSelection';
 export { ConfirmationStep } from './ConfirmationStep';
 export { SuccessStep } from './SuccessStep';
 export { ProgressBar } from './ProgressBar';
+export { ClientDataStep } from './ClientDataStep';

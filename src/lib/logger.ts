@@ -144,7 +144,7 @@ class Logger {
    */
   debug(message: string, ...args: unknown[]): void {
     if (!CONFIG.IS_PRODUCTION) {
-      // eslint-disable-next-line no-console    }
+           }
   }
 
   /**
@@ -261,12 +261,12 @@ class Logger {
         if (rpcError) {
           // Fallback si falla Supabase: solo console en dev
           if (!CONFIG.IS_PRODUCTION) {
-            // eslint-disable-next-line no-console          }
+                       }
         }
       } catch (rpcError) {
         // Silencioso en producción para no causar errores secundarios
         if (!CONFIG.IS_PRODUCTION) {
-          // eslint-disable-next-line no-console        }
+                   }
       }
     }
 
@@ -319,11 +319,11 @@ class Logger {
 
       if (error) {
         if (!CONFIG.IS_PRODUCTION) {
-          // eslint-disable-next-line no-console        }
+                   }
       }
     } catch (rpcError) {
       if (!CONFIG.IS_PRODUCTION) {
-        // eslint-disable-next-line no-console      }
+               }
     }
   }
 }

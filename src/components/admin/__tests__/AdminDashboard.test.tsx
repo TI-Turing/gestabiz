@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
+import { renderWithProviders } from '@/test-utils'
+import { renderWithProviders } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { AdminDashboard } from '../AdminDashboard'
 import type { Business, UserRole, User } from '@/types/types'
@@ -179,7 +181,7 @@ describe('AdminDashboard', () => {
 
   describe('Rendering Inicial', () => {
     it('renderiza el dashboard con todos los elementos principales', () => {
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Verifica que el logo esté presente
       expect(screen.getByRole('img', { name: /Gestabiz/i })).toBeInTheDocument()
@@ -196,7 +198,7 @@ describe('AdminDashboard', () => {
     })
 
     it('renderiza todos los items del sidebar', () => {
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Verifica que todos los 7 items del sidebar estén presentes
       expect(screen.getByText('Resumen')).toBeInTheDocument()
@@ -209,7 +211,7 @@ describe('AdminDashboard', () => {
     })
 
     it('renderiza la página Overview por defecto', () => {
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Verifica que el componente OverviewTab esté renderizado
       expect(screen.getByTestId('overview-tab')).toBeInTheDocument()
@@ -220,7 +222,7 @@ describe('AdminDashboard', () => {
   describe('Navegación entre Páginas', () => {
     it('navega a la página de Sedes al hacer click en el item del sidebar', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Click en "Sedes"
       await user.click(screen.getByText('Sedes'))
@@ -232,7 +234,7 @@ describe('AdminDashboard', () => {
 
     it('navega a la página de Servicios', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       await user.click(screen.getByText('Servicios'))
 
@@ -242,7 +244,7 @@ describe('AdminDashboard', () => {
 
     it('muestra mensaje "próximamente" para página de Empleados', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       await user.click(screen.getByText('Empleados'))
 
@@ -252,7 +254,7 @@ describe('AdminDashboard', () => {
 
     it('navega a la página de Contabilidad', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       await user.click(screen.getByText('Contabilidad'))
 
@@ -262,7 +264,7 @@ describe('AdminDashboard', () => {
 
     it('navega a la página de Reportes', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       await user.click(screen.getByText('Reportes'))
 
@@ -272,7 +274,7 @@ describe('AdminDashboard', () => {
 
     it('navega a la página de Permisos', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       await user.click(screen.getByText('Permisos'))
 
@@ -286,7 +288,7 @@ describe('AdminDashboard', () => {
   describe('Business Selector Dropdown', () => {
     it('muestra el dropdown de negocios al hacer click', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Buscar el trigger del dropdown (el nombre del negocio con ChevronDown)
       const businessTrigger = screen.getByRole('button', { name: new RegExp(mockBusiness.name, 'i') })
@@ -299,7 +301,7 @@ describe('AdminDashboard', () => {
 
     it('llama a onSelectBusiness al seleccionar un negocio diferente', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Abrir dropdown
       const businessTrigger = screen.getByRole('button', { name: new RegExp(mockBusiness.name, 'i') })
@@ -313,7 +315,7 @@ describe('AdminDashboard', () => {
 
     it('muestra el header "Mis Negocios" en el dropdown cuando hay múltiples negocios', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Abrir dropdown
       const businessTrigger = screen.getByRole('button', { name: new RegExp(mockBusiness.name, 'i') })
@@ -328,7 +330,7 @@ describe('AdminDashboard', () => {
         ...defaultProps,
         businesses: [mockBusiness] // Solo un negocio
       }
-      render(<AdminDashboard {...propsWithOneBusiness} />)
+      renderWithProviders(<AdminDashboard {...propsWithOneBusiness} />)
 
       // El business name debe aparecer
       expect(screen.getByText(mockBusiness.name)).toBeInTheDocument()
@@ -340,14 +342,14 @@ describe('AdminDashboard', () => {
 
   describe('Role Selector Dropdown', () => {
     it('muestra el rol actual como badge', () => {
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       expect(screen.getByText('Administrador')).toBeInTheDocument()
     })
 
     it('muestra el dropdown de roles al hacer click en el badge', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Click en el badge del rol
       const roleBadge = screen.getByText('Administrador')
@@ -360,7 +362,7 @@ describe('AdminDashboard', () => {
 
     it('llama a onRoleChange al seleccionar un rol diferente', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Abrir dropdown de roles
       await user.click(screen.getByText('Administrador'))
@@ -376,7 +378,7 @@ describe('AdminDashboard', () => {
         ...defaultProps,
         availableRoles: ['admin', 'admin', 'employee', 'employee', 'client'] as UserRole[]
       }
-      render(<AdminDashboard {...propsWithDuplicates} />)
+      renderWithProviders(<AdminDashboard {...propsWithDuplicates} />)
 
       // Abrir dropdown (debe tener implementación de deduplicación en UnifiedLayout)
       // Este test verifica que la lógica de deduplicación existe
@@ -388,7 +390,7 @@ describe('AdminDashboard', () => {
   describe('User Menu Dropdown', () => {
     it('muestra el dropdown del usuario al hacer click en su nombre', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Click en el nombre del usuario
       const userButton = screen.getByRole('button', { name: new RegExp(mockUser.name, 'i') })
@@ -402,7 +404,7 @@ describe('AdminDashboard', () => {
 
     it('navega a la página de perfil al seleccionar "Perfil"', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Abrir user menu
       const userButton = screen.getByRole('button', { name: new RegExp(mockUser.name, 'i') })
@@ -418,7 +420,7 @@ describe('AdminDashboard', () => {
 
     it('navega a la página de configuración al seleccionar "Configuración"', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Abrir user menu
       const userButton = screen.getByRole('button', { name: new RegExp(mockUser.name, 'i') })
@@ -434,7 +436,7 @@ describe('AdminDashboard', () => {
 
     it('muestra email del usuario en el dropdown', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Abrir user menu (click en avatar)
       const userAvatar = screen.getByAltText(mockUser.name)
@@ -451,7 +453,7 @@ describe('AdminDashboard', () => {
   describe('Props Passing a Child Components', () => {
     it('pasa businessId correcto a LocationsManager', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       await user.click(screen.getByText('Sedes'))
 
@@ -461,7 +463,7 @@ describe('AdminDashboard', () => {
 
     it('pasa businessId correcto a ServicesManager', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       await user.click(screen.getByText('Servicios'))
 
@@ -471,7 +473,7 @@ describe('AdminDashboard', () => {
 
     it('pasa businessId y onUpdate correcto a AccountingPage', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       await user.click(screen.getByText('Contabilidad'))
 
@@ -485,7 +487,7 @@ describe('AdminDashboard', () => {
 
     it('pasa businessId y user correcto a ReportsPage', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       await user.click(screen.getByText('Reportes'))
 
@@ -495,7 +497,7 @@ describe('AdminDashboard', () => {
 
     it('pasa businessId, ownerId y currentUserId correcto a PermissionsManager', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       await user.click(screen.getByText('Permisos'))
 
@@ -507,7 +509,7 @@ describe('AdminDashboard', () => {
 
     it('pasa business y onUpdate correcto a BusinessSettings', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Abrir user menu y navegar a configuración
       const userButton = screen.getByRole('button', { name: new RegExp(mockUser.name, 'i') })
@@ -524,7 +526,7 @@ describe('AdminDashboard', () => {
 
     it('pasa user y onUserUpdate correcto a UserProfile', async () => {
       const user = userEvent.setup()
-      render(<AdminDashboard {...defaultProps} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Abrir user menu y navegar a perfil
       const userButton = screen.getByRole('button', { name: new RegExp(mockUser.name, 'i') })
@@ -542,7 +544,7 @@ describe('AdminDashboard', () => {
 
   describe('User State Management', () => {
     it('actualiza el estado del usuario cuando la prop user cambia', () => {
-      const { rerender } = render(<AdminDashboard {...defaultProps} />)
+      const { rerender } = renderWithProviders(<AdminDashboard {...defaultProps} />)
 
       // Verificar avatar inicial
       expect(screen.getByAltText(mockUser.name)).toBeInTheDocument()
@@ -557,7 +559,7 @@ describe('AdminDashboard', () => {
 
     it('renderiza avatar inicial del usuario sin avatar_url', () => {
       const userWithoutAvatar = createMockUser({ avatar_url: undefined })
-      render(<AdminDashboard {...defaultProps} user={userWithoutAvatar} />)
+      renderWithProviders(<AdminDashboard {...defaultProps} user={userWithoutAvatar} />)
 
       // Debe renderizar inicial del nombre (T de "Test User")
       const initial = screen.getByText('T')

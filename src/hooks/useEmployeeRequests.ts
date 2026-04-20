@@ -75,7 +75,7 @@ export function useEmployeeRequests(options: UseEmployeeRequestsOptions = {}) {
 
       setRequests((data as unknown as EmployeeRequest[]) || [])
     } catch (err) {
-       // eslint-disable-line no-console
+        
       logger.error('Failed to fetch employee requests', err as Error, {
         component: 'useEmployeeRequests',
         operation: 'fetchRequests',
@@ -194,7 +194,7 @@ export function useEmployeeRequests(options: UseEmployeeRequestsOptions = {}) {
         await fetchRequests()
         return true
       } catch (err) {
-         // eslint-disable-line no-console
+          
         logger.error('Failed to create employee request', err as Error, {
           component: 'useEmployeeRequests',
           operation: 'createRequest',
@@ -235,7 +235,7 @@ export function useEmployeeRequests(options: UseEmployeeRequestsOptions = {}) {
         await fetchRequests()
         return true
       } catch (err) {
-         // eslint-disable-line no-console
+          
         logger.error('Failed to approve employee request', err as Error, {
           component: 'useEmployeeRequests',
           operation: 'approveRequest',
@@ -276,7 +276,7 @@ export function useEmployeeRequests(options: UseEmployeeRequestsOptions = {}) {
         await fetchRequests()
         return true
       } catch (err) {
-         // eslint-disable-line no-console
+          
         logger.error('Failed to reject employee request', err as Error, {
           component: 'useEmployeeRequests',
           operation: 'rejectRequest',

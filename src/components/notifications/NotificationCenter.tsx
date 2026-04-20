@@ -283,7 +283,7 @@ export function NotificationCenter({
         {
           availableRoles,
           onError: (error) => {
-            // eslint-disable-next-line no-console
+             
             // Fallback a navegación tradicional
             fallbackNavigate(notification)
           }

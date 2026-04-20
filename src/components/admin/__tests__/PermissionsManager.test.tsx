@@ -5,7 +5,9 @@
 // =====================================================
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
+import { renderWithProviders } from '@/test-utils'
+import { renderWithProviders } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { PermissionsManager } from '@/components/admin/PermissionsManager'
 import { usePermissions } from '@/hooks/usePermissions-v2'
@@ -142,7 +144,7 @@ describe('PermissionsManager - Render y Permisos', () => {
       })),
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -160,7 +162,7 @@ describe('PermissionsManager - Render y Permisos', () => {
       userPermissions: [createMockUserPermission()],
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -178,7 +180,7 @@ describe('PermissionsManager - Render y Permisos', () => {
       businessRoles: [],
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -193,7 +195,7 @@ describe('PermissionsManager - Render y Permisos', () => {
   it('muestra botón "Asignar Rol"', () => {
     mockUsePermissions()
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -216,7 +218,7 @@ describe('PermissionsManager - Tabs', () => {
   })
 
   it('renderiza 4 tabs correctamente', () => {
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -231,7 +233,7 @@ describe('PermissionsManager - Tabs', () => {
   })
 
   it('tab "Usuarios" está activo por defecto', () => {
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -246,7 +248,7 @@ describe('PermissionsManager - Tabs', () => {
   it('cambia de tab al hacer click', async () => {
     const user = userEvent.setup()
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -267,7 +269,7 @@ describe('PermissionsManager - Tabs', () => {
   it('tab "Plantillas" muestra contenido placeholder', async () => {
     const user = userEvent.setup()
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -285,7 +287,7 @@ describe('PermissionsManager - Tabs', () => {
   it('tab "Historial" muestra contenido placeholder', async () => {
     const user = userEvent.setup()
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -315,7 +317,7 @@ describe('PermissionsManager - Lista de Usuarios', () => {
       isLoading: true,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -331,7 +333,7 @@ describe('PermissionsManager - Lista de Usuarios', () => {
       businessRoles: [],
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -359,7 +361,7 @@ describe('PermissionsManager - Lista de Usuarios', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -390,7 +392,7 @@ describe('PermissionsManager - Lista de Usuarios', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -413,7 +415,7 @@ describe('PermissionsManager - Lista de Usuarios', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -437,7 +439,7 @@ describe('PermissionsManager - Lista de Usuarios', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -458,7 +460,7 @@ describe('PermissionsManager - Lista de Usuarios', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -482,7 +484,7 @@ describe('PermissionsManager - Lista de Usuarios', () => {
       userPermissions: permissions,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -506,7 +508,7 @@ describe('PermissionsManager - Lista de Usuarios', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -530,7 +532,7 @@ describe('PermissionsManager - Filtros', () => {
   it('renderiza el input de búsqueda', () => {
     mockUsePermissions()
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -554,7 +556,7 @@ describe('PermissionsManager - Filtros', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -578,7 +580,7 @@ describe('PermissionsManager - Filtros', () => {
   it('renderiza el select de filtro por rol', () => {
     mockUsePermissions()
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -614,7 +616,7 @@ describe('PermissionsManager - Stats Cards', () => {
   it('muestra las 3 tarjetas de estadísticas', () => {
     mockUsePermissions()
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -638,7 +640,7 @@ describe('PermissionsManager - Stats Cards', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -662,7 +664,7 @@ describe('PermissionsManager - Stats Cards', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -686,7 +688,7 @@ describe('PermissionsManager - Stats Cards', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -718,7 +720,7 @@ describe('PermissionsManager - Acciones', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -745,7 +747,7 @@ describe('PermissionsManager - Acciones', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -772,7 +774,7 @@ describe('PermissionsManager - Acciones', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -800,7 +802,7 @@ describe('PermissionsManager - Acciones', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"
@@ -828,7 +830,7 @@ describe('PermissionsManager - Acciones', () => {
       businessRoles: roles,
     })
 
-    render(
+    renderWithProviders(
       <PermissionsManager
         businessId="business-123"
         ownerId="owner-123"

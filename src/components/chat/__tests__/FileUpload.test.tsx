@@ -10,7 +10,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react'
+import { renderWithProviders } from '@/test-utils'
+import { renderWithProviders } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { FileUpload } from '../FileUpload';
 import type { ChatAttachment } from '@/hooks/useChat';
@@ -52,14 +54,14 @@ describe('FileUpload Component', () => {
   // ============================================================================
 
   it('should render drop zone with correct text', () => {
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     expect(screen.getByText(/arrastra archivos aquí/i)).toBeInTheDocument();
     expect(screen.getByText(/o haz clic para seleccionar/i)).toBeInTheDocument();
   });
 
   it('should show file input element', () => {
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const fileInput = screen.getByTestId('file-input');
     expect(fileInput).toBeInTheDocument();
@@ -68,7 +70,7 @@ describe('FileUpload Component', () => {
   });
 
   it('should display max size and file count limits', () => {
-    render(<FileUpload {...defaultProps} maxSizeMB={5} maxFiles={3} />);
+    renderWithProviders(<FileUpload {...defaultProps} maxSizeMB={5} maxFiles={3} />);
     
     expect(screen.getByText(/máximo 5 MB por archivo/i)).toBeInTheDocument();
     expect(screen.getByText(/hasta 3 archivos/i)).toBeInTheDocument();
@@ -80,7 +82,7 @@ describe('FileUpload Component', () => {
 
   it('should allow file selection via input', async () => {
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const file = new File(['test content'], 'test.jpg', { type: 'image/jpeg' });
     const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
@@ -94,7 +96,7 @@ describe('FileUpload Component', () => {
 
   it('should show file preview after selection', async () => {
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const files = [
       new File(['content1'], 'file1.pdf', { type: 'application/pdf' }),
@@ -112,7 +114,7 @@ describe('FileUpload Component', () => {
 
   it('should display file size correctly', async () => {
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const file = new File(['a'.repeat(1024)], 'test.txt', { type: 'text/plain' });
     const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
@@ -130,7 +132,7 @@ describe('FileUpload Component', () => {
 
   it('should reject files exceeding size limit', async () => {
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} maxSizeMB={1} />);
+    renderWithProviders(<FileUpload {...defaultProps} maxSizeMB={1} />);
     
     // Create 2MB file (exceeds 1MB limit)
     const largeFile = new File(
@@ -151,7 +153,7 @@ describe('FileUpload Component', () => {
 
   it('should reject invalid file types', async () => {
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const invalidFile = new File(['content'], 'test.exe', { type: 'application/x-msdownload' });
     const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
@@ -167,7 +169,7 @@ describe('FileUpload Component', () => {
 
   it('should reject when exceeding max file count', async () => {
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} maxFiles={2} />);
+    renderWithProviders(<FileUpload {...defaultProps} maxFiles={2} />);
     
     const files = [
       new File(['c1'], 'f1.jpg', { type: 'image/jpeg' }),
@@ -187,7 +189,7 @@ describe('FileUpload Component', () => {
 
   it('should allow valid file types', async () => {
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const validFiles = [
       new File(['img'], 'image.jpg', { type: 'image/jpeg' }),
@@ -210,7 +212,7 @@ describe('FileUpload Component', () => {
   // ============================================================================
 
   it('should handle drag enter event', () => {
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const dropZone = screen.getByTestId('drop-zone');
     
@@ -220,7 +222,7 @@ describe('FileUpload Component', () => {
   });
 
   it('should handle drag leave event', () => {
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const dropZone = screen.getByTestId('drop-zone');
     
@@ -231,7 +233,7 @@ describe('FileUpload Component', () => {
   });
 
   it('should handle file drop', async () => {
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const dropZone = screen.getByTestId('drop-zone');
     const file = new File(['content'], 'dropped.jpg', { type: 'image/jpeg' });
@@ -254,7 +256,7 @@ describe('FileUpload Component', () => {
 
   it('should allow removing individual files', async () => {
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const files = [
       new File(['c1'], 'file1.jpg', { type: 'image/jpeg' }),
@@ -281,7 +283,7 @@ describe('FileUpload Component', () => {
 
   it('should upload files when clicking upload button', async () => {
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
     const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
@@ -307,7 +309,7 @@ describe('FileUpload Component', () => {
 
   it('should show upload progress during upload', async () => {
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
     const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
@@ -322,7 +324,7 @@ describe('FileUpload Component', () => {
   });
 
   it('should disable upload button when no files selected', () => {
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const uploadButton = screen.getByRole('button', { name: /subir archivos/i });
     
@@ -331,7 +333,7 @@ describe('FileUpload Component', () => {
 
   it('should disable upload button during upload', async () => {
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
     const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
@@ -358,7 +360,7 @@ describe('FileUpload Component', () => {
     });
     
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
     const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
@@ -380,7 +382,7 @@ describe('FileUpload Component', () => {
   // ============================================================================
 
   it('should have proper ARIA labels', () => {
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const fileInput = screen.getByLabelText(/seleccionar archivos/i);
     expect(fileInput).toBeInTheDocument();
@@ -388,7 +390,7 @@ describe('FileUpload Component', () => {
 
   it('should be keyboard accessible', async () => {
     const user = userEvent.setup();
-    render(<FileUpload {...defaultProps} />);
+    renderWithProviders(<FileUpload {...defaultProps} />);
     
     const uploadButton = screen.getByRole('button', { name: /subir archivos/i });
     

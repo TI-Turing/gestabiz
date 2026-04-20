@@ -34,6 +34,9 @@ export default defineConfig({
     clearMocks: true,
     restoreMocks: true,
   },
+  define: {
+    __APP_VERSION__: JSON.stringify('0.0.0-test'),
+  },
   resolve: {
     alias: {
       '@': resolve(projectRoot, 'src'),

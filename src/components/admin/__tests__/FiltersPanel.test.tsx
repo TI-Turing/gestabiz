@@ -3,7 +3,9 @@
 // Tests para el panel de filtros de jerarquía de empleados
 // ============================================================================
 
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { screen, fireEvent, within } from '@testing-library/react'
+import { renderWithProviders } from '@/test-utils'
+import { renderWithProviders } from '@/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { FiltersPanel } from '../FiltersPanel'
 import type { HierarchyFilters } from '@/types'
@@ -25,7 +27,7 @@ describe('FiltersPanel', () => {
 
   describe('Renderizado inicial', () => {
     it('debería renderizar el componente', () => {
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={defaultFilters}
           onFiltersChange={mockOnFiltersChange}
@@ -37,7 +39,7 @@ describe('FiltersPanel', () => {
     })
 
     it('debería mostrar todos los campos de filtro', () => {
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={defaultFilters}
           onFiltersChange={mockOnFiltersChange}
@@ -54,7 +56,7 @@ describe('FiltersPanel', () => {
     })
 
     it('NO debería mostrar botón "Limpiar todo" sin filtros activos', () => {
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={defaultFilters}
           onFiltersChange={mockOnFiltersChange}
@@ -71,7 +73,7 @@ describe('FiltersPanel', () => {
         searchQuery: 'John',
       }
 
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={filtersWithSearch}
           onFiltersChange={mockOnFiltersChange}
@@ -85,7 +87,7 @@ describe('FiltersPanel', () => {
 
   describe('Filtro de Búsqueda', () => {
     it('debería actualizar el filtro de búsqueda al escribir', () => {
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={defaultFilters}
           onFiltersChange={mockOnFiltersChange}
@@ -105,7 +107,7 @@ describe('FiltersPanel', () => {
         searchQuery: 'Jane Smith',
       }
 
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={filtersWithSearch}
           onFiltersChange={mockOnFiltersChange}
@@ -123,7 +125,7 @@ describe('FiltersPanel', () => {
         searchQuery: 'Test',
       }
 
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={filtersWithSearch}
           onFiltersChange={mockOnFiltersChange}
@@ -145,7 +147,7 @@ describe('FiltersPanel', () => {
 
   describe('Filtro de Nivel Jerárquico', () => {
     it('debería actualizar el filtro de nivel', () => {
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={defaultFilters}
           onFiltersChange={mockOnFiltersChange}
@@ -164,7 +166,7 @@ describe('FiltersPanel', () => {
     })
 
     it('debería mostrar "Todos los niveles" cuando no hay filtro', () => {
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={defaultFilters}
           onFiltersChange={mockOnFiltersChange}
@@ -182,7 +184,7 @@ describe('FiltersPanel', () => {
         hierarchyLevel: 2,
       }
 
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={filtersWithLevel}
           onFiltersChange={mockOnFiltersChange}
@@ -202,7 +204,7 @@ describe('FiltersPanel', () => {
 
   describe('Filtro de Tipo de Empleado', () => {
     it('debería actualizar el filtro de tipo', () => {
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={defaultFilters}
           onFiltersChange={mockOnFiltersChange}
@@ -227,7 +229,7 @@ describe('FiltersPanel', () => {
         employeeType: 'service_provider',
       }
 
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={filtersWithType}
           onFiltersChange={mockOnFiltersChange}
@@ -247,7 +249,7 @@ describe('FiltersPanel', () => {
 
   describe('Filtro de Departamento', () => {
     it('debería actualizar el filtro de departamento', () => {
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={defaultFilters}
           onFiltersChange={mockOnFiltersChange}
@@ -270,7 +272,7 @@ describe('FiltersPanel', () => {
         departmentId: 'sales',
       }
 
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={filtersWithDept}
           onFiltersChange={mockOnFiltersChange}
@@ -297,7 +299,7 @@ describe('FiltersPanel', () => {
         departmentId: 'sales',
       }
 
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={filtersWithMultiple}
           onFiltersChange={mockOnFiltersChange}
@@ -319,7 +321,7 @@ describe('FiltersPanel', () => {
         searchQuery: 'John',
       }
 
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={filtersWithSearch}
           onFiltersChange={mockOnFiltersChange}
@@ -337,7 +339,7 @@ describe('FiltersPanel', () => {
         hierarchyLevel: 2,
       }
 
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={filtersWithLevel}
           onFiltersChange={mockOnFiltersChange}
@@ -355,7 +357,7 @@ describe('FiltersPanel', () => {
         employeeType: 'service_provider',
       }
 
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={filtersWithType}
           onFiltersChange={mockOnFiltersChange}
@@ -375,7 +377,7 @@ describe('FiltersPanel', () => {
         departmentId: undefined,
       }
 
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={filtersWithMultiple}
           onFiltersChange={mockOnFiltersChange}
@@ -391,7 +393,7 @@ describe('FiltersPanel', () => {
 
   describe('Sliders de Rangos', () => {
     it('debería mostrar rango de ocupación inicial', () => {
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={defaultFilters}
           onFiltersChange={mockOnFiltersChange}
@@ -403,7 +405,7 @@ describe('FiltersPanel', () => {
     })
 
     it('debería mostrar rango de rating inicial', () => {
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={defaultFilters}
           onFiltersChange={mockOnFiltersChange}
@@ -417,7 +419,7 @@ describe('FiltersPanel', () => {
 
   describe('Accessibility', () => {
     it('debería tener labels para todos los inputs', () => {
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={defaultFilters}
           onFiltersChange={mockOnFiltersChange}
@@ -439,7 +441,7 @@ describe('FiltersPanel', () => {
         searchQuery: 'Test',
       }
 
-      render(
+      renderWithProviders(
         <FiltersPanel
           filters={filtersWithSearch}
           onFiltersChange={mockOnFiltersChange}

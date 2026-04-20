@@ -189,7 +189,7 @@ export const ExpensesManagementPage: React.FC<ExpensesManagementPageProps> = ({ 
           .reduce((sum, t) => sum + (t.amount || 0), 0)
       );
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ExpensesManagementPage' } })
     }
   };

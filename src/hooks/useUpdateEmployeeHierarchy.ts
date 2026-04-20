@@ -66,7 +66,7 @@ export function useUpdateEmployeeHierarchy() {
         lvl: newLevel,
       }
 
-  // eslint-disable-next-line no-console
+   
   const response = await fetch(`${supabaseUrl}/functions/v1/update-hierarchy`, {
         method: 'POST',
         headers: {

@@ -4,7 +4,9 @@
 // =====================================================
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
+import { renderWithProviders } from '@/test-utils'
+import { renderWithProviders } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { PermissionTemplates } from '../PermissionTemplates'
 import * as usePermissionsModule from '@/hooks/usePermissions-v2'
@@ -95,7 +97,7 @@ function mockUsePermissions(
 }
 
 function renderWithProviders(ui: React.ReactElement) {
-  return render(ui)
+  return renderWithProviders(ui)
 }
 
 // =====================================================
