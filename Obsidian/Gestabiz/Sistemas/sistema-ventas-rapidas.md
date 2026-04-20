@@ -69,4 +69,4 @@ Solo administradores: AdminDashboard → sidebar `id: 'quickSales'`
 - [[sistema-contable]] — Transacciones automáticas desde ventas
 - [[sistema-sede-preferida]] — Sede preferida pre-seleccionada con doble cache
 - [[sistema-permisos]] — Permiso `sales.create`
-- [[crm-clientes]] — Clientes registrados en ventas rápidas aparecen en CRM
+- [[sistema-crm-clientes]]] — Clientes registrados en ventas rápidas aparecen en CRM

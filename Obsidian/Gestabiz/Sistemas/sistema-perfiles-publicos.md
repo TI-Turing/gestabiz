@@ -72,7 +72,6 @@ Cada negocio tiene una URL pública `/negocio/:slug` (ej: `/negocio/salon-bellez
 - `profile_view` con datos del negocio
 - `click_reserve_button` al click en reservar
 - `click_contact` al click en datos de contacto
-- Ver [[sistema-ga4]]
 
 ## Preselección Inteligente
 

@@ -4,17 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "0e46486743c76135",
+        "id": "69315347c2e6ab22",
         "type": "tabs",
         "children": [
           {
-            "id": "5507eb9b34963cad",
+            "id": "b0429392f6299eef",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Vista gráfica"
+              "type": "markdown",
+              "state": {
+                "file": "Índice.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Índice"
             }
           }
         ]
@@ -176,8 +180,10 @@
       "bases:Crear nueva base": false
     }
   },
-  "active": "5507eb9b34963cad",
+  "active": "b0429392f6299eef",
   "lastOpenFiles": [
+    "Sistemas/sistema-ventas-rapidas.md",
+    "Sistemas/sistema-perfiles-publicos.md",
     "Bugs/pgrst201-ambiguous-fk-appointment-confirmation.md",
     "Índice.md",
     "Sin título.canvas",
@@ -208,8 +214,6 @@
     "Sistemas/sistema-sede-preferida.md",
     "Sistemas/sistema-configuraciones.md",
     "Sistemas/sistema-autenticacion.md",
-    "Sistemas/sistema-perfiles-publicos.md",
-    "Sistemas/sistema-crm-clientes.md",
     "Sistemas",
     "Contexto",
     "Índice.md.tmp.26608.1774534841419",
