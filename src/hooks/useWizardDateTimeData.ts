@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import supabase from '@/lib/supabase';
 import { QUERY_CONFIG } from '@/lib/queryConfig';
 import { format } from 'date-fns';
@@ -164,19 +165,34 @@ export function useWizardDateTimeData(
   const dayData = dayQuery.data;
   const monthData = monthQuery.data;
 
+  // Memoize normalized arrays to avoid creating new references on every render,
+  // which would cause infinite useEffect loops in consumers like DateTimeSelection.
+  const dayAppointments = useMemo(
+    () => normalizeAppointmentTimestamps(dayData?.day_appointments || []),
+    [dayData?.day_appointments],
+  );
+  const clientDayAppointments = useMemo(
+    () => normalizeAppointmentTimestamps(dayData?.client_day_appointments || []),
+    [dayData?.client_day_appointments],
+  );
+  const monthAppointmentsNorm = useMemo(
+    () => normalizeAppointmentTimestamps(monthData?.month_appointments || []),
+    [monthData?.month_appointments],
+  );
+
   return {
     day: {
       locationSchedule: dayData?.location_schedule || null,
       employeeSchedule: dayData?.employee_schedule || null,
       workSchedules: dayData?.work_schedules || monthData?.work_schedules || [],
-      dayAppointments: normalizeAppointmentTimestamps(dayData?.day_appointments || []),
-      clientDayAppointments: normalizeAppointmentTimestamps(dayData?.client_day_appointments || []),
+      dayAppointments,
+      clientDayAppointments,
       employeeTransfer: dayData?.employee_transfer || null,
       isLoading: dayQuery.isLoading,
       error: dayQuery.error instanceof Error ? dayQuery.error.message : null,
     },
     month: {
-      monthAppointments: normalizeAppointmentTimestamps(monthData?.month_appointments || []),
+      monthAppointments: monthAppointmentsNorm,
       monthAbsences: monthData?.month_absences || [],
       isLoading: monthQuery.isLoading,
       error: monthQuery.error instanceof Error ? monthQuery.error.message : null,
