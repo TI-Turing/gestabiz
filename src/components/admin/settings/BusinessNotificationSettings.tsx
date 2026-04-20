@@ -149,7 +149,7 @@ export function BusinessNotificationSettings({ businessId }: { businessId: strin
           timezone: settings.timezone,
           use_fallback: settings.use_fallback,
           max_retry_attempts: settings.max_retry_attempts,
-        })
+        }, { onConflict: 'business_id' })
 
       if (error) throw error
 
