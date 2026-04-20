@@ -175,6 +175,12 @@ serve(async (req) => {
 
     if (hasTemplate) {
       // ── Template message ─────────────────────────────────────────────────
+      // Confirmed templates have one fewer variable than pending templates:
+      // - 24h confirmed: vars 1-7 (no token slot {{8}})
+      // - 24h pending:   vars 1-8 (includes confirmation token as {{8}})
+      // - 2h confirmed:  vars 1-6 (no token slot {{7}})
+      // - 2h pending:    vars 1-7 (includes confirmation token as {{7}})
+      // Sending extra variables not defined in the template causes Twilio error 21656.
       const contentVariables: Record<string, string> = is24h
         ? {
             '1': logoUrl,
@@ -184,7 +190,7 @@ serve(async (req) => {
             '5': formatTime(startDate),
             '6': sedeLabel,
             '7': serviceName,
-            '8': token,
+            ...(isConfirmed ? {} : { '8': token }),
           }
         : {
             '1': logoUrl,
@@ -193,7 +199,7 @@ serve(async (req) => {
             '4': formatTime(startDate),
             '5': sedeLabel,
             '6': serviceName,
-            '7': token,
+            ...(isConfirmed ? {} : { '7': token }),
           }
 
       messageParams = {
