@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<!--
+  Template: email-appointment-employee.html
+  Propósito: Notificación de nueva cita asignada al EMPLEADO / PROFESIONAL
+  Función:   send-notification (type: appointment_new_employee)
+  Generado por: createAppointmentNewEmployeeEmail() en send-notification/index.ts
+  Variables: {{employee_name}} (o {{professional_name}}), {{client_name}}, {{date}}, {{time}}, {{service}}, {{location}}
+-->
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nueva Cita Asignada — Gestabiz</title>
+</head>
+<body style="margin:0;padding:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#a855f7 0%,#9333ea 100%);padding:40px 30px;text-align:center;">
+              <div style="display:inline-block;width:80px;height:80px;background:white;border-radius:20px;font-size:40px;line-height:80px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.1);">🗓️</div>
+              <br>
+              <span style="color:white;font-size:32px;font-weight:700;letter-spacing:-0.5px;display:block;margin-top:16px;">Gestabiz</span>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px 30px;">
+              <h1 style="margin:0 0 12px;color:#1e293b;font-size:24px;font-weight:700;text-align:center;">📋 Nueva Cita Asignada</h1>
+              <p style="margin:0 0 32px;color:#64748b;font-size:16px;text-align:center;">Hola <strong style="color:#1e293b;">{{employee_name}}</strong>, se ha agendado una nueva cita para ti.</p>
+              <!-- Detalles -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f8fafc;border-radius:12px;">
+                <tr>
+                  <td style="padding:20px 24px 0;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding:10px 0;color:#64748b;font-size:15px;border-bottom:1px solid #e2e8f0;vertical-align:middle;">👤 Cliente</td>
+                        <td style="padding:10px 0;color:#1e293b;font-weight:600;font-size:15px;text-align:right;border-bottom:1px solid #e2e8f0;vertical-align:middle;">{{client_name}}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:10px 0;color:#64748b;font-size:15px;border-bottom:1px solid #e2e8f0;vertical-align:middle;">📅 Fecha</td>
+                        <td style="padding:10px 0;color:#1e293b;font-weight:600;font-size:15px;text-align:right;border-bottom:1px solid #e2e8f0;vertical-align:middle;">{{date}}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:10px 0;color:#64748b;font-size:15px;border-bottom:1px solid #e2e8f0;vertical-align:middle;">🕐 Hora</td>
+                        <td style="padding:10px 0;color:#1e293b;font-weight:600;font-size:15px;text-align:right;border-bottom:1px solid #e2e8f0;vertical-align:middle;">{{time}}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:10px 0;color:#64748b;font-size:15px;border-bottom:1px solid #e2e8f0;vertical-align:middle;">✂️ Servicio</td>
+                        <td style="padding:10px 0;color:#1e293b;font-weight:600;font-size:15px;text-align:right;border-bottom:1px solid #e2e8f0;vertical-align:middle;">{{service}}</td>
+                      </tr>
+                      <!-- Sede — condicional si {{location}} existe -->
+                      <tr>
+                        <td style="padding:10px 0;color:#64748b;font-size:15px;vertical-align:middle;">📍 Sede</td>
+                        <td style="padding:10px 0;color:#1e293b;font-weight:600;font-size:15px;text-align:right;vertical-align:middle;">{{location}}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:16px 24px 20px;text-align:center;">
+                    <p style="margin:0;color:#64748b;font-size:15px;">Entra a la app para ver más detalles de la cita.</p>
+                  </td>
+                </tr>
+              </table>
+              <!-- CTA -->
+              <div style="text-align:center;margin-top:28px;">
+                <a href="https://gestabiz.com/app" style="display:inline-block;background:#6820F7;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;padding:13px 28px;border-radius:10px;letter-spacing:.3px;">
+                  Ver en la App
+                </a>
+              </div>
+            </td>
+          </tr>
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 30px;"><div style="height:1px;background:linear-gradient(90deg,transparent,#e2e8f0,transparent);"></div></td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background:#f8fafc;padding:24px 30px;text-align:center;">
+              <p style="margin:0 0 8px;color:#94a3b8;font-size:13px;">© 2026 Gestabiz. Todos los derechos reservados.</p>
+              <p style="margin:0 0 12px;color:#94a3b8;font-size:13px;">Gestiona tus citas de forma inteligente</p>
+              <p style="margin:0;">
+                <a href="https://gestabiz.com" style="color:#a855f7;font-size:13px;text-decoration:none;margin:0 8px;">Sitio Web</a>
+                <a href="mailto:soporte@gestabiz.com" style="color:#a855f7;font-size:13px;text-decoration:none;margin:0 8px;">Soporte</a>
+                <a href="https://gestabiz.com/privacidad" style="color:#a855f7;font-size:13px;text-decoration:none;margin:0 8px;">Privacidad</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

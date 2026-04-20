@@ -6,8 +6,6 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
-import { sendBrevoEmail } from '../_shared/brevo.ts'
-
 // Initialize Sentry
 initSentry('send-appointment-confirmation')
 
@@ -63,127 +61,13 @@ serve(async (req) => {
     if (apptErr || !appt) throw new Error(`Appointment not found (id=${appointmentId}, err=${apptErr?.message ?? "no data"})`);
 
     const token: string | null = appt.confirmation_token ?? null;
-    const deadline: string | null = appt.confirmation_deadline ?? null;
     if (!token) throw new Error("Failed to generate confirmation token");
 
-    // Build links
-    const appUrl =
-      Deno.env.get("PUBLIC_APP_URL") ||
-      Deno.env.get("APP_BASE_URL") ||
-      "https://gestabiz.app";
-    const confirmUrl = `${appUrl}/confirmar-cita/${token}`;
-    const cancelUrl = `${appUrl}/cancelar-cita/${token}`;
+    // Token y deadline ya están guardados. Los emails los envía send-notification.
+    // Esta función solo genera el token y actualiza la BD.
+    console.log(`[send-appointment-confirmation] Token generado para cita ${appointmentId}. Emails delegados a send-notification.`);
 
-    // Prepare email
-    const toEmail: string | undefined = appt.client?.email ?? undefined;
-    const clientName = appt.client?.full_name ?? "Cliente";
-    const businessName = appt.business?.name ?? "Gestabiz";
-    const serviceName = appt.service?.name ?? "Cita";
-    const start = new Date(appt.start_time);
-    const localeDate = start.toLocaleDateString("es-ES", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const localeTime = start.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
-
-    const subject = `Confirma tu cita: ${serviceName} en ${businessName}`;
-    const html = `
-      <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 10px 10px 0 0; text-align: center;">
-              <h1 style="margin: 0; font-size: 22px;">Confirmación de Cita</h1>
-            </div>
-            <div style="background: white; padding: 24px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
-              <p>Hola ${clientName},</p>
-              <p>Tienes una cita programada para <strong>${localeDate}</strong> a las <strong>${localeTime}</strong> con <strong>${businessName}</strong>.</p>
-              <p>Servicio: <strong>${serviceName}</strong></p>
-              <p>Por favor confirma tu asistencia usando los siguientes enlaces:</p>
-              <div style="margin: 20px 0;">
-                <a href="${confirmUrl}" style="background: #10b981; color: white; padding: 12px 16px; text-decoration: none; border-radius: 6px; margin-right: 10px; display: inline-block;">Confirmar Cita</a>
-                <a href="${cancelUrl}" style="background: #ef4444; color: white; padding: 12px 16px; text-decoration: none; border-radius: 6px; display: inline-block;">Cancelar</a>
-              </div>
-              ${deadline ? `<p style="color:#6b7280; font-size: 14px;">Puedes confirmar hasta: ${new Date(deadline).toLocaleString('es-ES')}</p>` : ''}
-              <p>Si tienes preguntas, responde a este correo.</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    if (!toEmail) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Client email not available" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-      );
-    }
-
-    // Enviar email de confirmación al cliente via Brevo
-    console.log(`[send-appointment-confirmation] Enviando email a ${toEmail} para cita ${appointmentId}`);
-    const clientEmailResult = await sendBrevoEmail({
-      to: toEmail,
-      subject,
-      htmlBody: html,
-      fromName: businessName,
-    });
-    if (!clientEmailResult.success) {
-      console.error(
-        `[send-appointment-confirmation] Fallo Brevo para cita ${appointmentId}:`,
-        clientEmailResult.error
-      );
-      return new Response(
-        JSON.stringify({
-          success: false,
-          sent: false,
-          tokenSet: true,
-          emailError: clientEmailResult.error,
-          debug: "Verificar BREVO_API_KEY en Supabase secrets y que el sender no-reply@gestabiz.com esté verificado en Brevo",
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
-    }
-    console.log(`[send-appointment-confirmation] Email enviado correctamente a ${toEmail}`);
-
-    // Enviar email de notificación al profesional/empleado (si tiene email)
-    const employeeEmail: string | undefined = (appt.employee as { email?: string } | null)?.email ?? undefined;
-    const employeeName: string = (appt.employee as { full_name?: string } | null)?.full_name ?? "Profesional";
-    if (employeeEmail) {
-      const employeeSubject = `Nueva cita: ${serviceName} con ${clientName}`;
-      const locationName = (appt.location as { name?: string } | null)?.name ?? "";
-      const employeeHtml = `
-      <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 10px 10px 0 0; text-align: center;">
-              <h1 style="margin: 0; font-size: 22px;">Nueva Cita Agendada</h1>
-            </div>
-            <div style="background: white; padding: 24px; border: 1px solid #e1e5e9; border-radius: 0 0 10px 10px;">
-              <p>Hola ${employeeName},</p>
-              <p>Tienes una nueva cita programada:</p>
-              <ul>
-                <li><strong>Cliente:</strong> ${clientName}</li>
-                <li><strong>Servicio:</strong> ${serviceName}</li>
-                <li><strong>Fecha:</strong> ${localeDate} a las ${localeTime}</li>
-                ${locationName ? `<li><strong>Sede:</strong> ${locationName}</li>` : ""}
-              </ul>
-              <p style="color:#6b7280; font-size: 14px;">Este es un aviso automático de ${businessName}.</p>
-            </div>
-          </div>
-        </body>
-      </html>
-      `;
-      // Notificación al empleado no bloquea la respuesta si falla
-      await sendBrevoEmail({
-        to: employeeEmail,
-        subject: employeeSubject,
-        htmlBody: employeeHtml,
-        fromName: businessName,
-      }).catch(() => { /* silent — no bloquear por email de empleado */ });
-    }
-
-    return new Response(JSON.stringify({ success: true, sent: true, employeeNotified: !!employeeEmail }), {
+    return new Response(JSON.stringify({ success: true, sent: false, tokenSet: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

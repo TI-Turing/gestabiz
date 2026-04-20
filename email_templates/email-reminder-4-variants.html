@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<!--
+  Template: email-reminder-4-variants.html
+  Propósito: Recordatorio de cita — 4 variantes según tipo × estado de confirmación
+  Función:   send-email-reminder
+  Variables: {{client_name}}, {{date}}, {{time}}, {{service}}, {{location}}, {{address}}, {{confirm_url}}, {{app_url}}
+
+  ─── VARIANTE 1: reminder_24h + status=pending (NO confirmado) ──────────────
+  Asunto: "Confirma tu cita: {{service}}"
+  Muestra: caja amber de advertencia + botón "Confirmar asistencia" + botón "Reprogramar"
+
+  ─── VARIANTE 2: reminder_24h + status=confirmed (confirmado) ───────────────
+  Asunto: "Tu cita está confirmada — {{service}}"
+  Muestra: caja verde de confirmación solamente, sin botones
+
+  ─── VARIANTE 3: reminder_2h + status=confirmed (confirmado) ────────────────
+  Asunto: "Tu cita es en 2 horas — {{service}}"
+  Muestra: enlace inline "¿No puedes asistir? Reprograma tu cita"
+
+  ─── VARIANTE 4: reminder_2h + status=pending (NO confirmado) ───────────────
+  Asunto: "Tu cita es en 2 horas — {{service}}"
+  Muestra: botón "Confirmar asistencia" + enlace inline "Reprograma tu cita"
+-->
+
+<!-- ══════════════════════════════════════════════════════
+     VARIANTE 1: 24h + pendiente → advertencia + confirmar + reprogramar
+     ══════════════════════════════════════════════════════ -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Confirma tu cita — Gestabiz</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: #F5F4FB; font-family: 'Outfit', -apple-system, sans-serif; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .card { background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(104,32,247,0.08); }
+    .header { background: linear-gradient(135deg, #6820F7, #9333ea); padding: 36px 32px; text-align: center; }
+    .header-icon { width: 72px; height: 72px; background: white; border-radius: 18px; font-size: 36px; line-height: 72px; display: inline-block; }
+    .header-brand { color: white; font-size: 28px; font-weight: 700; margin-top: 14px; display: block; }
+    .body { padding: 36px 32px; }
+    .detail-card { background: #f8fafc; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; }
+    .detail-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-icon { width: 36px; height: 36px; background: #ede9fe; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 12px; font-size: 18px; flex-shrink: 0; }
+    .detail-label { color: #64748b; font-size: 14px; flex: 1; }
+    .detail-value { color: #1e293b; font-weight: 600; font-size: 15px; text-align: right; }
+    .warning-box { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 14px 18px; margin: 0 0 20px; }
+    .warning-box p { margin: 0; color: #92400e; font-size: 14px; }
+    .btn-primary { display: inline-block; background: #6820F7; color: #ffffff; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; text-decoration: none; padding: 13px 28px; border-radius: 10px; margin: 6px 8px; letter-spacing: .3px; }
+    .btn-secondary { display: inline-block; background: #f1f5f9; color: #475569; font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; text-decoration: none; padding: 12px 28px; border-radius: 10px; margin: 6px 8px; letter-spacing: .3px; }
+    .footer { background: #f8fafc; padding: 24px 32px; text-align: center; }
+    .footer p { margin: 0 0 6px; color: #94a3b8; font-size: 13px; }
+    .footer a { color: #6820F7; font-size: 13px; text-decoration: none; margin: 0 8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <span class="header-icon">🗓️</span>
+        <span class="header-brand">Gestabiz</span>
+      </div>
+      <div class="body">
+        <h1 style="margin:0 0 12px;color:#1e293b;font-size:22px;font-weight:700;text-align:center;">Recordatorio de Cita</h1>
+        <p style="margin:0 0 28px;color:#64748b;font-size:16px;text-align:center;">Hola <strong style="color:#1e293b;">{{client_name}}</strong>, mañana tienes una cita.</p>
+        <div class="detail-card">
+          <div class="detail-row">
+            <div class="detail-icon">📅</div>
+            <span class="detail-label">Fecha</span>
+            <span class="detail-value">{{date}}</span>
+          </div>
+          <div class="detail-row">
+            <div class="detail-icon">🕐</div>
+            <span class="detail-label">Hora</span>
+            <span class="detail-value">{{time}}</span>
+          </div>
+          <div class="detail-row">
+            <div class="detail-icon">✂️</div>
+            <span class="detail-label">Servicio</span>
+            <span class="detail-value">{{service}}</span>
+          </div>
+          <div class="detail-row">
+            <div class="detail-icon">📍</div>
+            <span class="detail-label">Sede</span>
+            <span class="detail-value">{{location}}</span>
+          </div>
+        </div>
+        <!-- CTA: VARIANTE 1 — 24h + pendiente -->
+        <div class="warning-box">
+          <p>⚠️ <strong>Aún no has confirmado esta cita.</strong> ¿Deseas confirmar ahora?</p>
+        </div>
+        <div style="text-align:center;margin:20px 0 4px;">
+          <a href="{{confirm_url}}" class="btn-primary">Confirmar asistencia</a>
+          <a href="{{app_url}}" class="btn-secondary">Reprogramar</a>
+        </div>
+      </div>
+      <div class="footer">
+        <p>© 2026 Gestabiz. Todos los derechos reservados.</p>
+        <p><a href="https://gestabiz.com">Sitio Web</a> <a href="mailto:soporte@gestabiz.com">Soporte</a></p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
+<!-- ══════════════════════════════════════════════════════
+     VARIANTE 2: 24h + confirmada → solo caja verde, sin botones
+     ══════════════════════════════════════════════════════ -->
+<!--
+<div class="detail-card">
+  ... mismas filas de detalles ...
+</div>
+<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:14px 18px;margin:0 0 20px;text-align:center;">
+  <p style="margin:0;color:#166534;font-size:14px;">✅ <strong>Tu cita está confirmada.</strong> ¡Te esperamos!</p>
+</div>
+-->
+
+<!-- ══════════════════════════════════════════════════════
+     VARIANTE 3: 2h + confirmada → enlace inline, sin botones
+     ══════════════════════════════════════════════════════ -->
+<!--
+<div class="detail-card">
+  ... mismas filas de detalles ...
+</div>
+<p style="color:#64748b;font-size:14px;text-align:center;margin:20px 0;">
+  ¿No puedes asistir? <a href="{{app_url}}" style="color:#6820F7;text-decoration:none;font-weight:600;">Reprograma tu cita</a>
+</p>
+-->
+
+<!-- ══════════════════════════════════════════════════════
+     VARIANTE 4: 2h + pendiente → botón confirmar + enlace inline
+     ══════════════════════════════════════════════════════ -->
+<!--
+<div class="detail-card">
+  ... mismas filas de detalles ...
+</div>
+<div style="text-align:center;margin:20px 0 8px;">
+  <a href="{{confirm_url}}" class="btn-primary">Confirmar asistencia</a>
+</div>
+<p style="color:#64748b;font-size:14px;text-align:center;margin:0;">
+  ¿No puedes asistir? <a href="{{app_url}}" style="color:#6820F7;text-decoration:none;font-weight:600;">Reprograma tu cita</a>
+</p>
+-->
