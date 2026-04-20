@@ -72,6 +72,7 @@ serve(async (req) => {
         .select('appointment_id, type, delivery_method')
         .in('appointment_id', allApptIds)
         .in('type', ['reminder_24h', 'reminder_2h'])
+        .in('status', ['sent', 'queued']) // ← No bloquear reintentos por notifs fallidas
 
       for (const n of existingNotifs ?? []) {
         existingNotifSet.add(`${n.appointment_id}:${n.type}:${n.delivery_method}`)
