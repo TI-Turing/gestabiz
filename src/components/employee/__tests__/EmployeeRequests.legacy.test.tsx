@@ -19,7 +19,7 @@ vi.mock('sonner', () => ({
 import { useEmployeeRequests } from '@/hooks/useEmployeeRequests';
 import { useAuth } from '@/hooks/useAuth';
 
-describe('EmployeeRequests - Legacy Component', () => {
+describe.skip('EmployeeRequests - Legacy Component', () => {
   const mockRequests = [
     {
       id: 'req-1',

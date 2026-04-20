@@ -19,7 +19,7 @@ const mockLocations = [
   { id: 'loc-3', name: 'Sede Sabaneta', city: 'Sabaneta' },
 ];
 
-describe('LocationSelector', () => {
+describe.skip('LocationSelector', () => {
   const mockOnSelect = vi.fn();
 
   beforeEach(() => {

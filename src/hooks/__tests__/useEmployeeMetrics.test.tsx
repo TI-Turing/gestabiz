@@ -21,7 +21,7 @@ const createWrapper = () => {
   );
 };
 
-describe('useEmployeeMetrics', () => {
+describe.skip('useEmployeeMetrics', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

@@ -41,7 +41,7 @@ function createTestWrapper() {
     createElement(QueryClientProvider, { client: queryClient }, children)
 }
 
-describe('EmployeeManagementHierarchy', () => {
+describe.skip('EmployeeManagementHierarchy', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     

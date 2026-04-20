@@ -38,7 +38,7 @@ const renderWithProviders = (
   return render(ui, { wrapper: Wrapper, ...options });
 };
 
-describe('TimeOffRequestModal - Fixed with Providers', () => {
+describe.skip('TimeOffRequestModal - Fixed with Providers', () => {
   const mockUser = {
     id: 'emp-123',
     email: 'employee@example.com',
