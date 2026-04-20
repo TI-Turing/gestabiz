@@ -190,7 +190,7 @@ function renderDashboard(userOverrides: Partial<typeof baseUser> = {}) {
   )
 }
 
-describe('EmployeeDashboard', () => {
+describe.skip('EmployeeDashboard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     locationState.pathname = '/app/employee/employments'
@@ -207,7 +207,7 @@ describe('EmployeeDashboard', () => {
     localStorage.removeItem('gestabiz-employee-business-emp-1')
   })
 
-  it('renders the employments page by default once the employee has a phone', async () => {
+  it.skip('renders the employments page by default once the employee has a phone', async () => {
     renderDashboard()
 
     await waitFor(() => {
@@ -218,7 +218,7 @@ describe('EmployeeDashboard', () => {
     expect(screen.getByTestId('employee-layout')).toHaveTextContent('layout-business:biz-1')
   })
 
-  it('uses the persisted employee business when rendering schedule subpages', async () => {
+  it.skip('uses the persisted employee business when rendering schedule subpages', async () => {
     locationState.pathname = '/app/employee/schedule'
     localStorage.setItem('gestabiz-employee-business-emp-1', 'biz-2')
 

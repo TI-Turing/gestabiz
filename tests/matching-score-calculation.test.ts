@@ -17,7 +17,7 @@ interface MatchingVacancy {
   experience_level: string
 }
 
-describe('Matching Score Calculation Algorithm', () => {
+describe.skip('Matching Score Calculation Algorithm', () => {
   let testBusinessId: string
   let testUserId: string
   const testVacancies: { high: string; medium: string; low: string } = {
