@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 import { LanguageProvider } from '@/contexts/LanguageContext'
+import { ThemeProvider } from '@/contexts/ThemeProvider'
 import type { User, UserRole } from '@/types/types'
 import { createMockUser } from './mock-factories'
 
@@ -39,6 +40,8 @@ interface WrapperOptions {
   withoutRouter?: boolean
   /** Skip wrapping with LanguageProvider (rare; only if test mocks useLanguage) */
   withoutLanguage?: boolean
+  /** Skip wrapping with ThemeProvider (rare; only if test mocks useTheme) */
+  withoutTheme?: boolean
 }
 
 /**
@@ -50,12 +53,15 @@ interface WrapperOptions {
  */
 export function createWrapper(options: WrapperOptions = {}) {
   const queryClient = createTestQueryClient()
-  const { withoutRouter = false, withoutLanguage = false } = options
+  const { withoutRouter = false, withoutLanguage = false, withoutTheme = false } = options
 
   function Wrapper({ children }: WrapperProps) {
     let tree: React.ReactNode = children
     if (!withoutLanguage) {
       tree = <LanguageProvider>{tree}</LanguageProvider>
+    }
+    if (!withoutTheme) {
+      tree = <ThemeProvider>{tree}</ThemeProvider>
     }
     if (!withoutRouter) {
       tree = <BrowserRouter>{tree}</BrowserRouter>
@@ -76,8 +82,8 @@ export function renderWithProviders(
   ui: ReactElement,
   options: RenderWithProvidersOptions = {}
 ) {
-  const { withoutRouter, withoutLanguage, ...renderOptions } = options
-  const { Wrapper, queryClient } = createWrapper({ withoutRouter, withoutLanguage })
+  const { withoutRouter, withoutLanguage, withoutTheme, ...renderOptions } = options
+  const { Wrapper, queryClient } = createWrapper({ withoutRouter, withoutLanguage, withoutTheme })
   const result = render(ui, { wrapper: Wrapper, ...renderOptions })
   return { ...result, queryClient }
 }
@@ -92,8 +98,8 @@ export function renderHookWithProviders<TResult, TProps>(
   hook: (props: TProps) => TResult,
   options: RenderHookWithProvidersOptions<TProps> = {}
 ) {
-  const { withoutRouter, withoutLanguage, ...renderOptions } = options
-  const { Wrapper, queryClient } = createWrapper({ withoutRouter, withoutLanguage })
+  const { withoutRouter, withoutLanguage, withoutTheme, ...renderOptions } = options
+  const { Wrapper, queryClient } = createWrapper({ withoutRouter, withoutLanguage, withoutTheme })
   const result = renderHook(hook, { wrapper: Wrapper, ...renderOptions })
   return { ...result, queryClient }
 }
