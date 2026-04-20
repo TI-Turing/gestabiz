@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { screen } from '@testing-library/react'
 import { renderWithProviders } from '@/test-utils'
-import { renderWithProviders } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { AdminDashboard } from '../AdminDashboard'
 import type { Business, UserRole, User } from '@/types/types'

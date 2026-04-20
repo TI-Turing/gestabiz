@@ -5,7 +5,6 @@
 
 import { screen, fireEvent } from '@testing-library/react'
 import { renderWithProviders } from '@/test-utils'
-import { renderWithProviders } from '@/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { EmployeeListView } from '../EmployeeListView'
 import type { EmployeeHierarchy } from '@/types'

@@ -5,7 +5,6 @@
 
 import { screen, fireEvent, within } from '@testing-library/react'
 import { renderWithProviders } from '@/test-utils'
-import { renderWithProviders } from '@/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { FiltersPanel } from '../FiltersPanel'
 import type { HierarchyFilters } from '@/types'

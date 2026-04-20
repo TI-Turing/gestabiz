@@ -12,7 +12,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react'
 import { renderWithProviders } from '@/test-utils'
-import { renderWithProviders } from '@/test-utils';
 import userEvent from '@testing-library/user-event';
 import { FileUpload } from '../FileUpload';
 import type { ChatAttachment } from '@/hooks/useChat';

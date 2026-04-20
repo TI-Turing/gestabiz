@@ -7,7 +7,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { screen, waitFor } from '@testing-library/react'
 import { renderWithProviders } from '@/test-utils'
-import { renderWithProviders } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { RoleAssignment } from '@/components/admin/RoleAssignment'
 import { usePermissions } from '@/hooks/usePermissions-v2'
