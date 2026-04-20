@@ -17,8 +17,7 @@ import { FileUpload } from '../FileUpload';
 import type { ChatAttachment } from '@/hooks/useChat';
 
 // Mock Supabase client
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     storage: {
       from: vi.fn(() => ({
         upload: vi.fn().mockResolvedValue({
@@ -30,8 +29,7 @@ vi.mock('@/lib/supabase', () => ({
         })),
       })),
     },
-  },
-}));
+  }; return { supabase: __sb, default: __sb } });
 
 describe('FileUpload Component', () => {
   const mockOnUploadComplete = vi.fn();

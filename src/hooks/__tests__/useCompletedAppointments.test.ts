@@ -4,11 +4,9 @@ import { useCompletedAppointments } from '../useCompletedAppointments';
 import { createWrapper } from '@/test-utils/render-with-providers';
 import { setupFromMock } from '@/test-utils/supabase-mock';
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     from: vi.fn(),
-  },
-}));
+  }; return { supabase: __sb, default: __sb } });
 
 // Import the mocked module to configure it per-test
 import { supabase } from '@/lib/supabase';

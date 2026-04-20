@@ -4,11 +4,9 @@ import { useUserRoles } from '../useUserRoles';
 import type { User } from '@/types/types';
 
 // Mock supabase
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     from: vi.fn(),
-  },
-}));
+  }; return { supabase: __sb, default: __sb } });
 
 // Mock sonner
 vi.mock('sonner', () => ({

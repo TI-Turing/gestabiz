@@ -9,11 +9,9 @@ const getWrapper = () => createWrapper().Wrapper
 
 const mockRpc = vi.fn()
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
+vi.mock('@/lib/supabase', () => { const __sb = {
     rpc: (...args: unknown[]) => mockRpc(...args),
-  },
-}))
+  }; return { supabase: __sb, default: __sb } })
 
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },

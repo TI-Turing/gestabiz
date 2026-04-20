@@ -6,9 +6,7 @@ import { createMockBusiness } from '@/test-utils/mock-factories'
 
 const mockFrom = vi.hoisted(() => vi.fn())
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: { from: mockFrom },
-}))
+vi.mock('@/lib/supabase', () => { const __sb = { from: mockFrom }; return { supabase: __sb, default: __sb } })
 
 vi.mock('@/lib/queryConfig', () => ({
   default: {

@@ -4,11 +4,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEmployeeServices } from '../useEmployeeServices';
 
 // Mock modules
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: vi.fn(),
-  },
-}));
+vi.mock('@/lib/supabase', () => {
+  const supabase = { from: vi.fn() };
+  return { supabase, default: supabase };
+});
 
 vi.mock('sonner', () => ({
   toast: {

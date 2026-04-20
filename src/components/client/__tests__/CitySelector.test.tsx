@@ -30,9 +30,7 @@ vi.mock('@/contexts/LanguageContext', () => ({
 }))
 
 // Mock supabase for the fallback fetch
-vi.mock('@/lib/supabase', () => ({
-  supabase: { from: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ order: vi.fn().mockResolvedValue({ data: [], error: null }) }) }) }) },
-}))
+vi.mock('@/lib/supabase', () => { const __sb = { from: vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ order: vi.fn().mockResolvedValue({ data: [], error: null }) }) }) }) }; return { supabase: __sb, default: __sb } })
 
 // Constants
 vi.mock('@/constants', () => ({

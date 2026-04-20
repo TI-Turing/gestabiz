@@ -6,9 +6,7 @@ import { mockSupabaseChain } from '@/test-utils/supabase-mock'
 const mockFrom = vi.hoisted(() => vi.fn())
 const mockRpc = vi.hoisted(() => vi.fn())
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: { from: mockFrom, rpc: mockRpc },
-}))
+vi.mock('@/lib/supabase', () => { const __sb = { from: mockFrom, rpc: mockRpc }; return { supabase: __sb, default: __sb } })
 
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
