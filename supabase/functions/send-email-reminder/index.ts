@@ -107,7 +107,7 @@ serve(async (req) => {
       // 24h + pendiente: caja de advertencia + botón confirmar + botón reprogramar
       ctaButtonsHtml = `
             <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:14px 18px;margin:0 0 20px;">
-              <p style="margin:0;color:#92400e;font-size:14px;">⚠️ <strong>Aún no has confirmado esta cita.</strong> ¿Deseas confirmar ahora?</p>
+              <p style="margin:0;color:#92400e;font-size:14px;display:flex;align-items:center;gap:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span><strong>Aún no has confirmado esta cita.</strong> ¿Deseas confirmar ahora?</span></p>
             </div>
             <div style="text-align:center;margin:20px 0 4px">
               <a href="${APP_URL}/confirmar-cita/${token}"
@@ -123,7 +123,7 @@ serve(async (req) => {
       // 24h + confirmada: solo caja verde informativa, sin botones
       ctaButtonsHtml = `
             <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:14px 18px;margin:0 0 20px;text-align:center;">
-              <p style="margin:0;color:#166534;font-size:14px;">✅ <strong>Tu cita está confirmada.</strong> ¡Te esperamos!</p>
+              <p style="margin:0;color:#166534;font-size:14px;display:inline-flex;align-items:center;gap:8px;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span><strong>Tu cita está confirmada.</strong> ¡Te esperamos!</span></p>
             </div>`
     } else if (!is24h && isConfirmed) {
       // 2h + confirmada: sin botones, solo enlace inline
