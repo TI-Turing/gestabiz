@@ -1,6 +1,6 @@
 // Supabase Edge Function: process-reminders
-// Runs hourly to send 24h and 2h appointment reminders.
-// Windowing accounts for half-hour slots: [24h, 24.5h] and [2h, 2.5h].
+// Runs every 15 minutes to send 24h and 2h appointment reminders.
+// Windowing uses 15-minute slots: [24h, 24h15m] and [2h, 2h15m].
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -29,12 +29,12 @@ serve(async (req) => {
     const now = new Date()
     const addMinutes = (d: Date, m: number) => new Date(d.getTime() + m * 60 * 1000)
 
-    // Windows to catch hourly cron and half-hour appointments
+    // Windows to catch every-15-min cron — 15-minute slots to avoid duplicates
     const windowStart24h = addMinutes(now, 24 * 60)
-    const windowEnd24h = addMinutes(now, 24 * 60 + 30)
+    const windowEnd24h = addMinutes(now, 24 * 60 + 15)
 
     const windowStart2h = addMinutes(now, 120)
-    const windowEnd2h = addMinutes(now, 120 + 30)
+    const windowEnd2h = addMinutes(now, 120 + 15)
 
     // Fetch appointments in both windows
     const [{ data: appts24h, error: err24 }, { data: appts2h, error: err2 }] = await Promise.all([
