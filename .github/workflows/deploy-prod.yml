@@ -58,7 +58,7 @@ jobs:
       - name: Check pending migrations
         id: check_migrations
         run: |
-          OUTPUT=$(npx supabase db push --dry-run --dns-resolver https 2>&1) || true
+          OUTPUT=$(npx supabase db push --dry-run --include-all --dns-resolver https 2>&1) || true
           echo "$OUTPUT"
 
           if echo "$OUTPUT" | grep -q "Would apply"; then
@@ -71,7 +71,7 @@ jobs:
 
       - name: Apply migrations
         if: steps.check_migrations.outputs.has_pending == 'true'
-        run: npx supabase db push --dns-resolver https --yes
+        run: npx supabase db push --include-all --dns-resolver https --yes
 
       - name: Verify migration status
         run: npx supabase migration list --dns-resolver https

@@ -28,7 +28,7 @@ jobs:
 
       - name: Apply migrations
         run: |
-          npx supabase db push --dns-resolver https --yes
+          npx supabase db push --include-all --dns-resolver https --yes
 
       - name: Verify migration status
         run: |
