@@ -943,14 +943,11 @@ function createAppointmentNewEmployeeEmail(vars: Record<string, string>, subject
 }
 
 // Helper para cargar template HTML personalizado
-async function loadHTMLTemplate(templateName: string, data: any): Promise<string | null> {
-    // En producción, cargar desde Supabase Storage o archivo local
-    const templatePath = `../templates/${templateName}.html`
-    
-    // Por ahora retornamos null para usar template básico
-    // TODO: Implementar carga de template desde storage
+async function loadHTMLTemplate(_templateName: string, _data: any): Promise<string | null> {
+  try {
+    // TODO: Implementar carga de template desde Supabase Storage
     return null
-  } catch (error) {
+  } catch (_error) {
     return null
   }
 }
