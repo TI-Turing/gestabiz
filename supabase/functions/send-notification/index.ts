@@ -3,48 +3,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // Sentry deshabilitado temporalmente para evitar fallos en carga del worker
 import { sendBrevoEmail, createBasicEmailTemplate } from '../_shared/brevo.ts'
 import { initSentry, captureEdgeFunctionError, captureEdgeFunctionMessage, flushSentry } from '../_shared/sentry.ts'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
 // Initialize Sentry (se activa solo si existe SENTRY_DSN)
 initSentry('send-notification')
-
-// Dominios permitidos para CORS (producción); localhost es dinámico
-const allowedOrigins = [
-  'https://gestabiz.com',
-  'https://www.gestabiz.com'
-]
-
-function isLocalOrigin(origin: string) {
-  try {
-    const u = new URL(origin)
-    return (
-      u.hostname === 'localhost' ||
-      u.hostname === '127.0.0.1'
-    )
-  } catch {
-    return false
-  }
-}
-
-function getCorsHeaders(origin: string | null, accessControlRequestHeaders?: string | null) {
-  let allowedOrigin = allowedOrigins[0]
-  if (origin) {
-    if (isLocalOrigin(origin)) {
-      // Permitir cualquier puerto en localhost/127.0.0.1 (Vite/Next/etc.)
-      allowedOrigin = origin
-    } else if (allowedOrigins.includes(origin)) {
-      allowedOrigin = origin
-    }
-  }
-
-  return {
-    'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Headers': accessControlRequestHeaders || 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Max-Age': '86400',
-    'Vary': 'Origin',
-  }
-}
 
 interface NotificationRequest {
   type: 'appointment_reminder' | 'appointment_confirmation' | 'appointment_cancellation' | 
@@ -76,13 +38,9 @@ interface NotificationRequest {
 
 serve(async (req) => {
   const requestId = crypto.randomUUID()
-  const origin = req.headers.get('origin')
-  const acrh = req.headers.get('Access-Control-Request-Headers')
-  const corsHeaders = getCorsHeaders(origin, acrh)
-  
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+  const corsHeaders = getCorsHeaders(req)
 
   try {
     captureEdgeFunctionMessage('send-notification:start', 'info', { request_id: requestId })
