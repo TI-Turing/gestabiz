@@ -24,7 +24,7 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
-    const { notificationId, appointmentId } = await req.json()
+    const { notificationId, appointmentId, type: reminderType } = await req.json()
     if (!notificationId || !appointmentId) {
       throw new Error('notificationId and appointmentId are required')
     }
@@ -100,33 +100,64 @@ serve(async (req) => {
     const isConfirmed = appointmentStatus === 'confirmed'
     const businessName = escapeHtml((appointment as any).business?.name ?? 'tu negocio')
 
-    // ── CTA Buttons based on status ───────────────────────────────────────────
-    const ctaButtonsHtml = token ? `
-            <div style="text-align:center;margin:28px 0 4px">
-              ${!isConfirmed ? `
+    // ── CTA Buttons — 4 variantes (is24h × isConfirmed) ────────────────────────
+    const is24h = (reminderType ?? 'reminder_24h') === 'reminder_24h'
+    let ctaButtonsHtml = ''
+    if (is24h && !isConfirmed && token) {
+      // 24h + pendiente: caja de advertencia + botón confirmar + botón reprogramar
+      ctaButtonsHtml = `
+            <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:14px 18px;margin:0 0 20px;">
+              <p style="margin:0;color:#92400e;font-size:14px;">⚠️ <strong>Aún no has confirmado esta cita.</strong> ¿Deseas confirmar ahora?</p>
+            </div>
+            <div style="text-align:center;margin:20px 0 4px">
               <a href="${APP_URL}/confirmar-cita/${token}"
                  style="display:inline-block;background:#6820F7;color:#ffffff;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:13px 28px;border-radius:10px;margin:6px 8px;letter-spacing:.3px;">
                 Confirmar asistencia
-              </a>` : ''}
-              <a href="${APP_URL}/cancelar-cita/${token}"
-                 style="display:inline-block;background:#ffffff;color:#dc2626;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:10px;border:2px solid #dc2626;margin:6px 8px;letter-spacing:.3px;">
-                Cancelar cita
+              </a>
+              <a href="${APP_URL}/app"
+                 style="display:inline-block;background:#f1f5f9;color:#475569;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:12px 28px;border-radius:10px;margin:6px 8px;letter-spacing:.3px;">
+                Reprogramar
+              </a>
+            </div>`
+    } else if (is24h && isConfirmed) {
+      // 24h + confirmada: solo caja verde informativa, sin botones
+      ctaButtonsHtml = `
+            <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:14px 18px;margin:0 0 20px;text-align:center;">
+              <p style="margin:0;color:#166534;font-size:14px;">✅ <strong>Tu cita está confirmada.</strong> ¡Te esperamos!</p>
+            </div>`
+    } else if (!is24h && isConfirmed) {
+      // 2h + confirmada: sin botones, solo enlace inline
+      ctaButtonsHtml = `
+            <p style="color:#64748b;font-size:14px;text-align:center;margin:20px 0;">
+              ¿No puedes asistir? <a href="${APP_URL}/app" style="color:#6820F7;text-decoration:none;font-weight:600;">Reprograma tu cita</a>
+            </p>`
+    } else if (!is24h && !isConfirmed && token) {
+      // 2h + pendiente: botón confirmar + enlace inline
+      ctaButtonsHtml = `
+            <div style="text-align:center;margin:20px 0 8px">
+              <a href="${APP_URL}/confirmar-cita/${token}"
+                 style="display:inline-block;background:#6820F7;color:#ffffff;font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;text-decoration:none;padding:13px 28px;border-radius:10px;margin:6px 8px;letter-spacing:.3px;">
+                Confirmar asistencia
               </a>
             </div>
-            <p style="color:#94a3b8;font-size:12px;text-align:center;margin-top:10px;margin-bottom:0;">
-              ${!isConfirmed
-                ? 'Tienes <strong>30 minutos</strong> desde este mensaje para confirmar o cancelar sin costo.'
-                : 'Si necesitas cancelar, puedes hacerlo durante los próximos <strong>30 minutos</strong>.'}
-            </p>` : ''
+            <p style="color:#64748b;font-size:14px;text-align:center;margin:0;">
+              ¿No puedes asistir? <a href="${APP_URL}/app" style="color:#6820F7;text-decoration:none;font-weight:600;">Reprograma tu cita</a>
+            </p>`
+    }
 
     // Escapar todos los datos de usuario antes de insertar en HTML
     const safeTitle = escapeHtml((appointment.service as any)?.name ?? 'Tu cita')
     const safeLocationName = escapeHtml(appointment.location?.name)
     const safeDescription = escapeHtml(appointment.client_notes ?? appointment.notes)
 
-    const emailSubject = isConfirmed
-      ? `Tu cita está confirmada — ${safeTitle}`
-      : `Recordatorio: ${safeTitle}`
+    let emailSubject: string
+    if (is24h && isConfirmed) {
+      emailSubject = `Tu cita está confirmada — ${safeTitle}`
+    } else if (is24h && !isConfirmed) {
+      emailSubject = `Confirma tu cita: ${safeTitle}`
+    } else {
+      emailSubject = `Tu cita es en 2 horas — ${safeTitle}`
+    }
 
     // Location detail rows (rendered only when data is present)
     const locationRowHtml = safeLocationName ? `
