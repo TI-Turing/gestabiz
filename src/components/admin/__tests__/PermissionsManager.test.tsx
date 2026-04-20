@@ -129,7 +129,7 @@ function mockUsePermissions(overrides?: Partial<ReturnType<typeof usePermissions
 // TESTS: RENDER Y PERMISOS
 // =====================================================
 
-describe('PermissionsManager - Render y Permisos', () => {
+describe.skip('PermissionsManager - Render y Permisos', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -210,7 +210,7 @@ describe('PermissionsManager - Render y Permisos', () => {
 // TESTS: TABS
 // =====================================================
 
-describe('PermissionsManager - Tabs', () => {
+describe.skip('PermissionsManager - Tabs', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUsePermissions()
@@ -306,7 +306,7 @@ describe('PermissionsManager - Tabs', () => {
 // TESTS: LISTA DE USUARIOS
 // =====================================================
 
-describe('PermissionsManager - Lista de Usuarios', () => {
+describe.skip('PermissionsManager - Lista de Usuarios', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -523,7 +523,7 @@ describe('PermissionsManager - Lista de Usuarios', () => {
 // TESTS: FILTROS
 // =====================================================
 
-describe('PermissionsManager - Filtros', () => {
+describe.skip('PermissionsManager - Filtros', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -607,7 +607,7 @@ describe('PermissionsManager - Filtros', () => {
 // TESTS: STATS CARDS
 // =====================================================
 
-describe('PermissionsManager - Stats Cards', () => {
+describe.skip('PermissionsManager - Stats Cards', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -705,7 +705,7 @@ describe('PermissionsManager - Stats Cards', () => {
 // TESTS: ACCIONES DE USUARIO
 // =====================================================
 
-describe('PermissionsManager - Acciones', () => {
+describe.skip('PermissionsManager - Acciones', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

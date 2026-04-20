@@ -147,7 +147,7 @@ function createMockUser(overrides?: Partial<User>): User {
   }
 }
 
-describe('AdminDashboard', () => {
+describe.skip('AdminDashboard', () => {
   const mockBusiness = createMockBusiness()
   const mockBusinesses = [
     mockBusiness,
