@@ -165,17 +165,19 @@ serve(async (req) => {
     }
 
     // ─── 5. NOTIFICACIÓN AL CLIENTE ─────────────────────────────────────────────
-    const { error: notificationError } = await supabaseAdmin
-      .from('notifications')
-      .insert({
-        user_id: appointment.client_id,
-        type: action === 'confirm' ? 'appointment_confirmed' : 'appointment_cancelled',
-        title: notificationTitle,
-        message: notificationMessage,
-        appointment_id: appointmentId
-      })
+    if (appointment.client_id) {
+      const { error: notificationError } = await supabaseAdmin
+        .from('notifications')
+        .insert({
+          user_id: appointment.client_id,
+          type: action === 'confirm' ? 'appointment_confirmed' : 'appointment_cancelled',
+          title: notificationTitle,
+          message: notificationMessage,
+          appointment_id: appointmentId
+        })
 
-    if (notificationError) {
+      if (notificationError) {
+      }
     }
 
     // ─── 6. WHATSAPP / EMAIL ────────────────────────────────────────────────────

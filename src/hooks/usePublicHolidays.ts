@@ -69,7 +69,7 @@ export function usePublicHolidays(
         .order('holiday_date', { ascending: true });
 
       if (queryError) {
-        // eslint-disable-next-line no-console        throw queryError;
+                 throw queryError;
       }
 
       return (data || []) as Holiday[];

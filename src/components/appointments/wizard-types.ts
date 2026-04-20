@@ -16,6 +16,10 @@ export interface AppointmentWizardProps {
   preselectedTime?: string
   appointmentToEdit?: Appointment | null
   onStartChat?: (conversationId: string) => void
+  /** Admin booking mode: skips business step, adds clientData step */
+  isAdminBooking?: boolean
+  /** Pre-selected preferred location from admin settings */
+  adminPreferredLocationId?: string
 }
 
 export interface WizardBusiness {
@@ -54,4 +58,10 @@ export interface WizardData {
   startTime: string | null
   endTime: string | null
   notes: string
+  // Admin booking client data
+  clientPhone?: string
+  clientPhonePrefix?: string
+  clientEmail?: string
+  clientName?: string
+  clientProfileId?: string | null
 }

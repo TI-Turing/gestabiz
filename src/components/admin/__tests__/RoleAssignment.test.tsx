@@ -5,7 +5,9 @@
 // =====================================================
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
+import { renderWithProviders } from '@/test-utils'
+import { renderWithProviders } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { RoleAssignment } from '@/components/admin/RoleAssignment'
 import { usePermissions } from '@/hooks/usePermissions-v2'
@@ -80,7 +82,7 @@ describe('RoleAssignment - Render y Estados', () => {
   it('renderiza modal cerrado cuando isOpen es false', () => {
     mockUsePermissions()
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -100,7 +102,7 @@ describe('RoleAssignment - Render y Estados', () => {
   it('renderiza modal abierto cuando isOpen es true', () => {
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -121,7 +123,7 @@ describe('RoleAssignment - Render y Estados', () => {
     mockUsePermissions({ isOwner: true })
     const currentRole = createMockBusinessRole()
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -141,7 +143,7 @@ describe('RoleAssignment - Render y Estados', () => {
   it('muestra información del usuario correctamente', () => {
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -171,7 +173,7 @@ describe('RoleAssignment - Restricción Owner', () => {
   it('muestra advertencia cuando el usuario es el owner', () => {
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -193,7 +195,7 @@ describe('RoleAssignment - Restricción Owner', () => {
   it('no muestra formulario cuando el usuario es el owner', () => {
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -214,7 +216,7 @@ describe('RoleAssignment - Restricción Owner', () => {
   it('no muestra botón de guardar cuando el usuario es el owner', () => {
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -244,7 +246,7 @@ describe('RoleAssignment - Restricción de Permisos', () => {
   it('muestra advertencia cuando el usuario no tiene permisos', () => {
     mockUsePermissions({ isOwner: false }) // No es owner
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -265,7 +267,7 @@ describe('RoleAssignment - Restricción de Permisos', () => {
   it('no muestra formulario cuando el usuario no tiene permisos', () => {
     mockUsePermissions({ isOwner: false })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -294,7 +296,7 @@ describe('RoleAssignment - Selección de Rol', () => {
   it('renderiza opciones de rol correctamente', () => {
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -315,7 +317,7 @@ describe('RoleAssignment - Selección de Rol', () => {
   it('rol employee está seleccionado por defecto', () => {
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -335,7 +337,7 @@ describe('RoleAssignment - Selección de Rol', () => {
   it('muestra tipo de empleado cuando se selecciona rol employee', () => {
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -357,7 +359,7 @@ describe('RoleAssignment - Selección de Rol', () => {
     const user = userEvent.setup()
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -383,7 +385,7 @@ describe('RoleAssignment - Selección de Rol', () => {
   it('service_provider está seleccionado por defecto en tipo de empleado', () => {
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -413,7 +415,7 @@ describe('RoleAssignment - Formulario', () => {
   it('renderiza campo de notas', () => {
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -436,7 +438,7 @@ describe('RoleAssignment - Formulario', () => {
     const user = userEvent.setup()
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -460,7 +462,7 @@ describe('RoleAssignment - Formulario', () => {
   it('renderiza botones de footer', () => {
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -480,7 +482,7 @@ describe('RoleAssignment - Formulario', () => {
   it('botón de asignar está deshabilitado si userId es null', () => {
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -512,7 +514,7 @@ describe('RoleAssignment - Submit Nuevo Rol', () => {
     const mockAssignRole = vi.fn()
     mockUsePermissions({ isOwner: true, assignRole: mockAssignRole })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -548,7 +550,7 @@ describe('RoleAssignment - Submit Nuevo Rol', () => {
     const mockAssignRole = vi.fn()
     mockUsePermissions({ isOwner: true, assignRole: mockAssignRole })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -583,7 +585,7 @@ describe('RoleAssignment - Submit Nuevo Rol', () => {
     const mockAssignRole = vi.fn()
     mockUsePermissions({ isOwner: true, assignRole: mockAssignRole })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -638,7 +640,7 @@ describe('RoleAssignment - Submit Modificar Rol', () => {
 
     const currentRole = createMockBusinessRole({ id: 'role-old', role: 'employee' })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -682,7 +684,7 @@ describe('RoleAssignment - Submit Modificar Rol', () => {
     mockUsePermissions({ isOwner: true })
     const currentRole = createMockBusinessRole()
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"
@@ -714,7 +716,7 @@ describe('RoleAssignment - Cancelación', () => {
     const mockOnClose = vi.fn()
     mockUsePermissions({ isOwner: true })
 
-    render(
+    renderWithProviders(
       <RoleAssignment
         businessId="business-123"
         ownerId="owner-123"

@@ -87,7 +87,7 @@ export function useCompletedAppointments(
         .order('start_time', { ascending: false });
 
       if (queryError) {
-        // eslint-disable-next-line no-console        throw queryError;
+                 throw queryError;
       }
 
       // Transform data to match our interface (businesses and services are already single objects)

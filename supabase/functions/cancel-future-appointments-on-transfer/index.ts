@@ -173,6 +173,9 @@ serve(async (req) => {
 
     for (const appointment of appointmentsToCancel) {
       try {
+        // Skip notification for guest appointments (no registered client)
+        if (!appointment.client_id) continue
+
         const appointmentDate = new Date(appointment.start_time).toLocaleDateString('es', {
           day: '2-digit', month: 'short', year: 'numeric',
           hour: '2-digit', minute: '2-digit',

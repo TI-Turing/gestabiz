@@ -84,7 +84,7 @@ export function useJobVacancies(businessId?: string) {
 
       setVacancies(data || [])
     } catch (err: any) {
-       // eslint-disable-line no-console
+        
       logger.error('Failed to fetch job vacancies', err, {
         component: 'useJobVacancies',
         operation: 'fetchVacancies',
@@ -158,7 +158,7 @@ export function useJobVacancies(businessId?: string) {
 
       return data
     } catch (err: any) {
-       // eslint-disable-line no-console
+        
       logger.error('Failed to create job vacancy', err, {
         component: 'useJobVacancies',
         operation: 'createVacancy',
@@ -195,7 +195,7 @@ export function useJobVacancies(businessId?: string) {
 
       return true
     } catch (err: any) {
-       // eslint-disable-line no-console
+        
       logger.error('Failed to update job vacancy', err, {
         component: 'useJobVacancies',
         operation: 'updateVacancy',
@@ -231,7 +231,7 @@ export function useJobVacancies(businessId?: string) {
 
       return true
     } catch (err: any) {
-       // eslint-disable-line no-console
+        
       logger.error('Failed to delete job vacancy', err, {
         component: 'useJobVacancies',
         operation: 'deleteVacancy',
@@ -259,7 +259,7 @@ export function useJobVacancies(businessId?: string) {
 
       return true
     } catch (err: any) {
-       // eslint-disable-line no-console
+        
       logger.error('Failed to close job vacancy', err, {
         component: 'useJobVacancies',
         operation: 'closeVacancy',
@@ -274,7 +274,7 @@ export function useJobVacancies(businessId?: string) {
     try {
       await supabase.rpc('increment_vacancy_views', { vacancy_id: vacancyId })
     } catch (err: any) {
-       // eslint-disable-line no-console
+        
       logger.warn('Failed to increment vacancy views', {
         component: 'useJobVacancies',
         operation: 'incrementViews',

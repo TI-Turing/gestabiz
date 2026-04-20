@@ -25,9 +25,9 @@ interface AddPaymentMethodModalProps {
 
 export function AddPaymentMethodModal({
   onClose,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   businessId: _businessId,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   onSuccess: _onSuccess,
 }: Readonly<AddPaymentMethodModalProps>) {
   return (

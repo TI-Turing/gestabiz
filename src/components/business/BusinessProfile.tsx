@@ -358,7 +358,7 @@ export default function BusinessProfile({
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessProfile' } })
       if (error instanceof Error) {
-        // eslint-disable-next-line no-console
+         
       }
     } finally {
       setLoading(false);
@@ -409,7 +409,7 @@ export default function BusinessProfile({
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessProfile' } })
       // Error handling
       if (error instanceof Error) {
-        // eslint-disable-next-line no-console
+         
       }
     }
   }, [user, businessId]);
@@ -440,7 +440,7 @@ export default function BusinessProfile({
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'BusinessProfile' } })
       // Error is already handled by useReviews hook
-      // eslint-disable-next-line no-console
+       
     }
   };
 

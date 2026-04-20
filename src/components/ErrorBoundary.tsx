@@ -45,7 +45,7 @@ export class ErrorBoundary extends Component<Props, State> {
     
     // Log estructurado para debugging
     const prefix = componentName ? `[ErrorBoundary - ${componentName}]` : '[ErrorBoundary]'
-    // eslint-disable-next-line no-console
+     
     
     // Call optional error handler
     onError?.(error, errorInfo)

@@ -207,7 +207,7 @@ export function SearchBar({ onResultSelect, onViewMore, className, autoFocus }: 
       setResults(data)
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'SearchBar' } })
-      // eslint-disable-next-line no-console      setResults([])
+             setResults([])
     } finally {
       setIsSearching(false)
     }

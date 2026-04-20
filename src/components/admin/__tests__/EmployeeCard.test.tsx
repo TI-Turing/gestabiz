@@ -3,7 +3,9 @@
 // Tests para el card de empleado individual
 // ============================================================================
 
-import { render, screen, fireEvent } from '@testing-library/react'
+import { screen, fireEvent } from '@testing-library/react'
+import { renderWithProviders } from '@/test-utils'
+import { renderWithProviders } from '@/test-utils'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { EmployeeCard } from '../EmployeeCard'
 import type { EmployeeHierarchy } from '@/types'
@@ -44,38 +46,38 @@ describe('EmployeeCard', () => {
 
   describe('Renderizado Normal', () => {
     it('debería renderizar el nombre del empleado', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       expect(screen.getByText('John Doe')).toBeInTheDocument()
     })
 
     it('debería renderizar el email del empleado', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       expect(screen.getByText('john@example.com')).toBeInTheDocument()
     })
 
     it('debería renderizar el cargo (job_title)', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       expect(screen.getByText('Manager')).toBeInTheDocument()
     })
 
     it('debería renderizar el badge de nivel jerárquico', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       expect(screen.getByText('Manager')).toBeInTheDocument()
     })
 
     it('debería renderizar el avatar con iniciales', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       // Buscar por el texto de las iniciales
       expect(screen.getByText('JD')).toBeInTheDocument()
     })
 
     it('debería renderizar métricas (ocupación, rating, revenue)', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       expect(screen.getByText('75%')).toBeInTheDocument()
       expect(screen.getByText('4.5')).toBeInTheDocument()
@@ -83,7 +85,7 @@ describe('EmployeeCard', () => {
     })
 
     it('debería renderizar contador de reportes directos', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       expect(screen.getByText('3')).toBeInTheDocument()
     })
@@ -91,14 +93,14 @@ describe('EmployeeCard', () => {
 
   describe('Renderizado Compacto', () => {
     it('debería renderizar versión compacta', () => {
-      render(<EmployeeCard employee={mockEmployee} compact />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} compact />)
 
       expect(screen.getByText('John Doe')).toBeInTheDocument()
       expect(screen.getByText('Manager')).toBeInTheDocument()
     })
 
     it('debería renderizar avatar en modo compacto', () => {
-      render(<EmployeeCard employee={mockEmployee} compact />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} compact />)
 
       expect(screen.getByText('JD')).toBeInTheDocument()
     })
@@ -106,7 +108,7 @@ describe('EmployeeCard', () => {
 
   describe('Acciones del Card', () => {
     it('debería llamar a onEdit al hacer clic en "Editar"', () => {
-      render(
+      renderWithProviders(
         <EmployeeCard
           employee={mockEmployee}
           onEdit={mockOnEdit}
@@ -125,7 +127,7 @@ describe('EmployeeCard', () => {
     })
 
     it('debería llamar a onViewProfile al hacer clic en "Ver Perfil"', () => {
-      render(
+      renderWithProviders(
         <EmployeeCard
           employee={mockEmployee}
           onViewProfile={mockOnViewProfile}
@@ -142,7 +144,7 @@ describe('EmployeeCard', () => {
     })
 
     it('debería llamar a onAssignSupervisor al hacer clic en "Asignar Supervisor"', () => {
-      render(
+      renderWithProviders(
         <EmployeeCard
           employee={mockEmployee}
           onAssignSupervisor={mockOnAssignSupervisor}
@@ -161,7 +163,7 @@ describe('EmployeeCard', () => {
 
   describe('Estados del Empleado', () => {
     it('debería mostrar empleado activo', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       // El card no debería tener indicador de inactivo
       expect(screen.queryByText('Inactivo')).not.toBeInTheDocument()
@@ -173,7 +175,7 @@ describe('EmployeeCard', () => {
         is_active: false,
       }
 
-      render(<EmployeeCard employee={inactiveEmployee} />)
+      renderWithProviders(<EmployeeCard employee={inactiveEmployee} />)
 
       expect(screen.getByText('Inactivo')).toBeInTheDocument()
     })
@@ -181,7 +183,7 @@ describe('EmployeeCard', () => {
 
   describe('Supervisor Info', () => {
     it('debería mostrar nombre del supervisor', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       expect(screen.getByText(/Jane Smith/)).toBeInTheDocument()
     })
@@ -194,7 +196,7 @@ describe('EmployeeCard', () => {
         supervisor_email: null,
       }
 
-      render(<EmployeeCard employee={employeeWithoutSupervisor} />)
+      renderWithProviders(<EmployeeCard employee={employeeWithoutSupervisor} />)
 
       expect(screen.getByText('Sin supervisor')).toBeInTheDocument()
     })
@@ -208,7 +210,7 @@ describe('EmployeeCard', () => {
         job_title: 'Owner',
       }
 
-      render(<EmployeeCard employee={ownerEmployee} />)
+      renderWithProviders(<EmployeeCard employee={ownerEmployee} />)
 
       expect(screen.getByText('Owner')).toBeInTheDocument()
     })
@@ -220,7 +222,7 @@ describe('EmployeeCard', () => {
         job_title: 'Admin',
       }
 
-      render(<EmployeeCard employee={adminEmployee} />)
+      renderWithProviders(<EmployeeCard employee={adminEmployee} />)
 
       expect(screen.getByText('Admin')).toBeInTheDocument()
     })
@@ -232,7 +234,7 @@ describe('EmployeeCard', () => {
         job_title: 'Team Lead',
       }
 
-      render(<EmployeeCard employee={leadEmployee} />)
+      renderWithProviders(<EmployeeCard employee={leadEmployee} />)
 
       expect(screen.getByText('Team Lead')).toBeInTheDocument()
     })
@@ -244,7 +246,7 @@ describe('EmployeeCard', () => {
         job_title: 'Staff Member',
       }
 
-      render(<EmployeeCard employee={staffEmployee} />)
+      renderWithProviders(<EmployeeCard employee={staffEmployee} />)
 
       expect(screen.getByText('Staff Member')).toBeInTheDocument()
     })
@@ -257,7 +259,7 @@ describe('EmployeeCard', () => {
         occupancy_percentage: 0,
       }
 
-      render(<EmployeeCard employee={employeeWithZeroOccupancy} />)
+      renderWithProviders(<EmployeeCard employee={employeeWithZeroOccupancy} />)
 
       expect(screen.getByText('0%')).toBeInTheDocument()
     })
@@ -268,7 +270,7 @@ describe('EmployeeCard', () => {
         occupancy_percentage: 100,
       }
 
-      render(<EmployeeCard employee={employeeWithFullOccupancy} />)
+      renderWithProviders(<EmployeeCard employee={employeeWithFullOccupancy} />)
 
       expect(screen.getByText('100%')).toBeInTheDocument()
     })
@@ -279,7 +281,7 @@ describe('EmployeeCard', () => {
         average_rating: 0,
       }
 
-      render(<EmployeeCard employee={employeeWithNoRating} />)
+      renderWithProviders(<EmployeeCard employee={employeeWithNoRating} />)
 
       expect(screen.getByText('0.0')).toBeInTheDocument()
     })
@@ -290,7 +292,7 @@ describe('EmployeeCard', () => {
         total_revenue: 0,
       }
 
-      render(<EmployeeCard employee={employeeWithNoRevenue} />)
+      renderWithProviders(<EmployeeCard employee={employeeWithNoRevenue} />)
 
       expect(screen.getByText('$0')).toBeInTheDocument()
     })
@@ -298,7 +300,7 @@ describe('EmployeeCard', () => {
 
   describe('Departamento', () => {
     it('debería mostrar nombre del departamento', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       expect(screen.getByText('Sales')).toBeInTheDocument()
     })
@@ -310,7 +312,7 @@ describe('EmployeeCard', () => {
         department_name: null,
       }
 
-      render(<EmployeeCard employee={employeeWithoutDept} />)
+      renderWithProviders(<EmployeeCard employee={employeeWithoutDept} />)
 
       expect(screen.getByText('Sin departamento')).toBeInTheDocument()
     })
@@ -318,14 +320,14 @@ describe('EmployeeCard', () => {
 
   describe('Accessibility', () => {
     it('debería tener botón de dropdown accesible', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       const dropdownButton = screen.getByRole('button', { name: /more/i })
       expect(dropdownButton).toBeInTheDocument()
     })
 
     it('debería tener avatar con alt text o fallback', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       // Verificar que existe el avatar (con iniciales como fallback)
       expect(screen.getByText('JD')).toBeInTheDocument()
@@ -334,7 +336,7 @@ describe('EmployeeCard', () => {
 
   describe('Props Opcionales', () => {
     it('debería funcionar sin callbacks', () => {
-      render(<EmployeeCard employee={mockEmployee} />)
+      renderWithProviders(<EmployeeCard employee={mockEmployee} />)
 
       expect(screen.getByText('John Doe')).toBeInTheDocument()
     })
@@ -345,7 +347,7 @@ describe('EmployeeCard', () => {
         avatar_url: null,
       }
 
-      render(<EmployeeCard employee={employeeWithoutAvatar} />)
+      renderWithProviders(<EmployeeCard employee={employeeWithoutAvatar} />)
 
       // Debería mostrar iniciales
       expect(screen.getByText('JD')).toBeInTheDocument()

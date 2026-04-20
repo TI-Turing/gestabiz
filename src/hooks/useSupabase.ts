@@ -382,7 +382,8 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
       
       // ✅ Enviar notificaciones in-app (no bloqueantes)
       try {
-        // Notificación al CLIENTE
+        // Notificación al CLIENTE (solo si hay client_id registrado)
+        if (appointmentData.client_id) {
         const clientNotificationPayload = {
           type: 'appointment_new_client',
           recipient_user_id: appointmentData.client_id,
@@ -402,6 +403,7 @@ export const useAppointments = (userId?: string, options: { autoFetch?: boolean 
         })
         if (clientResult.error) {
         } else {
+        }
         }
         
         // Notificación al EMPLEADO (si es diferente del creador)
