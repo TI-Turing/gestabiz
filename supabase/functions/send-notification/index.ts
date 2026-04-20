@@ -3,48 +3,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // Sentry deshabilitado temporalmente para evitar fallos en carga del worker
 import { sendBrevoEmail, createBasicEmailTemplate } from '../_shared/brevo.ts'
 import { initSentry, captureEdgeFunctionError, captureEdgeFunctionMessage, flushSentry } from '../_shared/sentry.ts'
+import { getCorsHeaders, handleCorsPreFlight } from '../_shared/cors.ts'
 
 // Initialize Sentry (se activa solo si existe SENTRY_DSN)
 initSentry('send-notification')
-
-// Dominios permitidos para CORS (producción); localhost es dinámico
-const allowedOrigins = [
-  'https://gestabiz.com',
-  'https://www.gestabiz.com'
-]
-
-function isLocalOrigin(origin: string) {
-  try {
-    const u = new URL(origin)
-    return (
-      u.hostname === 'localhost' ||
-      u.hostname === '127.0.0.1'
-    )
-  } catch {
-    return false
-  }
-}
-
-function getCorsHeaders(origin: string | null, accessControlRequestHeaders?: string | null) {
-  let allowedOrigin = allowedOrigins[0]
-  if (origin) {
-    if (isLocalOrigin(origin)) {
-      // Permitir cualquier puerto en localhost/127.0.0.1 (Vite/Next/etc.)
-      allowedOrigin = origin
-    } else if (allowedOrigins.includes(origin)) {
-      allowedOrigin = origin
-    }
-  }
-
-  return {
-    'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Headers': accessControlRequestHeaders || 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Max-Age': '86400',
-    'Vary': 'Origin',
-  }
-}
 
 interface NotificationRequest {
   type: 'appointment_reminder' | 'appointment_confirmation' | 'appointment_cancellation' | 
@@ -78,11 +40,9 @@ serve(async (req) => {
   const requestId = crypto.randomUUID()
   const origin = req.headers.get('origin')
   const acrh = req.headers.get('Access-Control-Request-Headers')
-  const corsHeaders = getCorsHeaders(origin, acrh)
-  
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  const corsPreFlight = handleCorsPreFlight(req)
+  if (corsPreFlight) return corsPreFlight
+  const corsHeaders = getCorsHeaders(req)
 
   try {
     captureEdgeFunctionMessage('send-notification:start', 'info', { request_id: requestId })
@@ -716,19 +676,349 @@ async function prepareNotificationContent(request: NotificationRequest, supabase
     message = generic
   }
 
-  return { subject, message }
+  return { subject, message, vars }
+}
+
+// Template HTML para confirmación de cita agendada — diseño de marca Gestabiz
+function createAppointmentBookedEmail(vars: Record<string, string>, subject: string): string {
+  const clientName = vars['client_name'] || 'Cliente'
+  const date = vars['date'] || ''
+  const time = vars['time'] || ''
+  const location = vars['location'] || ''
+  const address = vars['address'] || ''
+  const city = vars['city'] || ''
+  const service = vars['service'] || ''
+  const employeeName = vars['employee_name'] || ''
+
+  const addressInline = (address || city)
+    ? `<br><span style="color:#64748b;font-size:13px;">${address}${city ? `, ${city}` : ''}</span>`
+    : ''
+
+  const employeeRow = employeeName ? `
+        <div style="display:flex;align-items:flex-start;gap:14px;padding:10px 0;">
+          <div style="width:32px;height:32px;border-radius:8px;background:#fffbeb;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div>
+            <span style="color:#94a3b8;font-size:11.5px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:2px;">Profesional</span>
+            <span style="color:#1e293b;font-size:15px;font-weight:500;line-height:1.4;">${employeeName}</span>
+          </div>
+        </div>` : ''
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject} - Gestabiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background-color:#F5F4FB;padding:40px 20px;line-height:1.6;}
+    .email-wrapper{max-width:600px;margin:0 auto;}
+    .header{background-color:#6820F7;border-radius:16px 16px 0 0;padding:36px 32px 28px;text-align:center;}
+    .header-tagline{margin-top:10px;font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:#3bbfa0;}
+    .badge{display:inline-block;background:rgba(59,191,160,0.2);border:1px solid rgba(59,191,160,0.5);color:#3bbfa0;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:5px 14px;border-radius:20px;margin-top:16px;}
+    .email-card{background:#ffffff;padding:44px 40px 36px;}
+    h1{color:#1e293b;font-size:26px;font-weight:700;margin-bottom:12px;text-align:center;line-height:1.3;}
+    .greeting{color:#475569;font-size:15px;margin-bottom:20px;text-align:center;}
+    .message{color:#64748b;font-size:15px;margin-bottom:16px;text-align:center;line-height:1.75;}
+    .accent-line{width:48px;height:3px;background:linear-gradient(90deg,#6820F7,#3bbfa0);border-radius:2px;margin:20px auto 28px;}
+    .details-card{background:#F5F4FB;border:1px solid #ede9f9;border-radius:12px;padding:28px;margin:28px 0;}
+    .details-title{color:#6820F7;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:18px;}
+    .detail-row{display:flex;align-items:flex-start;gap:14px;padding:10px 0;border-bottom:1px solid #ede9f9;}
+    .detail-row:last-child{border-bottom:none;padding-bottom:0;}
+    .divider{height:1px;background-color:#ede9f9;margin:32px 0;}
+    .help-note{background:#f0fdfb;border-left:4px solid #3bbfa0;padding:14px 18px;border-radius:0 8px 8px 0;margin:24px 0;}
+    .help-note p{color:#1e6b5c;font-size:13.5px;margin:0;line-height:1.6;}
+    .footer{background:#f0eeff;border-radius:0 0 16px 16px;padding:28px 32px;text-align:center;border-top:1px solid #ede9f9;}
+    .footer-text{color:#7c6fab;font-size:12.5px;margin-bottom:6px;line-height:1.5;}
+    .footer-links{margin-top:14px;}
+    .footer-link{color:#6820F7;text-decoration:none;font-size:12.5px;font-weight:500;margin:0 10px;}
+    .footer-divider{display:inline-block;color:#c4b8e8;margin:0 2px;}
+    @media only screen and (max-width:600px){
+      body{padding:0;}
+      .header{border-radius:0;padding:28px 20px 22px;}
+      .email-card{padding:32px 20px 28px;}
+      .footer{border-radius:0;padding:22px 20px;}
+      h1{font-size:22px;}
+      .details-card{padding:20px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+
+    <!-- Header -->
+    <div class="header">
+      <a href="https://gestabiz.com" style="display:inline-flex;align-items:center;gap:14px;text-decoration:none;">
+        <img src="https://gestabiz.com/logo-icon.svg" width="52" height="52" alt="G" style="display:block;width:52px;height:52px;border-radius:11px;">
+        <span style="font-family:'Outfit',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.5px;line-height:1;">
+          <span style="color:#f0eeff;">Gesta</span><span style="color:#3bbfa0;">biz</span>
+        </span>
+      </a>
+      <p class="header-tagline">Agenda &middot; Gestiona &middot; Crece</p>
+      <div class="badge">Nueva cita</div>
+    </div>
+
+    <!-- Card principal -->
+    <div class="email-card">
+
+      <h1>&#x1F389; &#xA1;Cita Agendada!</h1>
+      <div class="accent-line"></div>
+
+      <p class="greeting">Hola <strong>${clientName}</strong>,</p>
+      <p class="message">Tu cita fue agendada exitosamente. Aqu&iacute; est&aacute;n todos los detalles:</p>
+
+      <!-- Detalles -->
+      <div class="details-card">
+        <p class="details-title">Detalles de la cita</p>
+
+        <!-- Servicio -->
+        <div class="detail-row">
+          <div style="width:32px;height:32px;border-radius:8px;background:#f0eeff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6820F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          </div>
+          <div>
+            <span style="color:#94a3b8;font-size:11.5px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:2px;">Servicio</span>
+            <span style="color:#1e293b;font-size:15px;font-weight:500;line-height:1.4;">${service}</span>
+          </div>
+        </div>
+
+        <!-- Fecha -->
+        <div class="detail-row">
+          <div style="width:32px;height:32px;border-radius:8px;background:#f0fdfb;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3bbfa0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div>
+            <span style="color:#94a3b8;font-size:11.5px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:2px;">Fecha</span>
+            <span style="color:#1e293b;font-size:15px;font-weight:500;line-height:1.4;">${date}</span>
+          </div>
+        </div>
+
+        <!-- Hora -->
+        <div class="detail-row">
+          <div style="width:32px;height:32px;border-radius:8px;background:#f0eeff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6820F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <span style="color:#94a3b8;font-size:11.5px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:2px;">Hora</span>
+            <span style="color:#1e293b;font-size:15px;font-weight:500;line-height:1.4;">${time}</span>
+          </div>
+        </div>
+
+        <!-- Sede -->
+        <div class="detail-row">
+          <div style="width:32px;height:32px;border-radius:8px;background:#f0fdfb;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3bbfa0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div>
+            <span style="color:#94a3b8;font-size:11.5px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:2px;">Sede</span>
+            <span style="color:#1e293b;font-size:15px;font-weight:500;line-height:1.4;">${location}${addressInline}</span>
+          </div>
+        </div>
+
+        ${employeeRow}
+
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="help-note">
+        <p>Recibir&aacute;s un recordatorio antes de tu cita. Si necesitas cancelar o reprogramar, comun&iacute;cate directamente con el negocio.</p>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p class="footer-text">&copy; 2026 Gestabiz &mdash; Todos los derechos reservados.</p>
+      <p class="footer-text">Este es un mensaje autom&aacute;tico. No responder a este correo.</p>
+      <div class="footer-links">
+        <a href="https://gestabiz.com" class="footer-link">Sitio web</a>
+        <span class="footer-divider">&bull;</span>
+        <a href="https://gestabiz.com/support" class="footer-link">Soporte</a>
+        <span class="footer-divider">&bull;</span>
+        <a href="https://gestabiz.com/privacy" class="footer-link">Privacidad</a>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>`
+}
+
+// Template HTML para nueva cita asignada al profesional/empleado — diseño de marca Gestabiz
+function createAppointmentNewEmployeeEmail(vars: Record<string, string>, subject: string): string {
+  const employeeName = vars['employee_name'] || vars['professional_name'] || 'Profesional'
+  const clientName = vars['client_name'] || ''
+  const date = vars['date'] || ''
+  const time = vars['time'] || ''
+  const service = vars['service'] || ''
+  const location = vars['location'] || ''
+
+  const locationRow = location ? `
+        <div class="detail-row">
+          <div style="width:32px;height:32px;border-radius:8px;background:#f0fdfb;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3bbfa0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div>
+            <span style="color:#94a3b8;font-size:11.5px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:2px;">Sede</span>
+            <span style="color:#1e293b;font-size:15px;font-weight:500;line-height:1.4;">${location}</span>
+          </div>
+        </div>` : ''
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject} - Gestabiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background-color:#F5F4FB;padding:40px 20px;line-height:1.6;}
+    .email-wrapper{max-width:600px;margin:0 auto;}
+    .header{background-color:#6820F7;border-radius:16px 16px 0 0;padding:36px 32px 28px;text-align:center;}
+    .header-tagline{margin-top:10px;font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:#3bbfa0;}
+    .badge{display:inline-block;background:rgba(59,191,160,0.2);border:1px solid rgba(59,191,160,0.5);color:#3bbfa0;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:5px 14px;border-radius:20px;margin-top:16px;}
+    .email-card{background:#ffffff;padding:44px 40px 36px;}
+    h1{color:#1e293b;font-size:26px;font-weight:700;margin-bottom:12px;text-align:center;line-height:1.3;}
+    .greeting{color:#475569;font-size:15px;margin-bottom:20px;text-align:center;}
+    .message{color:#64748b;font-size:15px;margin-bottom:16px;text-align:center;line-height:1.75;}
+    .accent-line{width:48px;height:3px;background:linear-gradient(90deg,#6820F7,#3bbfa0);border-radius:2px;margin:20px auto 28px;}
+    .details-card{background:#F5F4FB;border:1px solid #ede9f9;border-radius:12px;padding:28px;margin:28px 0;}
+    .details-title{color:#6820F7;font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:18px;}
+    .detail-row{display:flex;align-items:flex-start;gap:14px;padding:10px 0;border-bottom:1px solid #ede9f9;}
+    .detail-row:last-child{border-bottom:none;padding-bottom:0;}
+    .divider{height:1px;background-color:#ede9f9;margin:32px 0;}
+    .help-note{background:#f0fdfb;border-left:4px solid #3bbfa0;padding:14px 18px;border-radius:0 8px 8px 0;margin:24px 0;}
+    .help-note p{color:#1e6b5c;font-size:13.5px;margin:0;line-height:1.6;}
+    .footer{background:#f0eeff;border-radius:0 0 16px 16px;padding:28px 32px;text-align:center;border-top:1px solid #ede9f9;}
+    .footer-text{color:#7c6fab;font-size:12.5px;margin-bottom:6px;line-height:1.5;}
+    .footer-links{margin-top:14px;}
+    .footer-link{color:#6820F7;text-decoration:none;font-size:12.5px;font-weight:500;margin:0 10px;}
+    .footer-divider{display:inline-block;color:#c4b8e8;margin:0 2px;}
+    @media only screen and (max-width:600px){
+      body{padding:0;}
+      .header{border-radius:0;padding:28px 20px 22px;}
+      .email-card{padding:32px 20px 28px;}
+      .footer{border-radius:0;padding:22px 20px;}
+      h1{font-size:22px;}
+      .details-card{padding:20px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+
+    <!-- Header -->
+    <div class="header">
+      <a href="https://gestabiz.com" style="display:inline-flex;align-items:center;gap:14px;text-decoration:none;">
+        <img src="https://gestabiz.com/logo-icon.svg" width="52" height="52" alt="G" style="display:block;width:52px;height:52px;border-radius:11px;">
+        <span style="font-family:'Outfit',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.5px;line-height:1;">
+          <span style="color:#f0eeff;">Gesta</span><span style="color:#3bbfa0;">biz</span>
+        </span>
+      </a>
+      <p class="header-tagline">Agenda &middot; Gestiona &middot; Crece</p>
+      <div class="badge">Cita asignada</div>
+    </div>
+
+    <!-- Card principal -->
+    <div class="email-card">
+
+      <h1>Nueva Cita Asignada</h1>
+      <div class="accent-line"></div>
+
+      <p class="greeting">Hola <strong>${employeeName}</strong>,</p>
+      <p class="message">Tienes una nueva cita agendada. Aqu&iacute; est&aacute;n los detalles:</p>
+
+      <!-- Detalles -->
+      <div class="details-card">
+        <p class="details-title">Detalles de la cita</p>
+
+        <!-- Cliente -->
+        <div class="detail-row">
+          <div style="width:32px;height:32px;border-radius:8px;background:#fffbeb;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div>
+            <span style="color:#94a3b8;font-size:11.5px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:2px;">Cliente</span>
+            <span style="color:#1e293b;font-size:15px;font-weight:500;line-height:1.4;">${clientName}</span>
+          </div>
+        </div>
+
+        <!-- Servicio -->
+        <div class="detail-row">
+          <div style="width:32px;height:32px;border-radius:8px;background:#f0eeff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6820F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          </div>
+          <div>
+            <span style="color:#94a3b8;font-size:11.5px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:2px;">Servicio</span>
+            <span style="color:#1e293b;font-size:15px;font-weight:500;line-height:1.4;">${service}</span>
+          </div>
+        </div>
+
+        <!-- Fecha -->
+        <div class="detail-row">
+          <div style="width:32px;height:32px;border-radius:8px;background:#f0fdfb;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3bbfa0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div>
+            <span style="color:#94a3b8;font-size:11.5px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:2px;">Fecha</span>
+            <span style="color:#1e293b;font-size:15px;font-weight:500;line-height:1.4;">${date}</span>
+          </div>
+        </div>
+
+        <!-- Hora -->
+        <div class="detail-row">
+          <div style="width:32px;height:32px;border-radius:8px;background:#f0eeff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6820F7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <span style="color:#94a3b8;font-size:11.5px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;display:block;margin-bottom:2px;">Hora</span>
+            <span style="color:#1e293b;font-size:15px;font-weight:500;line-height:1.4;">${time}</span>
+          </div>
+        </div>
+
+        ${locationRow}
+
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="help-note">
+        <p>Revisa tu agenda en la app para ver m&aacute;s detalles y gestionar la cita.</p>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p class="footer-text">&copy; 2026 Gestabiz &mdash; Todos los derechos reservados.</p>
+      <p class="footer-text">Este es un mensaje autom&aacute;tico. No responder a este correo.</p>
+      <div class="footer-links">
+        <a href="https://gestabiz.com" class="footer-link">Sitio web</a>
+        <span class="footer-divider">&bull;</span>
+        <a href="https://gestabiz.com/support" class="footer-link">Soporte</a>
+        <span class="footer-divider">&bull;</span>
+        <a href="https://gestabiz.com/privacy" class="footer-link">Privacidad</a>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>`
 }
 
 // Helper para cargar template HTML personalizado
-async function loadHTMLTemplate(templateName: string, data: any): Promise<string | null> {
+async function loadHTMLTemplate(_templateName: string, _data: any): Promise<string | null> {
   try {
-    // En producción, cargar desde Supabase Storage o archivo local
-    const templatePath = `../templates/${templateName}.html`
-    
-    // Por ahora retornamos null para usar template básico
-    // TODO: Implementar carga de template desde storage
+    // TODO: Implementar carga de template desde Supabase Storage
     return null
-  } catch (error) {
+  } catch (_error) {
     return null
   }
 }
@@ -770,8 +1060,14 @@ async function sendEmail(request: NotificationRequest, content: any) {
     let htmlBody = ''
     
     
+    // Template especializado para cita agendada (cliente)
+    if (request.type === 'appointment_new_client') {
+      htmlBody = createAppointmentBookedEmail(content.vars || {}, content.subject)
+    // Template especializado para nueva cita asignada al empleado/profesional
+    } else if (request.type === 'appointment_new_employee') {
+      htmlBody = createAppointmentNewEmployeeEmail(content.vars || {}, content.subject)
     // Usar template HTML personalizado para job_application_new
-    if (request.type === 'job_application_new' || request.type === 'job_application_accepted' || request.type === 'job_application_interview') {
+    } else if (request.type === 'job_application_new' || request.type === 'job_application_accepted' || request.type === 'job_application_interview') {
       // Intentar cargar template HTML personalizado
       const templateName = request.type === 'job_application_new' ? 'job-application' : request.type
       const customTemplate = await loadHTMLTemplate(templateName, request.data)

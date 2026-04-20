@@ -38,3 +38,13 @@ El empleado puede copiar su link público desde:
 - `src/App.tsx` — ruta `/profesional/:employeeId`
 - `src/pages/PublicBusinessProfile.tsx` — lee `employeeId` al auto-book
 - `src/components/settings/EmployeeRolePreferences.tsx` — card compartir perfil
+
+## Notas Relacionadas
+
+- [[sistema-perfiles-publicos]] — Perfiles públicos de negocios y SEO
+- [[sistema-citas]] — Wizard de reserva con pre-selección
+- [[sistema-reviews]] — Reviews por profesional
+- [[sistema-busqueda]] — Búsqueda de profesionales
+- [[QR-con-branding-Gestabiz]] — QR apunta a perfil público
+- [[SEO-directorio-post-deploy]] — SEO de perfiles públicos
+- [[2026-04-17-exploracion-area-publica-y-cliente]] — Exploración del área pública

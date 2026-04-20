@@ -158,6 +158,20 @@ Cuando se restaure budget (5pm GMT-5), relanzar 5 exploraciones:
 2. **Admin financiero**: `expenses/reports/billing` + sistema contable (taxes, charts, exports)
 3. **Empleado**: EmployeeDashboard + módulos `myAppointments/myClients/myStats/myAbsences/myProfile`
 4. **Settings**: `CompleteUnifiedSettings` (3 perfiles: admin/employee/client) + integraciones (Google Calendar, payment gateways)
+
+## Notas Relacionadas
+
+- [[sistema-perfiles-publicos]] — Perfiles públicos y SEO
+- [[sistema-citas]] — AppointmentWizard, DateTimeSelection
+- [[sistema-busqueda]] — RPCs y búsqueda avanzada
+- [[sistema-chat]] — FloatingChatButton, ChatWithAdminModal
+- [[sistema-reviews]] — MandatoryReviewModal, reviews anónimas
+- [[sistema-notificaciones]] — Canales y tipos de notificación
+- [[sistema-festivos]] — usePublicHolidays en DateTimeSelection
+- [[sistema-configuraciones]] — CompleteUnifiedSettings
+- [[sistema-autenticacion]] — Flujo auth y roles dinámicos
+- [[Perfil-Publico-Profesional]] — Perfiles públicos de profesionales explorados
+- [[landing-page-dark-mode-fixed]] — Landing page explorada
 5. **Cross-cutting**: notificaciones, chat, bug reports, i18n, Analytics GA4, sistema de cards reutilizables
 
 Una vez completado, generar:

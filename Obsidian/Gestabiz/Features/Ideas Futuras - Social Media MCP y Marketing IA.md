@@ -115,6 +115,14 @@ Este feature podría ser exclusivo de Plan Pro/Empresarial:
 - Plan Pro: 30 posts/mes generados por IA
 - Plan Empresarial: Ilimitado + programación avanzada
 
+## Notas Relacionadas
+
+- [[planes-y-precios]] — Planes y monetización de features IA
+- [[sistema-notificaciones]] — WhatsApp Business API ya integrada
+- [[edge-functions]] — Runtime Deno para agentes
+- [[propuesta-de-valor]] — Diferenciador “marketing incluido”- [[Fase 3 - IA, Automatización y Agentes]] — Fase 3 incluye marketing IA
+- [[analisis-competitivo-roadmap]] — Roadmap de marketing y features
+- [[estrategia-producto-y-negocio]] — Marketing integrado en estrategia
 ---
 
 ## Próximos pasos cuando se decida explorar

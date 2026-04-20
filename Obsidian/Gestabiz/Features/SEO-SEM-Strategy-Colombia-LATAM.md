@@ -405,3 +405,19 @@ Rutas a pre-renderizar:
 - [ ] Monitorear rankings y ajustar
 - [ ] A/B testing de landing pages
 - [ ] Optimizar CPC en Google Ads
+
+## Notas Relacionadas
+
+- [[comparativa-competidores]] — AgendaPro, Fresha, Booksy, Calendly en detalle
+- [[sistema-perfiles-publicos]] — SEO, JSON-LD, perfiles públicos /negocio/:slug
+- [[sistema-busqueda]] — RPCs search_businesses, índices trigram, full-text search
+- [[sistema-categorias]] — Categorías y subcategorías para directorio por vertical
+- [[sectores-y-casos-de-uso]] — Verticales (salones, clínicas, gimnasios, restaurantes, coworkings)
+- [[planes-y-precios]] — Pricing para Google Ads y landing pages
+- [[stack-tecnologico]] — Vite, pre-rendering, Core Web Vitals
+- [[sistema-reviews]] — AggregateRating real para schema markup
+- [[SEO-SEM-estrategia-2026]] — Versión más concisa de la estrategia
+- [[SEO-directorio-post-deploy]] — Pasos post-deploy específicos
+- [[analisis-competitivo-roadmap]] — Roadmap de features por competidor
+- [[Perfil-Publico-Profesional]] — Perfiles públicos indexables
+- [[estrategia-producto-y-negocio]] — SEO como canal de adquisición

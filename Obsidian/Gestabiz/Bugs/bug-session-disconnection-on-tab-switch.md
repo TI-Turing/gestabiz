@@ -57,3 +57,11 @@ useEffect(() => {
 - Crítico: afecta experiencia de usuario en móvil y desktop
 - Visible en flujos normales (cambiar a WhatsApp, email, etc.)
 - Workaround actual: F5
+
+## Notas Relacionadas
+
+- [[sistema-autenticacion]] — Sistema de auth (useAuthSimple, AuthContext)
+- [[stack-tecnologico]] — Stack y providers de la app
+- [[google-oauth-separacion-entornos]] — Separación auth por entorno
+- [[2026-03-31-infra-oauth-ci]] — Sesión que trabajó infraestructura auth
+- [[auditoria-completa-abril-2026]] — Auditoría menciona React Query cache en logout

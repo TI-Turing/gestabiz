@@ -158,3 +158,20 @@ Ya hay soporte ES/EN y MercadoPago. Pero hay diferencias importantes entre país
 8. **Métricas** — para optimizar todo lo anterior
 9. **Aliados y partners** — escalar sin costo marginal alto
 10. **Internacionalización** — cuando Colombia esté sólido
+
+## Notas Relacionadas
+
+- [[planes-y-precios]] — Modelo de precios actual
+- [[comparativa-competidores]] — Análisis competitivo detallado
+- [[sectores-y-casos-de-uso]] — Verticales y expansión
+- [[propuesta-de-valor]] — Pitch comercial
+- [[sistema-perfiles-publicos]] — SEO y perfiles públicos
+- [[sistema-notificaciones]] — Canales multi-canal (WhatsApp, email, push)
+- [[i18n]] — Internacionalización ES/EN
+- [[sistema-festivos]] — Festivos por país
+- [[analisis-competitivo-roadmap]] — Análisis competitivo detallado con roadmap
+- [[free-trial-mes-gratis]] — Free trial como herramienta de pricing
+- [[auditoria-completa-abril-2026]] — Auditoría con perspectiva de producto
+- [[2026-04-13-primer-dia-ventas]] — Primer día de ventas real
+- [[SEO-SEM-estrategia-2026]] — Estrategia SEO complementaria
+- [[SEO-SEM-Strategy-Colombia-LATAM]] — Estrategia SEO/SEM exhaustiva

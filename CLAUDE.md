@@ -51,12 +51,15 @@ El proyecto usa **tres capas de persistencia** complementarias:
 
 ```
 Obsidian/Gestabiz/
-├── Índice.md              # Guía del vault
-├── Decisiones/            # Decisiones arquitectónicas y trade-offs
-├── Bugs/                  # Bugs conocidos, gotchas, soluciones
-├── Sesiones Claude/       # Resúmenes de sesiones importantes
-├── Features/              # Specs de features en desarrollo o pendientes
-└── Contexto/              # Contexto de negocio, roadmap, usuarios
+├── Índice.md              # Catálogo completo del vault (49 notas)
+├── Sistemas/              # 19 notas — cada módulo funcional del producto
+├── Arquitectura/          # 6 notas — BD, Edge Functions, cache, cards, i18n, stack
+├── Negocio/               # 4 notas — planes, propuesta de valor, competidores, sectores
+├── Features/              # 11 notas — specs de features en desarrollo o pendientes
+├── Contexto/              # 2 notas — auditorías, estrategia general
+├── Decisiones/            # 1 nota — decisiones arquitectónicas y trade-offs
+├── Bugs/                  # 3 notas — bugs conocidos, gotchas, soluciones
+└── Sesiones Claude/       # 3 notas — resúmenes de sesiones importantes
 ```
 
 ### Convención: "recuerda X" / "guarda una nota de X"
@@ -85,6 +88,23 @@ Contenido de la nota...
 ```
 
 **Esta convención está siempre activa** — no necesita configuración adicional por sesión.
+
+### Regla de Mantenimiento del Vault ⭐ OBLIGATORIA
+
+**Cada cambio funcional en el código DEBE reflejarse en la nota Obsidian correspondiente.**
+
+- Cambio en un sistema existente → actualizar la nota en `Sistemas/` (ej: `sistema-citas.md`)
+- Nuevo sistema o módulo → crear nota nueva en `Sistemas/` y agregar al `Índice.md`
+- Cambio arquitectónico (BD, cache, Edge Functions) → actualizar nota en `Arquitectura/`
+- Nuevo bug documentado o resuelto → crear/actualizar nota en `Bugs/`
+- Decisión técnica relevante → crear nota en `Decisiones/`
+- Cambio en planes, pricing o posicionamiento → actualizar nota en `Negocio/`
+- Feature nueva especificada → crear nota en `Features/`
+- Sesión de trabajo significativa → crear nota en `Sesiones Claude/`
+- **Siempre**: usar wikilinks `[[nombre-nota]]` para conectar notas relacionadas
+- **Siempre**: actualizar `Índice.md` si se crea una nota nueva
+
+**Exenciones**: cambios cosméticos de UI, refactors internos sin impacto funcional, fixes de typos.
 
 ---
 
@@ -158,7 +178,8 @@ Contenido de la nota...
 11. **NUNCA modificar Supabase de producción directamente** — cualquier cambio en BD (tablas, funciones, RLS) o Edge Functions que afecte producción DEBE hacerse mediante migración SQL en `supabase/migrations/` o deploy de Edge Function. El usuario decide cuándo desplegarlo. Ante un bug en prod: identificar causa y mostrar el fix.
 12. **NUNCA deployar Edge Functions directamente** — el flujo correcto es: editar la función → commit → push a la rama correspondiente → el workflow CI/CD hace el deploy automáticamente. Solo se acepta `npx supabase functions deploy` manual con autorización explícita del usuario para un fix de emergencia puntual.
 13. **NUNCA aplicar migraciones a producción o DEV directamente** — crear la migración SQL → commit → push → el usuario ejecuta `npx supabase db push` localmente. Nunca ejecutar migraciones directamente en Supabase UI ni con `npx supabase db push` apuntando a PROD o DEV sin autorización explícita.
-14. **Documentar cada cambio funcional** — cada nuevo feat, cambio de flujo, creación/eliminación de flujo debe actualizar los dos documentos del producto: `docs/Manual_Usuario_Gestabiz.docx` (guía funcional de usuario) y `docs/Propuesta_Valor_Gestabiz.docx` (pitch comercial). Cambios UI/UX menores no requieren update; cambios de comportamiento, permisos, planes, o flujos sí. Mantener ambos en sincronía con el código.
+14. **Validar impacto en Edge Functions antes de alterar tablas** ⭐ CRÍTICO — Antes de agregar, renombrar o eliminar cualquier columna de una tabla de Supabase, buscar en `supabase/functions/` todas las Edge Functions que consultan esa tabla y verificar que ningún `select()`, `update()` o `insert()` referencia la columna afectada. Si alguna función la usa, actualizar primero el código de esa función (o en el mismo commit) para evitar errores 500 en producción. Aplica también a columnas que se asumen existentes en código TypeScript del frontend.
+15. **Documentar cada cambio funcional** — cada nuevo feat, cambio de flujo, creación/eliminación de flujo debe actualizar los dos documentos del producto: `docs/Manual_Usuario_Gestabiz.docx` (guía funcional de usuario) y `docs/Propuesta_Valor_Gestabiz.docx` (pitch comercial). Cambios UI/UX menores no requieren update; cambios de comportamiento, permisos, planes, o flujos sí. Mantener ambos en sincronía con el código.
     - **Fuente única de verdad**: `scripts/generate_product_docs.py` — los .docx se regeneran con `python scripts/generate_product_docs.py`. No editar los .docx a mano: editar el script y regenerar.
     - **Estructura obligatoria en ambos documentos**: Portada con logo Gestabiz + atribución a Ti Turing → Índice hipervinculado → **Parte 1: Resumen Ejecutivo** (alto nivel, con hipervínculos al detalle) → **Parte 2: Detalle Exhaustivo** (reglas, excepciones, flujos normales y alternos, cada botón y validación — mucho más extensa en el Manual) → Placeholders de capturas de pantalla → Pie con logo Ti Turing.
     - **Agrupación por planes**: todas las features agrupadas por plan (Gratuito → Básico → Pro), aclarando que cada plan incluye lo del anterior más sus exclusivas.

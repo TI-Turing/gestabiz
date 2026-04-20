@@ -99,7 +99,7 @@ export const appointments = {
     minutes: 'minutes',
     optionalNotes: 'Optional Notes',
     notesPlaceholder: 'Add any special requests or notes...',
-    confirmationMessage: 'You will receive a confirmation via email and WhatsApp',
+    confirmationMessage: 'You will receive a confirmation via email',
     selectDateTime: 'Select Date & Time',
     availableOn: 'Available on',
     selectedService: 'Selected service:',
