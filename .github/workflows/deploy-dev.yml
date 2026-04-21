@@ -6,8 +6,30 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    name: Run Tests & Coverage Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Run Tests with Coverage
+        run: npm run test -- --coverage
+
   migrate:
     name: Apply Supabase Migrations to DEV
+    needs: test
     runs-on: ubuntu-latest
     environment: dev
 
@@ -36,6 +58,7 @@ jobs:
 
   deploy-edge-functions:
     name: Deploy All Edge Functions to DEV
+    needs: migrate
     runs-on: ubuntu-latest
     environment: dev
 

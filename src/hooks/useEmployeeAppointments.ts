@@ -69,7 +69,7 @@ export function useEmployeeAppointments(
         `)
         .eq('employee_id', employeeId)
         .eq('business_id', businessId)
-        .order('start_time', { ascending: true })
+        .order('start_time', { ascending: false })
 
       if (fetchError) throw fetchError
 
