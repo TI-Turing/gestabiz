@@ -24,10 +24,7 @@ jobs:
       - name: Type check
         run: npm run type-check
 
-      - name: Run Tests
-        run: npm run test
-
-      - name: Verify Coverage
+      - name: Run Tests with Coverage
         run: npm run test -- --coverage
 
   migrate:
@@ -61,7 +58,7 @@ jobs:
 
   deploy-edge-functions:
     name: Deploy All Edge Functions to DEV
-    needs: test
+    needs: migrate
     runs-on: ubuntu-latest
     environment: dev
 

@@ -14,6 +14,7 @@ import { BOGOTA_REGION_ID, BOGOTA_CITY_ID, BOGOTA_CITY_NAME } from '@/constants'
 import { useKV } from '@/lib/useKV';
 
 type SearchType = 'all' | 'businesses' | 'services' | 'categories' | 'users';
+type EdgeSearchType = SearchType | 'initial';
 
 interface Business {
   id: string;
@@ -181,11 +182,11 @@ export function BusinessSelection({
       const effectiveRegionName = propRegionName ?? hookRegionName ?? null;
       const effectiveCityName = propCityName ?? hookCityName ?? null;
 
-      const cacheKey = `search_businesses|type=all|term=|regionId=${effectiveRegionId}|regionName=${effectiveRegionName}|cityId=${effectiveCityId}|cityName=${effectiveCityName}|client=${user?.id ?? ''}|page=1|size=${PAGE_SIZE}|minRating=${typeof minRating==='number'?minRating:''}|minReviews=${typeof minReviewCount==='number'?minReviewCount:''}`;
+      const cacheKey = `search_businesses|type=initial|term=|regionId=${effectiveRegionId}|regionName=${effectiveRegionName}|cityId=${effectiveCityId}|cityName=${effectiveCityName}|client=${user?.id ?? ''}|page=1|size=${PAGE_SIZE}|minRating=${typeof minRating==='number'?minRating:''}|minReviews=${typeof minReviewCount==='number'?minReviewCount:''}`;
       const { data, error } = await withCache(cacheKey, async () => {
         return supabase.functions.invoke('search_businesses', {
           body: {
-            type: 'all',
+            type: 'initial',
             term: '',
             preferredRegionId: effectiveRegionId,
             preferredRegionName: effectiveRegionName,
@@ -437,7 +438,7 @@ export function BusinessSelection({
     const excludeIds = displayedBusinesses.map(b => b.id);
 
     try {
-      const keyType = (searchTerm && searchTerm.trim().length >= 2) ? searchType : 'all';
+      const keyType: EdgeSearchType = (searchTerm && searchTerm.trim().length >= 2) ? searchType : 'initial';
       const keyTerm = (searchTerm && searchTerm.trim().length >= 2) ? searchTerm.toLowerCase() : '';
       const cacheKeyLoadMore = `search_businesses|type=${keyType}|term=${keyTerm}|regionId=${effectiveRegionId}|regionName=${effectiveRegionName}|cityId=${effectiveCityId}|cityName=${effectiveCityName}|client=${user?.id ?? ''}|page=${nextPage}|size=${PAGE_SIZE}|exclude=${excludeIds.join(',')}|minRating=${typeof minRating==='number'?minRating:''}|minReviews=${typeof minReviewCount==='number'?minReviewCount:''}|filtersApplied=${filtersApplied}`;
       const { data, error } = await withCache(cacheKeyLoadMore, async () => {
