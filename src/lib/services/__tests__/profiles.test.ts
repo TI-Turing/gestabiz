@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import * as Sentry from '@sentry/react'
 
 const mocks = vi.hoisted(() => ({
   mockFrom: vi.fn(),
@@ -26,6 +27,7 @@ function buildChain(resolvedValue: { data: unknown; error: unknown }) {
 
 beforeEach(() => {
   mocks.mockFrom.mockReset()
+  vi.mocked(Sentry.captureException).mockClear()
 })
 
 describe('profilesService.findByPhone', () => {
@@ -55,6 +57,11 @@ describe('profilesService.findByPhone', () => {
 
     const result = await profilesService.findByPhone('300')
     expect(result).toBeNull()
+    expect(Sentry.captureException).toHaveBeenCalledOnce()
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ tags: { service: 'profiles', operation: 'findByPhone' } })
+    )
   })
 
   it('retorna null si no encuentra', async () => {
