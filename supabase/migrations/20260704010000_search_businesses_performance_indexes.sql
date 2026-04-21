@@ -5,8 +5,8 @@
 -- search_businesses Edge Function. Goal: reduce ~4s response time to <1.5s
 -- on cold cache by enabling index-only scans on the hot queries.
 --
--- All indexes use IF NOT EXISTS to be idempotent and CONCURRENTLY to avoid
--- blocking writes on existing tables.
+-- All indexes use IF NOT EXISTS to keep the migration idempotent.
+-- They are created with standard CREATE INDEX statements in this migration.
 --
 -- Hot queries optimized:
 --   1. locations.is_active filter on city/state lookups
