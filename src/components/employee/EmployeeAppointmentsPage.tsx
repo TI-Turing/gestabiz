@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { Calendar, List, Search } from 'lucide-react'
+import { Calendar, ChevronDown, List, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { EmployeeAppointmentsList } from './EmployeeAppointmentsList'
 import { AppointmentsCalendar } from '@/components/admin/AppointmentsCalendar'
 import { useEmployeeAppointments } from '@/hooks/useEmployeeAppointments'
@@ -24,13 +29,16 @@ const getDateKeyInColombia = (value: Date | string) => {
   return date.toLocaleDateString('en-CA', { timeZone: COLOMBIA_TIME_ZONE })
 }
 
-const isScheduledStatus = (status: Appointment['status']) => {
-  return status === 'scheduled' || status === 'rescheduled'
-}
+const ALL_STATUSES = ['scheduled', 'confirmed', 'in_progress', 'completed', 'no_show', 'cancelled']
 
-const isConfirmedStatus = (status: Appointment['status']) => {
-  return status === 'confirmed' || status === 'in_progress'
-}
+const STATUS_OPTIONS = [
+  { value: 'scheduled', label: 'Pendiente' },
+  { value: 'confirmed', label: 'Confirmada' },
+  { value: 'in_progress', label: 'En progreso' },
+  { value: 'completed', label: 'Completada' },
+  { value: 'no_show', label: 'No se presentó' },
+  { value: 'cancelled', label: 'Cancelada' },
+]
 
 interface Service {
   id: string
@@ -43,14 +51,13 @@ interface EmployeeAppointmentsPageProps {
 }
 
 type ViewMode = 'list' | 'calendar'
-type StatusFilter = 'all' | 'scheduled' | 'confirmed' | 'completed' | 'cancelled'
 
 export function EmployeeAppointmentsPage({ 
   employeeId, 
   businessId
 }: Readonly<EmployeeAppointmentsPageProps>) {
   const [viewMode, setViewMode] = useState<ViewMode>('list')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [statusFilter, setStatusFilter] = useState<string[]>(ALL_STATUSES)
   const [serviceFilter, setServiceFilter] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [services, setServices] = useState<Service[]>([])
@@ -91,17 +98,10 @@ export function EmployeeAppointmentsPage({
     let filtered = appointments
 
     // Filtro por estado
-    if (statusFilter !== 'all') {
+    if (statusFilter.length < ALL_STATUSES.length) {
       filtered = filtered.filter(apt => {
-        if (statusFilter === 'scheduled') {
-          return isScheduledStatus(apt.status)
-        }
-
-        if (statusFilter === 'confirmed') {
-          return isConfirmedStatus(apt.status)
-        }
-
-        return apt.status === statusFilter
+        const normalizedStatus = apt.status === 'rescheduled' ? 'scheduled' : apt.status
+        return statusFilter.includes(normalizedStatus)
       })
     }
 
@@ -136,8 +136,8 @@ export function EmployeeAppointmentsPage({
     return {
       total: appointments.length,
       today: todayAppointments.length,
-      scheduled: appointments.filter(a => isScheduledStatus(a.status)).length,
-      confirmed: appointments.filter(a => isConfirmedStatus(a.status)).length,
+      scheduled: appointments.filter(a => a.status === 'scheduled' || a.status === 'rescheduled').length,
+      confirmed: appointments.filter(a => a.status === 'confirmed' || a.status === 'in_progress').length,
       completed: appointments.filter(a => a.status === 'completed').length,
       cancelled: appointments.filter(a => a.status === 'cancelled').length,
     }
@@ -255,18 +255,47 @@ export function EmployeeAppointmentsPage({
             </div>
 
             {/* Filtro por estado */}
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
-                <SelectItem value="scheduled">Programadas</SelectItem>
-                <SelectItem value="confirmed">Confirmadas / En curso</SelectItem>
-                <SelectItem value="completed">Completadas</SelectItem>
-                <SelectItem value="cancelled">Canceladas</SelectItem>
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="px-3 py-2 text-sm border border-border rounded-md bg-background text-foreground hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all w-full md:w-[200px] flex items-center justify-between gap-2">
+                  <span className="truncate">
+                    {statusFilter.length === 0
+                      ? 'Ninguno'
+                      : statusFilter.length === ALL_STATUSES.length
+                        ? 'Todos los estados'
+                        : `${statusFilter.length} seleccionado${statusFilter.length === 1 ? '' : 's'}`}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-56 p-0">
+                <div className="px-2 py-2 border-b border-border">
+                  <button
+                    className="w-full text-left px-3 py-2 text-sm font-medium hover:bg-muted/40 rounded"
+                    onClick={() => setStatusFilter(ALL_STATUSES)}
+                  >
+                    Seleccionar todos
+                  </button>
+                </div>
+                {STATUS_OPTIONS.map(({ value, label }) => (
+                  <label key={value} className="flex items-center px-3 py-2 hover:bg-muted/50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={statusFilter.includes(value)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setStatusFilter([...statusFilter, value])
+                        } else {
+                          setStatusFilter(statusFilter.filter(s => s !== value))
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-2 border-muted-foreground/40 bg-background checked:bg-primary checked:border-primary focus:ring-2 focus:ring-primary/30 transition-all cursor-pointer"
+                    />
+                    <span className="ml-2 text-sm text-foreground">{label}</span>
+                  </label>
+                ))}
+              </PopoverContent>
+            </Popover>
 
             {/* Filtro por servicio */}
             {services.length > 0 && (
@@ -286,11 +315,11 @@ export function EmployeeAppointmentsPage({
             )}
 
             {/* Limpiar filtros */}
-            {(statusFilter !== 'all' || serviceFilter !== 'all' || searchTerm) && (
+            {(statusFilter.length !== ALL_STATUSES.length || serviceFilter !== 'all' || searchTerm) && (
               <Button
                 variant="ghost"
                 onClick={() => {
-                  setStatusFilter('all')
+                  setStatusFilter(ALL_STATUSES)
                   setServiceFilter('all')
                   setSearchTerm('')
                 }}
