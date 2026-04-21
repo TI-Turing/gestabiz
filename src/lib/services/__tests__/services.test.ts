@@ -168,7 +168,7 @@ describe('servicesService.update', () => {
     expect(updateCall.price).toBeUndefined()
   })
 
-  it('aplica defaults para currency null y description null', async () => {
+  it('omite currency y description cuando son undefined', async () => {
     const { servicesService } = await import('@/lib/services/services')
     const chain = buildChain({ data: { id: 's1' }, error: null })
     mocks.mockFrom.mockReturnValue(chain)
@@ -178,6 +178,19 @@ describe('servicesService.update', () => {
     const updateCall = (chain.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(updateCall.currency).toBeUndefined()
     expect(updateCall.description).toBeUndefined()
+  })
+
+  it('aplica default COP para currency null y null para description null', async () => {
+    const { servicesService } = await import('@/lib/services/services')
+    const chain = buildChain({ data: { id: 's1' }, error: null })
+    mocks.mockFrom.mockReturnValue(chain)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await servicesService.update('s1', { currency: null as any, description: null as any })
+
+    const updateCall = (chain.update as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(updateCall.currency).toBe('COP')
+    expect(updateCall.description).toBeNull()
   })
 })
 
