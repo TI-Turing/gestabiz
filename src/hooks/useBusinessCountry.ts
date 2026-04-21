@@ -29,7 +29,7 @@ export function useBusinessCountry(businessId: string | null | undefined) {
         .single();
 
       if (error) {
-        // eslint-disable-next-line no-console        throw error;
+                 throw error;
       }
 
       return data as BusinessCountry;

@@ -91,7 +91,7 @@ export function configureAnalytics(newConfig: Partial<AnalyticsConfig>) {
   config = { ...config, ...newConfig }
   
   if (config.debug) {
-    // eslint-disable-next-line no-console  }
+       }
 }
 
 /**
@@ -120,7 +120,7 @@ export function trackEvent(event: AnalyticsEvent) {
 
   // Log en consola si debug está habilitado
   if (config.debug) {
-    // eslint-disable-next-line no-console
+     
   }
 
   // Enviar a cada proveedor activo
@@ -141,7 +141,7 @@ export function trackEvent(event: AnalyticsEvent) {
           break
       }
     } catch (error) {
-      // eslint-disable-next-line no-console    }
+           }
   })
 }
 
@@ -222,7 +222,7 @@ export function trackTiming(
   }
 
   if (config.debug) {
-    // eslint-disable-next-line no-console  }
+       }
 
   if (window.gtag) {
     window.gtag('event', 'timing_complete', {

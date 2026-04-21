@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-console */
+ 
 /**
  * useMessages Hook - Gestión de Mensajes FASE 2
  * 

@@ -195,7 +195,7 @@ export function useUserRoles(user: User | null) {
       }
     } catch (error) {
       void logger.error('useUserRoles: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useUserRoles' })
-      // eslint-disable-next-line no-console      toast.error('Error al cargar roles disponibles')
+             toast.error('Error al cargar roles disponibles')
     } finally {
       setIsLoading(false)
     }
@@ -276,7 +276,7 @@ export function useUserRoles(user: User | null) {
         return true
       } catch (error) {
         void logger.error('useUserRoles: operation failed', error instanceof Error ? error : new Error(String(error)), { component: 'useUserRoles' })
-        // eslint-disable-next-line no-console        toast.error('Error al cambiar de rol')
+                 toast.error('Error al cambiar de rol')
         return false
       }
     },

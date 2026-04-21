@@ -3,7 +3,46 @@ import supabase from '@/lib/supabase'
 import type { User } from '@/types'
 import type { Json } from '@/types/database'
 
+export interface ProfileSummary {
+  id: string
+  full_name: string | null
+  email: string
+  phone: string | null
+}
+
 export const profilesService = {
+  async findByPhone(phone: string): Promise<ProfileSummary | null> {
+    const cleaned = phone.replace(/\s+/g, '').trim()
+    if (!cleaned) return null
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, phone')
+      .eq('phone', cleaned)
+      .limit(1)
+      .maybeSingle()
+    if (error) {
+      Sentry.captureException(error, { tags: { service: 'profiles', operation: 'findByPhone' } })
+      return null
+    }
+    return data as ProfileSummary | null
+  },
+
+  async findByEmail(email: string): Promise<ProfileSummary | null> {
+    const trimmed = email.trim().toLowerCase()
+    if (!trimmed) return null
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, phone')
+      .eq('email', trimmed)
+      .limit(1)
+      .maybeSingle()
+    if (error) {
+      Sentry.captureException(error, { tags: { service: 'profiles', operation: 'findByEmail' } })
+      return null
+    }
+    return data as ProfileSummary | null
+  },
+
   async get(id: string): Promise<User | null> {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single()
     if (error) {

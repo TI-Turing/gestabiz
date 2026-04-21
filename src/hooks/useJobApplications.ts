@@ -473,7 +473,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
       });
 
       if (notifError) {
-        // eslint-disable-next-line no-console
+         
         // No fallar la operación si falla la notificación
       }
 
@@ -653,7 +653,7 @@ export function useJobApplications(filters?: ApplicationFilters) {
       });
 
       if (notifError) {
-        // eslint-disable-next-line no-console
+         
         // No fallar la operación si falla la notificación
       }
 

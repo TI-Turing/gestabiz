@@ -10,6 +10,7 @@ import {
   EmployeeSelection,
   EmployeeBusinessSelection,
   DateTimeSelection,
+  ClientDataStep,
   ConfirmationStep,
   SuccessStep,
 } from './wizard-steps'
@@ -41,6 +42,7 @@ interface WizardStepContentProps {
   onSubmit: () => Promise<void>
   onClose: () => void
   onStartChat?: (conversationId: string) => void
+  isAdminBooking?: boolean
 }
 
 export function WizardStepContent({
@@ -66,6 +68,7 @@ export function WizardStepContent({
   onSubmit,
   onClose,
   onStartChat,
+  isAdminBooking,
 }: Readonly<WizardStepContentProps>) {
   const effectiveBusiness = wizardData.businessId || businessId || ''
 
@@ -183,6 +186,14 @@ export function WizardStepContent({
         />
       )}
 
+      {/* Client data (admin booking only) */}
+      {currentStep === getStepNumber('clientData') && isAdminBooking && (
+        <ClientDataStep
+          wizardData={wizardData}
+          updateWizardData={updateWizardData}
+        />
+      )}
+
       {/* Confirmation */}
       {currentStep === getStepNumber('confirmation') && (
         <ConfirmationStep
@@ -190,6 +201,7 @@ export function WizardStepContent({
           onUpdateNotes={(notes) => updateWizardData({ notes })}
           isEditing={!!appointmentToEdit}
           onSubmit={onSubmit}
+          isAdminBooking={isAdminBooking}
         />
       )}
 

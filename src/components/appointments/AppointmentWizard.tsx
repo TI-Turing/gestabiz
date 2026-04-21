@@ -37,6 +37,8 @@ export function AppointmentWizard({
   preselectedTime,
   appointmentToEdit,
   onStartChat,
+  isAdminBooking,
+  adminPreferredLocationId,
 }: Readonly<AppointmentWizardProps>) {
   const { t } = useLanguage()
   const { preferredCityName, preferredRegionName } = usePreferredCity()
@@ -58,6 +60,8 @@ export function AppointmentWizard({
     onClose,
     dataCache,
     analytics,
+    isAdminBooking,
+    adminPreferredLocationId,
   })
 
   const { createAppointment } = useCreateAppointment({
@@ -71,6 +75,7 @@ export function AppointmentWizard({
       data: Record<string, unknown>,
     ) => Promise<unknown>,
     analytics,
+    isAdminBooking,
   })
 
   const {
@@ -154,6 +159,7 @@ export function AppointmentWizard({
           onSubmit={handleConfirm}
           onClose={handleClose}
           onStartChat={onStartChat}
+          isAdminBooking={isAdminBooking}
         />
 
         {!isSuccess && (

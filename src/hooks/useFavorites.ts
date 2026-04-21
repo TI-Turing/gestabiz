@@ -68,7 +68,7 @@ export function useFavorites(userId?: string) {
       void logger.error('useFavorites: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFavorites' })
       const error = err as Error;
       setError(error);
-      // eslint-disable-next-line no-console      toast.error('Error al cargar favoritos');
+             toast.error('Error al cargar favoritos');
     } finally {
       setLoading(false);
     }
@@ -122,7 +122,7 @@ export function useFavorites(userId?: string) {
     } catch (err) {
       void logger.error('useFavorites: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFavorites' })
       const error = err as Error;
-      // eslint-disable-next-line no-console      // Revert optimistic update
+             // Revert optimistic update
       setFavoriteIds(new Set(favoriteIds));
       await fetchFavorites();
 
@@ -154,7 +154,7 @@ export function useFavorites(userId?: string) {
 
     } catch (err) {
       void logger.error('useFavorites: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFavorites' })
-      // eslint-disable-next-line no-console      return false;
+             return false;
     }
   }, [userId]);
 

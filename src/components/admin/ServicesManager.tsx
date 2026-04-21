@@ -218,7 +218,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       }
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServicesManager' } })
-      // eslint-disable-next-line no-console
+       
       toast.error('Error al cargar los datos')
       // En caso de error, establecer arrays vacíos para no romper la UI
       setServices([])
@@ -435,7 +435,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
           .single()
 
         if (error) {
-          // eslint-disable-next-line no-console
+           
           throw error
         }
         serviceId = data.id
@@ -511,7 +511,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       await fetchData()
       handleCloseDialog()
     } catch (error: any) {
-      // eslint-disable-next-line no-console
+       
       const errorMessage = error?.message || 'Error desconocido'
       const statusCode = (error as any)?.statusCode || (error as any)?.status || undefined
       const msg = String(errorMessage).toLowerCase()
@@ -630,7 +630,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       await fetchData()
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'ServicesManager' } })
-      // eslint-disable-next-line no-console
+       
       toast.error('Error al eliminar el servicio y cancelar citas')
     }
   }
@@ -658,7 +658,7 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
       }
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ServicesManager' } })
-      // eslint-disable-next-line no-console
+       
       toast.error('Error al reactivar el servicio')
     }
   }

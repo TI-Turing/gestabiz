@@ -32,17 +32,17 @@ export function usePendingNavigation(
         
         // Solo ejecutar si no es muy antigua (evitar navegaciones obsoletas)
         if (age < maxAge) {
-          // eslint-disable-next-line no-console          // Ejecutar navegación
+                     // Ejecutar navegación
           onNavigate(navigation.page, navigation.context)
           
           // Limpiar navegación pendiente
           sessionStorage.removeItem('pending-navigation')
         } else {
-          // eslint-disable-next-line no-console
+           
           sessionStorage.removeItem('pending-navigation')
         }
       } catch (error) {
-        // eslint-disable-next-line no-console        Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'usePendingNavigation' } })
+                 Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'usePendingNavigation' } })
         sessionStorage.removeItem('pending-navigation')
       }
     }

@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Clock, MapPin, User, Scissors } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Scissors, Phone } from 'lucide-react';
 import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -18,6 +18,11 @@ interface WizardData {
   location: { name: string; address?: string | null } | null;
   employeeId: string | null;
   employee: { full_name: string | null; email: string } | null;
+  clientName?: string;
+  clientPhone?: string;
+  clientPhonePrefix?: string;
+  clientEmail?: string;
+  clientProfileId?: string | null;
 }
 
 interface ConfirmationStepProps {
@@ -25,6 +30,7 @@ interface ConfirmationStepProps {
   readonly onUpdateNotes: (notes: string) => void;
   readonly onSubmit: () => void;
   readonly isEditing?: boolean;
+  readonly isAdminBooking?: boolean;
 }
 
 interface InfoRowProps {
@@ -49,6 +55,7 @@ export function ConfirmationStep({
   wizardData,
   onUpdateNotes,
   isEditing,
+  isAdminBooking,
 }: ConfirmationStepProps) {
   const { service, date, startTime, endTime, notes, location, employee } = wizardData;
   const { t, language } = useLanguage();
@@ -139,6 +146,35 @@ export function ConfirmationStep({
                   ${service.price.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </span>
               </div>
+            </>
+          )}
+
+          {/* Client info (admin booking) */}
+          {isAdminBooking && wizardData.clientName && (
+            <>
+              <Separator className="bg-white/10" />
+              <InfoRow
+                icon={<User className="h-5 w-5" />}
+                label={t('appointments.clientData.name')}
+                value={wizardData.clientName}
+              />
+              {wizardData.clientPhone && (
+                <InfoRow
+                  icon={<Phone className="h-5 w-5" />}
+                  label={t('appointments.clientData.phone')}
+                  value={`${wizardData.clientPhonePrefix || '+57'} ${wizardData.clientPhone}`}
+                />
+              )}
+              {wizardData.clientEmail && (
+                <InfoRow
+                  icon={<User className="h-5 w-5" />}
+                  label={t('appointments.clientData.email')}
+                  value={wizardData.clientEmail}
+                />
+              )}
+              {wizardData.clientProfileId && (
+                <p className="text-xs text-green-500 ml-8">{t('appointments.clientData.registered')}</p>
+              )}
             </>
           )}
         </div>

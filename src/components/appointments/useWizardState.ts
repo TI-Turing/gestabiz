@@ -39,6 +39,8 @@ interface UseWizardStateParams {
       locationId?: string; currency: string
     }) => void
   }
+  isAdminBooking?: boolean
+  adminPreferredLocationId?: string
 }
 
 export function useWizardState({
@@ -53,6 +55,8 @@ export function useWizardState({
   onClose,
   dataCache,
   analytics,
+  isAdminBooking,
+  adminPreferredLocationId,
 }: UseWizardStateParams) {
   const { t } = useLanguage()
 
@@ -63,6 +67,7 @@ export function useWizardState({
     employee: t('appointments.wizard.stepLabels.employee'),
     employeeBusiness: t('appointments.wizard.stepLabels.employeeBusiness'),
     dateTime: t('appointments.wizard.stepLabels.dateTime'),
+    clientData: t('appointments.clientData.stepLabel'),
     confirmation: t('appointments.wizard.stepLabels.confirmation'),
     success: t('appointments.wizard.stepLabels.success'),
   }
@@ -97,10 +102,15 @@ export function useWizardState({
   }
 
   // ── Core state ──────────────────────────────────────────────────────────────
+  // For admin booking with a specific preferred location, pre-select it
+  const adminLocationId = isAdminBooking && adminPreferredLocationId && adminPreferredLocationId !== 'all'
+    ? adminPreferredLocationId
+    : null
+
   const [wizardData, setWizardData] = useState<WizardData>({
     businessId: businessId || null,
     business: null,
-    locationId: preselectedLocationId || null,
+    locationId: adminLocationId || preselectedLocationId || null,
     location: null,
     serviceId: preselectedServiceId || null,
     service: null,
@@ -157,12 +167,19 @@ export function useWizardState({
     const base = businessId
       ? ['location', 'service', 'employee', 'dateTime', 'confirmation', 'success']
       : ['business', 'location', 'service', 'employee', 'dateTime', 'confirmation', 'success']
+
+    // Admin booking: insert clientData step between dateTime and confirmation
+    if (isAdminBooking) {
+      const confIdx = base.indexOf('confirmation')
+      base.splice(confIdx, 0, 'clientData')
+    }
+
     if (needsEmployeeBusinessSelection) {
       const idx = base.indexOf('employee')
       return [...base.slice(0, idx + 1), 'employeeBusiness', ...base.slice(idx + 1)]
     }
     return base
-  }, [businessId, needsEmployeeBusinessSelection])
+  }, [businessId, needsEmployeeBusinessSelection, isAdminBooking])
 
   const getStepOrder = React.useCallback((): string[] => stepOrder, [stepOrder])
 
@@ -175,6 +192,9 @@ export function useWizardState({
     // serviceId / locationId / employeeId are always pre-filled by
     // handleRescheduleAppointment — jump directly to date/time selection.
     if (appointmentToEdit && businessId) return 'dateTime'
+    // Admin booking: if a specific preferred location is set, skip location step
+    if (isAdminBooking && adminLocationId) return 'service'
+    if (isAdminBooking && businessId) return 'location'
     if (preselectedDate || preselectedTime) return 'business'
     if (!businessId) return 'business'
     if (preselectedEmployeeId && preselectedServiceId) return 'dateTime'
@@ -190,6 +210,8 @@ export function useWizardState({
     preselectedEmployeeId,
     preselectedServiceId,
     preselectedLocationId,
+    isAdminBooking,
+    adminLocationId,
   ])
 
   const [currentStep, setCurrentStep] = useState(() => getStepNumber(getInitialStepLogical()))
@@ -259,6 +281,8 @@ export function useWizardState({
       completed.push(effectiveSteps.indexOf('employee'))
     if (wizardData.date && wizardData.startTime && effectiveSteps.includes('dateTime'))
       completed.push(effectiveSteps.indexOf('dateTime'))
+    if (wizardData.clientPhone && wizardData.clientEmail && wizardData.clientName && effectiveSteps.includes('clientData'))
+      completed.push(effectiveSteps.indexOf('clientData'))
 
     const effectiveCurrentStepIndex = getEffectiveCurrentStep()
     const confirmationIndex = effectiveSteps.indexOf('confirmation')
@@ -274,6 +298,9 @@ export function useWizardState({
     wizardData.employeeId,
     wizardData.date,
     wizardData.startTime,
+    wizardData.clientPhone,
+    wizardData.clientEmail,
+    wizardData.clientName,
     getEffectiveCurrentStep,
   ])
 
@@ -289,6 +316,9 @@ export function useWizardState({
     }
     if (currentStep === getStepNumber('employeeBusiness')) return wizardData.employeeBusinessId !== null
     if (currentStep === getStepNumber('dateTime')) return wizardData.date !== null && wizardData.startTime !== null
+    if (currentStep === getStepNumber('clientData')) {
+      return !!(wizardData.clientPhone && wizardData.clientEmail && wizardData.clientName)
+    }
     if (currentStep === getStepNumber('confirmation')) return true
     return false
   }, [
@@ -304,6 +334,9 @@ export function useWizardState({
     wizardData.employeeBusinessId,
     wizardData.date,
     wizardData.startTime,
+    wizardData.clientPhone,
+    wizardData.clientEmail,
+    wizardData.clientName,
   ])
 
   // ── Navigation ──────────────────────────────────────────────────────────────
@@ -468,7 +501,7 @@ export function useWizardState({
     setWizardData({
       businessId: businessId || null,
       business: null,
-      locationId: preselectedLocationId || null,
+      locationId: adminLocationId || preselectedLocationId || null,
       location: null,
       serviceId: preselectedServiceId || null,
       service: null,
@@ -481,6 +514,11 @@ export function useWizardState({
       startTime: null,
       endTime: null,
       notes: '',
+      clientPhone: undefined,
+      clientPhonePrefix: undefined,
+      clientEmail: undefined,
+      clientName: undefined,
+      clientProfileId: undefined,
     })
     onClose()
   }, [

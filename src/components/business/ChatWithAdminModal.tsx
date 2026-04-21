@@ -107,7 +107,7 @@ export default function ChatWithAdminModal({
       }
     } catch (err) {
       Sentry.captureException(err instanceof Error ? err : new Error(String(err)), { tags: { component: 'ChatWithAdminModal' } })
-      // eslint-disable-next-line no-console
+       
       toast.error('No se pudo iniciar el chat. Intenta nuevamente.');
     } finally {
       setCreatingChat(false);

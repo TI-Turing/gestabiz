@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-console */
+ 
 /**
  * useConversations Hook - Sistema de Chat FASE 2
  * 

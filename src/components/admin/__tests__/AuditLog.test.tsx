@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
+import { renderWithProviders } from '@/test-utils'
 import userEvent from '@testing-library/user-event'
 import { AuditLog } from '../AuditLog'
 import * as usePermissionsModule from '@/hooks/usePermissions-v2'
@@ -91,7 +92,7 @@ describe('AuditLog', () => {
       })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       expect(screen.getByText('Historial de Auditoría')).toBeInTheDocument()
       expect(screen.getByText('Registro completo de cambios en roles y permisos')).toBeInTheDocument()
@@ -104,7 +105,7 @@ describe('AuditLog', () => {
       })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       expect(screen.getByText('Cargando registros...')).toBeInTheDocument()
     })
@@ -115,7 +116,7 @@ describe('AuditLog', () => {
       })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       expect(screen.getByText('No hay registros de auditoría')).toBeInTheDocument()
     })
@@ -130,7 +131,7 @@ describe('AuditLog', () => {
       })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       expect(screen.getByText('Juan Pérez')).toBeInTheDocument()
       expect(screen.getByText('María García')).toBeInTheDocument()
@@ -142,7 +143,7 @@ describe('AuditLog', () => {
       const mockHook = mockUsePermissions({ auditLog: [] })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       expect(screen.getByLabelText('Tipo de Acción')).toBeInTheDocument()
       expect(screen.getByLabelText('Usuario')).toBeInTheDocument()
@@ -164,7 +165,7 @@ describe('AuditLog', () => {
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
       const user = userEvent.setup()
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       // Verificar que se muestran todos los registros inicialmente (número en span)
       expect(screen.getByText('3')).toBeInTheDocument()
@@ -193,7 +194,7 @@ describe('AuditLog', () => {
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
       const user = userEvent.setup()
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       // Buscar por "Juan"
       const userInput = screen.getByPlaceholderText('Buscar por nombre...')
@@ -213,7 +214,7 @@ describe('AuditLog', () => {
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
       const user = userEvent.setup()
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       // Aplicar filtro de usuario
       const userInput = screen.getByPlaceholderText('Buscar por nombre...')
@@ -241,7 +242,7 @@ describe('AuditLog', () => {
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
       const user = userEvent.setup()
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       // Buscar usuario que no existe
       const userInput = screen.getByPlaceholderText('Buscar por nombre...')
@@ -256,7 +257,7 @@ describe('AuditLog', () => {
       const mockHook = mockUsePermissions({ auditLog: [] })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       // Buscar headers dentro de la tabla (thead) para evitar duplicados con filtros
       const tableHeaders = screen.getAllByRole('columnheader')
@@ -281,7 +282,7 @@ describe('AuditLog', () => {
       const mockHook = mockUsePermissions({ auditLog: entries })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       // Buscar badge "Permiso Otorgado"
       const badge = screen.getByText(/Permiso Otorgado/i)
@@ -303,7 +304,7 @@ describe('AuditLog', () => {
       const mockHook = mockUsePermissions({ auditLog: entries })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       // Buscar el elemento <code> con el permiso
       const permissionCode = screen.getByText('read_appointments')
@@ -323,7 +324,7 @@ describe('AuditLog', () => {
       const mockHook = mockUsePermissions({ auditLog: entries })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       expect(screen.getByText('Administrador')).toBeInTheDocument()
     })
@@ -339,7 +340,7 @@ describe('AuditLog', () => {
       const mockHook = mockUsePermissions({ auditLog: entries })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       // Buscar "N/A" en la columna de detalles
       const cells = screen.getAllByRole('cell')
@@ -357,7 +358,7 @@ describe('AuditLog', () => {
       const mockHook = mockUsePermissions({ auditLog: entries })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       // Buscar la inicial "J" en el avatar
       expect(screen.getByText('J')).toBeInTheDocument()
@@ -376,7 +377,7 @@ describe('AuditLog', () => {
       const mockHook = mockUsePermissions({ auditLog: entries })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       expect(screen.getByText('Página 1 de 2')).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /Anterior/i })).toBeInTheDocument()
@@ -390,7 +391,7 @@ describe('AuditLog', () => {
       const mockHook = mockUsePermissions({ auditLog: entries })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       const previousButton = screen.getByRole('button', { name: /Anterior/i })
       expect(previousButton).toBeDisabled()
@@ -404,7 +405,7 @@ describe('AuditLog', () => {
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
       const user = userEvent.setup()
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       // Ir a la página 2 (última)
       const nextButton = screen.getByRole('button', { name: /Siguiente/i })
@@ -425,7 +426,7 @@ describe('AuditLog', () => {
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
       const user = userEvent.setup()
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       // Verificar página 1
       expect(screen.getByText('Página 1 de 2')).toBeInTheDocument()
@@ -467,7 +468,7 @@ describe('AuditLog', () => {
       const mockHook = mockUsePermissions({ auditLog: [] })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       const exportButton = screen.getByRole('button', { name: /Exportar CSV/i })
       expect(exportButton).toBeDisabled()
@@ -492,7 +493,7 @@ describe('AuditLog', () => {
       const mockHook = mockUsePermissions({ auditLog: entries })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       const exportButton = screen.getByRole('button', { name: /Exportar CSV/i })
       expect(exportButton).not.toBeDisabled()
@@ -527,7 +528,7 @@ describe('AuditLog', () => {
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
       const user = userEvent.setup()
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       const exportButton = screen.getByRole('button', { name: /Exportar CSV/i })
       await user.click(exportButton)
@@ -559,7 +560,7 @@ describe('AuditLog', () => {
       vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockLink as unknown as Node)
 
       const user = userEvent.setup()
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       const exportButton = screen.getByRole('button', { name: /Exportar CSV/i })
       await user.click(exportButton)
@@ -584,7 +585,7 @@ describe('AuditLog', () => {
       const mockHook = mockUsePermissions({ auditLog: entries })
       vi.mocked(usePermissionsModule.usePermissions).mockReturnValue(mockHook)
 
-      render(<AuditLog {...defaultProps} />)
+      renderWithProviders(<AuditLog {...defaultProps} />)
 
       // Verificar que cada tipo de acción tiene su badge con ícono
       expect(screen.getByText(/Rol Asignado/i)).toBeInTheDocument()

@@ -4,13 +4,11 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { PermissionGate } from '@/components/ui/PermissionGate'
 import { 
   Bell, 
-  Clock, 
   Envelope, 
   Phone, 
   WhatsappLogo,
@@ -320,37 +318,7 @@ export function BusinessNotificationSettings({ businessId }: { businessId: strin
         </CardContent>
       </Card>
 
-      {/* Tiempos de Recordatorio */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-foreground">
-            <Clock className="h-5 w-5" />
-            Tiempos de Recordatorio
-          </CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Define cuándo enviar recordatorios antes de las citas (en minutos)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            {settings.reminder_times.sort((a, b) => b - a).map(minutes => (
-              <div key={minutes} className="flex items-center justify-between p-3 border border-border rounded-lg bg-background">
-                <div className="flex items-center gap-3">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{formatMinutesToHuman(minutes)} antes</span>
-                  <Badge variant="secondary">{minutes} min</Badge>
-                </div>
-
-              </div>
-            ))}
-            {settings.reminder_times.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No hay recordatorios configurados
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tiempos de Recordatorio — deshabilitado: valores fijos 24h y 2h gestionados internamente */}
 
       {/* Configuración Avanzada */}
       <Card className="bg-card border-border">

@@ -138,7 +138,7 @@ serve(async (req) => {
     const businessName: string = business?.name ?? 'tu negocio'
     const location = appointment.location as { name?: string; address?: string; city?: string } | null
     const sedeLabel: string = location?.name ?? location?.city ?? businessName
-    const logoUrl: string = business?.logo_url ?? ''
+    const logoUrl: string = business?.logo_url ?? Deno.env.get('GESTABIZ_DEFAULT_LOGO_URL') ?? `${APP_URL}/logo-light.svg`
     const token: string = (appointment as { confirmation_token?: string }).confirmation_token ?? ''
 
     const to = `whatsapp:+${phoneDigits}`
@@ -162,8 +162,9 @@ serve(async (req) => {
       : (is24h
           ? (isConfirmed ? TEMPLATE_SID_24H_CONFIRMED : TEMPLATE_SID_24H_PENDING)
           : (isConfirmed ? TEMPLATE_SID_2H_CONFIRMED : TEMPLATE_SID_2H_PENDING))
-    // Template requires logo: if business has no logo, fall through to free-text fallback
-    const hasTemplate = !!templateSid && !!token && !!logoUrl
+    // Confirmed appointments don't need a confirmation_token (appointment already confirmed).
+    // Pending appointments need the token to build the confirmation link in the template.
+    const hasTemplate = !!templateSid && (isConfirmed || !!token)
 
     const timeLabel = formatTime(startDate)
     const fallbackMsg = is24h
@@ -174,6 +175,12 @@ serve(async (req) => {
 
     if (hasTemplate) {
       // ── Template message ─────────────────────────────────────────────────
+      // Confirmed templates have one fewer variable than pending templates:
+      // - 24h confirmed: vars 1-7 (no token slot {{8}})
+      // - 24h pending:   vars 1-8 (includes confirmation token as {{8}})
+      // - 2h confirmed:  vars 1-6 (no token slot {{7}})
+      // - 2h pending:    vars 1-7 (includes confirmation token as {{7}})
+      // Sending extra variables not defined in the template causes Twilio error 21656.
       const contentVariables: Record<string, string> = is24h
         ? {
             '1': logoUrl,
@@ -183,7 +190,7 @@ serve(async (req) => {
             '5': formatTime(startDate),
             '6': sedeLabel,
             '7': serviceName,
-            '8': token,
+            ...(isConfirmed ? {} : { '8': token }),
           }
         : {
             '1': logoUrl,
@@ -192,7 +199,7 @@ serve(async (req) => {
             '4': formatTime(startDate),
             '5': sedeLabel,
             '6': serviceName,
-            '7': token,
+            ...(isConfirmed ? {} : { '7': token }),
           }
 
       messageParams = {
@@ -202,8 +209,10 @@ serve(async (req) => {
         ContentVariables: JSON.stringify(contentVariables),
       }
     } else {
-      // ── Fallback: free-form text (used while templates are pending approval) ─
-      messageParams = { To: to, From: from, Body: fallbackMsg }
+      // No hay template disponible — los mensajes proactivos de WhatsApp SIEMPRE requieren template aprobado.
+      // Para citas 'confirmed' solo se necesita templateSid.
+      // Para citas 'pending' se necesita templateSid + confirmation_token (enlace de confirmación).
+      throw new Error('No WhatsApp template available: missing Twilio templateSid or (for pending appointments) confirmation_token. Proactive messages require an approved template.')
     }
 
     // ── 6. Send via Twilio ───────────────────────────────────────────────────
@@ -215,21 +224,7 @@ serve(async (req) => {
 
     if (!resp.ok) {
       const txt = await resp.text()
-
-      if (hasTemplate) {
-        const fallbackResp = await fetch(messagesUrl, {
-          method: 'POST',
-          headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({ To: to, From: from, Body: fallbackMsg }),
-        })
-
-        if (!fallbackResp.ok) {
-          const fallbackTxt = await fallbackResp.text()
-          throw new Error(`Twilio error: ${txt}; fallback error: ${fallbackTxt}`)
-        }
-      } else {
-        throw new Error(`Twilio error: ${txt}`)
-      }
+      throw new Error(`Twilio error: ${txt}`)
     }
 
     await supabase.from('notifications')

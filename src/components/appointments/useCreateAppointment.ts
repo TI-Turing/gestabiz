@@ -3,6 +3,7 @@
  * Separa la lógica de persistencia del componente raíz.
  */
 import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { logger } from '@/lib/logger'
 import supabase from '@/lib/supabase'
@@ -24,6 +25,7 @@ interface UseCreateAppointmentParams {
       amount?: number; currency: string; duration: number
     }) => void
   }
+  isAdminBooking?: boolean
 }
 
 /** Colombia UTC offset (hours to add when converting local → UTC) */
@@ -62,15 +64,17 @@ export function useCreateAppointment({
   setIsSubmitting,
   createAppointmentWithNotifications,
   analytics,
+  isAdminBooking,
 }: UseCreateAppointmentParams) {
   const { t } = useLanguage()
+  const queryClient = useQueryClient()
 
   const createAppointment = async (): Promise<boolean> => {
     if (!wizardData.businessId || !wizardData.serviceId || !wizardData.date || !wizardData.startTime) {
       toast.error(t('appointments.wizard_errors.missingRequiredData'))
       return false
     }
-    if (!userId) {
+    if (!userId && !isAdminBooking) {
       toast.error(t('appointments.wizard_errors.mustLogin'))
       return false
     }
@@ -86,8 +90,20 @@ export function useCreateAppointment({
 
       const finalBusinessId = wizardData.employeeBusinessId || wizardData.businessId
 
+      // Determine client_id and guest_client_info for admin bookings
+      const clientId = isAdminBooking
+        ? (wizardData.clientProfileId || null)
+        : userId
+      const guestClientInfo = (isAdminBooking && !wizardData.clientProfileId)
+        ? {
+            name: wizardData.clientName,
+            phone: `${wizardData.clientPhonePrefix || '+57'}${wizardData.clientPhone}`,
+            email: wizardData.clientEmail,
+          }
+        : null
+
       const appointmentData = {
-        client_id: userId,
+        client_id: clientId,
         business_id: finalBusinessId,
         service_id: wizardData.serviceId,
         location_id: wizardData.locationId,
@@ -98,6 +114,7 @@ export function useCreateAppointment({
         status: 'pending' as const,
         notes: wizardData.notes || null,
         price: wizardData.service?.price ?? null,
+        ...(guestClientInfo ? { guest_client_info: guestClientInfo } : {}),
       }
 
       if (appointmentToEdit) {
@@ -132,6 +149,13 @@ export function useCreateAppointment({
 
         toast.success(t('appointments.wizard_success.created'))
       }
+
+      // Invalidar cache de disponibilidad del wizard para que nuevas consultas
+      // reflejen la cita recién creada/modificada
+      queryClient.invalidateQueries({ queryKey: ['wizard-datetime-day'] })
+      queryClient.invalidateQueries({ queryKey: ['wizard-datetime-month'] })
+      // También invalidar las queries de calendario para que reflejen el cambio
+      queryClient.invalidateQueries({ queryKey: ['appointments'] })
 
       onSuccess?.()
       return true

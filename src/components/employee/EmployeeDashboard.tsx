@@ -149,7 +149,7 @@ export function EmployeeDashboard({
     navigate(`/app/employee/${page}`)
     // Aquí puedes usar el context si necesitas pasarlo a componentes hijos
     if (context) {
-      // eslint-disable-next-line no-console
+       
     }
   }
 

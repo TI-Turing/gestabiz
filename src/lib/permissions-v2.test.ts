@@ -55,8 +55,8 @@ describe('permissions-v2.ts - Core Library', () => {
   // CONSTANTES
   // =====================================================
   describe('Constantes de permisos', () => {
-    it('debe tener 60 permisos totales en ALL_PERMISSIONS', () => {
-      expect(ALL_PERMISSIONS).toHaveLength(60)
+    it('debe tener 64 permisos totales en ALL_PERMISSIONS', () => {
+      expect(ALL_PERMISSIONS).toHaveLength(64)
     })
 
     it('debe tener descripciones para todos los permisos', () => {
@@ -66,16 +66,16 @@ describe('permissions-v2.ts - Core Library', () => {
       expect(permissionsWithoutDescription).toHaveLength(0)
     })
 
-    it('debe tener 11 categorías de permisos', () => {
+    it('debe tener 12 categorías de permisos', () => {
       const categories = Object.keys(PERMISSION_CATEGORIES)
-      expect(categories).toHaveLength(11)
+      expect(categories).toHaveLength(12)
     })
 
     it('debe tener todos los permisos organizados en categorías', () => {
       const allCategoryPermissions = Object.values(PERMISSION_CATEGORIES).flatMap(
         (cat) => cat.permissions
       )
-      expect(allCategoryPermissions).toHaveLength(60)
+      expect(allCategoryPermissions).toHaveLength(64)
       expect(allCategoryPermissions.sort()).toEqual(ALL_PERMISSIONS.sort())
     })
 
@@ -254,7 +254,7 @@ describe('permissions-v2.ts - Core Library', () => {
   describe('getUserActivePermissions()', () => {
     it('debe retornar todos los permisos si es Admin Dueño', () => {
       const result = getUserActivePermissions('owner-id', 'owner-id', [])
-      expect(result).toHaveLength(60)
+      expect(result).toHaveLength(64)
       expect(result).toEqual(ALL_PERMISSIONS)
     })
 
