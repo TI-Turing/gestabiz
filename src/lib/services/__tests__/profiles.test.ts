@@ -52,16 +52,16 @@ describe('profilesService.findByPhone', () => {
 
   it('retorna null y captura excepción si hay error', async () => {
     const { profilesService } = await import('@/lib/services/profiles')
-    const chain = buildChain({ data: null, error: new Error('rls') })
+    const error = new Error('rls')
+    const chain = buildChain({ data: null, error })
     mocks.mockFrom.mockReturnValue(chain)
 
     const result = await profilesService.findByPhone('300')
     expect(result).toBeNull()
     expect(Sentry.captureException).toHaveBeenCalledOnce()
-    expect(Sentry.captureException).toHaveBeenCalledWith(
-      expect.any(Error),
-      expect.objectContaining({ tags: { service: 'profiles', operation: 'findByPhone' } })
-    )
+    expect(Sentry.captureException).toHaveBeenCalledWith(error, {
+      tags: { service: 'profiles', operation: 'findByPhone' },
+    })
   })
 
   it('retorna null si no encuentra', async () => {
