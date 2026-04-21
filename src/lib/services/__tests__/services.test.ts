@@ -185,6 +185,8 @@ describe('servicesService.update', () => {
     const chain = buildChain({ data: { id: 's1' }, error: null })
     mocks.mockFrom.mockReturnValue(chain)
 
+    // Simula valores null en runtime (la DB puede devolver null aunque el tipo TS sea string | undefined).
+    // El servicio usa `?? 'COP'` y `?? null` para manejar este caso defensivamente.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await servicesService.update('s1', { currency: null as any, description: null as any })
 

@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react'
 
 const mocks = vi.hoisted(() => ({
   mockFrom: vi.fn(),
+  mockCaptureException: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase', () => {
@@ -11,7 +12,7 @@ vi.mock('@/lib/supabase', () => {
 })
 
 vi.mock('@sentry/react', () => ({
-  captureException: vi.fn(),
+  captureException: mocks.mockCaptureException,
 }))
 
 function buildChain(resolvedValue: { data: unknown; error: unknown }) {
@@ -27,7 +28,7 @@ function buildChain(resolvedValue: { data: unknown; error: unknown }) {
 
 beforeEach(() => {
   mocks.mockFrom.mockReset()
-  vi.mocked(Sentry.captureException).mockClear()
+  mocks.mockCaptureException.mockClear()
 })
 
 describe('profilesService.findByPhone', () => {
