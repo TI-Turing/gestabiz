@@ -214,12 +214,18 @@ export function EmployeeAppointmentsPage({
               <div className="text-sm text-muted-foreground">Citas Hoy</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4">
+          <button
+            type="button"
+            aria-label="Programadas"
+            data-slot="card"
+            onClick={() => setStatusFilter(['scheduled'])}
+            className="bg-card text-card-foreground flex flex-col gap-3 rounded-xl border py-3 shadow-sm text-left hover:bg-accent/50 transition-colors cursor-pointer"
+          >
+            <div data-slot="card-content" className="p-4">
               <div className="text-2xl font-bold">{stats.scheduled}</div>
               <div className="text-sm text-muted-foreground">Programadas</div>
-            </CardContent>
-          </Card>
+            </div>
+          </button>
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-green-600">{stats.confirmed}</div>
