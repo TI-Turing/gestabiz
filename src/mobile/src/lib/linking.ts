@@ -68,6 +68,10 @@ export const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       // ProfileStack) se sigue resolviendo.
       Favoritos: 'app/client/favorites/legacy',
 
+      // ─── Reseñas (cliente) ─────────────────────────────────
+      EscribirResena: 'app/client/review/:appointmentId',
+      ReseñasPendientes: 'app/client/pending-reviews',
+
       // ─── Compartidas (accesibles desde notificaciones) ─────
       Chat: 'chat/:conversationId',
       ConversacionList: 'app/messages',

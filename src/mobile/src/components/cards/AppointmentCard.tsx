@@ -50,6 +50,8 @@ interface AppointmentCardProps {
   onAction?: (id: string) => void
   /** Label for the action button, e.g. "Cancelar" */
   actionLabel?: string
+  /** Called when user taps "Dejar reseña" (only shown when status === 'completed') */
+  onReview?: (id: string) => void
 }
 
 // ─── AppointmentCard ──────────────────────────────────────────────────────────
@@ -60,6 +62,7 @@ export function AppointmentCard({
   onPress,
   onAction,
   actionLabel,
+  onReview,
 }: AppointmentCardProps) {
   const { theme } = useTheme()
   const {
@@ -283,22 +286,34 @@ export function AppointmentCard({
       </View>
 
       {/* Footer */}
-      {(servicePrice !== undefined || onAction) && (
+      {(servicePrice !== undefined || onAction || (status === 'completed' && onReview)) && (
         <View style={styles.footer}>
           {servicePrice !== undefined && (
             <CurrencyText amount={servicePrice} highlight size="sm" />
           )}
-          {onAction && actionLabel && (
-            <TouchableOpacity
-              onPress={() => onAction(id)}
-              style={[styles.actionBtn, { borderColor: theme.border }]}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text style={[styles.actionText, { color: theme.textSecondary }]}>
-                {actionLabel}
-              </Text>
-            </TouchableOpacity>
-          )}
+          <View style={styles.footerActions}>
+            {status === 'completed' && onReview && (
+              <TouchableOpacity
+                onPress={() => onReview(id)}
+                style={[styles.reviewBtn, { backgroundColor: theme.primary }]}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="star-outline" size={12} color="#FFFFFF" />
+                <Text style={styles.reviewBtnText}>Reseñar</Text>
+              </TouchableOpacity>
+            )}
+            {onAction && actionLabel && (
+              <TouchableOpacity
+                onPress={() => onAction(id)}
+                style={[styles.actionBtn, { borderColor: theme.border }]}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={[styles.actionText, { color: theme.textSecondary }]}>
+                  {actionLabel}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       )}
 
@@ -358,6 +373,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: spacing[1],
+  },
+  footerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  reviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+  },
+  reviewBtnText: {
+    fontSize: typography.xs,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   actionBtn: {
     borderWidth: 1,

@@ -65,6 +65,8 @@ import AppointmentHistoryScreen from './src/screens/client/AppointmentHistoryScr
 import CalendarScreen from './src/screens/client/CalendarScreen'
 import FavoritesScreen from './src/screens/client/FavoritesScreen'
 import SearchScreen from './src/screens/client/SearchScreen'
+import WriteReviewScreen from './src/screens/client/WriteReviewScreen'
+import PendingReviewsScreen from './src/screens/client/PendingReviewsScreen'
 
 // Admin additional screens
 import AppointmentsCalendarScreen from './src/screens/admin/AppointmentsCalendarScreen'
@@ -247,6 +249,8 @@ function ClientHomeStack() {
       <Stack.Screen name="MisCitasList" component={ClientAppointmentsScreen} options={{ title: 'Mis Citas', headerShown: false }} />
       <Stack.Screen name="Calendario" component={CalendarScreen} options={{ title: 'Calendario' }} />
       <Stack.Screen name="Reservar" component={BookingScreen} options={{ title: 'Reservar cita', headerShown: false }} />
+      <Stack.Screen name="EscribirResena" component={WriteReviewScreen} options={{ title: 'Reseña', headerShown: false }} />
+      <Stack.Screen name="ReseñasPendientes" component={PendingReviewsScreen} options={{ title: 'Reseñas pendientes', headerShown: false }} />
       <Stack.Screen name="BusinessProfile" component={BusinessProfileScreen} options={{ title: 'Negocio' }} />
     </Stack.Navigator>
   )
@@ -267,6 +271,8 @@ function ClientHistoryStack() {
     <Stack.Navigator screenOptions={{ ...STACK_HEADER_STYLE }}>
       <Stack.Screen name="HistorialCitas" component={AppointmentHistoryScreen} options={{ title: 'Historial', headerShown: false }} />
       <Stack.Screen name="BusinessProfile" component={BusinessProfileScreen} options={{ title: 'Negocio' }} />
+      <Stack.Screen name="EscribirResena" component={WriteReviewScreen} options={{ title: 'Reseña', headerShown: false }} />
+      <Stack.Screen name="ReseñasPendientes" component={PendingReviewsScreen} options={{ title: 'Reseñas pendientes', headerShown: false }} />
     </Stack.Navigator>
   )
 }
