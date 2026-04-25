@@ -35,6 +35,7 @@ const DOC_TYPES = [
 
 const NAV_ITEMS: { label: string; icon: keyof typeof Ionicons.glyphMap; screen: string }[] = [
   { label: 'Mis favoritos', icon: 'heart-outline', screen: 'Favoritos' },
+  { label: 'Reseñas pendientes', icon: 'star-outline', screen: 'ReseñasPendientes' },
   { label: 'Mensajes', icon: 'chatbubble-outline', screen: 'ConversacionList' },
   { label: 'Notificaciones', icon: 'notifications-outline', screen: 'Notificaciones' },
   { label: 'Ajustes de cuenta', icon: 'settings-outline', screen: 'Ajustes' },

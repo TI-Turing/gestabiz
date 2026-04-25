@@ -26,7 +26,11 @@ import { BugReportModal } from '../../components/bug-report/BugReportModal'
 
 interface NotifPrefs {
   email_enabled: boolean
+  sms_enabled: boolean
+  whatsapp_enabled: boolean
   do_not_disturb_enabled: boolean
+  daily_digest_enabled: boolean
+  weekly_summary_enabled: boolean
 }
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
@@ -59,11 +63,18 @@ export default function SettingsScreen() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_notification_preferences')
-        .select('email_enabled, do_not_disturb_enabled')
+        .select('email_enabled, sms_enabled, whatsapp_enabled, do_not_disturb_enabled, daily_digest_enabled, weekly_summary_enabled')
         .eq('user_id', user!.id)
         .maybeSingle()
       if (error) throw error
-      return (data as NotifPrefs | null) ?? { email_enabled: true, do_not_disturb_enabled: false }
+      return (data as NotifPrefs | null) ?? {
+        email_enabled: true,
+        sms_enabled: false,
+        whatsapp_enabled: false,
+        do_not_disturb_enabled: false,
+        daily_digest_enabled: false,
+        weekly_summary_enabled: false,
+      }
     },
     enabled: !!user?.id,
     ...QUERY_CONFIG.STABLE,
@@ -147,12 +158,13 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── Notificaciones ────────────────────────────────────────────── */}
+        {/* ── Notificaciones — Canales ──────────────────────────────────── */}
         <Text style={[styles.sectionLabel, { color: theme.mutedForeground }]}>NOTIFICACIONES</Text>
         <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <ToggleRow
             icon="mail-outline"
-            label="Notificaciones por email"
+            label="Email"
+            description="Confirmaciones y recordatorios por correo"
             value={notifPrefs?.email_enabled ?? true}
             loading={loadingNotifs}
             onChange={v => notifMutation.mutate({ email_enabled: v })}
@@ -160,9 +172,57 @@ export default function SettingsScreen() {
           />
           <View style={[styles.divider, { backgroundColor: theme.border }]} />
           <ToggleRow
+            icon="logo-whatsapp"
+            label="WhatsApp"
+            description="Recordatorios via WhatsApp"
+            value={notifPrefs?.whatsapp_enabled ?? false}
+            loading={loadingNotifs}
+            onChange={v => notifMutation.mutate({ whatsapp_enabled: v })}
+            theme={theme}
+          />
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+          <ToggleRow
+            icon="chatbubble-outline"
+            label="SMS"
+            description="Mensajes de texto"
+            value={notifPrefs?.sms_enabled ?? false}
+            loading={loadingNotifs}
+            onChange={v => notifMutation.mutate({ sms_enabled: v })}
+            theme={theme}
+          />
+        </View>
+
+        {/* ── Notificaciones — Resúmenes ────────────────────────────────── */}
+        <Text style={[styles.sectionLabel, { color: theme.mutedForeground }]}>RESÚMENES</Text>
+        <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <ToggleRow
+            icon="today-outline"
+            label="Resumen diario"
+            description="Un resumen de tus citas cada mañana"
+            value={notifPrefs?.daily_digest_enabled ?? false}
+            loading={loadingNotifs}
+            onChange={v => notifMutation.mutate({ daily_digest_enabled: v })}
+            theme={theme}
+          />
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+          <ToggleRow
+            icon="calendar-outline"
+            label="Resumen semanal"
+            description="Actividad de la semana cada lunes"
+            value={notifPrefs?.weekly_summary_enabled ?? false}
+            loading={loadingNotifs}
+            onChange={v => notifMutation.mutate({ weekly_summary_enabled: v })}
+            theme={theme}
+          />
+        </View>
+
+        {/* ── Notificaciones — Privacidad ───────────────────────────────── */}
+        <Text style={[styles.sectionLabel, { color: theme.mutedForeground }]}>PRIVACIDAD</Text>
+        <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <ToggleRow
             icon="moon-outline"
             label="No molestar"
-            description="Silenciar entre 10pm y 8am"
+            description="Silenciar notificaciones entre 10pm y 8am"
             value={notifPrefs?.do_not_disturb_enabled ?? false}
             loading={loadingNotifs}
             onChange={v => notifMutation.mutate({ do_not_disturb_enabled: v })}

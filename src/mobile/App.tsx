@@ -297,6 +297,8 @@ function ClientProfileStack() {
       <Stack.Screen name="ConversacionList" component={ConversationListScreen} options={{ title: 'Mensajes' }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: '' }} />
       <Stack.Screen name="Ajustes" component={SettingsScreen} options={{ title: 'Ajustes' }} />
+      <Stack.Screen name="ReseñasPendientes" component={PendingReviewsScreen} options={{ title: 'Reseñas pendientes', headerShown: false }} />
+      <Stack.Screen name="EscribirResena" component={WriteReviewScreen} options={{ title: 'Reseña', headerShown: false }} />
     </Stack.Navigator>
   )
 }
