@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "prepare": "husky",
+    "prebuild": "npm run remove-logs",
     "dev": "vite",
     "dev:staging": "vite --mode staging",
     "dev:owner": "vite --config vite.config.owner.ts",
@@ -133,7 +135,9 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^17.4.0",
+    "husky": "^9.1.7",
     "jsdom": "^27.0.0",
+    "lint-staged": "^15.5.2",
     "supabase": "^2.54.11",
     "tailwindcss": "^4.2.1",
     "tsx": "^4.20.6",

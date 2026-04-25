@@ -24,7 +24,7 @@ Gestabiz es una plataforma SaaS **todo-en-uno** para PyMEs de servicios (salones
 
 | Servidor | Alcance | Propósito |
 |----------|---------|-----------|
-| `supabase` | Proyecto (`.claude/mcp.json`) | SQL directo, migraciones, Edge Functions. DEV: `dkancockzvcqorqbwtyh` / PROD: `emknatoknbomvmyumqju` |
+| `supabase` | Proyecto (`.claude/mcp.json`) | SQL directo, migraciones, Edge Functions. LOCAL: `http://localhost:54321` / DEV: `dkancockzvcqorqbwtyh` / PROD: `emknatoknbomvmyumqju` |
 | `chrome-devtools` | Proyecto (`.claude/mcp.json`) | Inspección de Network, Console y DOM en tiempo real |
 | `pencil` | Global (`~/.claude/settings.json`) | Editor de diseño `.pen` — generar y editar pantallas UI/UX |
 | `claude-mem` | Global (plugin `claude-mem@thedotmack`) | Memoria persistente cross-sesión: `make-plan`, `do`, `mem-search`, `smart-explore` |
@@ -722,9 +722,55 @@ Capa de abstracción sobre Supabase para operaciones CRUD:
 
 ## BASE DE DATOS SUPABASE
 
-**Solo en la nube** (no hay instancia local).
-- **DEV**: `dkancockzvcqorqbwtyh` — proyecto original con data de prueba
-- **PROD**: `emknatoknbomvmyumqju` — proyecto nuevo, limpio
+**Tres ambientes** — el flujo de trabajo estándar usa LOCAL en el día a día:
+
+| Ambiente | Proyecto | URL | Uso |
+|----------|----------|-----|-----|
+| **LOCAL** ⭐ | Docker local | `http://localhost:54321` | **Desarrollo diario** — espejo exacto de DEV, sin riesgo de afectar otros |
+| **DEV** | `dkancockzvcqorqbwtyh` | `https://dkancockzvcqorqbwtyh.supabase.co` | Pruebas remotas / QA / cuando el local no está disponible |
+| **PROD** | `emknatoknbomvmyumqju` | `https://emknatoknbomvmyumqju.supabase.co` | Producción — nunca modificar directamente |
+
+**Stack local**: `npx supabase start` → Studio en `http://localhost:54323`, DB en `postgresql://postgres:postgres@localhost:54322/postgres`
+**Snapshot**: `supabase/_remote_snapshot/` contiene los dumps del DEV remoto (en `.gitignore`)
+**Para apuntar la app al local**: `.env.local` (ya configurado, toma prioridad sobre `.env`)
+**Para volver al DEV remoto**: borrar o renombrar `.env.local`
+
+### Supabase Local — Reglas Operativas ⭐ NUEVA
+
+**Stack local** (configurado en `supabase/config.toml`):
+- API: `http://localhost:54321`
+- DB: `postgresql://postgres:postgres@localhost:54322/postgres`
+- Studio: `http://localhost:54323`
+- Inbucket (emails capturados): `http://localhost:54324`
+- `.env.local` apunta automáticamente a localhost — toma prioridad sobre `.env`
+
+**Cuándo usar local**:
+- Desarrollo diario (espejo exacto de DEV, sin riesgo)
+- Probar migraciones SQL nuevas antes del commit
+- Probar RLS y políticas con distintos roles
+- Probar webhooks de pago con eventos firmados (con ngrok)
+- Reproducir bugs reportados en DEV/PROD
+
+**Cuándo NO usar local**:
+- Validación final pre-PR (usar DEV remoto)
+- Demos a clientes/inversores (usar DEV o PROD)
+- Pruebas de integración con servicios externos reales (Stripe live mode, Brevo)
+
+**Comandos**:
+```bash
+supabase start                                          # Iniciar stack local
+supabase stop                                           # Detener
+supabase db reset                                       # Recrea desde cero (todas las migraciones)
+supabase functions serve <name> --env-file .env.local   # Servir edge function local
+supabase db diff                                        # Detectar schema drift vs migraciones
+```
+
+**Regla obligatoria**: toda migración nueva DEBE probarse con `supabase db reset` local antes de hacer commit. Si rompe el reset, no se commitea.
+
+**Troubleshooting rápido**:
+- Puerto ocupado → `supabase stop && supabase start`
+- Conflicto de migraciones → `supabase db reset --linked=false`
+- App ve DEV en vez de local → verificar que `.env.local` existe con `VITE_SUPABASE_URL=http://localhost:54321`
 
 ### Tablas principales (40+)
 
@@ -940,21 +986,23 @@ npm run pre-deploy        # Checks pre-deploy
 ## VARIABLES DE ENTORNO
 
 **Web** — ver templates en `environments/`. Archivos gitignoreados:
-- `.env.development` → local/dev (apunta a `dkancockzvcqorqbwtyh`)
-- `.env.staging` → build de dev (idem)
+- `.env.local` ⭐ **ACTIVO en desarrollo** — apunta al stack LOCAL Docker (`http://localhost:54321`). Toma prioridad sobre `.env` cuando existe.
+- `.env` → apunta a DEV remoto (`dkancockzvcqorqbwtyh`). Se usa cuando `.env.local` no existe (modo pruebas remotas).
+- `.env.staging` → build de dev/staging (apunta a DEV remoto)
 - `.env.production` → build de prod (apunta a `emknatoknbomvmyumqju`)
 
+> **Regla de oro**: para desarrollo local siempre usar `.env.local` → `VITE_SUPABASE_URL=http://localhost:54321`. El DEV remoto (`dkancockzvcqorqbwtyh`) es para pruebas remotas/QA, no para el día a día.
+
 ```bash
-# Ejemplo .env.development (DEV)
-VITE_SUPABASE_URL=https://dkancockzvcqorqbwtyh.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJ...
+# .env.local (LOCAL Docker — desarrollo diario)
+VITE_SUPABASE_URL=http://localhost:54321
+VITE_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
 VITE_APP_URL=http://localhost:5173
-VITE_APP_NAME=Gestabiz
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
-VITE_PAYMENT_GATEWAY=stripe|payu|mercadopago
-VITE_GOOGLE_CLIENT_ID=...
-VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
-VITE_DEMO_MODE=true   # Cliente Supabase simulado
+VITE_APP_NAME=Gestabiz [LOCAL]
+VITE_PAYMENT_GATEWAY=mercadopago
+VITE_GOOGLE_CLIENT_ID=496587471913-qk668fv00cpto430petb79c3h4tkvla6.apps.googleusercontent.com
+# VITE_GA_MEASUREMENT_ID=   ← desactivado en local para no contaminar analytics
+VITE_DEMO_MODE=false
 ```
 
 **Vercel — variables por entorno** (configuradas vía API, no dashboard):
@@ -1049,7 +1097,8 @@ SUPABASE_SERVICE_ROLE_KEY  # Solo para scripts, nunca en frontend
 - **Organización**: TI-Turing (https://github.com/TI-Turing)
 - **Repo**: https://github.com/TI-Turing/Gestabiz
 - **Deploy**: Vercel (configurado en `vercel.json`)
-- **Supabase DEV**: `dkancockzvcqorqbwtyh` (proyecto original, data de prueba)
+- **Supabase LOCAL** ⭐: Docker local — `http://localhost:54321` (desarrollo diario, espejo de DEV)
+- **Supabase DEV**: `dkancockzvcqorqbwtyh` (pruebas remotas / QA — ya no se usa desde local en el día a día)
 - **Supabase PROD**: `emknatoknbomvmyumqju` (proyecto nuevo, limpio)
 - **Versión**: 1.0.3
 - **Fase**: BETA completada — no se agregan nuevos flujos funcionales; solo bugs, optimizaciones y features puntuales solicitadas

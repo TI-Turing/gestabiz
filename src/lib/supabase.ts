@@ -13,29 +13,55 @@ type GlobalWithProcess = typeof globalThis & { process?: { env?: Record<string, 
 const gwp = globalThis as GlobalWithProcess
 const demoFlag = typeof gwp !== 'undefined' && gwp.process?.env?.VITE_DEMO_MODE === 'true'
 
-// ✨ FIX: Detectar si las variables están vacías o son placeholders
-const hasValidCredentials = 
-  supabaseUrl && 
-  supabaseUrl !== '' && 
-  supabaseUrl !== 'undefined' &&
-  !supabaseUrl.includes('demo.supabase.co') &&
-  supabaseAnonKey && 
-  supabaseAnonKey !== '' && 
+// ✨ FIX: Detectar si las variables están vacías o son placeholders.
+// URL aceptada: https://*.supabase.co (PROD/DEV) o http://localhost:54321 (Supabase local).
+const SUPABASE_URL_PATTERN = /^(https:\/\/[a-z0-9-]+\.supabase\.co|http:\/\/(localhost|127\.0\.0\.1):54321)$/
+// Anon key aceptada: formato nuevo `sb_publishable_*` (CLAUDE.md regla 13 — JWT legacy `eyJ*`
+// está deshabilitado desde abr 2026). En supabase local también empieza con `eyJ` por compatibilidad,
+// así que aceptamos ambos prefijos pero rechazamos placeholders.
+const SUPABASE_KEY_PATTERN = /^(sb_publishable_|eyJ)/
+
+const isLikelyValidUrl = SUPABASE_URL_PATTERN.test(supabaseUrl)
+const isLikelyValidKey =
+  SUPABASE_KEY_PATTERN.test(supabaseAnonKey) &&
+  supabaseAnonKey !== 'demo-key' &&
   supabaseAnonKey !== 'undefined' &&
-  supabaseAnonKey !== 'demo-key'
+  supabaseAnonKey.length > 20
 
-const isDemoMode = demoFlag || 
-                   import.meta.env.VITE_DEMO_MODE === 'true' || 
-                   !hasValidCredentials
+const hasValidCredentials = isLikelyValidUrl && isLikelyValidKey
 
-// ✨ DEBUG: Log configuración en desarrollo/producción
-if (typeof window !== 'undefined') {
+const isDemoMode =
+  demoFlag ||
+  import.meta.env.VITE_DEMO_MODE === 'true' ||
+  !hasValidCredentials
+
+// ✨ FAIL-LOUD en producción: si las credenciales no son válidas, NO caer al mock
+// silenciosamente — un build de PROD con env vacío resultaría en una app que parece
+// funcionar pero no hace nada real. Ref: auditoria-completa-abril-2026.md §1.2.
+if (import.meta.env.PROD && !hasValidCredentials && !isMockDataMode) {
+  const reason = !isLikelyValidUrl
+    ? `VITE_SUPABASE_URL inválida o ausente: "${supabaseUrl}"`
+    : `VITE_SUPABASE_ANON_KEY inválida o ausente (debe empezar con sb_publishable_)`
+  throw new Error(
+    `[supabase] Configuración faltante o inválida en build de producción. ${reason}. ` +
+      `Verifica las variables de entorno en Vercel/CI. La app NO se inicializará con mock en PROD.`,
+  )
+}
+
+// En DEV, si activamos mock por env inválido, queremos un grito ruidoso (no silencioso).
+if (import.meta.env.DEV && isDemoMode && !demoFlag && import.meta.env.VITE_DEMO_MODE !== 'true' && !isMockDataMode) {
+  // eslint-disable-next-line no-console
+  console.error(
+    '[supabase] ⚠️ Cayendo a MOCK CLIENT porque las credenciales no son válidas. ' +
+      'Si esto NO es intencional, revisa .env.local. ' +
+      `URL=${supabaseUrl} | KEY=${supabaseAnonKey.slice(0, 12)}…`,
+  )
 }
 
 // For development purposes, we'll create a mock client if real credentials aren't available
 export const supabase = isMockDataMode
   ? createEnhancedMockClient()
-  : isDemoMode 
+  : isDemoMode
     ? createMockClient()
     : createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
