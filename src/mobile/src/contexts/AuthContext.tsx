@@ -38,17 +38,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [pushToken, setPushToken] = useState<string | null>(null)
 
   useEffect(() => {
-    // Obtener sesión inicial
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      setSession(initialSession)
-      setUser(initialSession?.user ?? null)
-      setLoading(false)
-    })
+    let isMounted = true
+
+    // Obtener sesión inicial — maneja token de refresco inválido/expirado
+    const initSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession()
+        if (!isMounted) return
+
+        if (error) {
+          // Token inválido o expirado — limpiar AsyncStorage y mostrar login
+          await supabase.auth.signOut()
+          setSession(null)
+          setUser(null)
+        } else {
+          setSession(data.session)
+          setUser(data.session?.user ?? null)
+        }
+      } catch {
+        // Error inesperado — limpiar sesión por seguridad
+        if (isMounted) {
+          await supabase.auth.signOut()
+          setSession(null)
+          setUser(null)
+        }
+      } finally {
+        if (isMounted) setLoading(false)
+      }
+    }
+
+    initSession()
 
     // Suscribirse a cambios de auth
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (!isMounted) return
       setSession(newSession)
       setUser(newSession?.user ?? null)
       setLoading(false)
@@ -66,6 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     })
 
     return () => {
+      isMounted = false
       subscription.unsubscribe()
     }
   }, [])

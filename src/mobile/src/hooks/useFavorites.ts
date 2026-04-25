@@ -14,7 +14,11 @@ export interface FavoriteBusiness {
     id: string
     name: string
     logo_url?: string | null
+    banner_url?: string | null
     category_id?: string | null
+    average_rating?: number | null
+    review_count?: number | null
+    city?: string | null
   } | null
 }
 
@@ -29,7 +33,7 @@ export function useFavorites(userId: string | undefined) {
     queryFn: async (): Promise<FavoriteBusiness[]> => {
       const { data, error } = await supabase
         .from('favorite_businesses')
-        .select('id, user_id, business_id, created_at, business:businesses(id, name, logo_url, category_id)')
+        .select('id, user_id, business_id, created_at, business:businesses(id, name, logo_url, banner_url, category_id, average_rating, review_count, city)')
         .eq('user_id', userId!)
         .order('created_at', { ascending: false })
       throwIfError(error, 'FETCH_FAVORITES', 'No se pudieron cargar los favoritos')

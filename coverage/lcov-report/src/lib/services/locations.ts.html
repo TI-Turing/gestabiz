@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">25.8% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/31</span>
+                <span class='fraction'>31/31</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">25.8% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/31</span>
+                <span class='fraction'>31/31</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -123,37 +123,37 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import supabase from '@/lib/supabase'
 import type { Location } from '@/types'
@@ -168,38 +168,38 @@ export interface LocationQuery {
 }
 &nbsp;
 export const locationsService = {
-<span class="fstat-no" title="function not covered" >  async list(q: LocationQuery = {}): Promise&lt;Location[]&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    let query = supabase.from('locations').select('*')</span>
-<span class="cstat-no" title="statement not covered" >    if (q.activeOnly !== false) { query = query.eq('is_active', true) }</span>
-<span class="cstat-no" title="statement not covered" >    if (q.businessIds?.length) { query = query.in('business_id', q.businessIds) }</span>
-<span class="cstat-no" title="statement not covered" >    else if (q.businessId) { query = query.eq('business_id', q.businessId) }</span>
-<span class="cstat-no" title="statement not covered" >    const { data, error } = await query.order('name')</span>
-<span class="cstat-no" title="statement not covered" >    throwIfError(error, 'LIST_LOCATIONS', 'No se pudieron cargar las sedes')</span>
-<span class="cstat-no" title="statement not covered" >    return ((data as Row&lt;'locations'&gt;[] | null) || []).map(normalizeLocation)</span>
-<span class="cstat-no" title="statement not covered" >  },</span>
+  async list(q: LocationQuery = {}): Promise&lt;Location[]&gt; {
+    let query = supabase.from('locations').select('*')
+    if (q.activeOnly !== false) { query = query.eq('is_active', true) }
+    if (q.businessIds?.length) { query = query.in('business_id', q.businessIds) }
+    else if (q.businessId) { query = query.eq('business_id', q.businessId) }
+    const { data, error } = await query.order('name')
+    throwIfError(error, 'LIST_LOCATIONS', 'No se pudieron cargar las sedes')
+    return ((data as Row&lt;'locations'&gt;[] | null) || []).map(normalizeLocation)
+  },
 &nbsp;
-<span class="fstat-no" title="function not covered" >  async get(id: string): Promise&lt;Location | null&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    const { data, error } = await supabase.from('locations').select('*').eq('id', id).single()</span>
-<span class="cstat-no" title="statement not covered" >    throwIfError(error, 'GET_LOCATION', 'No se pudo cargar la sede')</span>
-<span class="cstat-no" title="statement not covered" >    return normalizeLocation(data as Row&lt;'locations'&gt;)</span>
-<span class="cstat-no" title="statement not covered" >  },</span>
+  async get(id: string): Promise&lt;Location | null&gt; {
+    const { data, error } = await supabase.from('locations').select('*').eq('id', id).single()
+    throwIfError(error, 'GET_LOCATION', 'No se pudo cargar la sede')
+    return normalizeLocation(data as Row&lt;'locations'&gt;)
+  },
 &nbsp;
-<span class="fstat-no" title="function not covered" >  async create(payload: Omit&lt;Location, 'id' | 'created_at' | 'updated_at'&gt;): Promise&lt;Location&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    const { data, error } = await supabase.from('locations').insert(payload).select().single()</span>
-<span class="cstat-no" title="statement not covered" >    throwIfError(error, 'CREATE_LOCATION', 'No se pudo crear la sede')</span>
-<span class="cstat-no" title="statement not covered" >    return normalizeLocation(data as Row&lt;'locations'&gt;)</span>
-<span class="cstat-no" title="statement not covered" >  },</span>
+  async create(payload: Omit&lt;Location, 'id' | 'created_at' | 'updated_at'&gt;): Promise&lt;Location&gt; {
+    const { data, error } = await supabase.from('locations').insert(payload).select().single()
+    throwIfError(error, 'CREATE_LOCATION', 'No se pudo crear la sede')
+    return normalizeLocation(data as Row&lt;'locations'&gt;)
+  },
 &nbsp;
-<span class="fstat-no" title="function not covered" >  async update(id: string, updates: Partial&lt;Location&gt;): Promise&lt;Location&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    const { data, error } = await supabase.from('locations').update(updates).eq('id', id).select().single()</span>
-<span class="cstat-no" title="statement not covered" >    throwIfError(error, 'UPDATE_LOCATION', 'No se pudo actualizar la sede')</span>
-<span class="cstat-no" title="statement not covered" >    return normalizeLocation(data as Row&lt;'locations'&gt;)</span>
-<span class="cstat-no" title="statement not covered" >  },</span>
+  async update(id: string, updates: Partial&lt;Location&gt;): Promise&lt;Location&gt; {
+    const { data, error } = await supabase.from('locations').update(updates).eq('id', id).select().single()
+    throwIfError(error, 'UPDATE_LOCATION', 'No se pudo actualizar la sede')
+    return normalizeLocation(data as Row&lt;'locations'&gt;)
+  },
 &nbsp;
-<span class="fstat-no" title="function not covered" >  async remove(id: string): Promise&lt;void&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    const { error } = await supabase.from('locations').delete().eq('id', id)</span>
-<span class="cstat-no" title="statement not covered" >    throwIfError(error, 'DELETE_LOCATION', 'No se pudo eliminar la sede')</span>
-<span class="cstat-no" title="statement not covered" >  }</span>
+  async remove(id: string): Promise&lt;void&gt; {
+    const { error } = await supabase.from('locations').delete().eq('id', id)
+    throwIfError(error, 'DELETE_LOCATION', 'No se pudo eliminar la sede')
+  }
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -208,7 +208,7 @@ export const locationsService = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-20T22:17:53.371Z
+                at 2026-04-21T18:59:18.425Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

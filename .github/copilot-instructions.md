@@ -737,14 +737,14 @@ export function ServiceCard({ serviceId, initialData, readOnly, onSelect, render
   - `src/mobile/app.json`: `googleServicesFile` removido (archivo no existe; requerido solo para EAS Build con FCM)
 - Extensión: `extension/` y `src/browser-extension/`
   - `npm run build` (copia/zip), `npm run dev` para servidor estático local; carga "unpacked" en Chrome.
-- **Supabase**: SOLO en la nube (no hay instancia local). Ver `SUPABASE_INTEGRATION_GUIDE.md`, `src/docs/deployment-guide.md` y `supabase/functions/README.md` para CLI, Edge Functions y cron.
+- **Supabase**: Tres ambientes — LOCAL (Docker, desarrollo diario), DEV remoto (pruebas/QA), PROD. Ver `SUPABASE_INTEGRATION_GUIDE.md`, `src/docs/deployment-guide.md` y `supabase/functions/README.md` para CLI, Edge Functions y cron.
   - **MCP configurado**: Servidor Model Context Protocol disponible para operaciones directas de base de datos.
   - **Chrome DevTools MCP**: Herramientas de depuración del navegador disponibles vía MCP para inspeccionar requests, console logs, performance y network activity en tiempo real.
 
 Objetivo: que un agente pueda contribuir de inmediato entendiendo la arquitectura, flujos de desarrollo y convenciones propias del proyecto.
 
 ## Panorama general
-- Monorepo con 3 superficies: web (React + Vite), móvil (Expo/React Native) y extensión de navegador; backend en Supabase (solo en la nube).
+- Monorepo con 3 superficies: web (React + Vite), móvil (Expo/React Native) y extensión de navegador; backend en Supabase (LOCAL Docker para desarrollo diario, DEV remoto para pruebas/QA, PROD para producción).
 - Ejes clave:
   - Cliente Supabase y utilidades: `src/lib/supabase.ts` (modo demo incluido), tipos en `src/types/**`, utilidades en `src/lib/**`.
   - Data hooks: `src/hooks/` — 70+ hooks con React Query para fetching, mutaciones y cache (ver sección Hooks en arquitectura).
@@ -756,8 +756,17 @@ Objetivo: que un agente pueda contribuir de inmediato entendiendo la arquitectur
 
 ## 🗄️ BASE DE DATOS SUPABASE
 
-### Infraestructura
-- **SOLO en la nube** (no hay instancia local)
+### Infraestructura — Ambientes
+
+| Ambiente | Proyecto | URL | Uso |
+|----------|----------|-----|-----|
+| **LOCAL** ⭐ | Docker local | `http://localhost:54321` | **Desarrollo diario** — espejo exacto de DEV |
+| **DEV** | `dkancockzvcqorqbwtyh` | `https://dkancockzvcqorqbwtyh.supabase.co` | Pruebas remotas / QA |
+| **PROD** | `emknatoknbomvmyumqju` | `https://emknatoknbomvmyumqju.supabase.co` | Producción |
+
+**Stack local**: `npx supabase start` → Studio `http://localhost:54323`, DB `postgresql://postgres:postgres@localhost:54322/postgres`
+**App → local**: `.env.local` (prioridad sobre `.env`). **App → DEV remoto**: borrar `.env.local`.
+
 - **PostgreSQL 15+** con extensiones:
   - `uuid-ossp`: Generación de UUIDs
   - `pg_trgm`: Búsqueda fuzzy (trigram)
@@ -1426,9 +1435,13 @@ npm run test:coverage    # Cobertura de tests
 
 ### Variables de Entorno Requeridas
 
-**Web** (`.env`) — ver templates en `environments/`. Archivos gitignoreados:
-- `.env.development` → local/dev (apunta a proy. DEV `dkancockzvcqorqbwtyh`)
+**Web** — ver templates en `environments/`. Archivos gitignoreados:
+- `.env.local` ⭐ **ACTIVO en desarrollo** — apunta al stack LOCAL Docker (`http://localhost:54321`). Toma prioridad sobre `.env`.
+- `.env` → apunta a DEV remoto (`dkancockzvcqorqbwtyh`). Usado cuando `.env.local` no existe (pruebas remotas/QA).
+- `.env.staging` → build de staging (DEV remoto)
 - `.env.production` → build de prod (apunta a PROD `emknatoknbomvmyumqju`)
+
+> **Regla de oro**: desarrollo local siempre con `.env.local` → `VITE_SUPABASE_URL=http://localhost:54321`. El DEV remoto es para QA, no para el día a día.
 
 ```bash
 VITE_SUPABASE_URL=https://your-project.supabase.co
