@@ -80,6 +80,7 @@ Specs de features en desarrollo, pendientes o ideas futuras.
 
 - [[Fase 2 - Contabilidad, DIAN y App Móvil]] — Módulo contable completo, facturación electrónica DIAN, app móvil
 - [[Fase 3 - IA, Automatización y Agentes]] — Agentes LLM, procesos automáticos, AI marketing assistant
+- [[Fase 4 - El Shopify de los Negocios de Servicios]] — Pagos a clientes, recordatorios escalonados, promociones, CRM avanzado, estadísticas, marketplace, widget embebible
 - [[Ideas Futuras - Social Media MCP y Marketing IA]] — MCP para redes sociales, publicación automática con IA
 - [[QR-con-branding-Gestabiz]] — QR con icono de Gestabiz centrado + logo y texto "Reserva tu próxima cita aquí"
 - [[analisis-competitivo-roadmap]] — Roadmap competitivo y análisis de mercado
