@@ -86,6 +86,40 @@ Todo botón de acción en Gestabiz DEBE estar protegido con `PermissionGate`. Lo
 </PermissionGate>
 ```
 
+## Hook usePermissions — Versiones v1 vs v2
+
+### v1 (Legacy)
+- Ubicación: `src/lib/permissions.ts`
+- Implementación: manual con `useState` + `useEffect`
+- Cache: localStorage volátil, sin TTL
+- Validación owner: lectura de localStorage (vulnerable a spoofing)
+- Status: mantener por compatibilidad, no agregar features nuevas
+
+### v2 (TanStack Query)
+- Ubicación: `src/lib/permissions-v2.ts`
+- Implementación: React Query con STABLE 5min cache
+- Deduplication: múltiples usePermissions(businessId, perm) reutilizan 1 query
+- Validación owner: **NUNCA confiar en localStorage**
+  - Query `businesses.owner_id` directamente
+  - Cache 5min con revalidación automática
+  - RLS + RPCs SECURITY DEFINER re-validan contra `auth.uid()`
+- Status: **usar siempre en código nuevo**
+
+### Anti-Spoofing: Owner Bypass
+
+```ts
+// ✅ CORRECTO: Query la BD directamente
+const isOwner = await supabase
+  .from('businesses')
+  .select('owner_id')
+  .eq('id', businessId)
+  .eq('owner_id', auth.uid())
+  .single();
+
+// ❌ INCORRECTO: nunca confiar en localStorage
+const isOwner = localStorage.getItem(`owner-${businessId}`) === 'true'
+```
+
 ## RPC Service
 
 `src/lib/services/permissionRPC.ts` — `PermissionRPCService` con 5 métodos SECURITY DEFINER:

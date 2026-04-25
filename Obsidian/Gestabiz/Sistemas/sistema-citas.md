@@ -103,6 +103,43 @@ En modo edición (reprogramación), la cita actual se excluye del cálculo via p
 - `supabase/functions/appointment-actions/`
 - `supabase/functions/send-appointment-confirmation/`
 
+## Token Flow para Confirmación/Cancelación Sin Login
+
+Clientes pueden confirmar o cancelar citas mediante links públicos sin necesidad de autenticación.
+
+### Rutas Públicas
+
+- `/confirmar-cita/:token` — Componente `AppointmentConfirmation.tsx`
+  - Obtiene el token de la URL
+  - Llama RPC `confirm_appointment_by_token()` (SECURITY DEFINER)
+  - Muestra estado de confirmación
+  - Redirige a perfil público del negocio con toast de éxito
+
+- `/cancelar-cita/:token` — Componente `AppointmentCancellation.tsx`
+  - Obtiene el token de la URL
+  - Llama RPC `cancel_appointment_by_token()` (SECURITY DEFINER)
+  - Muestra estado de cancelación
+  - Notifica al negocio y al cliente
+
+### RPCs (SECURITY DEFINER)
+
+```sql
+confirm_appointment_by_token(token text)
+  → appointment_id uuid, status text, timestamp
+
+cancel_appointment_by_token(token text)
+  → appointment_id uuid, status text, timestamp
+```
+
+Ambas validan que el token sea válido y no haya expirado (30 min de vida por defecto).
+
+### Ciclo de Vida de una Cita
+
+1. **pending** → Cliente en wizard
+2. **confirmed** → Cliente confirma vía email link O automático si `auto_confirm` está habilitado
+3. **no_show** / **completed** → Final (cron cada 30 min actualiza estados automáticamente)
+4. **cancelled** → Cliente cancela vía link o admin desde panel
+
 ## Notas Relacionadas
 
 - [[sistema-permisos]] — Permisos granulares para acciones de citas
@@ -113,4 +150,4 @@ En modo edición (reprogramación), la cita actual se excluye del cálculo via p
 - [[sistema-modelo-flexible]] — Recursos físicos como alternativa a employee_id
 - [[sistema-perfiles-publicos]] — Deep-link desde perfil público preselecciona datos en wizard
 - [[sistema-sede-preferida]] — Sede preferida pre-selecciona location en wizard
-- [[Fase 2 - Contabilidad, DIAN y App Móvil]] — Integración con Google Calendar
+- [[sistema-google-calendar]] — Integración con Google Calendar

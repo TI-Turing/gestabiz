@@ -8,7 +8,7 @@ Se usa junto con el sistema `claude-mem` (MCP) para persistencia cross-sesión d
 
 ---
 
-## Sistemas (20 notas)
+## Sistemas (22 notas)
 
 Documentación técnica de cada módulo funcional del producto.
 
@@ -34,19 +34,23 @@ Documentación técnica de cada módulo funcional del producto.
 | [[sistema-categorias]] | 15 categorías + ~60 subcategorías jerárquicas |
 | [[sistema-festivos]] | public_holidays, 54 festivos colombianos 2025-2027 |
 | [[sistema-referrals]] | Programa de referidos: cupones, comisiones MP, kill-switch |
+| [[sistema-google-calendar]] | OAuth Google, sync bidireccional, calendar_sync_settings |
+| [[sistema-mobile-hybrid]] | Expo + WebView, auth bridging, EAS Build (.aab/.apk/.ipa) |
 
 ---
 
-## Arquitectura (6 notas)
+## Arquitectura (9 notas)
 
 Decisiones técnicas transversales y patrones del codebase.
 
 | Nota | Descripción |
 |------|-------------|
 | [[stack-tecnologico]] | React 19, Vite 6, TypeScript 5.7, Supabase, Tailwind 4 |
-| [[base-de-datos]] | 40+ tablas, RLS, triggers, vistas materializadas |
-| [[supabase-local-workflow]] | Stack local Docker, cuándo usarlo, troubleshooting |
-| [[edge-functions]] | ~50 Edge Functions Deno desplegadas |
+| [[base-de-datos]] | 70+ tablas, 108 triggers, RLS, vistas materializadas, system_config |
+| [[supabase-local-workflow]] | Stack local Docker, scripts auxiliares, headers de seguridad |
+| [[edge-functions]] | ~50 Edge Functions Deno, selective deploy, JWT/HMAC/CORS |
+| [[cicd-pipeline]] | GitHub Actions: ci.yml, deploy-dev.yml, deploy-prod.yml |
+| [[catalog-api-azure]] | API .NET de catálogos (países/regiones/ciudades/EPS) |
 | [[react-query-cache]] | STABLE/FREQUENT/REALTIME, query keys, deduplication |
 | [[sistema-cards]] | Cards self-fetch por ID, patrón reutilizable |
 | [[i18n]] | ~2,200 claves ES/EN, ~44 archivos por idioma |
