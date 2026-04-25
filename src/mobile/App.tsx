@@ -67,6 +67,8 @@ import FavoritesScreen from './src/screens/client/FavoritesScreen'
 import SearchScreen from './src/screens/client/SearchScreen'
 import WriteReviewScreen from './src/screens/client/WriteReviewScreen'
 import PendingReviewsScreen from './src/screens/client/PendingReviewsScreen'
+import AppointmentConfirmationScreen from './src/screens/client/AppointmentConfirmationScreen'
+import AppointmentCancellationScreen from './src/screens/client/AppointmentCancellationScreen'
 
 // Admin additional screens
 import AppointmentsCalendarScreen from './src/screens/admin/AppointmentsCalendarScreen'
@@ -343,6 +345,23 @@ function ClientTabs() {
 void AdminTabs
 void EmployeeTabs
 
+// ─── Root Stack (permite deep-links globales sin auth) ───────────────────────
+
+function RootStack({ user }: { user: { id: string } | null }) {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {!user ? (
+        <Stack.Screen name="AuthRoot" component={AuthStack} />
+      ) : (
+        <Stack.Screen name="ClientRoot" component={ClientTabs} />
+      )}
+      {/* Deep-link screens — accesibles sin autenticación */}
+      <Stack.Screen name="ConfirmarCita" component={AppointmentConfirmationScreen} />
+      <Stack.Screen name="CancelarCita" component={AppointmentCancellationScreen} />
+    </Stack.Navigator>
+  )
+}
+
 function AppNavigator() {
   const { user, loading: authLoading } = useAuth()
   const { theme } = useTheme()
@@ -367,7 +386,7 @@ function AppNavigator() {
   return (
     <NavigationContainer ref={navigationRef} linking={linking}>
       <NotificationProvider>
-        {!user ? <AuthStack /> : <ClientTabs />}
+        <RootStack user={user} />
         {user && <FloatingBugReportButton />}
       </NotificationProvider>
     </NavigationContainer>

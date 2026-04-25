@@ -22,6 +22,10 @@ export const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       // ─── Auth ──────────────────────────────────────────────
       Auth: 'login',
 
+      // ─── Deep-links de cita (globales, sin auth) ──────────
+      ConfirmarCita: 'confirmar-cita/:token',
+      CancelarCita: 'cancelar-cita/:token',
+
       // ─── Admin tabs ────────────────────────────────────────
       Dashboard: 'app/admin',
       Citas: 'app/admin/appointments',
