@@ -1,1 +1,14 @@
-{}
+{
+  "nodes": [
+    {
+      "id": "gestabiz-canvas-purpose",
+      "type": "text",
+      "x": 0,
+      "y": 0,
+      "width": 420,
+      "height": 160,
+      "text": "# Gestabiz\\n\\nCanvas inicial de documentación. Completar con contenido real o renombrar el archivo si se va a conservar."
+    }
+  ],
+  "edges": []
+}
