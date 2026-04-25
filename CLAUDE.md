@@ -995,20 +995,21 @@ npm run pre-deploy        # Checks pre-deploy
 
 ```bash
 # .env.local (LOCAL Docker — desarrollo diario)
+# NOTA: Reemplazar los valores placeholder con los reales del gestor de secretos del equipo
 VITE_SUPABASE_URL=http://localhost:54321
-VITE_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
+VITE_SUPABASE_ANON_KEY=sb_publishable_your_local_anon_key_here
 VITE_APP_URL=http://localhost:5173
 VITE_APP_NAME=Gestabiz [LOCAL]
 VITE_PAYMENT_GATEWAY=mercadopago
-VITE_GOOGLE_CLIENT_ID=496587471913-qk668fv00cpto430petb79c3h4tkvla6.apps.googleusercontent.com
+VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 # VITE_GA_MEASUREMENT_ID=   ← desactivado en local para no contaminar analytics
 VITE_DEMO_MODE=false
 ```
 
 **Vercel — variables por entorno** (configuradas vía API, no dashboard):
 - `VITE_GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_SECRET`:
-  - `production` → cliente PROD (`...7cqaibtabnrm7evqfv4ak2tri8f63us7`)
-  - `development` + `preview` → cliente DEV (`...qk668fv00cpto430petb79c3h4tkvla6`)
+  - `production` → cliente PROD (obtener del gestor de secretos del equipo)
+  - `development` + `preview` → cliente DEV (obtener del gestor de secretos del equipo)
 - `VITE_SUPABASE_ANON_KEY`: usar formato nuevo `sb_publishable_*` (**los JWT legacy `eyJ...` están deshabilitados desde Abr 2026**)
 - **NUNCA** exponer service role key con prefijo `VITE_` — solo en Edge Functions
 
