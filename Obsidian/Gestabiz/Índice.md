@@ -102,12 +102,14 @@ Contexto del negocio, auditorías y estrategia general.
 
 ---
 
-## Decisiones (2 notas)
+## Decisiones (4 notas)
 
 Decisiones arquitectónicas y trade-offs importantes.
 
 - [[google-oauth-separacion-entornos]] — Dos clientes Google OAuth separados (DEV y PROD)
 - [[decision-antifraude-referrals]] — Por qué no se necesitan reglas anti-fraude complejas en el programa de referrals
+- [[lock-in-estrategia-datos-clientes]] — Lock-in por datos: cómo la base de datos del negocio se convierte en una fosa competitiva vs. AgendaPro y Fresha
+- [[ventajas-estructurales-no-explotadas]] — 17 ventajas competitivas latentes en la arquitectura: multi-rol nativo, modelo flexible, mobile híbrido, permisos enterprise, founder único y más
 
 ---
 
