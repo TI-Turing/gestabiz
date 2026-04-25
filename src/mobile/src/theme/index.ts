@@ -39,7 +39,12 @@ export const lightColors = {
   background: '#F5F5F7',
   foreground: '#1F1F1F',
   card: '#FFFFFF',
+  cardForeground: '#1F1F1F',
   cardBorder: '#E5E5EA',
+  popover: '#FFFFFF',
+  popoverForeground: '#1F1F1F',
+  muted: '#EBEBF0',
+  mutedForeground: '#6B6B72',
   surface: '#FFFFFF',
   surfaceSecondary: '#F2F2F7',
   text: '#1F1F1F',
@@ -47,6 +52,9 @@ export const lightColors = {
   textMuted: '#AEAEB2',
   textInverse: '#FFFFFF',
   border: '#E5E5EA',
+  input: '#E5E5EA',
+  ring: '#6820F7',
+  destructiveForeground: '#FFFFFF',
   inputBg: '#FFFFFF',
   inputBorder: '#C7C7CC',
   inputFocusBorder: '#6820F7',
@@ -65,7 +73,12 @@ export const darkColors = {
   background: '#0D0D0F',
   foreground: '#F0F0F2',
   card: '#1A1A1E',
+  cardForeground: '#F0F0F2',
   cardBorder: '#2A2A30',
+  popover: '#111114',
+  popoverForeground: '#F0F0F2',
+  muted: '#1F1F24',
+  mutedForeground: '#8A8A93',
   surface: '#111114',
   surfaceSecondary: '#1F1F24',
   text: '#F0F0F2',
@@ -73,6 +86,9 @@ export const darkColors = {
   textMuted: '#5A5A62',
   textInverse: '#1F1F1F',
   border: '#2A2A30',
+  input: '#2A2A30',
+  ring: '#8B4FFF',
+  destructiveForeground: '#FFFFFF',
   inputBg: '#1F1F24',
   inputBorder: '#3A3A42',
   inputFocusBorder: '#8B4FFF',
@@ -182,4 +198,14 @@ export const shadows = {
     shadowRadius: 4,
     elevation: 3,
   },
+} as const
+
+// ─── Familias de fuente (Outfit — misma que la web) ───────────────────────────
+// Cargadas en App.tsx con useFonts de @expo-google-fonts/outfit.
+// Usar estas constantes en los estilos; NUNCA hardcodear el nombre.
+export const fonts = {
+  regular: 'Outfit_Regular',
+  medium: 'Outfit_Medium',
+  semibold: 'Outfit_SemiBold',
+  bold: 'Outfit_Bold',
 } as const

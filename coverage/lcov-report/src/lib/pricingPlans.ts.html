@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">84.3% </span>
+                <span class="strong">93.02% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>145/172</span>
+                <span class='fraction'>160/172</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">42.85% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>3/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">84.3% </span>
+                <span class="strong">93.02% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>145/172</span>
+                <span class='fraction'>160/172</span>
             </div>
         
             
@@ -429,31 +429,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -702,32 +702,32 @@ export const MODULES_PRO: string[] = [
 /**
  * Dado un planId, retorna el array de IDs de módulos accesibles.
  */
-export <span class="fstat-no" title="function not covered" >function getAccessibleModules(planId: PlanId): string[] {</span>
-<span class="cstat-no" title="statement not covered" >  switch (planId) {</span>
-<span class="cstat-no" title="statement not covered" >    case 'free':   return MODULES_ALWAYS</span>
-<span class="cstat-no" title="statement not covered" >    case 'basico': return MODULES_BASICO</span>
-<span class="cstat-no" title="statement not covered" >    case 'pro':    return MODULES_PRO</span>
-<span class="cstat-no" title="statement not covered" >    default:       return MODULES_ALWAYS</span>
-<span class="cstat-no" title="statement not covered" >  }</span>
-<span class="cstat-no" title="statement not covered" >}</span>
+export function getAccessibleModules(planId: PlanId): string[] {
+  switch (planId) {
+    case 'free':   return MODULES_ALWAYS
+    case 'basico': return MODULES_BASICO
+    case 'pro':    return MODULES_PRO
+    default:       return MODULES_ALWAYS
+  }
+}
 &nbsp;
 /**
  * Retorna el planId mínimo requerido para acceder a un módulo.
  */
-export <span class="fstat-no" title="function not covered" >function getRequiredPlan(moduleId: string): PlanId | null {</span>
-<span class="cstat-no" title="statement not covered" >  if (MODULES_ALWAYS.includes(moduleId))     return null       // siempre libre</span>
-<span class="cstat-no" title="statement not covered" >  if (MODULES_BASICO.includes(moduleId))     return 'basico'</span>
-<span class="cstat-no" title="statement not covered" >  if (MODULES_PRO.includes(moduleId))        return 'pro'</span>
-<span class="cstat-no" title="statement not covered" >  return null</span>
-<span class="cstat-no" title="statement not covered" >}</span>
+export function getRequiredPlan(moduleId: string): PlanId | null {
+  if (MODULES_ALWAYS.includes(moduleId))     return null       // siempre libre
+  if (MODULES_BASICO.includes(moduleId))     return 'basico'
+  if (MODULES_PRO.includes(moduleId))        return 'pro'
+  return null
+}
 &nbsp;
 /**
  * Compara dos planes y retorna true si planId &gt;= requiredPlan.
  */
-export <span class="fstat-no" title="function not covered" >function planIncludes(planId: PlanId, requiredPlan: PlanId): boolean {</span>
-<span class="cstat-no" title="statement not covered" >  const order: PlanId[] = ['free', 'basico', 'pro']</span>
-<span class="cstat-no" title="statement not covered" >  return order.indexOf(planId) &gt;= order.indexOf(requiredPlan)</span>
-<span class="cstat-no" title="statement not covered" >}</span>
+export function planIncludes(planId: PlanId, requiredPlan: PlanId): boolean {
+  const order: PlanId[] = ['free', 'basico', 'pro']
+  return order.indexOf(planId) &gt;= order.indexOf(requiredPlan)
+}
 &nbsp;
 // ---------------------------------------------------------------------------
 // Definición de planes
@@ -892,7 +892,7 @@ export <span class="fstat-no" title="function not covered" >function getUpgradeP
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-20T22:17:53.371Z
+                at 2026-04-21T18:59:18.425Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
