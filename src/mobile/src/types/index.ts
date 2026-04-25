@@ -96,6 +96,8 @@ export interface Profile {
   email: string
   phone?: string
   avatar_url?: string
+  document_type?: string
+  document_number?: string
   is_active: boolean
 }
 

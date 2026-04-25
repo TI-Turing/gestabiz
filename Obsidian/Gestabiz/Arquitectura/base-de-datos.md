@@ -6,13 +6,16 @@ status: activo
 
 # Base de Datos Supabase
 
-40+ tablas PostgreSQL 15+ con RLS, triggers, vistas materializadas, RPCs y storage buckets. Solo en la nube (sin instancia local).
+40+ tablas PostgreSQL 15+ con RLS, triggers, vistas materializadas, RPCs y storage buckets.
+
+> Para el flujo de trabajo con la instancia local de Supabase (Docker), ver [[supabase-local-workflow]].
 
 ## Proyectos
 
 | Entorno | Project ID | Uso |
 |---------|-----------|-----|
-| DEV | `dkancockzvcqorqbwtyh` | Desarrollo + datos de prueba |
+| **LOCAL** ⭐ | Docker (`localhost:54321`) | **Desarrollo diario** — espejo de DEV |
+| DEV | `dkancockzvcqorqbwtyh` | Pruebas remotas / QA |
 | PROD | `emknatoknbomvmyumqju` | Producción (limpio) |
 
 ## Extensiones PostgreSQL

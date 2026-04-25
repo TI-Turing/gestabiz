@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">38.46% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>5/13</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/0</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">38.46% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/13</span>
+                <span class='fraction'>13/13</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -85,31 +85,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import supabase from '@/lib/supabase'
 import type { UserSettings } from '@/types'
 import { normalizeUserSettings as normalize } from '@/lib/normalizers'
 &nbsp;
 export const userSettingsService = {
-<span class="fstat-no" title="function not covered" >  async getByUser(userId: string): Promise&lt;UserSettings | null&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    const { data, error } = await supabase.from('user_settings').select('*').eq('user_id', userId).single()</span>
-<span class="cstat-no" title="statement not covered" >    if (error) throw error</span>
-<span class="cstat-no" title="statement not covered" >    return normalize(data as Record&lt;string, unknown&gt;)</span>
-<span class="cstat-no" title="statement not covered" >  },</span>
-<span class="fstat-no" title="function not covered" >  async upsert(userId: string, updates: Partial&lt;UserSettings&gt;): Promise&lt;UserSettings&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    const { data, error } = await supabase.from('user_settings').upsert({ user_id: userId, ...updates }).select().single()</span>
-<span class="cstat-no" title="statement not covered" >    if (error) throw error</span>
-<span class="cstat-no" title="statement not covered" >    return normalize(data as Record&lt;string, unknown&gt;)</span>
-<span class="cstat-no" title="statement not covered" >  }</span>
+  async getByUser(userId: string): Promise&lt;UserSettings | null&gt; {
+    const { data, error } = await supabase.from('user_settings').select('*').eq('user_id', userId).single()
+    if (error) throw error
+    return normalize(data as Record&lt;string, unknown&gt;)
+  },
+  async upsert(userId: string, updates: Partial&lt;UserSettings&gt;): Promise&lt;UserSettings&gt; {
+    const { data, error } = await supabase.from('user_settings').upsert({ user_id: userId, ...updates }).select().single()
+    if (error) throw error
+    return normalize(data as Record&lt;string, unknown&gt;)
+  }
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -118,7 +118,7 @@ export const userSettingsService = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-20T22:17:53.371Z
+                at 2026-04-21T18:59:18.425Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
