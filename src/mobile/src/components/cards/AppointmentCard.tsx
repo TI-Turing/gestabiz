@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   // ─── Default ──────────────────────────────────────────────────────────────
   card: {
     borderWidth: 1,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,  // paridad web rounded-md
     padding: spacing.sm + 4,
     gap: spacing.xs + 2,
   },

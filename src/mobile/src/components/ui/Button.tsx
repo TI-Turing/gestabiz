@@ -28,32 +28,36 @@ interface ButtonProps {
   textStyle?: TextStyle
 }
 
+// Paridad con web buttonVariants:
+//   - default (md): h-9 (36px) px-4, text-sm font-medium, rounded-md (4px)
+//   - sm:           h-8 (32px) px-3, text-sm font-medium, rounded-md
+//   - lg:           h-10 (40px) px-6, text-sm font-medium, rounded-md
 const sizeStyles: Record<Size, { container: ViewStyle; text: TextStyle; iconSize: number }> = {
   sm: {
     container: {
-      paddingVertical: spacing.xs,
-      paddingHorizontal: spacing.sm,
-      borderRadius: radius.sm,
+      paddingVertical: 6,        // ≈ h-8 (32px) total con texto
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.md,
     },
     text: { fontSize: typography.sm },
     iconSize: 14,
   },
   md: {
     container: {
-      paddingVertical: spacing.sm + 2,
+      paddingVertical: 8,        // ≈ h-9 (36px) total
       paddingHorizontal: spacing.base,
       borderRadius: radius.md,
     },
-    text: { fontSize: typography.base },
+    text: { fontSize: typography.sm },  // web: text-sm
     iconSize: 16,
   },
   lg: {
     container: {
-      paddingVertical: spacing.md,
+      paddingVertical: 10,       // ≈ h-10 (40px) total
       paddingHorizontal: spacing.xl,
-      borderRadius: radius.lg,
+      borderRadius: radius.md,
     },
-    text: { fontSize: typography.lg },
+    text: { fontSize: typography.base },
     iconSize: 18,
   },
 }
@@ -156,7 +160,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    fontWeight: '600',
+    // Web usa font-medium (500) en buttons.
+    fontWeight: '500',
     textAlign: 'center',
   },
   icon: {
