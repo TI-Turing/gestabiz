@@ -73,3 +73,7 @@ supabase/_remote_snapshot/
 
 # Claude
 .claude/
+
+# Obsidian — user-specific UI state (noisy diffs, merge conflicts)
+Obsidian/Gestabiz/.obsidian/workspace.json
+Obsidian/Gestabiz/.obsidian/graph.json
