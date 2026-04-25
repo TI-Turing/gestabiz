@@ -1,0 +1,4 @@
+{
+  "*.{ts,tsx}": ["eslint --fix --no-error-on-unmatched-pattern"],
+  "*": ["node scripts/check-no-env-files.cjs"]
+}

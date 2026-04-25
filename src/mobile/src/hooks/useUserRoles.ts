@@ -6,6 +6,11 @@ import { supabase } from '../lib/supabase'
 import { UserRole, UserRoleAssignment } from '../types'
 import { QUERY_CONFIG, QUERY_KEYS } from '../lib/queryClient'
 
+// TEMP (Abr 2026): App móvil en fase de lanzamiento client-only.
+// Este hook se mantiene intacto porque varias pantallas admin/employee dormidas
+// dependen de él. NO debe usarse `switchRole` en UI mientras la app sea client-only.
+// Cuando se reactive multi-rol, restaurar la ramificación en App.tsx > AppNavigator.
+
 interface UseUserRolesResult {
   roles: UserRoleAssignment[]
   activeRole: UserRole

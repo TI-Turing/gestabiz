@@ -11,6 +11,9 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "strictNullChecks": true,
+    // TODO(punchlist): activar `noImplicitAny` y `strictBindCallApply` — abr 2026
+    // audit gen 327 errores al habilitarlos, excede el umbral del sprint de
+    // estabilización. Ref: auditoria-completa-abril-2026.md §2.4.
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,

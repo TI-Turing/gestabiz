@@ -1,6 +1,7 @@
 // UI primitives barrel export
 
 // ─── Default exports ────────────────────────────────────────────────────────
+export { default as AppHeader } from './AppHeader'
 export { default as Avatar } from './Avatar'
 export { default as Badge } from './Badge'
 export { default as Button } from './Button'

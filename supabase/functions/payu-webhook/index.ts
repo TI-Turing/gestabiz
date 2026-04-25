@@ -5,6 +5,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createHash } from 'node:crypto'
 import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+import { checkIdempotency, markIdempotencyProcessed } from '../_shared/idempotency.ts'
 
 // Initialize Sentry
 initSentry('payu-webhook')
@@ -69,6 +70,20 @@ serve(async (req) => {
 
     // Crear cliente Supabase
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Idempotencia: PayU asigna un transaction_id único por transacción.
+    // Fallback a reference_sale + state_pol si transaction_id viniera vacío.
+    // Protege contra replay attacks y retries duplicados.
+    // Ref: auditoria-completa-abril-2026.md §1.2
+    const payuTransactionId = String(formData.get('transaction_id') ?? '')
+    const idempotencyKey = payuTransactionId || `${referenceCode}:${transactionState}`
+    const { firstSeen, duplicateResponse } = await checkIdempotency(
+      supabase,
+      'payu',
+      idempotencyKey,
+      req,
+    )
+    if (!firstSeen) return duplicateResponse
 
     // Determinar nuevo status según estado de PayU
     let newStatus: 'active' | 'past_due' | 'trialing' | 'canceled' = 'trialing'
@@ -176,6 +191,8 @@ serve(async (req) => {
         currency,
       },
     })
+
+    await markIdempotencyProcessed(supabase, 'payu', idempotencyKey, 200)
 
     return new Response('OK', { status: 200 })
   } catch (error) {

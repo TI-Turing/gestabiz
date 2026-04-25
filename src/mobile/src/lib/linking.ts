@@ -56,13 +56,17 @@ export const linking: LinkingOptions<ReactNavigation.RootParamList> = {
       SolicitudAusencia: 'app/employee/absence-request',
 
       // ─── Client tabs ───────────────────────────────────────
-      Inicio: 'app/client',
-      Reservar: 'app/client/booking',
-      MisCitasList: 'app/client/appointments',
-      HistorialCitas: 'app/client/history',
+      // Estructura: Inicio (Mis Citas) | Favoritos | Historial | Buscar | Perfil
+      MisCitasList: 'app/client',
       Calendario: 'app/client/calendar',
-      Favoritos: 'app/client/favorites',
+      Reservar: 'app/client/booking',
+      FavoritosList: 'app/client/favorites',
+      HistorialCitas: 'app/client/history',
+      Buscar: 'app/client/search',
       ClientProfile: 'app/client/profile',
+      // Alias legacy: si alguien guardó link a "Favoritos" (screen de
+      // ProfileStack) se sigue resolviendo.
+      Favoritos: 'app/client/favorites/legacy',
 
       // ─── Compartidas (accesibles desde notificaciones) ─────
       Chat: 'chat/:conversationId',
@@ -97,5 +101,6 @@ export async function openExternalUrl(url: string): Promise<void> {
   const canOpen = await Linking.canOpenURL(url)
   if (canOpen) {
     await Linking.openURL(url)
-  } else {  }
+  } else {
+  }
 }
