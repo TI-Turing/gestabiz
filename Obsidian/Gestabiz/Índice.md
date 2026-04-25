@@ -45,6 +45,7 @@ Decisiones técnicas transversales y patrones del codebase.
 |------|-------------|
 | [[stack-tecnologico]] | React 19, Vite 6, TypeScript 5.7, Supabase, Tailwind 4 |
 | [[base-de-datos]] | 40+ tablas, RLS, triggers, vistas materializadas |
+| [[supabase-local-workflow]] | Stack local Docker, cuándo usarlo, troubleshooting |
 | [[edge-functions]] | ~50 Edge Functions Deno desplegadas |
 | [[react-query-cache]] | STABLE/FREQUENT/REALTIME, query keys, deduplication |
 | [[sistema-cards]] | Cards self-fetch por ID, patrón reutilizable |
@@ -52,7 +53,7 @@ Decisiones técnicas transversales y patrones del codebase.
 
 ---
 
-## Negocio (6 notas)
+## Negocio (8 notas)
 
 Estrategia comercial, pricing, go-to-market y posicionamiento.
 
@@ -64,6 +65,8 @@ Estrategia comercial, pricing, go-to-market y posicionamiento.
 | [[propuesta-de-valor]] | Todo-en-uno para PyMEs de servicios en Colombia |
 | [[comparativa-competidores]] | vs AgendaPro, Fresha, Booksy, Calendly, WeiBook |
 | [[sectores-y-casos-de-uso]] | Salones, clínicas, gimnasios, hoteles, coworkings |
+| [[pricing-fase2]] | Fase 2: planes por sede/empleado, cobros incrementales, sin comisión por cita |
+| [[competencia-luna-barberia]] | Luna chatbot WhatsApp: amenaza táctica en microbarberías, oportunidad de funnel |
 
 ---
 

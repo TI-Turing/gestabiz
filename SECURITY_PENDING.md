@@ -376,3 +376,41 @@ npx supabase functions deploy send-whatsapp
 ---
 
 *Generado: 16 Mar 2026 | Actualizado Ronda 5: 16 Mar 2026 | Gestabiz v0.0.14 | Fuente: SECURITY_AUDIT.md Rondas 1-5*
+
+---
+
+## Sección agregada: Sprint de Estabilización Crítica — Abril 2026
+
+### Auditoría de historial git — posibles credenciales históricas
+
+`git ls-files` confirma que **no hay archivos `.env*` tracked actualmente**. Sin embargo, si alguna vez existieron commits con `.env`, las credenciales siguen accesibles vía `git log`.
+
+**Verificar:**
+```bash
+git log --all --full-history --oneline -- .env .env.local .env.staging .env.production
+```
+
+Si el comando devuelve commits, **rotar** las siguientes credenciales:
+
+| Credencial | Servicio | Urgencia | Cómo rotar |
+|-----------|---------|---------|-----------|
+| `BREVO_SMTP_PASSWORD` / `BREVO_API_KEY` | Brevo (email) | Alta | Panel Brevo → API Keys → Regenerar |
+| `STRIPE_SECRET_KEY` | Stripe | Alta | Dashboard Stripe → Developers → API Keys → Roll |
+| `STRIPE_WEBHOOK_SECRET` | Stripe Webhooks | Alta | Dashboard Stripe → Webhooks → Regenerar |
+| `PAYU_SECRET_KEY` | PayU | Alta | Panel PayU → Configuración → Credenciales |
+| `MERCADOPAGO_ACCESS_TOKEN` | MercadoPago | Alta | Panel MP → Credenciales → Generar nuevo |
+| `WHATSAPP_ACCESS_TOKEN` | Meta/WhatsApp | Alta | Meta Business → Apps → Generar token |
+| `GOOGLE_CLIENT_SECRET` (DEV) | Google OAuth | Media | GCP Console → Credentials → Regenerar |
+| `GOOGLE_CLIENT_SECRET` (PROD) | Google OAuth | Media | GCP Console → Credentials → Regenerar |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase | ✅ Ya rotado | — |
+
+**Reescritura de historial**: NO ejecutar sin coordinar con todo el equipo. Usar `git filter-repo` o BFG Repo Cleaner. Requiere fresh clone para todos los colaboradores.
+
+### Idempotencia pendiente en Edge Functions
+
+Solo `stripe-webhook`, `payu-webhook` y `mercadopago-webhook` tienen idempotencia (`webhook_idempotency_keys`). Las siguientes Edge Functions también pueden recibir requests duplicados y deberían revisarse en un sprint posterior:
+- `appointment-actions`
+- `request-absence`
+- `approve-reject-absence`
+
+*Actualizado: 25 Abr 2026 — Sprint estabilización crítica (chore/stabilization-critical-2026-04)*

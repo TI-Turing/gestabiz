@@ -7,6 +7,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Stripe from 'https://esm.sh/stripe@14.11.0?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { initSentry, captureEdgeFunctionError, flushSentry } from '../_shared/sentry.ts'
+import { checkIdempotency, markIdempotencyProcessed } from '../_shared/idempotency.ts'
 
 // Initialize Sentry
 initSentry('stripe-webhook')
@@ -30,9 +31,20 @@ serve(async (req) => {
   try {
     const body = await req.text()
     const event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-    
+
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Idempotencia: si ya procesamos este event.id, responder 200 sin reprocesar.
+    // Protege contra replay attacks y retries duplicados de Stripe.
+    // Ref: auditoria-completa-abril-2026.md §1.2
+    const { firstSeen, duplicateResponse } = await checkIdempotency(
+      supabase,
+      'stripe',
+      event.id,
+      req,
+    )
+    if (!firstSeen) return duplicateResponse
 
     // Procesar eventos según tipo
     switch (event.type) {
@@ -101,6 +113,9 @@ serve(async (req) => {
 
       default:
     }
+
+    // Marcar como procesado exitosamente para trazabilidad.
+    await markIdempotencyProcessed(supabase, 'stripe', event.id, 200)
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { 'Content-Type': 'application/json' },

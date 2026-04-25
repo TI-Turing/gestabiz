@@ -4,6 +4,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { checkIdempotency, markIdempotencyProcessed } from '../_shared/idempotency.ts'
 
 // Mapeo frontend → BD (el frontend usa 'basico'/'pro', la BD usa 'inicio'/'profesional')
 const PLAN_TYPE_MAPPING: Record<string, string> = {
@@ -65,6 +66,19 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Idempotencia: usar topic+id como clave única (ej: "payment:123456789").
+    // MercadoPago reintenta notificaciones agresivamente; sin esto cada retry
+    // gastaría una llamada externa a su API y podría duplicar upserts.
+    // Ref: auditoria-completa-abril-2026.md §1.2
+    const idempotencyKey = `${topic}:${id}`
+    const { firstSeen, duplicateResponse } = await checkIdempotency(
+      supabase,
+      'mercadopago',
+      idempotencyKey,
+      req,
+    )
+    if (!firstSeen) return duplicateResponse
 
     // Fetch payment details from MercadoPago API
     const paymentResponse = await fetch(`https://api.mercadopago.com/v1/payments/${id}`, {
@@ -167,6 +181,8 @@ Deno.serve(async (req) => {
         // No fallar el webhook principal por errores en referrals
       }
     }
+
+    await markIdempotencyProcessed(supabase, 'mercadopago', idempotencyKey, 200)
 
     return new Response(JSON.stringify({ status: 'ok', processed: true }), {
       status: 200,
