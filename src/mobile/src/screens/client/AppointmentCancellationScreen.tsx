@@ -108,7 +108,7 @@ export default function AppointmentCancellationScreen() {
           </Text>
           <TouchableOpacity
             style={[styles.btn, { backgroundColor: theme.primary }]}
-            onPress={() => (navigation.canGoBack() ? navigation.goBack() : (navigation as any).navigate('MisCitasList'))}
+            onPress={() => (navigation.canGoBack() ? navigation.goBack() : (navigation as any).navigate('ClientRoot', { screen: 'Inicio', params: { screen: 'MisCitasList' } }))}
           >
             <Text style={styles.btnText}>Ver mis citas</Text>
           </TouchableOpacity>
@@ -133,7 +133,7 @@ export default function AppointmentCancellationScreen() {
           </Text>
           <TouchableOpacity
             style={[styles.btn, { backgroundColor: theme.primary }]}
-            onPress={() => (navigation.canGoBack() ? navigation.goBack() : (navigation as any).navigate('MisCitasList'))}
+            onPress={() => (navigation.canGoBack() ? navigation.goBack() : (navigation as any).navigate('ClientRoot', { screen: 'Inicio', params: { screen: 'MisCitasList' } }))}
           >
             <Text style={styles.btnText}>Ver mis citas</Text>
           </TouchableOpacity>
@@ -197,7 +197,7 @@ export default function AppointmentCancellationScreen() {
 
           <TouchableOpacity
             style={[styles.secondaryBtn, { borderColor: theme.border }]}
-            onPress={() => (navigation.canGoBack() ? navigation.goBack() : (navigation as any).navigate('MisCitasList'))}
+            onPress={() => (navigation.canGoBack() ? navigation.goBack() : (navigation as any).navigate('ClientRoot', { screen: 'Inicio', params: { screen: 'MisCitasList' } }))}
           >
             <Text style={[styles.secondaryBtnText, { color: theme.textSecondary }]}>
               No cancelar
