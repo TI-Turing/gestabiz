@@ -20,7 +20,7 @@ import { useTheme } from '../../contexts/ThemeContext'
 import { spacing, typography, radius } from '../../theme'
 
 type WriteReviewParams = {
-  WriteReview: { appointmentId: string }
+  EscribirResena: { appointmentId: string }
 }
 
 interface AppointmentDetails {
