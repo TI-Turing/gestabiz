@@ -93,6 +93,28 @@ jest.mock('../src/contexts/ThemeContext', () => ({
   }),
 }))
 
+// ─── Expo vector icons (loads expo-font → expo-asset → global.Expo which fails in tests) ──
+
+jest.mock('@expo/vector-icons', () => {
+  const React = require('react')
+  const stub = (name: string) => (props: Record<string, unknown>) =>
+    React.createElement('View', { testID: `icon-${name}`, ...props })
+  return {
+    Ionicons: stub('Ionicons'),
+    MaterialIcons: stub('MaterialIcons'),
+    FontAwesome: stub('FontAwesome'),
+    AntDesign: stub('AntDesign'),
+    Feather: stub('Feather'),
+    MaterialCommunityIcons: stub('MaterialCommunityIcons'),
+    Entypo: stub('Entypo'),
+    EvilIcons: stub('EvilIcons'),
+    Octicons: stub('Octicons'),
+    SimpleLineIcons: stub('SimpleLineIcons'),
+    Zocial: stub('Zocial'),
+    Foundation: stub('Foundation'),
+  }
+})
+
 // ─── Expo modules ─────────────────────────────────────────────────────────────
 
 jest.mock('expo-location', () => ({
