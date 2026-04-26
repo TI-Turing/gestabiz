@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   TextInput, ScrollView, Alert, Platform, Image, Dimensions,
@@ -6,6 +6,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
+import { useRoute, RouteProp } from '@react-navigation/native'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import type { ThemeColors } from '../../theme'
@@ -16,6 +17,10 @@ import Avatar from '../../components/ui/Avatar'
 import Button from '../../components/ui/Button'
 import { Business, Service, Location } from '../../types'
 import { QUERY_KEYS as QK, QUERY_CONFIG as QC } from '../../lib/queryClient'
+
+type BookingRouteParams = {
+  Reservar: { preselectedBusinessId?: string }
+}
 
 interface EmployeeOption {
   id: string
@@ -519,12 +524,31 @@ export default function BookingScreen() {
   const { user } = useAuth()
   const { theme } = useTheme()
   const qc = useQueryClient()
+  const route = useRoute<RouteProp<BookingRouteParams, 'Reservar'>>()
+  const preselectedBusinessId = route.params?.preselectedBusinessId
 
   const [step, setStep] = useState<Step>('business')
   const [wizardData, setWizardData] = useState<WizardData>({
     business: null, service: null, employee: null, location: null,
     date: new Date(), timeSlot: null, notes: '',
   })
+
+  // Pre-select business and skip to service step when coming from BusinessProfile
+  useEffect(() => {
+    if (!preselectedBusinessId) return
+    supabase
+      .from('businesses')
+      .select('*')
+      .eq('id', preselectedBusinessId)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setWizardData((d) => ({ ...d, business: data as Business }))
+          setStep('service')
+        }
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preselectedBusinessId])
 
   const currentStepIdx = STEPS.findIndex((s) => s.key === step)
 

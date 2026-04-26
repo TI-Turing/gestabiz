@@ -34,7 +34,7 @@ async function fetchClientUpcoming(userId: string): Promise<AptRow[]> {
     .select('*')
     .eq('client_id', userId)
     .gte('start_time', new Date().toISOString())
-    .in('status', ['scheduled', 'confirmed'])
+    .in('status', ['scheduled', 'confirmed', 'pending'])
     .order('start_time', { ascending: true })
     .limit(5)
 

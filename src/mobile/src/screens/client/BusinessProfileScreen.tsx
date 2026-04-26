@@ -7,6 +7,7 @@ import { useTheme } from '../../contexts/ThemeContext'
 import { spacing, typography, radius } from '../../theme'
 import Screen from '../../components/ui/Screen'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
+import AppHeader from '../../components/ui/AppHeader'
 import { Business, Service, Location, Review } from '../../types'
 import { QUERY_CONFIG, QUERY_KEYS } from '../../lib/queryClient'
 
@@ -59,6 +60,8 @@ export default function BusinessProfileScreen({ route, navigation }: { route: an
 
   return (
     <Screen scrollable>
+      <AppHeader title={business.name} onBack={() => navigation.goBack()} />
+
       {/* Banner */}
       {business.banner_url ? (
         <Image source={{ uri: business.banner_url }} style={styles.banner} resizeMode="cover" />
@@ -86,7 +89,7 @@ export default function BusinessProfileScreen({ route, navigation }: { route: an
       {/* CTA reservar */}
       <TouchableOpacity
         style={[styles.bookBtn, { backgroundColor: theme.primary }]}
-        onPress={() => navigation.navigate('Reservar')}
+        onPress={() => navigation.navigate('Reservar', { preselectedBusinessId: business.id })}
       >
         <Ionicons name="calendar-outline" size={20} color="#fff" />
         <Text style={styles.bookBtnText}>Reservar cita</Text>

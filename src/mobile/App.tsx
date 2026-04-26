@@ -65,6 +65,10 @@ import AppointmentHistoryScreen from './src/screens/client/AppointmentHistoryScr
 import CalendarScreen from './src/screens/client/CalendarScreen'
 import FavoritesScreen from './src/screens/client/FavoritesScreen'
 import SearchScreen from './src/screens/client/SearchScreen'
+import WriteReviewScreen from './src/screens/client/WriteReviewScreen'
+import PendingReviewsScreen from './src/screens/client/PendingReviewsScreen'
+import AppointmentConfirmationScreen from './src/screens/client/AppointmentConfirmationScreen'
+import AppointmentCancellationScreen from './src/screens/client/AppointmentCancellationScreen'
 
 // Admin additional screens
 import AppointmentsCalendarScreen from './src/screens/admin/AppointmentsCalendarScreen'
@@ -247,6 +251,8 @@ function ClientHomeStack() {
       <Stack.Screen name="MisCitasList" component={ClientAppointmentsScreen} options={{ title: 'Mis Citas', headerShown: false }} />
       <Stack.Screen name="Calendario" component={CalendarScreen} options={{ title: 'Calendario' }} />
       <Stack.Screen name="Reservar" component={BookingScreen} options={{ title: 'Reservar cita', headerShown: false }} />
+      <Stack.Screen name="EscribirResena" component={WriteReviewScreen} options={{ title: 'Reseña', headerShown: false }} />
+      <Stack.Screen name="ReseñasPendientes" component={PendingReviewsScreen} options={{ title: 'Reseñas pendientes', headerShown: false }} />
       <Stack.Screen name="BusinessProfile" component={BusinessProfileScreen} options={{ title: 'Negocio' }} />
     </Stack.Navigator>
   )
@@ -267,6 +273,8 @@ function ClientHistoryStack() {
     <Stack.Navigator screenOptions={{ ...STACK_HEADER_STYLE }}>
       <Stack.Screen name="HistorialCitas" component={AppointmentHistoryScreen} options={{ title: 'Historial', headerShown: false }} />
       <Stack.Screen name="BusinessProfile" component={BusinessProfileScreen} options={{ title: 'Negocio' }} />
+      <Stack.Screen name="EscribirResena" component={WriteReviewScreen} options={{ title: 'Reseña', headerShown: false }} />
+      <Stack.Screen name="ReseñasPendientes" component={PendingReviewsScreen} options={{ title: 'Reseñas pendientes', headerShown: false }} />
     </Stack.Navigator>
   )
 }
@@ -291,6 +299,8 @@ function ClientProfileStack() {
       <Stack.Screen name="ConversacionList" component={ConversationListScreen} options={{ title: 'Mensajes' }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: '' }} />
       <Stack.Screen name="Ajustes" component={SettingsScreen} options={{ title: 'Ajustes' }} />
+      <Stack.Screen name="ReseñasPendientes" component={PendingReviewsScreen} options={{ title: 'Reseñas pendientes', headerShown: false }} />
+      <Stack.Screen name="EscribirResena" component={WriteReviewScreen} options={{ title: 'Reseña', headerShown: false }} />
     </Stack.Navigator>
   )
 }
@@ -335,6 +345,23 @@ function ClientTabs() {
 void AdminTabs
 void EmployeeTabs
 
+// ─── Root Stack (permite deep-links globales sin auth) ───────────────────────
+
+function RootStack({ user }: { user: { id: string } | null }) {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {!user ? (
+        <Stack.Screen name="AuthRoot" component={AuthStack} />
+      ) : (
+        <Stack.Screen name="ClientRoot" component={ClientTabs} />
+      )}
+      {/* Deep-link screens — accesibles sin autenticación */}
+      <Stack.Screen name="ConfirmarCita" component={AppointmentConfirmationScreen} />
+      <Stack.Screen name="CancelarCita" component={AppointmentCancellationScreen} />
+    </Stack.Navigator>
+  )
+}
+
 function AppNavigator() {
   const { user, loading: authLoading } = useAuth()
   const { theme } = useTheme()
@@ -359,7 +386,7 @@ function AppNavigator() {
   return (
     <NavigationContainer ref={navigationRef} linking={linking}>
       <NotificationProvider>
-        {!user ? <AuthStack /> : <ClientTabs />}
+        <RootStack user={user} />
         {user && <FloatingBugReportButton />}
       </NotificationProvider>
     </NavigationContainer>

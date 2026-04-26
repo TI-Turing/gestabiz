@@ -36,7 +36,7 @@ async function fetchClientApts(userId: string, filter: Filter): Promise<AptRow[]
   if (filter === 'upcoming') {
     query = query
       .gte('start_time', now)
-      .in('status', ['scheduled', 'confirmed'])
+      .in('status', ['scheduled', 'confirmed', 'pending'])
       .order('start_time', { ascending: true })
   } else if (filter === 'past') {
     query = query
@@ -55,11 +55,22 @@ async function fetchClientApts(userId: string, filter: Filter): Promise<AptRow[]
   const locationIds = [...new Set(apts.map((a: any) => a.location_id).filter(Boolean))]
   const employeeIds = [...new Set(apts.map((a: any) => a.employee_id).filter(Boolean))]
 
-  const [bizRes, svcRes, locRes, empRes] = await Promise.all([
+  const ROLE_LABELS: Record<string, string> = {
+    manager: 'Manager',
+    professional: 'Profesional',
+    receptionist: 'Recepcionista',
+    accountant: 'Contador',
+    support_staff: 'Soporte',
+  }
+
+  const [bizRes, svcRes, locRes, empRes, beRes] = await Promise.all([
     businessIds.length > 0 ? supabase.from('businesses').select('id, name').in('id', businessIds) : { data: [] },
     serviceIds.length > 0 ? supabase.from('services').select('id, name, price, image_url').in('id', serviceIds) : { data: [] },
-    locationIds.length > 0 ? supabase.from('locations').select('id, name, address').in('id', locationIds) : { data: [] },
+    locationIds.length > 0 ? supabase.from('locations').select('id, name, address, banner_url').in('id', locationIds) : { data: [] },
     employeeIds.length > 0 ? supabase.from('profiles').select('id, full_name, avatar_url').in('id', employeeIds) : { data: [] },
+    employeeIds.length > 0 && businessIds.length > 0
+      ? supabase.from('business_employees').select('employee_id, business_id, role').in('employee_id', employeeIds).in('business_id', businessIds)
+      : { data: [] },
   ])
 
   const bm: Record<string, string> = {}
@@ -70,24 +81,35 @@ async function fetchClientApts(userId: string, filter: Filter): Promise<AptRow[]
     sm[s.id] = { name: s.name, price: s.price ?? undefined, imageUrl: s.image_url ?? undefined }
   })
 
-  const lm: Record<string, { name: string; address?: string }> = {}
-  ;(locRes.data ?? []).forEach((l: any) => { lm[l.id] = { name: l.name, address: l.address ?? undefined } })
+  const lm: Record<string, { name: string; address?: string; bannerUrl?: string }> = {}
+  ;(locRes.data ?? []).forEach((l: any) => { lm[l.id] = { name: l.name, address: l.address ?? undefined, bannerUrl: l.banner_url ?? undefined } })
 
   const em: Record<string, { name: string; avatarUrl?: string }> = {}
   ;(empRes.data ?? []).forEach((e: any) => { em[e.id] = { name: e.full_name, avatarUrl: e.avatar_url ?? undefined } })
 
-  return apts.map((a: any) => ({
-    ...a,
-    status: a.status as AppointmentStatus,
-    businessName: bm[a.business_id] ?? 'Negocio',
-    serviceName: sm[a.service_id]?.name ?? 'Servicio',
-    serviceImageUrl: sm[a.service_id]?.imageUrl,
-    servicePrice: sm[a.service_id]?.price,
-    employeeName: a.employee_id ? em[a.employee_id]?.name : undefined,
-    employeeAvatarUrl: a.employee_id ? em[a.employee_id]?.avatarUrl : undefined,
-    locationName: a.location_id ? lm[a.location_id]?.name : undefined,
-    locationAddress: a.location_id ? lm[a.location_id]?.address : undefined,
-  }))
+  // Composite key (employee_id)-(business_id) → role label
+  const roleMap: Record<string, string> = {}
+  ;(beRes.data ?? []).forEach((r: any) => {
+    roleMap[`${r.employee_id}-${r.business_id}`] = ROLE_LABELS[r.role] ?? r.role
+  })
+
+  return apts.map((a: any) => {
+    const svcImg = sm[a.service_id]?.imageUrl
+    const locBanner = a.location_id ? lm[a.location_id]?.bannerUrl : undefined
+    return {
+      ...a,
+      status: a.status as AppointmentStatus,
+      businessName: bm[a.business_id] ?? 'Negocio',
+      serviceName: sm[a.service_id]?.name ?? 'Servicio',
+      serviceImageUrl: svcImg ?? locBanner,
+      servicePrice: sm[a.service_id]?.price,
+      employeeName: a.employee_id ? em[a.employee_id]?.name : undefined,
+      employeeAvatarUrl: a.employee_id ? em[a.employee_id]?.avatarUrl : undefined,
+      employeeTitle: a.employee_id ? roleMap[`${a.employee_id}-${a.business_id}`] : undefined,
+      locationName: a.location_id ? lm[a.location_id]?.name : undefined,
+      locationAddress: a.location_id ? lm[a.location_id]?.address : undefined,
+    }
+  })
 }
 
 function toCardData(apt: AptRow): AppointmentCardData {
@@ -102,6 +124,7 @@ function toCardData(apt: AptRow): AppointmentCardData {
     businessName: apt.businessName,
     employeeName: apt.employeeName,
     employeeAvatarUrl: apt.employeeAvatarUrl,
+    employeeTitle: (apt as any).employeeTitle,
     locationName: apt.locationName,
     locationAddress: apt.locationAddress,
   }
@@ -226,8 +249,8 @@ export default function ClientAppointmentsScreen({
               appointment={toCardData(item)}
               variant="hero"
               onPress={() => {}}
-              actionLabel={item.status === 'scheduled' ? 'Cancelar' : undefined}
-              onAction={item.status === 'scheduled' ? () => confirmCancel(item) : undefined}
+              actionLabel={['scheduled', 'pending', 'confirmed'].includes(item.status) ? 'Cancelar' : undefined}
+              onAction={['scheduled', 'pending', 'confirmed'].includes(item.status) ? () => confirmCancel(item) : undefined}
             />
           )}
         />
