@@ -39,7 +39,7 @@ module.exports = {
         ],
       },
       moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1' },
-      testMatch: ['**/__tests__/utils.test.ts'],
+      testMatch: ['**/__tests__/**/*.test.ts'],
     },
   ],
 }
