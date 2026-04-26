@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   View,
   Text,
@@ -65,7 +65,15 @@ export default function SearchScreen() {
   const [geoEnabled, setGeoEnabled] = useState(false)
 
   const debouncedSearch = useDebounce(searchText, 350)
-  const { coords, loading: geoLoading, error: geoError } = useGeolocation({ enabled: geoEnabled })
+  const { coords, loading: geoLoading, error: geoError, refreshLocation } = useGeolocation()
+
+  // Trigger location fetch only when the user activates the geo toggle — never on mount
+  useEffect(() => {
+    if (geoEnabled) {
+      refreshLocation()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoEnabled])
 
   const { data: results = [], isLoading } = useQuery({
     queryKey: ['search', searchType, debouncedSearch],
