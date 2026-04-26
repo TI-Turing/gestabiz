@@ -126,7 +126,7 @@ export function AppointmentCard({
       <TouchableOpacity
         onPress={() => onPress?.(id)}
         activeOpacity={0.9}
-        style={[styles.heroCard, shadows.md]}
+        style={[styles.heroCard, shadows.sm]}
       >
         <ImageBackground
           source={hasImage ? { uri: serviceImageUrl } : undefined}
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   },
   // ─── Hero ─────────────────────────────────────────────────────────────────
   heroCard: {
-    borderRadius: radius['2xl'],
+    borderRadius: radius.lg,
     overflow: 'hidden',
     marginBottom: spacing.base,
   },
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   heroImageStyle: {
-    borderRadius: radius['2xl'],
+    borderRadius: radius.lg,
   },
   heroFallbackBg: {
     ...StyleSheet.absoluteFillObject,
