@@ -25,7 +25,7 @@ import { NotificationProvider } from './src/contexts/NotificationContext'
 import { linking } from './src/lib/linking'
 // useUserRoles se mantiene en el codebase pero no se usa aquí mientras la app sea client-only.
 import { colors } from './src/theme'
-import { FloatingBugReportButton } from './src/components/bug-report/FloatingBugReportButton'
+import { FloatingChatButton } from './src/components/chat/FloatingChatButton'
 
 // Auth
 import AuthScreen from './src/screens/auth/AuthScreen'
@@ -306,20 +306,26 @@ function ClientProfileStack() {
 }
 
 function ClientTabs() {
+  const { theme } = useTheme()
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        tabBarStyle: TAB_BAR_STYLE,
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textSecondary,
+        tabBarStyle: {
+          backgroundColor: theme.tabBar,
+          borderTopWidth: 1,
+          borderTopColor: theme.tabBarBorder,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+          paddingTop: 8,
+          height: Platform.OS === 'ios' ? 88 : 64,
+        },
         tabBarIcon: ({ focused, color, size }) => {
           const icons: Record<string, [string, string]> = {
-            Inicio: ['home', 'home-outline'],
+            Inicio: ['calendar', 'calendar-outline'],
             Favoritos: ['heart', 'heart-outline'],
             Historial: ['time', 'time-outline'],
-            Buscar: ['search', 'search-outline'],
-            Perfil: ['person', 'person-outline'],
           }
           const [active, inactive] = icons[route.name] ?? ['help', 'help-outline']
           return <Ionicons name={(focused ? active : inactive) as keyof typeof Ionicons.glyphMap} size={size} color={color} />
@@ -329,8 +335,6 @@ function ClientTabs() {
       <Tab.Screen name="Inicio" component={ClientHomeStack} options={{ title: 'Mis Citas' }} />
       <Tab.Screen name="Favoritos" component={ClientFavoritesStack} options={{ title: 'Favoritos' }} />
       <Tab.Screen name="Historial" component={ClientHistoryStack} options={{ title: 'Historial' }} />
-      <Tab.Screen name="Buscar" component={ClientSearchStack} options={{ title: 'Buscar' }} />
-      <Tab.Screen name="Perfil" component={ClientProfileStack} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   )
 }
@@ -358,6 +362,9 @@ function RootStack({ user }: { user: { id: string } | null }) {
       {/* Deep-link screens — accesibles sin autenticación */}
       <Stack.Screen name="ConfirmarCita" component={AppointmentConfirmationScreen} />
       <Stack.Screen name="CancelarCita" component={AppointmentCancellationScreen} />
+      {/* Chat screens — accesibles desde FloatingChatButton sin requerir tab específica */}
+      <Stack.Screen name="ConversacionList" component={ConversationListScreen} options={{ ...STACK_HEADER_STYLE, headerShown: true, title: 'Mensajes' }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ ...STACK_HEADER_STYLE, headerShown: true, title: '' }} />
     </Stack.Navigator>
   )
 }
@@ -387,7 +394,7 @@ function AppNavigator() {
     <NavigationContainer ref={navigationRef} linking={linking}>
       <NotificationProvider>
         <RootStack user={user} />
-        {user && <FloatingBugReportButton />}
+        {user && <FloatingChatButton />}
       </NotificationProvider>
     </NavigationContainer>
   )

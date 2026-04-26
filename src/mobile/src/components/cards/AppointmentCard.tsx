@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   },
   // ─── Hero ─────────────────────────────────────────────────────────────────
   heroCard: {
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
     overflow: 'hidden',
     marginBottom: spacing.base,
   },
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   heroImageStyle: {
-    borderRadius: radius.lg,
+    borderRadius: radius.xl,
   },
   heroFallbackBg: {
     ...StyleSheet.absoluteFillObject,
