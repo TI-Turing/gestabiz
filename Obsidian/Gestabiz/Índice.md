@@ -120,13 +120,14 @@ Bugs conocidos, gotchas y soluciones documentadas.
 
 ---
 
-## Sesiones Claude (3 notas)
+## Sesiones Claude (4 notas)
 
 Resúmenes de sesiones de trabajo importantes.
 
 - [[2026-03-31-infra-oauth-ci]] — Fix widget estado, secretos GitGuardian, CI, Google OAuth DEV/PROD
 - [[2026-04-13-primer-dia-ventas]] — Primer día de ventas, pricing, onboarding
 - [[2026-04-17-exploracion-area-publica-y-cliente]] — Exploración del área pública y flujos de cliente
+- [[2026-04-26-mobile-client-parity-fase3]] — Sprint paridad móvil ↔ web Fases 2.1–3 (reseñas, perfil, geo, deep-links, chat, pending filter, employeeTitle)
 
 ---
 

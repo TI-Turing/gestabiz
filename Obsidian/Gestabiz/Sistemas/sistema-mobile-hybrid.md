@@ -1,77 +1,112 @@
 ---
-date: 2026-04-25
-tags: [mobile, expo, webview, hybrid, react-native, eas]
+date: 2026-04-26
+tags: [mobile, expo, react-native, eas, cliente]
 status: completed
 ---
 
-# Sistema Mobile Híbrido (Expo + WebView)
+# Sistema Mobile (Expo React Native)
 
-Gestabiz tiene una **app móvil híbrida** que reusa ~95% del código web mediante un WebView, con una capa nativa fina (~5%) para autenticación segura, almacenamiento, push notifications y bridging con APIs nativas. La carpeta es `src/mobile/`.
+La app móvil de Gestabiz es una **app React Native nativa** en `src/mobile/`. No es WebView — tiene sus propios componentes, navegación y tema.
 
-## Estrategia: Expo Hybrid WebView
+## Stack
 
-En vez de duplicar la lógica de la web en React Native puro, la app móvil:
+- **Expo SDK 51** + React Native 0.74
+- **React Navigation 6**: BottomTabs + NativeStack
+- **TanStack React Query 5**: cache idéntica a web (STABLE/FREQUENT/REALTIME)
+- **Supabase JS v2**: mismo cliente singleton (`src/mobile/src/lib/supabase.ts`)
+- **Theme propio**: `ThemeContext`, `useTheme()`, tokens en `src/mobile/src/theme/`
+- **StyleSheet** + no NativeWind (estilos inline con tema)
 
-1. Carga la URL de producción (`https://gestabiz.com`) o un build local en un `WebView`.
-2. Una **shell nativa** (Expo) maneja:
-   - Autenticación con `expo-secure-store` (almacenamiento encriptado del refresh token).
-   - Push notifications nativas via Expo Push.
-   - Permisos de cámara, ubicación, archivos.
-   - Status bar, splash screen, deep links.
-3. La web detecta que está dentro de un WebView (`window.IS_MOBILE_APP`) y ajusta UI: oculta header, ajusta padding, usa gestos nativos.
+## Estructura de pantallas (cliente)
 
-## Auth bridging WebView ↔ SecureStore
+| Pantalla | Estado | Notas |
+|----------|--------|-------|
+| `ClientDashboardScreen` | ✅ Paridad | Filtro upcoming: `['scheduled', 'confirmed', 'pending']` |
+| `ClientAppointmentsScreen` | ✅ Paridad | Pending + employeeTitle + banner fallback + hero radius.lg |
+| `AppointmentHistoryScreen` | ✅ Completo | Stats card + filtros rango/status |
+| `CalendarScreen` / `CalendarView` | ✅ Completo | Grilla mensual, dots por status, pending incluido |
+| `SearchScreen` | ✅ Paridad | 3 tipos búsqueda, geo toggle, sort Haversine, distance badge |
+| `BusinessProfileScreen` | ✅ Paridad | AppHeader back, tabs Servicios/Sedes/Reseñas/Acerca |
+| `BookingScreen` | ✅ Paridad | Wizard 5 pasos, preselección desde BusinessProfile |
+| `FavoritesScreen` | ✅ Completo | BusinessCard, heart overlay, empty CTA |
+| `ClientProfileScreen` | ✅ Paridad | Cover hero, avatar upload, doc identidad, accesos rápidos |
+| `SettingsScreen` | ✅ Paridad | Notifs (email/SMS/WhatsApp), resúmenes, DND, tema oscuro |
+| `WriteReviewScreen` | ✅ Completo | Selector negocio/empleado, wraps ReviewForm |
+| `PendingReviewsScreen` | ✅ Completo | Lista citas sin reseña, navega a WriteReview |
+| `AppointmentConfirmationScreen` | ✅ Completo | Deep-link `/confirmar-cita/:token` |
+| `AppointmentCancellationScreen` | ✅ Completo | Deep-link `/cancelar-cita/:token` |
 
-Para evitar que el token viva solo en cookies de WebView (vulnerable a clearing), la auth se bridgea:
+## Pantallas admin y employee
 
-1. Al hacer login en la web (dentro del WebView), un `postMessage` envía el `refresh_token` al shell nativo.
-2. El shell guarda el token en `SecureStore` (Keychain en iOS, EncryptedSharedPreferences en Android).
-3. Al abrir la app, el shell inyecta el token al WebView mediante `injectedJavaScript`:
-   ```js
-   window.localStorage.setItem('sb-refresh-token', '...');
-   window.dispatchEvent(new Event('mobile-auth-ready'));
-   ```
-4. Logout limpia ambas capas.
+Existen en `src/mobile/src/screens/admin/` y `src/mobile/src/screens/employee/` pero no son el foco del sprint de paridad cliente.
 
-## Health checks: `useServiceStatus`
+## Navegación (App.tsx en `src/mobile/`)
 
-Hook que valida que los servicios críticos (Supabase, Edge Functions, Catalog API) responden. Si alguno está caído, muestra una pantalla de mantenimiento en lugar del WebView para evitar errores confusos.
+```
+RootStack (modal)
+├── ClientRoot (BottomTabs)
+│   ├── Inicio tab → ClientDashboardScreen
+│   ├── MisCitas tab → ClientAppointmentsStack
+│   ├── Buscar tab → ClientSearchStack
+│   ├── Reservar tab → BookingScreen
+│   └── Perfil tab → ClientProfileStack
+├── WriteReview (global, sin tabs)
+├── ConfirmarCita / CancelarCita (deep-links públicos)
+└── AdminRoot / EmployeeRoot (otros roles)
+```
 
-## Build artifacts (EAS Build)
+## Patrones críticos
 
-| Plataforma | Artefacto | Uso |
-|-----------|-----------|-----|
-| Android | `.aab` | Subida a Play Store |
-| Android | `.apk` | Sideload / testing interno |
-| iOS | `.ipa` | App Store + TestFlight |
+### Two-step query (OBLIGATORIO)
+`appointments` no tiene columnas denormalizadas (`client_name`, `service_name`, etc.). Siempre:
+```ts
+// Paso 1: fetch appointments
+const { data: apts } = await supabase.from('appointments').select('*').eq('client_id', userId)
+// Paso 2: batch fetch en paralelo
+const [bizRes, svcRes] = await Promise.all([
+  supabase.from('businesses').select('id, name').in('id', businessIds),
+  supabase.from('services').select('id, name, price, image_url').in('id', serviceIds),
+])
+```
 
-Builds gestionados con **EAS Build** (Expo Application Services). Profiles: `development`, `preview`, `production` en `eas.json`.
+### Filtro de estado upcoming
+```ts
+.in('status', ['scheduled', 'confirmed', 'pending'])
+// 'pending' = estado inicial antes de confirmación del negocio — SIEMPRE incluir
+```
 
-## Versionado
+### employeeTitle (rol del empleado)
+```ts
+const ROLE_LABELS = { manager: 'Manager', professional: 'Profesional', ... }
+// Fetch business_employees.role por clave compuesta (employee_id, business_id)
+```
 
-`APP_CONFIG.VERSION` en `src/constants/index.ts` se referencia en `src/main.tsx:103-107` para mostrar la versión actual en footer y al reportar bugs. La app móvil sincroniza `app.json` (`expo.version`, `expo.android.versionCode`, `expo.ios.buildNumber`) con esta misma constante en cada release.
+### Deep links (`linking.ts`)
+```
+gestabiz://confirmar-cita/:token   → AppointmentConfirmationScreen
+gestabiz://cancelar-cita/:token    → AppointmentCancellationScreen
+gestabiz://app/client/review/:id   → WriteReviewScreen
+gestabiz://app/client/pending-reviews → PendingReviewsScreen
+```
 
-## Push notifications
+### Variables de entorno móvil
+```bash
+EXPO_PUBLIC_SUPABASE_URL=https://...supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...   # formato nuevo OBLIGATORIO (JWT legacy deshabilitado)
+```
 
-- Registro del device token al login → guardado en `profiles.push_token`.
-- Edge Function `send-notification` envía push via Expo Push API si el canal `in-app` está habilitado y hay token registrado.
-- Tap en push abre la URL específica del recurso (ej: cita, conversación) mediante deep linking.
+## Build
 
-## Deep linking
-
-Esquema `gestabiz://` + universal links de `https://gestabiz.com`:
-- `gestabiz://appointment/:id`
-- `gestabiz://chat/:conversationId`
-- `gestabiz://negocio/:slug`
-
-## Limitaciones del enfoque
-
-- Pull-to-refresh y gestos nativos requieren ajustes específicos.
-- Performance percibida depende de la conexión (es web cargada en WebView).
-- Algunas APIs (compartir, geolocalización en background) requieren bridges adicionales.
+```bash
+cd src/mobile
+npx expo start          # desarrollo
+npx expo start --tunnel # cuando la red bloquea el puerto
+eas build --profile preview --platform android  # APK de prueba
+```
 
 ## Notas relacionadas
 
-- [[stack-tecnologico]] — React Native / Expo
-- [[sistema-autenticacion]] — Auth singleton compartido con web
-- [[sistema-notificaciones]] — Push notifications
+- [[sistema-citas]] — Wizard y lógica de citas (web)
+- [[sistema-reviews]] — ReviewForm compartido
+- [[sistema-notificaciones]] — Canales notificación
+- [[2026-04-26-mobile-client-parity-fase3]] — Sesión de paridad sprint
