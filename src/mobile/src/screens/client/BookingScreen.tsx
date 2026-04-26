@@ -6,7 +6,7 @@ import {
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
-import { useRoute, RouteProp } from '@react-navigation/native'
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import type { ThemeColors } from '../../theme'
@@ -525,6 +525,7 @@ export default function BookingScreen() {
   const { theme } = useTheme()
   const qc = useQueryClient()
   const route = useRoute<RouteProp<BookingRouteParams, 'Reservar'>>()
+  const navigation = useNavigation()
   const preselectedBusinessId = route.params?.preselectedBusinessId
 
   const [step, setStep] = useState<Step>('business')
@@ -554,6 +555,11 @@ export default function BookingScreen() {
 
   const goNext = (nextStep: Step) => setStep(nextStep)
   const goBack = () => {
+    // Si venimos de BusinessProfile y estamos en el primer paso editable → volver a la pantalla anterior
+    if (preselectedBusinessId && step === 'service') {
+      navigation.goBack()
+      return
+    }
     const idx = STEPS.findIndex((s) => s.key === step)
     if (idx > 0) setStep(STEPS[idx - 1].key)
   }
