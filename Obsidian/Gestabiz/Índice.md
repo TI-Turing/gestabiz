@@ -80,6 +80,7 @@ Specs de features en desarrollo, pendientes o ideas futuras.
 
 - [[Fase 2 - Contabilidad, DIAN y App Móvil]] — Módulo contable completo, facturación electrónica DIAN, app móvil
 - [[Fase 3 - IA, Automatización y Agentes]] — Agentes LLM, procesos automáticos, AI marketing assistant
+- [[Fase 4 - El Shopify de los Negocios de Servicios]] — Pagos a clientes, recordatorios escalonados, promociones, CRM avanzado, estadísticas, marketplace, widget embebible
 - [[Ideas Futuras - Social Media MCP y Marketing IA]] — MCP para redes sociales, publicación automática con IA
 - [[QR-con-branding-Gestabiz]] — QR con icono de Gestabiz centrado + logo y texto "Reserva tu próxima cita aquí"
 - [[analisis-competitivo-roadmap]] — Roadmap competitivo y análisis de mercado
@@ -101,12 +102,14 @@ Contexto del negocio, auditorías y estrategia general.
 
 ---
 
-## Decisiones (2 notas)
+## Decisiones (4 notas)
 
 Decisiones arquitectónicas y trade-offs importantes.
 
 - [[google-oauth-separacion-entornos]] — Dos clientes Google OAuth separados (DEV y PROD)
 - [[decision-antifraude-referrals]] — Por qué no se necesitan reglas anti-fraude complejas en el programa de referrals
+- [[lock-in-estrategia-datos-clientes]] — Lock-in por datos: cómo la base de datos del negocio se convierte en una fosa competitiva vs. AgendaPro y Fresha
+- [[ventajas-estructurales-no-explotadas]] — 17 ventajas competitivas latentes en la arquitectura: multi-rol nativo, modelo flexible, mobile híbrido, permisos enterprise, founder único y más
 
 ---
 
