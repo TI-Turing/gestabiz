@@ -95,7 +95,7 @@ export default function SearchScreen() {
           .limit(ids.length * 3)
         const locMap = new Map<string, { lat: number; lng: number }>()
         for (const loc of locs ?? []) {
-          if (loc.latitude && loc.longitude && !locMap.has(loc.business_id)) {
+          if (loc.latitude != null && loc.longitude != null && !locMap.has(loc.business_id)) {
             locMap.set(loc.business_id, { lat: loc.latitude, lng: loc.longitude })
           }
         }
