@@ -11,6 +11,16 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test-utils/setup.ts'],
+    exclude: [
+      // Default Vitest exclusions
+      '**/node_modules/**',
+      '**/dist/**',
+      // Excluir worktrees internos de Claude (Obsidian/Gestabiz/.claude/worktrees/)
+      'Obsidian/**',
+      '**/.claude/worktrees/**',
+      // Tests de React Native — requieren react-test-renderer@18, incompatible con React 19
+      'src/mobile/__tests__/**',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

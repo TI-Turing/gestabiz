@@ -44,11 +44,16 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 // TESTS
 // ---------------------------------------------------------------------------
 describe('useEmployeeAbsences', () => {
-  const { Wrapper } = createWrapper()
+  let Wrapper: ReturnType<typeof createWrapper>['Wrapper']
 
   beforeEach(() => {
     mockQueryFn.mockReset()
     mockQueryFn.mockResolvedValue({ data: [], error: null })
+    // Resetear mockFrom a la implementación por defecto (buildChain con mockQueryFn)
+    mockFrom.mockReset()
+    mockFrom.mockImplementation(() => buildChain(mockQueryFn))
+    // QueryClient fresco por test para evitar interferencia de caché entre tests
+    ;({ Wrapper } = createWrapper())
   })
 
   it('returns empty absences when businessId is empty string', async () => {
@@ -106,7 +111,7 @@ describe('useEmployeeAbsences', () => {
     })
 
     const { result } = renderHook(() => useEmployeeAbsences('biz-1'), { wrapper: Wrapper })
-    await waitFor(() => result.current.vacationBalance !== null)
+    await waitFor(() => expect(result.current.vacationBalance).not.toBeNull())
 
     expect(result.current.vacationBalance?.year).toBe(2025)
     expect(result.current.vacationBalance?.totalDaysAvailable).toBe(15)
