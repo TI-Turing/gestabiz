@@ -32,7 +32,7 @@ export function FloatingChatButton({ bottomOffset = 80 }: FloatingChatButtonProp
         .from('in_app_notifications')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .eq('read', false)
+        .eq('status', 'unread')
         .ilike('type', '%chat%')
       return count ?? 0
     },

@@ -2,7 +2,7 @@ import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useTheme } from '../../contexts/ThemeContext'
-import { typography, spacing, fonts } from '../../theme'
+import { typography, spacing, radius, fonts } from '../../theme'
 
 interface AppHeaderProps {
   onSearch?: () => void
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   logoBox: {
     width: 36,
     height: 36,
-    borderRadius: 8,
+    borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },

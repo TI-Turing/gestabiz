@@ -324,8 +324,10 @@ function ClientTabs() {
         tabBarIcon: ({ focused, color, size }) => {
           const icons: Record<string, [string, string]> = {
             Inicio: ['calendar', 'calendar-outline'],
+            Buscar: ['search', 'search-outline'],
             Favoritos: ['heart', 'heart-outline'],
             Historial: ['time', 'time-outline'],
+            Perfil: ['person', 'person-outline'],
           }
           const [active, inactive] = icons[route.name] ?? ['help', 'help-outline']
           return <Ionicons name={(focused ? active : inactive) as keyof typeof Ionicons.glyphMap} size={size} color={color} />
@@ -333,8 +335,10 @@ function ClientTabs() {
       })}
     >
       <Tab.Screen name="Inicio" component={ClientHomeStack} options={{ title: 'Mis Citas' }} />
+      <Tab.Screen name="Buscar" component={ClientSearchStack} options={{ title: 'Buscar' }} />
       <Tab.Screen name="Favoritos" component={ClientFavoritesStack} options={{ title: 'Favoritos' }} />
       <Tab.Screen name="Historial" component={ClientHistoryStack} options={{ title: 'Historial' }} />
+      <Tab.Screen name="Perfil" component={ClientProfileStack} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   )
 }

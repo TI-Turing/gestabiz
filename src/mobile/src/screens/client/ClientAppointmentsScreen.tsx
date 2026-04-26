@@ -51,15 +51,6 @@ async function fetchRecommendedBusinesses(): Promise<RecommendedBusiness[]> {
 
 async function fetchClientApts(userId: string, filter: Filter): Promise<AptRow[]> {
   const now = new Date().toISOString()
-  // DEBUG — temporary
-  const { data: allApts, error: allError } = await supabase
-    .from('appointments')
-    .select('id, client_id, status, start_time')
-    .eq('client_id', userId)
-    .limit(10)
-  console.log('[DEBUG] userId:', userId)
-  console.log('[DEBUG] all apts (no filter):', allApts, 'error:', allError)
-
   let query = supabase.from('appointments').select('*').eq('client_id', userId).limit(50)
 
   if (filter === 'upcoming') {
@@ -76,8 +67,7 @@ async function fetchClientApts(userId: string, filter: Filter): Promise<AptRow[]
     query = query.eq('status', 'cancelled').order('start_time', { ascending: false })
   }
 
-  const { data: apts, error: aptsError } = await query
-  console.log('[DEBUG] filtered apts (upcoming):', apts, 'error:', aptsError)
+  const { data: apts } = await query
   if (!apts || apts.length === 0) return []
 
   const businessIds = [...new Set(apts.map((a: any) => a.business_id).filter(Boolean))]

@@ -12,9 +12,10 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import Constants from 'expo-constants'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useAuth } from '../../contexts/AuthContext'
-import { spacing, typography, radius, fonts, shadows } from '../../theme'
+import { spacing, typography, radius, fonts } from '../../theme'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 const DRAWER_WIDTH = SCREEN_WIDTH * 0.82
@@ -163,17 +164,19 @@ export function ClientMenuDrawer({ isOpen, onClose, onReportBug }: ClientMenuDra
             }}
             activeOpacity={0.7}
           >
-            <View style={[styles.actionIconBox, { backgroundColor: '#ef444418' }]}>
-              <Ionicons name="log-out-outline" size={20} color="#ef4444" />
+            <View style={[styles.actionIconBox, { backgroundColor: theme.destructive + '18' }]}>
+              <Ionicons name="log-out-outline" size={20} color={theme.destructive} />
             </View>
-            <Text style={[styles.actionLabel, { color: '#ef4444' }]}>Cerrar Sesión</Text>
+            <Text style={[styles.actionLabel, { color: theme.destructive }]}>Cerrar Sesión</Text>
             <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
           </TouchableOpacity>
         </View>
 
         {/* Version footer */}
         <View style={styles.footer}>
-          <Text style={[styles.versionText, { color: theme.textSecondary }]}>Gestabiz v1.0.3</Text>
+          <Text style={[styles.versionText, { color: theme.textSecondary }]}>
+            Gestabiz v{Constants.expoConfig?.version ?? '1.0.0'}
+          </Text>
         </View>
       </Animated.View>
     </Modal>

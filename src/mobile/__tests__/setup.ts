@@ -3,6 +3,7 @@
  * Mocks all native modules that don't run in Node.js.
  */
 // extend-expect se carga automáticamente en @testing-library/jest-native v5+
+import type { ReactNode } from 'react'
 
 // ─── React Navigation ────────────────────────────────────────────────────────
 
@@ -17,7 +18,7 @@ jest.mock('@react-navigation/native', () => {
     }),
     useRoute: () => ({ params: {} }),
     useFocusEffect: jest.fn(),
-    NavigationContainer: ({ children }: { children: React.ReactNode }) => children,
+    NavigationContainer: ({ children }: { children: ReactNode }) => children,
   }
 })
 

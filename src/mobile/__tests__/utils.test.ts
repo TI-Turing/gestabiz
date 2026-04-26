@@ -1,24 +1,10 @@
 // Tests for pure utility functions used across the mobile app.
-// No mocks needed — these are plain TypeScript functions.
+// Imports from production source to ensure tests reflect real behaviour.
+
+import { haversineKm, formatDistance } from '../src/lib/geoUtils'
+import { ROLE_LABELS } from '../src/lib/roleLabels'
 
 // ─── Haversine distance ───────────────────────────────────────────────────────
-
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLon = ((lon2 - lon1) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
-
-function formatDistance(km: number): string {
-  if (km < 1) return `${Math.round(km * 1000)} m`
-  return `${km.toFixed(1)} km`
-}
 
 describe('haversineKm', () => {
   it('retorna 0 para el mismo punto', () => {
@@ -57,14 +43,6 @@ describe('formatDistance', () => {
 })
 
 // ─── ROLE_LABELS ──────────────────────────────────────────────────────────────
-
-const ROLE_LABELS: Record<string, string> = {
-  manager: 'Manager',
-  professional: 'Profesional',
-  receptionist: 'Recepcionista',
-  accountant: 'Contador',
-  support_staff: 'Soporte',
-}
 
 describe('ROLE_LABELS', () => {
   it('mapea todos los roles esperados', () => {
@@ -121,7 +99,9 @@ describe('serviceImageUrl fallback', () => {
 
 // ─── toCardData mapping ───────────────────────────────────────────────────────
 
-type AppointmentStatus = 'scheduled' | 'confirmed' | 'pending' | 'completed' | 'cancelled' | 'no_show'
+import { AppointmentCardData } from '../src/components/cards/AppointmentCard'
+
+type AppointmentStatus = AppointmentCardData['status']
 
 interface MockAptRow {
   id: string
@@ -139,7 +119,7 @@ interface MockAptRow {
   locationAddress?: string
 }
 
-function toCardData(apt: MockAptRow) {
+function toCardData(apt: MockAptRow): AppointmentCardData {
   return {
     id: apt.id,
     startTime: apt.start_time,

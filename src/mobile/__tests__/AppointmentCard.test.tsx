@@ -1,7 +1,7 @@
 /**
  * Smoke tests — AppointmentCard
  * Verifica que las tres variantes renderizan correctamente,
- * y que el ajuste visual del sprint (radius.lg, shadow.sm en hero) está en su lugar.
+ * y que el ajuste visual del sprint (radius.xl, shadow.sm en hero) está en su lugar.
  */
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react-native'
