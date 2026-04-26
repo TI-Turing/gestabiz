@@ -20,9 +20,9 @@ export default function AppHeader({ onSearch, onNotifications, onMenu }: AppHead
         { backgroundColor: theme.background, borderBottomColor: theme.border },
       ]}
     >
-      {/* Izquierda: logo circular "G" + nombre de marca */}
+      {/* Izquierda: logo app + nombre de marca */}
       <View style={styles.left}>
-        <View style={[styles.logoCircle, { backgroundColor: theme.primary }]}>
+        <View style={[styles.logoBox, { backgroundColor: theme.primary }]}>
           <Text style={styles.logoLetter}>G</Text>
         </View>
         <Text style={[styles.brandName, { color: theme.text }]}>Gestabiz</Text>
@@ -75,18 +75,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  logoCircle: {
+  logoBox: {
     width: 36,
     height: 36,
-    borderRadius: radius.full,
+    borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoLetter: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     fontFamily: fonts.bold,
+    letterSpacing: -0.5,
   },
   brandName: {
     fontSize: typography.lg,
