@@ -68,7 +68,7 @@ async function fetchAppointmentDetails(appointmentId: string): Promise<Appointme
 
 export default function WriteReviewScreen() {
   const navigation = useNavigation()
-  const route = useRoute<RouteProp<WriteReviewParams, 'WriteReview'>>()
+  const route = useRoute<RouteProp<WriteReviewParams, 'EscribirResena'>>()
   const { theme } = useTheme()
   const { appointmentId } = route.params
 

@@ -65,7 +65,7 @@ export default function SearchScreen() {
   const [geoEnabled, setGeoEnabled] = useState(false)
 
   const debouncedSearch = useDebounce(searchText, 350)
-  const { coords, loading: geoLoading, error: geoError } = useGeolocation()
+  const { coords, loading: geoLoading, error: geoError } = useGeolocation({ enabled: geoEnabled })
 
   const { data: results = [], isLoading } = useQuery({
     queryKey: ['search', searchType, debouncedSearch],
@@ -87,6 +87,7 @@ export default function SearchScreen() {
         }
         // Enrich with coords from locations table for distance calc
         const ids = (data as SearchResult[]).map((b) => b.id)
+        if (ids.length === 0) return data as SearchResult[]
         const { data: locs } = await supabase
           .from('locations')
           .select('business_id, latitude, longitude')
@@ -152,11 +153,11 @@ export default function SearchScreen() {
     if (!geoEnabled || !coords || searchType !== 'businesses') return results
     return [...results].sort((a, b) => {
       const da =
-        a.latitude && a.longitude
+        a.latitude != null && a.longitude != null
           ? haversineKm(coords.latitude, coords.longitude, a.latitude, a.longitude)
           : Infinity
       const db =
-        b.latitude && b.longitude
+        b.latitude != null && b.longitude != null
           ? haversineKm(coords.latitude, coords.longitude, b.latitude, b.longitude)
           : Infinity
       return da - db
@@ -296,7 +297,7 @@ export default function SearchScreen() {
           }
           renderItem={({ item }) => {
             const distanceKm =
-              geoEnabled && coords && item.latitude && item.longitude
+              geoEnabled && coords && item.latitude != null && item.longitude != null
                 ? haversineKm(coords.latitude, coords.longitude, item.latitude, item.longitude)
                 : null
 

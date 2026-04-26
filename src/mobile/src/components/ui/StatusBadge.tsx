@@ -2,7 +2,6 @@ import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { AppointmentStatus } from '../../types'
 import { radius, spacing, typography } from '../../theme'
-import { useTheme } from '../../contexts/ThemeContext'
 
 /**
  * StatusBadge — Badge de estado de cita.
@@ -43,7 +42,6 @@ interface StatusBadgeProps {
 }
 
 export default function StatusBadge({ status, size = 'sm' }: StatusBadgeProps) {
-  const { theme } = useTheme()
   const config = getConfig(status)
   const isSmall = size === 'sm'
 

@@ -77,7 +77,7 @@ async function fetchPendingReviews(clientId: string): Promise<PendingReview[]> {
 }
 
 export default function PendingReviewsScreen() {
-  const navigation = useNavigation<NavigationProp<{ WriteReview: { appointmentId: string } }>>()
+  const navigation = useNavigation<NavigationProp<{ EscribirResena: { appointmentId: string } }>>()
   const { user } = useAuth()
   const { theme } = useTheme()
 
@@ -93,7 +93,7 @@ export default function PendingReviewsScreen() {
     const dateLabel = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }).format(date)
     return (
       <TouchableOpacity
-        onPress={() => navigation.navigate('WriteReview', { appointmentId: item.id })}
+        onPress={() => navigation.navigate('EscribirResena', { appointmentId: item.id })}
         activeOpacity={0.75}
         style={[styles.row, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
       >

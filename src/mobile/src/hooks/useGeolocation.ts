@@ -19,7 +19,7 @@ export interface UseGeolocationResult {
 
 // ─── Hook: useGeolocation ─────────────────────────────────────────────────────
 
-export function useGeolocation(): UseGeolocationResult {
+export function useGeolocation({ enabled = true } = {}): UseGeolocationResult {
   const [coords, setCoords] = useState<Coords | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -56,8 +56,10 @@ export function useGeolocation(): UseGeolocationResult {
   }, [])
 
   useEffect(() => {
-    fetchLocation()
-  }, [fetchLocation])
+    if (enabled) {
+      fetchLocation()
+    }
+  }, [fetchLocation, enabled])
 
   return { coords, loading, error, permissionStatus, refreshLocation: fetchLocation }
 }
