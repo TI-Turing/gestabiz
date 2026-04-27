@@ -64,7 +64,7 @@ export function BusinessSelection({
   const [remainingBusinessIds, setRemainingBusinessIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalResults, setTotalResults] = useState<number>(0);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const PAGE_SIZE = 12;
   const hasLoadedRef = useRef(false);
   // Cargar última búsqueda guardada (si existe)
@@ -264,10 +264,16 @@ export function BusinessSelection({
     // Esperar a que esté disponible preferredRegionId para incluirlo en la primera solicitud
     if (!hookCityData.preferredRegionId) return;
 
+    // Esperar a que el estado de autenticación esté resuelto.
+    // Sin este guard, loadBusinesses se llama con user?.id = undefined y luego
+    // hasLoadedRef bloquea el re-intento cuando auth finalmente carga, quedando
+    // la lista vacía de forma intermitente.
+    if (authLoading) return;
+
     hasLoadedRef.current = true;
     setLoading(true);
     void loadBusinesses();
-  }, [loadBusinesses, autoLoad, hookCityData.preferredRegionId]);
+  }, [loadBusinesses, autoLoad, hookCityData.preferredRegionId, authLoading]);
 
   // Si hay una búsqueda previa persistida, aplicarla al montar
   useEffect(() => {

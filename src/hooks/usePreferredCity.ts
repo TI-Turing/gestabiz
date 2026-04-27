@@ -14,11 +14,33 @@ interface PreferredCityData {
   cityName: string | null;
 }
 
+/** Lee el STORAGE_KEY_PREFIX de localStorage de forma síncrona (solo para lazy init). */
+function readStoredCityData(): PreferredCityData | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_PREFIX);
+    if (stored) return JSON.parse(stored) as PreferredCityData;
+  } catch {
+    // ignore — fallback a defaults
+  }
+  return null;
+}
+
 export function usePreferredCity() {
-  const [preferredRegionId, setPreferredRegionId] = useState<string | null>(null);
-  const [preferredRegionName, setPreferredRegionName] = useState<string | null>(null);
-  const [preferredCityId, setPreferredCityId] = useState<string | null>(null);
-  const [preferredCityName, setPreferredCityName] = useState<string | null>(null);
+  // Inicialización síncrona desde localStorage para evitar race conditions en el primer render.
+  // Sin esto, preferredRegionId arranca como null y hay un ciclo null→BOGOTA_ID que
+  // puede disparar loadBusinesses antes de que el estado de auth esté listo.
+  const [preferredRegionId, setPreferredRegionId] = useState<string | null>(
+    () => readStoredCityData()?.regionId ?? DEFAULT_REGION_ID
+  );
+  const [preferredRegionName, setPreferredRegionName] = useState<string | null>(
+    () => readStoredCityData()?.regionName ?? 'Bogotá D.C.'
+  );
+  const [preferredCityId, setPreferredCityId] = useState<string | null>(
+    () => readStoredCityData()?.cityId ?? DEFAULT_CITY_ID
+  );
+  const [preferredCityName, setPreferredCityName] = useState<string | null>(
+    () => readStoredCityData()?.cityName ?? DEFAULT_CITY_NAME
+  );
 
   // Load from localStorage on mount and listen for storage changes
   useEffect(() => {
