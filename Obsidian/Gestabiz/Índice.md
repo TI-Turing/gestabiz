@@ -57,13 +57,14 @@ Decisiones técnicas transversales y patrones del codebase.
 
 ---
 
-## Negocio (8 notas)
+## Negocio (9 notas)
 
 Estrategia comercial, pricing, go-to-market y posicionamiento.
 
 | Nota | Descripción |
 |------|-------------|
 | [[go-to-market-2026]] | Estrategia de ventas agresiva: puerta-puerta, redes, vendedores, ads, referrals, SEO/SEM |
+| [[manual-vendedores-externos]] | Manual completo para vendedores externos: pitch, objeciones, demo, comisiones |
 | [[diferenciacion-pricing]] | Tesis de pricing: 90k COP vs. Calendly/Booksy/Fresha, ROI para cliente, elasticidad |
 | [[planes-y-precios]] | Gratuito → Inicio (90k) → Profesional (180k) → Empresarial |
 | [[propuesta-de-valor]] | Todo-en-uno para PyMEs de servicios en Colombia |
