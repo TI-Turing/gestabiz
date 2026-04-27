@@ -69,6 +69,19 @@ La mayoría de soluciones locales son:
 2. **Localización LATAM nativa**: Impuestos, monedas, gateways de pago
 3. **Modelo flexible**: Profesionales + recursos físicos en la misma plataforma
 4. **Base de código madura**: ~151k líneas, 70+ hooks, 40+ tablas
+5. **Lock-in por datos** ⭐ — Ver [[lock-in-estrategia-datos-clientes]]
+
+## Punto Débil de la Competencia — Lock-in
+
+AgendaPro y Fresha están diseñados como **herramientas de agenda** — orientados al evento (la cita), no al objeto (el cliente). Migrar de ellos es fácil: exportas las citas y listo. No hay nada valioso que perder.
+
+Gestabiz acumula **la historia completa del negocio**: perfiles ricos de clientes, notas privadas, historial financiero, ausencias de empleados, reseñas, etiquetas. Cuanto más tiempo usa el negocio Gestabiz, más costoso y doloroso es irse.
+
+- **AgendaPro**: CRM básico (nombre + teléfono). Sin notas, sin segmentación, sin historial contable. Migrar = exportar CSV y ya.
+- **Fresha**: su incentivo es cobrar comisión por cita — no les importa que el negocio construya su base de datos. El dato no es su negocio.
+- **Gestabiz**: el dato ES el negocio. Mes a mes el negocio construye un activo que no puede llevarse fácilmente a ningún otro lado.
+
+Este es el vector de ataque: preguntarle al prospecto "¿dónde vive la información de tus clientes?" y demostrar que Gestabiz es la respuesta.
 
 ## Notas Relacionadas
 

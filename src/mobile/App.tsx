@@ -25,7 +25,7 @@ import { NotificationProvider } from './src/contexts/NotificationContext'
 import { linking } from './src/lib/linking'
 // useUserRoles se mantiene en el codebase pero no se usa aquí mientras la app sea client-only.
 import { colors } from './src/theme'
-import { FloatingBugReportButton } from './src/components/bug-report/FloatingBugReportButton'
+import { FloatingChatButton } from './src/components/chat/FloatingChatButton'
 
 // Auth
 import AuthScreen from './src/screens/auth/AuthScreen'
@@ -65,6 +65,10 @@ import AppointmentHistoryScreen from './src/screens/client/AppointmentHistoryScr
 import CalendarScreen from './src/screens/client/CalendarScreen'
 import FavoritesScreen from './src/screens/client/FavoritesScreen'
 import SearchScreen from './src/screens/client/SearchScreen'
+import WriteReviewScreen from './src/screens/client/WriteReviewScreen'
+import PendingReviewsScreen from './src/screens/client/PendingReviewsScreen'
+import AppointmentConfirmationScreen from './src/screens/client/AppointmentConfirmationScreen'
+import AppointmentCancellationScreen from './src/screens/client/AppointmentCancellationScreen'
 
 // Admin additional screens
 import AppointmentsCalendarScreen from './src/screens/admin/AppointmentsCalendarScreen'
@@ -247,6 +251,8 @@ function ClientHomeStack() {
       <Stack.Screen name="MisCitasList" component={ClientAppointmentsScreen} options={{ title: 'Mis Citas', headerShown: false }} />
       <Stack.Screen name="Calendario" component={CalendarScreen} options={{ title: 'Calendario' }} />
       <Stack.Screen name="Reservar" component={BookingScreen} options={{ title: 'Reservar cita', headerShown: false }} />
+      <Stack.Screen name="EscribirResena" component={WriteReviewScreen} options={{ title: 'Reseña', headerShown: false }} />
+      <Stack.Screen name="ReseñasPendientes" component={PendingReviewsScreen} options={{ title: 'Reseñas pendientes', headerShown: false }} />
       <Stack.Screen name="BusinessProfile" component={BusinessProfileScreen} options={{ title: 'Negocio' }} />
     </Stack.Navigator>
   )
@@ -267,6 +273,8 @@ function ClientHistoryStack() {
     <Stack.Navigator screenOptions={{ ...STACK_HEADER_STYLE }}>
       <Stack.Screen name="HistorialCitas" component={AppointmentHistoryScreen} options={{ title: 'Historial', headerShown: false }} />
       <Stack.Screen name="BusinessProfile" component={BusinessProfileScreen} options={{ title: 'Negocio' }} />
+      <Stack.Screen name="EscribirResena" component={WriteReviewScreen} options={{ title: 'Reseña', headerShown: false }} />
+      <Stack.Screen name="ReseñasPendientes" component={PendingReviewsScreen} options={{ title: 'Reseñas pendientes', headerShown: false }} />
     </Stack.Navigator>
   )
 }
@@ -291,24 +299,34 @@ function ClientProfileStack() {
       <Stack.Screen name="ConversacionList" component={ConversationListScreen} options={{ title: 'Mensajes' }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: '' }} />
       <Stack.Screen name="Ajustes" component={SettingsScreen} options={{ title: 'Ajustes' }} />
+      <Stack.Screen name="ReseñasPendientes" component={PendingReviewsScreen} options={{ title: 'Reseñas pendientes', headerShown: false }} />
+      <Stack.Screen name="EscribirResena" component={WriteReviewScreen} options={{ title: 'Reseña', headerShown: false }} />
     </Stack.Navigator>
   )
 }
 
 function ClientTabs() {
+  const { theme } = useTheme()
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
-        tabBarStyle: TAB_BAR_STYLE,
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textSecondary,
+        tabBarStyle: {
+          backgroundColor: theme.tabBar,
+          borderTopWidth: 1,
+          borderTopColor: theme.tabBarBorder,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+          paddingTop: 8,
+          height: Platform.OS === 'ios' ? 88 : 64,
+        },
         tabBarIcon: ({ focused, color, size }) => {
           const icons: Record<string, [string, string]> = {
-            Inicio: ['home', 'home-outline'],
+            Inicio: ['calendar', 'calendar-outline'],
+            Buscar: ['search', 'search-outline'],
             Favoritos: ['heart', 'heart-outline'],
             Historial: ['time', 'time-outline'],
-            Buscar: ['search', 'search-outline'],
             Perfil: ['person', 'person-outline'],
           }
           const [active, inactive] = icons[route.name] ?? ['help', 'help-outline']
@@ -317,9 +335,9 @@ function ClientTabs() {
       })}
     >
       <Tab.Screen name="Inicio" component={ClientHomeStack} options={{ title: 'Mis Citas' }} />
+      <Tab.Screen name="Buscar" component={ClientSearchStack} options={{ title: 'Buscar' }} />
       <Tab.Screen name="Favoritos" component={ClientFavoritesStack} options={{ title: 'Favoritos' }} />
       <Tab.Screen name="Historial" component={ClientHistoryStack} options={{ title: 'Historial' }} />
-      <Tab.Screen name="Buscar" component={ClientSearchStack} options={{ title: 'Buscar' }} />
       <Tab.Screen name="Perfil" component={ClientProfileStack} options={{ title: 'Perfil' }} />
     </Tab.Navigator>
   )
@@ -334,6 +352,26 @@ function ClientTabs() {
 // Marcamos los stacks no usados como "void" para evitar warnings de unused.
 void AdminTabs
 void EmployeeTabs
+
+// ─── Root Stack (permite deep-links globales sin auth) ───────────────────────
+
+function RootStack({ user }: { user: { id: string } | null }) {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {!user ? (
+        <Stack.Screen name="AuthRoot" component={AuthStack} />
+      ) : (
+        <Stack.Screen name="ClientRoot" component={ClientTabs} />
+      )}
+      {/* Deep-link screens — accesibles sin autenticación */}
+      <Stack.Screen name="ConfirmarCita" component={AppointmentConfirmationScreen} />
+      <Stack.Screen name="CancelarCita" component={AppointmentCancellationScreen} />
+      {/* Chat screens — accesibles desde FloatingChatButton sin requerir tab específica */}
+      <Stack.Screen name="ConversacionList" component={ConversationListScreen} options={{ ...STACK_HEADER_STYLE, headerShown: true, title: 'Mensajes' }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ ...STACK_HEADER_STYLE, headerShown: true, title: '' }} />
+    </Stack.Navigator>
+  )
+}
 
 function AppNavigator() {
   const { user, loading: authLoading } = useAuth()
@@ -359,8 +397,8 @@ function AppNavigator() {
   return (
     <NavigationContainer ref={navigationRef} linking={linking}>
       <NotificationProvider>
-        {!user ? <AuthStack /> : <ClientTabs />}
-        {user && <FloatingBugReportButton />}
+        <RootStack user={user} />
+        {user && <FloatingChatButton />}
       </NotificationProvider>
     </NavigationContainer>
   )

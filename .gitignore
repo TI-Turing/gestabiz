@@ -73,6 +73,9 @@ supabase/_remote_snapshot/
 
 # Claude
 .claude/
+# Permitir versionado de agentes especializados
+!.claude/agents/
+!.claude/agents/*.agent.md
 
 # Obsidian — user-specific UI state (noisy diffs, merge conflicts)
 Obsidian/Gestabiz/.obsidian/workspace.json

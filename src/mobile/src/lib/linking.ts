@@ -8,6 +8,13 @@ import type { LinkingOptions } from '@react-navigation/native'
  * - gestabiz://        (esquema personalizado iOS/Android)
  * - https://gestabiz.com
  * - https://app.gestabiz.com
+ *
+ * Jerarquía del navigator (Apr 2026, fase client-only):
+ *   RootStack
+ *   ├── AuthRoot  → AuthStack → Auth
+ *   ├── ClientRoot → ClientTabs → (Inicio|Favoritos|Historial|Buscar|Perfil)
+ *   ├── ConfirmarCita  (no auth required)
+ *   └── CancelarCita   (no auth required)
  */
 export const linking: LinkingOptions<ReactNavigation.RootParamList> = {
   prefixes: [
@@ -20,60 +27,60 @@ export const linking: LinkingOptions<ReactNavigation.RootParamList> = {
   config: {
     screens: {
       // ─── Auth ──────────────────────────────────────────────
-      Auth: 'login',
+      AuthRoot: {
+        screens: {
+          Auth: 'login',
+        },
+      },
 
-      // ─── Admin tabs ────────────────────────────────────────
-      Dashboard: 'app/admin',
-      Citas: 'app/admin/appointments',
-      Clientes: 'app/admin/clients',
-      // Pantallas dentro de AdminMoreStack
-      Servicios: 'app/admin/services',
-      Empleados: 'app/admin/employees',
-      Sedes: 'app/admin/locations',
-      Recursos: 'app/admin/resources',
-      Ausencias: 'app/admin/absences',
-      Reclutamiento: 'app/admin/recruitment',
-      Ventas: 'app/admin/sales',
-      VentasRapidas: 'app/admin/quick-sale',
-      Gastos: 'app/admin/expenses',
-      Reportes: 'app/admin/reports',
-      Facturacion: 'app/admin/billing',
-      CalendarioCitas: 'app/admin/calendar',
-      Permisos: 'app/admin/permissions',
-      QR: 'app/admin/qr',
-      Configuracion: 'app/admin/settings',
+      // ─── Deep-link screens (globales, sin auth) ────────────
+      ConfirmarCita: 'confirmar-cita/:token',
+      CancelarCita: 'cancelar-cita/:token',
 
-      // ─── Employee tabs ─────────────────────────────────────
-      EmpDashboard: 'app/employee',
-      EmpCitas: 'app/employee/appointments',
-      EmpClientes: 'app/employee/clients',
-      // Pantallas dentro de EmployeeMoreStack (EmpPerfil tab)
-      EmployeeSettings: 'app/employee/me',
-      MiCalendario: 'app/employee/calendar',
-      MisEmpleos: 'app/employee/employments',
-      MiPerfil: 'app/employee/profile',
-      Vacantes: 'app/employee/vacancies',
-      SolicitudAusencia: 'app/employee/absence-request',
-
-      // ─── Client tabs ───────────────────────────────────────
-      // Estructura: Inicio (Mis Citas) | Favoritos | Historial | Buscar | Perfil
-      MisCitasList: 'app/client',
-      Calendario: 'app/client/calendar',
-      Reservar: 'app/client/booking',
-      FavoritosList: 'app/client/favorites',
-      HistorialCitas: 'app/client/history',
-      Buscar: 'app/client/search',
-      ClientProfile: 'app/client/profile',
-      // Alias legacy: si alguien guardó link a "Favoritos" (screen de
-      // ProfileStack) se sigue resolviendo.
-      Favoritos: 'app/client/favorites/legacy',
-
-      // ─── Compartidas (accesibles desde notificaciones) ─────
-      Chat: 'chat/:conversationId',
-      ConversacionList: 'app/messages',
-      Notificaciones: 'app/notifications',
-      BusinessProfile: 'negocio/:slug',
-      Ajustes: 'app/account',
+      // ─── Client root ───────────────────────────────────────
+      ClientRoot: {
+        screens: {
+          // Tab: Inicio → ClientHomeStack
+          Inicio: {
+            screens: {
+              MisCitasList: 'app/client',
+              Calendario: 'app/client/calendar',
+              Reservar: 'app/client/booking',
+              EscribirResena: 'app/client/review/:appointmentId',
+              ReseñasPendientes: 'app/client/pending-reviews',
+              BusinessProfile: 'negocio/:slug',
+            },
+          },
+          // Tab: Favoritos → ClientFavoritesStack
+          Favoritos: {
+            screens: {
+              FavoritosList: 'app/client/favorites',
+            },
+          },
+          // Tab: Historial → ClientHistoryStack
+          Historial: {
+            screens: {
+              HistorialCitas: 'app/client/history',
+            },
+          },
+          // Tab: Buscar → ClientSearchStack
+          Buscar: {
+            screens: {
+              Buscar: 'app/client/search',
+            },
+          },
+          // Tab: Perfil → ClientProfileStack
+          Perfil: {
+            screens: {
+              ClientProfile: 'app/client/profile',
+              Notificaciones: 'app/notifications',
+              ConversacionList: 'app/messages',
+              Chat: 'chat/:conversationId',
+              Ajustes: 'app/account',
+            },
+          },
+        },
+      },
     },
   },
 }

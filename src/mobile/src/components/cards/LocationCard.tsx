@@ -147,7 +147,7 @@ export function LocationCard({
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,  // paridad web rounded-md
     padding: spacing.sm + 4,
     gap: spacing.sm,
   },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,  // paridad web rounded-md
     padding: spacing.sm,
     gap: spacing.sm,
   },

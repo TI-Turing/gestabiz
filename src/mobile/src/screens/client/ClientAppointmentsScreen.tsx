@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl, Alert } from 'react-native'
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl, Alert, Image } from 'react-native'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '../../contexts/AuthContext'
@@ -14,6 +14,8 @@ import { AppointmentCard, AppointmentCardData, AppointmentStatus } from '../../c
 import { Appointment } from '../../types'
 import { QUERY_CONFIG, QUERY_KEYS } from '../../lib/queryClient'
 import AppHeader from '../../components/ui/AppHeader'
+import { ClientMenuDrawer } from '../../components/ui/ClientMenuDrawer'
+import { BugReportModal } from '../../components/bug-report/BugReportModal'
 
 type ViewMode = 'list' | 'calendar'
 type Filter = 'upcoming' | 'past' | 'cancelled'
@@ -29,6 +31,24 @@ interface AptRow extends Appointment {
   locationAddress?: string
 }
 
+interface RecommendedBusiness {
+  id: string
+  name: string
+  logo_url: string | null
+  city: string | null
+  average_rating: number | null
+  total_reviews: number | null
+}
+
+async function fetchRecommendedBusinesses(): Promise<RecommendedBusiness[]> {
+  const { data } = await supabase
+    .from('businesses')
+    .select('id, name, logo_url, city, average_rating, total_reviews')
+    .order('average_rating', { ascending: false })
+    .limit(8)
+  return (data as RecommendedBusiness[]) ?? []
+}
+
 async function fetchClientApts(userId: string, filter: Filter): Promise<AptRow[]> {
   const now = new Date().toISOString()
   let query = supabase.from('appointments').select('*').eq('client_id', userId).limit(50)
@@ -36,7 +56,7 @@ async function fetchClientApts(userId: string, filter: Filter): Promise<AptRow[]
   if (filter === 'upcoming') {
     query = query
       .gte('start_time', now)
-      .in('status', ['scheduled', 'confirmed'])
+      .in('status', ['scheduled', 'confirmed', 'pending'])
       .order('start_time', { ascending: true })
   } else if (filter === 'past') {
     query = query
@@ -55,11 +75,22 @@ async function fetchClientApts(userId: string, filter: Filter): Promise<AptRow[]
   const locationIds = [...new Set(apts.map((a: any) => a.location_id).filter(Boolean))]
   const employeeIds = [...new Set(apts.map((a: any) => a.employee_id).filter(Boolean))]
 
-  const [bizRes, svcRes, locRes, empRes] = await Promise.all([
+  const ROLE_LABELS: Record<string, string> = {
+    manager: 'Manager',
+    professional: 'Profesional',
+    receptionist: 'Recepcionista',
+    accountant: 'Contador',
+    support_staff: 'Soporte',
+  }
+
+  const [bizRes, svcRes, locRes, empRes, beRes] = await Promise.all([
     businessIds.length > 0 ? supabase.from('businesses').select('id, name').in('id', businessIds) : { data: [] },
     serviceIds.length > 0 ? supabase.from('services').select('id, name, price, image_url').in('id', serviceIds) : { data: [] },
-    locationIds.length > 0 ? supabase.from('locations').select('id, name, address').in('id', locationIds) : { data: [] },
+    locationIds.length > 0 ? supabase.from('locations').select('id, name, address, banner_url').in('id', locationIds) : { data: [] },
     employeeIds.length > 0 ? supabase.from('profiles').select('id, full_name, avatar_url').in('id', employeeIds) : { data: [] },
+    employeeIds.length > 0 && businessIds.length > 0
+      ? supabase.from('business_employees').select('employee_id, business_id, role').in('employee_id', employeeIds).in('business_id', businessIds)
+      : { data: [] },
   ])
 
   const bm: Record<string, string> = {}
@@ -70,24 +101,35 @@ async function fetchClientApts(userId: string, filter: Filter): Promise<AptRow[]
     sm[s.id] = { name: s.name, price: s.price ?? undefined, imageUrl: s.image_url ?? undefined }
   })
 
-  const lm: Record<string, { name: string; address?: string }> = {}
-  ;(locRes.data ?? []).forEach((l: any) => { lm[l.id] = { name: l.name, address: l.address ?? undefined } })
+  const lm: Record<string, { name: string; address?: string; bannerUrl?: string }> = {}
+  ;(locRes.data ?? []).forEach((l: any) => { lm[l.id] = { name: l.name, address: l.address ?? undefined, bannerUrl: l.banner_url ?? undefined } })
 
   const em: Record<string, { name: string; avatarUrl?: string }> = {}
   ;(empRes.data ?? []).forEach((e: any) => { em[e.id] = { name: e.full_name, avatarUrl: e.avatar_url ?? undefined } })
 
-  return apts.map((a: any) => ({
-    ...a,
-    status: a.status as AppointmentStatus,
-    businessName: bm[a.business_id] ?? 'Negocio',
-    serviceName: sm[a.service_id]?.name ?? 'Servicio',
-    serviceImageUrl: sm[a.service_id]?.imageUrl,
-    servicePrice: sm[a.service_id]?.price,
-    employeeName: a.employee_id ? em[a.employee_id]?.name : undefined,
-    employeeAvatarUrl: a.employee_id ? em[a.employee_id]?.avatarUrl : undefined,
-    locationName: a.location_id ? lm[a.location_id]?.name : undefined,
-    locationAddress: a.location_id ? lm[a.location_id]?.address : undefined,
-  }))
+  // Composite key (employee_id)-(business_id) → role label
+  const roleMap: Record<string, string> = {}
+  ;(beRes.data ?? []).forEach((r: any) => {
+    roleMap[`${r.employee_id}-${r.business_id}`] = ROLE_LABELS[r.role] ?? r.role
+  })
+
+  return apts.map((a: any) => {
+    const svcImg = sm[a.service_id]?.imageUrl
+    const locBanner = a.location_id ? lm[a.location_id]?.bannerUrl : undefined
+    return {
+      ...a,
+      status: a.status as AppointmentStatus,
+      businessName: bm[a.business_id] ?? 'Negocio',
+      serviceName: sm[a.service_id]?.name ?? 'Servicio',
+      serviceImageUrl: svcImg ?? locBanner,
+      servicePrice: sm[a.service_id]?.price,
+      employeeName: a.employee_id ? em[a.employee_id]?.name : undefined,
+      employeeAvatarUrl: a.employee_id ? em[a.employee_id]?.avatarUrl : undefined,
+      employeeTitle: a.employee_id ? roleMap[`${a.employee_id}-${a.business_id}`] : undefined,
+      locationName: a.location_id ? lm[a.location_id]?.name : undefined,
+      locationAddress: a.location_id ? lm[a.location_id]?.address : undefined,
+    }
+  })
 }
 
 function toCardData(apt: AptRow): AppointmentCardData {
@@ -102,6 +144,7 @@ function toCardData(apt: AptRow): AppointmentCardData {
     businessName: apt.businessName,
     employeeName: apt.employeeName,
     employeeAvatarUrl: apt.employeeAvatarUrl,
+    employeeTitle: (apt as any).employeeTitle,
     locationName: apt.locationName,
     locationAddress: apt.locationAddress,
   }
@@ -116,12 +159,20 @@ export default function ClientAppointmentsScreen({
   const { theme } = useTheme()
   const qc = useQueryClient()
   const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [bugReportOpen, setBugReportOpen] = useState(false)
 
   const { data: apts = [], isLoading, isFetching, refetch } = useQuery({
     queryKey: [...QUERY_KEYS.MY_APPOINTMENTS(user?.id ?? ''), 'upcoming'],
     queryFn: () => fetchClientApts(user!.id, 'upcoming'),
     enabled: !!user,
     ...QUERY_CONFIG.FREQUENT,
+  })
+
+  const { data: recommendedBusinesses = [] } = useQuery({
+    queryKey: ['recommended-businesses'],
+    queryFn: fetchRecommendedBusinesses,
+    ...QUERY_CONFIG.STABLE,
   })
 
   const cancelMutation = useMutation({
@@ -143,7 +194,14 @@ export default function ClientAppointmentsScreen({
 
   return (
     <Screen noPadding>
-      <AppHeader />
+      <AppHeader onMenu={() => setMenuOpen(true)} />
+
+      <ClientMenuDrawer
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        onReportBug={() => setBugReportOpen(true)}
+      />
+      <BugReportModal isOpen={bugReportOpen} onClose={() => setBugReportOpen(false)} />
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: theme.text }]}>Mis Citas</Text>
         <TouchableOpacity
@@ -211,23 +269,75 @@ export default function ClientAppointmentsScreen({
                 title="No tienes citas próximas"
                 message="Reserva tu próxima cita en segundos"
               />
-              <TouchableOpacity
-                style={[styles.emptyCta, { backgroundColor: theme.primary }, shadows.sm]}
-                onPress={() => navigation?.navigate('Reservar')}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="add-circle-outline" size={18} color="#fff" />
-                <Text style={styles.emptyCtaText}>Reservar ahora</Text>
-              </TouchableOpacity>
             </View>
+          }
+          ListFooterComponent={
+            recommendedBusinesses.length > 0 ? (
+              <View style={styles.recommendedSection}>
+                <View style={styles.recommendedHeader}>
+                  <Ionicons name="star" size={16} color={theme.primary} />
+                  <Text style={[styles.recommendedTitle, { color: theme.text }]}>
+                    Recomendados para ti
+                  </Text>
+                </View>
+                <FlatList
+                  data={recommendedBusinesses}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(b) => b.id}
+                  contentContainerStyle={styles.recommendedList}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[styles.bizCard, { backgroundColor: theme.card, borderColor: theme.border }]}
+                      activeOpacity={0.8}
+                      onPress={() => navigation?.navigate('Buscar')}
+                    >
+                      {/* Logo o iniciales */}
+                      {item.logo_url ? (
+                        <Image
+                          source={{ uri: item.logo_url }}
+                          style={styles.bizLogo}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View style={[styles.bizLogo, styles.bizLogoFallback, { backgroundColor: theme.primary }]}>
+                          <Text style={styles.bizLogoInitial}>
+                            {item.name[0]?.toUpperCase() ?? '?'}
+                          </Text>
+                        </View>
+                      )}
+                      <Text style={[styles.bizName, { color: theme.text }]} numberOfLines={2}>
+                        {item.name}
+                      </Text>
+                      {/* Rating */}
+                      {item.average_rating != null && (
+                        <View style={styles.bizRating}>
+                          <Ionicons name="star" size={11} color="#f59e0b" />
+                          <Text style={[styles.bizRatingText, { color: theme.textSecondary }]}>
+                            {item.average_rating.toFixed(1)}
+                          </Text>
+                        </View>
+                      )}
+                      <TouchableOpacity
+                        style={[styles.bizReserveBtn, { backgroundColor: theme.primary }]}
+                        onPress={() => navigation?.navigate('Buscar')}
+                        activeOpacity={0.85}
+                      >
+                        <Text style={styles.bizReserveBtnText}>Reservar</Text>
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            ) : null
           }
           renderItem={({ item }) => (
             <AppointmentCard
               appointment={toCardData(item)}
               variant="hero"
               onPress={() => {}}
-              actionLabel={item.status === 'scheduled' ? 'Cancelar' : undefined}
-              onAction={item.status === 'scheduled' ? () => confirmCancel(item) : undefined}
+              actionLabel={['scheduled', 'pending', 'confirmed'].includes(item.status) ? 'Cancelar' : undefined}
+              onAction={['scheduled', 'pending', 'confirmed'].includes(item.status) ? () => confirmCancel(item) : undefined}
             />
           )}
         />
@@ -292,13 +402,76 @@ const styles = StyleSheet.create({
   calendarBox: { flex: 1, paddingHorizontal: spacing.base },
   list: { paddingHorizontal: spacing.base, paddingBottom: spacing.xl, gap: spacing.sm },
   emptyBox: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.base },
-  emptyCta: {
+  recommendedSection: {
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
+  recommendedHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
     paddingHorizontal: spacing.base,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
+    marginBottom: spacing.md,
   },
-  emptyCtaText: { color: '#fff', fontWeight: '600', fontSize: typography.sm, fontFamily: fonts.semibold },
+  recommendedTitle: {
+    fontSize: typography.base,
+    fontWeight: '700',
+    fontFamily: fonts.bold,
+  },
+  recommendedList: {
+    paddingHorizontal: spacing.base,
+    gap: spacing.sm,
+  },
+  bizCard: {
+    width: 140,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  bizLogo: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.lg,
+    marginBottom: spacing.xs,
+  },
+  bizLogoFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bizLogoInitial: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '700',
+    fontFamily: fonts.bold,
+  },
+  bizName: {
+    fontSize: typography.sm,
+    fontWeight: '600',
+    fontFamily: fonts.semibold,
+    textAlign: 'center',
+  },
+  bizRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  bizRatingText: {
+    fontSize: typography.xs,
+    fontFamily: fonts.regular,
+  },
+  bizReserveBtn: {
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+    alignItems: 'center',
+  },
+  bizReserveBtnText: {
+    color: '#fff',
+    fontSize: typography.xs,
+    fontWeight: '600',
+    fontFamily: fonts.semibold,
+  },
 })

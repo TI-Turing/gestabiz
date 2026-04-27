@@ -8,7 +8,7 @@ Se usa junto con el sistema `claude-mem` (MCP) para persistencia cross-sesión d
 
 ---
 
-## Sistemas (20 notas)
+## Sistemas (22 notas)
 
 Documentación técnica de cada módulo funcional del producto.
 
@@ -34,32 +34,37 @@ Documentación técnica de cada módulo funcional del producto.
 | [[sistema-categorias]] | 15 categorías + ~60 subcategorías jerárquicas |
 | [[sistema-festivos]] | public_holidays, 54 festivos colombianos 2025-2027 |
 | [[sistema-referrals]] | Programa de referidos: cupones, comisiones MP, kill-switch |
+| [[sistema-google-calendar]] | OAuth Google, sync bidireccional, calendar_sync_settings |
+| [[sistema-mobile-hybrid]] | Expo + WebView, auth bridging, EAS Build (.aab/.apk/.ipa) |
 
 ---
 
-## Arquitectura (6 notas)
+## Arquitectura (9 notas)
 
 Decisiones técnicas transversales y patrones del codebase.
 
 | Nota | Descripción |
 |------|-------------|
 | [[stack-tecnologico]] | React 19, Vite 6, TypeScript 5.7, Supabase, Tailwind 4 |
-| [[base-de-datos]] | 40+ tablas, RLS, triggers, vistas materializadas |
-| [[supabase-local-workflow]] | Stack local Docker, cuándo usarlo, troubleshooting |
-| [[edge-functions]] | ~50 Edge Functions Deno desplegadas |
+| [[base-de-datos]] | 70+ tablas, 108 triggers, RLS, vistas materializadas, system_config |
+| [[supabase-local-workflow]] | Stack local Docker, scripts auxiliares, headers de seguridad |
+| [[edge-functions]] | ~50 Edge Functions Deno, selective deploy, JWT/HMAC/CORS |
+| [[cicd-pipeline]] | GitHub Actions: ci.yml, deploy-dev.yml, deploy-prod.yml |
+| [[catalog-api-azure]] | API .NET de catálogos (países/regiones/ciudades/EPS) |
 | [[react-query-cache]] | STABLE/FREQUENT/REALTIME, query keys, deduplication |
 | [[sistema-cards]] | Cards self-fetch por ID, patrón reutilizable |
 | [[i18n]] | ~2,200 claves ES/EN, ~44 archivos por idioma |
 
 ---
 
-## Negocio (8 notas)
+## Negocio (9 notas)
 
 Estrategia comercial, pricing, go-to-market y posicionamiento.
 
 | Nota | Descripción |
 |------|-------------|
 | [[go-to-market-2026]] | Estrategia de ventas agresiva: puerta-puerta, redes, vendedores, ads, referrals, SEO/SEM |
+| [[manual-vendedores-externos]] | Manual completo para vendedores externos: pitch, objeciones, demo, comisiones |
 | [[diferenciacion-pricing]] | Tesis de pricing: 90k COP vs. Calendly/Booksy/Fresha, ROI para cliente, elasticidad |
 | [[planes-y-precios]] | Gratuito → Inicio (90k) → Profesional (180k) → Empresarial |
 | [[propuesta-de-valor]] | Todo-en-uno para PyMEs de servicios en Colombia |
@@ -76,6 +81,7 @@ Specs de features en desarrollo, pendientes o ideas futuras.
 
 - [[Fase 2 - Contabilidad, DIAN y App Móvil]] — Módulo contable completo, facturación electrónica DIAN, app móvil
 - [[Fase 3 - IA, Automatización y Agentes]] — Agentes LLM, procesos automáticos, AI marketing assistant
+- [[Fase 4 - El Shopify de los Negocios de Servicios]] — Pagos a clientes, recordatorios escalonados, promociones, CRM avanzado, estadísticas, marketplace, widget embebible
 - [[Ideas Futuras - Social Media MCP y Marketing IA]] — MCP para redes sociales, publicación automática con IA
 - [[QR-con-branding-Gestabiz]] — QR con icono de Gestabiz centrado + logo y texto "Reserva tu próxima cita aquí"
 - [[analisis-competitivo-roadmap]] — Roadmap competitivo y análisis de mercado
@@ -97,12 +103,14 @@ Contexto del negocio, auditorías y estrategia general.
 
 ---
 
-## Decisiones (2 notas)
+## Decisiones (4 notas)
 
 Decisiones arquitectónicas y trade-offs importantes.
 
 - [[google-oauth-separacion-entornos]] — Dos clientes Google OAuth separados (DEV y PROD)
 - [[decision-antifraude-referrals]] — Por qué no se necesitan reglas anti-fraude complejas en el programa de referrals
+- [[lock-in-estrategia-datos-clientes]] — Lock-in por datos: cómo la base de datos del negocio se convierte en una fosa competitiva vs. AgendaPro y Fresha
+- [[ventajas-estructurales-no-explotadas]] — 17 ventajas competitivas latentes en la arquitectura: multi-rol nativo, modelo flexible, mobile híbrido, permisos enterprise, founder único y más
 
 ---
 
@@ -116,13 +124,14 @@ Bugs conocidos, gotchas y soluciones documentadas.
 
 ---
 
-## Sesiones Claude (3 notas)
+## Sesiones Claude (4 notas)
 
 Resúmenes de sesiones de trabajo importantes.
 
 - [[2026-03-31-infra-oauth-ci]] — Fix widget estado, secretos GitGuardian, CI, Google OAuth DEV/PROD
 - [[2026-04-13-primer-dia-ventas]] — Primer día de ventas, pricing, onboarding
 - [[2026-04-17-exploracion-area-publica-y-cliente]] — Exploración del área pública y flujos de cliente
+- [[2026-04-26-mobile-client-parity-fase3]] — Sprint paridad móvil ↔ web Fases 2.1–3 (reseñas, perfil, geo, deep-links, chat, pending filter, employeeTitle)
 
 ---
 

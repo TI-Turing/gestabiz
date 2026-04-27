@@ -156,7 +156,7 @@ export function ServiceCard({
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,  // paridad web rounded-md
     overflow: 'hidden',
   },
   image: {
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,  // paridad web rounded-md
     padding: spacing.sm,
     gap: spacing.sm,
   },
