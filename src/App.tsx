@@ -16,6 +16,9 @@ import { AppStateProvider } from '@/contexts/AppStateContext'
 import { NotificationProvider } from '@/contexts/NotificationContext'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 
+// Vercel Analytics
+import { Analytics } from '@vercel/analytics/react'
+
 // Google Analytics 4
 import { initializeGA4 } from '@/lib/ga4'
 import { hasAnalyticsConsent } from '@/hooks/useAnalytics'
@@ -185,6 +188,8 @@ function App() {
                       <CookieConsent />
                       {/* Toaster global para todas las rutas, incluidas públicas */}
                       <Toaster richColors closeButton />
+                      {/* Vercel Analytics */}
+                      <Analytics />
                     </AlertProvider>
                   </AuthProvider>
                 </AppStateProvider>
