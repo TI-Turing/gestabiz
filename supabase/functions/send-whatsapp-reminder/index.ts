@@ -111,6 +111,12 @@ serve(async (req) => {
     const phoneDigits = String(phoneRaw).replace(/\D/g, '')
     if (!phoneDigits) throw new Error('Client phone/WhatsApp not available')
 
+    // Normalize to E.164: Colombian mobile numbers stored as 10 digits (3XXXXXXXXX)
+    // need the country code 57 prepended → +573XXXXXXXXX
+    const e164Digits = phoneDigits.length === 10 && phoneDigits.startsWith('3')
+      ? `57${phoneDigits}`
+      : phoneDigits
+
     // ── 4. Resolve Twilio env vars ───────────────────────────────────────────
     const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID')
     const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN')
@@ -141,8 +147,10 @@ serve(async (req) => {
     const logoUrl: string = business?.logo_url ?? Deno.env.get('GESTABIZ_DEFAULT_LOGO_URL') ?? `${APP_URL}/logo-light.svg`
     const token: string = (appointment as { confirmation_token?: string }).confirmation_token ?? ''
 
-    const to = `whatsapp:+${phoneDigits}`
-    const from = `whatsapp:${TWILIO_WHATSAPP_NUMBER}`
+    const to = `whatsapp:+${e164Digits}`
+    // Strip any non-digit chars (e.g. spaces, leading +) then re-add + to ensure valid E.164 From
+    const fromDigits = TWILIO_WHATSAPP_NUMBER.replace(/\D/g, '')
+    const from = `whatsapp:+${fromDigits}`
     const auth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
     const messagesUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`
 
