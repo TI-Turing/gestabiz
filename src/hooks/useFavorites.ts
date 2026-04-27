@@ -68,7 +68,8 @@ export function useFavorites(userId?: string) {
       void logger.error('useFavorites: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFavorites' })
       const error = err as Error;
       setError(error);
-             toast.error('Error al cargar favoritos');
+       
+      toast.error('Error al cargar favoritos');
     } finally {
       setLoading(false);
     }
@@ -115,14 +116,15 @@ export function useFavorites(userId?: string) {
       await fetchFavorites();
 
       // FIX CRÍTICO: Invalidar query del dashboard para que se actualice la lista de favoritos
-      queryClient.invalidateQueries({ queryKey: ['client-dashboard-data'] });
+      queryClient.invalidateQueries({ queryKey: ['client-dashboard'] });
 
       return isNowFavorite;
 
     } catch (err) {
       void logger.error('useFavorites: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFavorites' })
       const error = err as Error;
-             // Revert optimistic update
+       
+      // Revert optimistic update
       setFavoriteIds(new Set(favoriteIds));
       await fetchFavorites();
 
@@ -154,7 +156,8 @@ export function useFavorites(userId?: string) {
 
     } catch (err) {
       void logger.error('useFavorites: operation failed', err instanceof Error ? err : new Error(String(err)), { component: 'useFavorites' })
-             return false;
+       
+      return false;
     }
   }, [userId]);
 
@@ -171,12 +174,18 @@ export function useFavorites(userId?: string) {
 
   /**
    * Effect: Realtime subscription para cambios en favoritos
+   * Usa nombre de canal único por instancia para evitar conflictos cuando
+   * múltiples componentes montan useFavorites simultáneamente (ej: FavoritesList + BusinessProfile).
+   * usa removeChannel() en cleanup para eliminar el canal del registro interno de Supabase.
    */
   useEffect(() => {
     if (!userId) return;
 
+    // Nombre único por instancia: evita el error
+    // "cannot add postgres_changes callbacks after subscribe()"
+    const channelName = `favorites:${userId}:${Date.now()}`;
     const subscription = supabase
-      .channel(`favorites:${userId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -192,7 +201,7 @@ export function useFavorites(userId?: string) {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      void supabase.removeChannel(subscription);
     };
   }, [userId]);
 

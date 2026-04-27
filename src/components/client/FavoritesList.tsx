@@ -43,10 +43,11 @@ export default function FavoritesList({ favorites, loading, onBookAppointment, o
       
       // Invalidar query del dashboard para refrescar la lista
       // El hook useFavorites ya maneja su propio toast
-      queryClient.invalidateQueries({ queryKey: ['client-dashboard-data'] });
+      queryClient.invalidateQueries({ queryKey: ['client-dashboard'] });
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'FavoritesList' } })
-      // El error ya se maneja en useFavorites con su propio toast    }
+      // El error ya se maneja en useFavorites con su propio toast
+    }
   };
 
   // ✅ OPTIMIZACIÓN: Definir useCallback ANTES de early returns (hooks rules)
