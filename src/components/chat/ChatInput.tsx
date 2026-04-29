@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Send, Paperclip, X, FileIcon, FolderOpen } from 'lucide-react'
-import { Smiley } from '@phosphor-icons/react'
+import { Smiley, Microphone, MicrophoneSlash } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -11,10 +11,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { FileUpload } from './FileUpload'
 import { EmojiPicker } from './EmojiPicker'
-import { AudioRecorder } from './AudioRecorder'
 import { MediaPreview } from './MediaPreview'
 import { MarketingVaultPicker } from './MarketingVaultPicker'
 import { useImageCompression } from '@/hooks/useImageCompression'
+import { useAudioRecorder } from '@/hooks/useAudioRecorder'
 import type { MessageWithSender } from '@/hooks/useMessages'
 import type { ChatAttachment } from '@/hooks/useChat'
 import type { MarketingVaultFile } from '@/types/types'
@@ -58,8 +58,13 @@ export function ChatInput({
   const [mediaPreview, setMediaPreview] = useState<{ file: File; objectUrl: string; type: 'image' | 'video' } | null>(null)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const micButtonRef = useRef<HTMLButtonElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const { compress } = useImageCompression()
+
+  // Audio recorder inline
+  const { state: audioState, duration: audioDuration, waveformData, startRecording, stopRecording, cancelRecording } = useAudioRecorder()
+  const isRecording = audioState === 'recording'
 
   useEffect(() => {
     if (textareaRef.current && !disabled) textareaRef.current.focus()
@@ -195,8 +200,28 @@ export function ChatInput({
     }
   }
 
-  const handleAudioReady = async (blob: Blob, duration: number, waveform: number[]) => {
-    if (onSendAudio) await onSendAudio(blob, duration, waveform)
+  const handleMicPointerDown = async (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!onSendAudio) return
+    e.preventDefault()
+    micButtonRef.current?.setPointerCapture(e.pointerId)
+    await startRecording()
+  }
+
+  const handleMicPointerUp = async () => {
+    if (!isRecording) return
+    const result = await stopRecording()
+    if (result && onSendAudio) {
+      await onSendAudio(result.blob, result.duration, result.waveform)
+    }
+  }
+
+  const handleMicPointerLeave = () => {
+    if (isRecording) cancelRecording()
+  }
+
+  const formatAudioDuration = (s: number) => {
+    const m = Math.floor(s / 60)
+    return `${m}:${String(s % 60).padStart(2, '0')}`
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -260,79 +285,145 @@ export function ChatInput({
 
       {/* Input principal */}
       <div className="px-3 py-2 sm:px-4 sm:py-3 flex items-end gap-1 sm:gap-2">
-        {/* Adjuntar */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        {/* Adjuntar — oculto mientras graba */}
+        {!isRecording && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="flex-shrink-0 h-9 w-9"
+                disabled={disabled}
+                title="Adjuntar"
+                aria-label="Adjuntar archivo"
+              >
+                <Paperclip className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="top" align="start">
+              <DropdownMenuItem onSelect={() => setIsUploadOpen(true)}>
+                <FileIcon className="h-4 w-4 mr-2" /> Archivo del dispositivo
+              </DropdownMenuItem>
+              {isBusinessSide && businessId && (
+                <DropdownMenuItem onSelect={() => setIsVaultOpen(true)}>
+                  <FolderOpen className="h-4 w-4 mr-2" /> Vault de marketing
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
+        {/* Textarea — reemplazado por UI de grabación cuando isRecording */}
+        {isRecording ? (
+          <div className="flex-1 flex items-center gap-2 px-2 py-1 bg-muted/40 rounded-lg min-h-[44px]">
+            {/* Cancel */}
+            <button
+              type="button"
+              onClick={cancelRecording}
+              className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted shrink-0"
+              title="Cancelar grabación"
+              aria-label="Cancelar grabación"
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button>
+            {/* Timer */}
+            <span className="text-sm font-mono text-destructive tabular-nums w-10 shrink-0">
+              {formatAudioDuration(audioDuration)}
+            </span>
+            {/* Waveform */}
+            <div className="flex items-center gap-0.5 h-5 flex-1">
+              {waveformData.slice(-20).map((amp, i) => (
+                <div
+                  key={i}
+                  className="flex-1 bg-destructive rounded-full transition-all duration-75"
+                  style={{ height: `${Math.max(15, amp * 100)}%` }}
+                />
+              ))}
+            </div>
+            <span className="text-xs text-muted-foreground shrink-0">Suelta para enviar</span>
+          </div>
+        ) : (
+          <Textarea
+            ref={textareaRef}
+            value={message}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            placeholder={placeholder}
+            disabled={disabled || isSending}
+            className={cn('min-h-[44px] sm:min-h-[40px] max-h-[120px] resize-none text-base focus-visible:ring-1')}
+            rows={1}
+            aria-label="Escribe un mensaje"
+            aria-multiline
+          />
+        )}
+
+        {/* Emoji — oculto mientras graba */}
+        {!isRecording && (
+          <div className="relative hidden sm:flex">
             <Button
               variant="ghost"
               size="icon"
-              className="flex-shrink-0 h-9 w-9 hidden xs:flex"
+              className="flex-shrink-0 h-9 w-9"
               disabled={disabled}
-              title="Adjuntar"
-              aria-label="Adjuntar archivo"
+              title="Emojis"
+              aria-label="Agregar emoji"
+              onClick={() => setIsEmojiOpen(o => !o)}
             >
-              <Paperclip className="h-5 w-5" />
+              <Smiley size={20} />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start">
-            <DropdownMenuItem onSelect={() => setIsUploadOpen(true)}>
-              <FileIcon className="h-4 w-4 mr-2" /> Archivo del dispositivo
-            </DropdownMenuItem>
-            {isBusinessSide && businessId && (
-              <DropdownMenuItem onSelect={() => setIsVaultOpen(true)}>
-                <FolderOpen className="h-4 w-4 mr-2" /> Vault de marketing
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        {/* Textarea */}
-        <Textarea
-          ref={textareaRef}
-          value={message}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          placeholder={placeholder}
-          disabled={disabled || isSending}
-          className={cn('min-h-[44px] sm:min-h-[40px] max-h-[120px] resize-none text-base focus-visible:ring-1')}
-          rows={1}
-          aria-label="Escribe un mensaje"
-          aria-multiline
-        />
-
-        {/* Emoji */}
-        <div className="relative hidden sm:flex">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="flex-shrink-0 h-9 w-9"
-            disabled={disabled}
-            title="Emojis"
-            aria-label="Agregar emoji"
-            onClick={() => setIsEmojiOpen(o => !o)}
-          >
-            <Smiley size={20} />
-          </Button>
-          <EmojiPicker isOpen={isEmojiOpen} onEmojiSelect={handleEmojiSelect} onClose={() => setIsEmojiOpen(false)} />
-        </div>
-
-        {/* Audio recorder */}
-        {onSendAudio && (
-          <AudioRecorder onAudioReady={handleAudioReady} disabled={disabled} />
+            <EmojiPicker isOpen={isEmojiOpen} onEmojiSelect={handleEmojiSelect} onClose={() => setIsEmojiOpen(false)} />
+          </div>
         )}
 
-        {/* Enviar */}
-        <Button
-          onClick={handleSend}
-          disabled={!canSend}
-          size="icon"
-          className="flex-shrink-0 h-10 w-10 min-h-[48px] min-w-[48px] sm:min-h-0 sm:min-w-0"
-          aria-label={isSending ? 'Enviando...' : 'Enviar mensaje'}
-          aria-busy={isSending}
-        >
-          <Send className="h-5 w-5" />
-        </Button>
+        {/* Botón único: micrófono (campo vacío) o enviar (tiene texto/adjuntos) */}
+        {canSend ? (
+          <Button
+            onClick={handleSend}
+            disabled={isSending}
+            size="icon"
+            className="flex-shrink-0 h-10 w-10 min-h-[48px] min-w-[48px] sm:min-h-0 sm:min-w-0"
+            aria-label={isSending ? 'Enviando...' : 'Enviar mensaje'}
+            aria-busy={isSending}
+          >
+            <Send className="h-5 w-5" />
+          </Button>
+        ) : onSendAudio ? (
+          <button
+            ref={micButtonRef}
+            type="button"
+            disabled={disabled}
+            onPointerDown={handleMicPointerDown}
+            onPointerUp={handleMicPointerUp}
+            onPointerLeave={handleMicPointerLeave}
+            title={isRecording ? 'Suelta para enviar' : 'Mantén presionado para grabar'}
+            aria-label={isRecording ? 'Soltar para enviar audio' : 'Grabar nota de voz'}
+            className={cn(
+              'flex-shrink-0 h-10 w-10 min-h-[48px] min-w-[48px] sm:min-h-0 sm:min-w-0',
+              'flex items-center justify-center rounded-full transition-colors select-none touch-none',
+              isRecording
+                ? 'bg-destructive text-white scale-110'
+                : 'hover:bg-muted text-muted-foreground',
+              disabled && 'opacity-40 cursor-not-allowed'
+            )}
+          >
+            {audioState === 'cancelled' ? (
+              <MicrophoneSlash size={20} />
+            ) : (
+              <Microphone size={20} weight={isRecording ? 'fill' : 'regular'} />
+            )}
+          </button>
+        ) : (
+          <Button
+            onClick={handleSend}
+            disabled
+            size="icon"
+            className="flex-shrink-0 h-10 w-10 min-h-[48px] min-w-[48px] sm:min-h-0 sm:min-w-0 opacity-40"
+            aria-label="Enviar mensaje"
+          >
+            <Send className="h-5 w-5" />
+          </Button>
+        )}
       </div>
 
       <div className="hidden sm:block px-4 pb-2 text-xs text-muted-foreground">
