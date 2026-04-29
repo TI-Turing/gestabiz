@@ -11,8 +11,9 @@ DROP POLICY IF EXISTS chat_attachments_insert ON storage.objects;
 DROP POLICY IF EXISTS chat_attachments_update ON storage.objects;
 DROP POLICY IF EXISTS chat_attachments_delete ON storage.objects;
 
--- Helper SECURITY DEFINER: bypasea RLS de conversation_members para que
--- el storage service pueda consultarla sin entrar en recursión
+-- Helper SECURITY DEFINER: bypasea RLS para evitar recursión infinita.
+-- Verifica ambos schemas: conversation_members (FASE 2) y chat_participants (FASE 1 legacy)
+-- para que el storage funcione mientras el frontend migra al nuevo schema.
 CREATE OR REPLACE FUNCTION public.is_conversation_member(p_conversation_id uuid, p_user_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -22,8 +23,11 @@ SET search_path = public
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.conversation_members
-    WHERE conversation_id = p_conversation_id
-      AND user_id = p_user_id
+    WHERE conversation_id = p_conversation_id AND user_id = p_user_id
+  )
+  OR EXISTS (
+    SELECT 1 FROM public.chat_participants
+    WHERE conversation_id = p_conversation_id AND user_id = p_user_id AND left_at IS NULL
   );
 $$;
 
