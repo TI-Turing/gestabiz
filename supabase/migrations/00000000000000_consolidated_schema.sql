@@ -29,7 +29,7 @@ SET row_security = off;
 -- Name: public; Type: SCHEMA; Schema: -; Owner: -
 --
 
-CREATE SCHEMA public;
+CREATE SCHEMA IF NOT EXISTS public;
 
 
 --
@@ -37,6 +37,13 @@ CREATE SCHEMA public;
 --
 
 COMMENT ON SCHEMA public IS 'standard public schema';
+
+-- Extensions required by this schema
+SET search_path TO extensions, public;
+CREATE EXTENSION IF NOT EXISTS pg_trgm SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA extensions;
+SELECT pg_catalog.set_config('search_path', '', false);
 
 
 --
@@ -13607,7 +13614,7 @@ CREATE INDEX idx_businesses_legal_entity_type ON public.businesses USING btree (
 -- Name: idx_businesses_name_trgm; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_businesses_name_trgm ON public.businesses USING gin (name public.gin_trgm_ops);
+CREATE INDEX idx_businesses_name_trgm ON public.businesses USING gin (name extensions.gin_trgm_ops);
 
 
 --
@@ -14790,7 +14797,7 @@ CREATE INDEX idx_profiles_email ON public.profiles USING btree (email);
 -- Name: idx_profiles_full_name_trgm; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_profiles_full_name_trgm ON public.profiles USING gin (full_name public.gin_trgm_ops);
+CREATE INDEX idx_profiles_full_name_trgm ON public.profiles USING gin (full_name extensions.gin_trgm_ops);
 
 
 --
@@ -15042,7 +15049,7 @@ CREATE INDEX idx_services_is_active ON public.services USING btree (is_active);
 -- Name: idx_services_name_trgm; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_services_name_trgm ON public.services USING gin (name public.gin_trgm_ops);
+CREATE INDEX idx_services_name_trgm ON public.services USING gin (name extensions.gin_trgm_ops);
 
 
 --
@@ -19934,7 +19941,5 @@ ALTER TABLE public.work_schedules ENABLE ROW LEVEL SECURITY;
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict RX7IrdKEo73XZ2VJYZXPakb7XuIEqAsDQnCqpFzRf7Hp559Wpw6Pq45NinjnlrW
 
 
