@@ -111,9 +111,12 @@ export interface ChatTypingUser {
 export interface SendMessageParams {
   conversation_id: string;
   content: string;
-  type?: 'text' | 'image' | 'file';
+  type?: 'text' | 'image' | 'file' | 'audio' | 'video' | 'call_log';
   attachments?: ChatAttachment[];
   reply_to_id?: string;
+  duration_seconds?: number;
+  waveform?: number[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface CreateConversationParams {
@@ -382,7 +385,7 @@ export function useChat(userId: string | null) {
         conversation_id: params.conversation_id,
         sender_id: userId,
         content: params.content,
-        type: params.type || 'text',
+        type: (params.type || 'text') as ChatMessage['type'],
         attachments: params.attachments || null,
         sent_at: new Date().toISOString(),
         delivered_at: null,
