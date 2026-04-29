@@ -18,7 +18,7 @@ Documentación técnica de cada módulo funcional del producto.
 | [[sistema-permisos]] | PermissionGate, 79 permisos, 9 templates, RPC service |
 | [[sistema-ausencias]] | Ausencias, vacaciones, aprobación obligatoria, balance |
 | [[sistema-notificaciones]] | Email/SMS/WhatsApp, in-app, recordatorios cron |
-| [[sistema-chat]] | Chat en tiempo real, Realtime, FloatingChatButton |
+| [[sistema-chat]] | Chat v2: WebRTC, audio, emojis, modelo de relación, presencia, vault marketing |
 | [[sistema-busqueda]] | Full-text search, RPCs, trigram, vistas materializadas |
 | [[sistema-billing]] | Stripe/PayU/MercadoPago, planes, suscripciones |
 | [[sistema-contable]] | IVA/ICA/Retención, transacciones, exports PDF/CSV |
