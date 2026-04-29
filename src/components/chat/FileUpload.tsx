@@ -1,11 +1,15 @@
 import React, { useCallback, useState } from 'react';
 import * as Sentry from '@sentry/react'
-import { Upload, X, File, Image as ImageIcon, FileText, Archive } from 'lucide-react';
+import { Upload, X, File, Image as ImageIcon, FileText, Archive, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/lib/supabase';
+import { useImageCompression } from '@/hooks/useImageCompression';
 import type { ChatAttachment } from '@/hooks/useChat';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+
+const VIDEO_MAX_MB = 25;
 
 interface FileUploadProps {
   conversationId: string;
@@ -40,6 +44,9 @@ export function FileUpload({
     'image/png',
     'image/gif',
     'image/webp',
+    'video/mp4',
+    'video/webm',
+    'video/quicktime',
     'application/pdf',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -53,22 +60,29 @@ export function FileUpload({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [isDragging, setIsDragging] = useState(false);
+  const { compress } = useImageCompression();
 
   /**
    * Validar archivo
    */
   const validateFile = useCallback((file: File): string | null => {
-    // Validar tamaño
+    // Videos tienen límite propio
+    if (file.type.startsWith('video/')) {
+      if (file.size > VIDEO_MAX_MB * 1024 * 1024) {
+        return `El video ${file.name} excede el límite de ${VIDEO_MAX_MB}MB. Por favor comprímelo antes de enviarlo.`;
+      }
+      return null;
+    }
+    // Imágenes: no validamos el tamaño original porque se comprimen
+    if (file.type.startsWith('image/')) return null;
+    // Otros archivos
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxSizeBytes) {
       return `El archivo ${file.name} excede el límite de ${maxSizeMB}MB`;
     }
-
-    // Validar tipo
     if (!acceptedTypes.includes(file.type)) {
       return `Tipo de archivo no permitido: ${file.type}`;
     }
-
     return null;
   }, [maxSizeMB, acceptedTypes]);
 
@@ -153,14 +167,18 @@ export function FileUpload({
     const uploadedAttachments: ChatAttachment[] = [];
 
     try {
-      for (const file of files) {
+      for (const rawFile of files) {
+        // Comprimir imágenes antes de subir
+        const file = rawFile.type.startsWith('image/')
+          ? await compress(rawFile).catch(() => rawFile)
+          : rawFile;
+
         // Generar path único
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `${conversationId}/${messageId}/${fileName}`;
 
-        // Simular progress (Supabase SDK no expone progress nativo)
-        setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
+        setUploadProgress(prev => ({ ...prev, [rawFile.name]: 0 }));
 
         // Upload a Supabase Storage
         const { error } = await supabase.storage
@@ -174,18 +192,13 @@ export function FileUpload({
           throw new Error(`Error al subir ${file.name}: ${error.message}`);
         }
 
-        // Simular progress completo
-        setUploadProgress(prev => ({ ...prev, [file.name]: 100 }));
+        setUploadProgress(prev => ({ ...prev, [rawFile.name]: 100 }));
 
-        // Obtener URL pública (con signed URL para bucket privado)
-        const { data: urlData } = supabase.storage
-          .from('chat-attachments')
-          .getPublicUrl(filePath);
+        const { data: urlData } = supabase.storage.from('chat-attachments').getPublicUrl(filePath);
 
-        // Agregar a lista de attachments
         uploadedAttachments.push({
           url: urlData.publicUrl,
-          name: file.name,
+          name: rawFile.name,
           size: file.size,
           type: file.type
         });
@@ -199,8 +212,9 @@ export function FileUpload({
       setUploadProgress({});
     } catch (error) {
       Sentry.captureException(error instanceof Error ? error : new Error(String(error)), { tags: { component: 'FileUpload' } })
-      const message = error instanceof Error ? error.message : 'Error desconocido';
-      onUploadError?.(message);
+      const msg = error instanceof Error ? error.message : 'Error desconocido';
+      toast.error(msg);
+      onUploadError?.(msg);
     } finally {
       setUploading(false);
     }
@@ -211,6 +225,7 @@ export function FileUpload({
    */
   const getFileIcon = (type: string) => {
     if (type.startsWith('image/')) return <ImageIcon className="h-4 w-4" />;
+    if (type.startsWith('video/')) return <Video className="h-4 w-4" />;
     if (type === 'application/pdf') return <FileText className="h-4 w-4" />;
     if (type.includes('zip') || type.includes('rar')) return <Archive className="h-4 w-4" />;
     return <File className="h-4 w-4" />;

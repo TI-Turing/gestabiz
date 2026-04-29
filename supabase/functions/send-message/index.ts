@@ -23,10 +23,12 @@ const BANNED_WORDS = ['spam', 'scam', 'phishing']
 
 interface SendMessageRequest {
   conversation_id: string
-  type: 'text' | 'image' | 'file' | 'system'
+  type: 'text' | 'image' | 'file' | 'system' | 'audio' | 'video' | 'call_log'
   body?: string
   metadata?: Record<string, unknown>
   reply_to?: string
+  duration_seconds?: number
+  waveform?: number[]
 }
 
 interface SendMessageResponse {
@@ -201,13 +203,32 @@ serve(async (req) => {
     if (request.type === 'file' && request.metadata?.file_url) {
       const fileSize = request.metadata.file_size as number
       const maxSize = 10 * 1024 * 1024 // 10 MB
-
       if (fileSize && fileSize > maxSize) {
         return new Response(
           JSON.stringify({ success: false, error: 'File too large (max 10 MB)' }),
           { status: 400, headers: { 'Content-Type': 'application/json' } }
         )
       }
+    }
+
+    // Validar videos
+    if (request.type === 'video' && request.metadata?.video_url) {
+      const fileSize = request.metadata.file_size as number
+      const maxSize = 25 * 1024 * 1024 // 25 MB
+      if (fileSize && fileSize > maxSize) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Video too large (max 25 MB)' }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
+    // Validar audio
+    if (request.type === 'audio' && !request.metadata?.audio_url) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Audio message requires audio_url in metadata' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
     }
 
     // Validar reply_to existe

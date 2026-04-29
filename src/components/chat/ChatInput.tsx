@@ -1,249 +1,256 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, X, Smile, FileIcon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { FileUpload } from './FileUpload';
-import type { MessageWithSender } from '@/hooks/useMessages';
-import type { ChatAttachment } from '@/hooks/useChat'; // Temporal - future phase
-import { cn } from '@/lib/utils';
-import { announce } from '@/lib/accessibility';
+import React, { useState, useRef, useEffect } from 'react'
+import { Send, Paperclip, X, FileIcon, FolderOpen } from 'lucide-react'
+import { Smiley } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { FileUpload } from './FileUpload'
+import { EmojiPicker } from './EmojiPicker'
+import { AudioRecorder } from './AudioRecorder'
+import { MediaPreview } from './MediaPreview'
+import { MarketingVaultPicker } from './MarketingVaultPicker'
+import { useImageCompression } from '@/hooks/useImageCompression'
+import type { MessageWithSender } from '@/hooks/useMessages'
+import type { ChatAttachment } from '@/hooks/useChat'
+import type { MarketingVaultFile } from '@/types/types'
+import { cn } from '@/lib/utils'
+import { announce } from '@/lib/accessibility'
+import { toast } from 'sonner'
+
+const VIDEO_MAX_MB = 25
 
 interface ChatInputProps {
-  conversationId: string;
-  onSendMessage: (content: string, replyTo?: string, attachments?: ChatAttachment[]) => Promise<void>;
-  onTypingChange?: (isTyping: boolean) => void;
-  replyToMessage?: MessageWithSender | null;
-  onCancelReply?: () => void;
-  disabled?: boolean;
-  placeholder?: string;
+  conversationId: string
+  onSendMessage: (content: string, replyTo?: string, attachments?: ChatAttachment[]) => Promise<void>
+  onSendAudio?: (blob: Blob, duration: number, waveform: number[]) => Promise<void>
+  onTypingChange?: (isTyping: boolean) => void
+  replyToMessage?: MessageWithSender | null
+  onCancelReply?: () => void
+  disabled?: boolean
+  placeholder?: string
+  businessId?: string
+  isBusinessSide?: boolean
 }
 
-/**
- * ChatInput Component
- * 
- * Input de chat con:
- * - Textarea con auto-resize
- * - Botón enviar
- * - Botón adjuntar archivos (futuro)
- * - Preview de mensaje al que se responde
- * - Detección de Enter para enviar (Shift+Enter = nueva línea)
- * - Notificación de typing indicator
- */
 export function ChatInput({
   conversationId,
   onSendMessage,
+  onSendAudio,
   onTypingChange,
   replyToMessage,
   onCancelReply,
   disabled = false,
-  placeholder = 'Escribe un mensaje...'
+  placeholder = 'Escribe un mensaje...',
+  businessId,
+  isBusinessSide = false,
 }: ChatInputProps) {
-  const [message, setMessage] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [message, setMessage] = useState('')
+  const [isSending, setIsSending] = useState(false)
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([])
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false)
+  const [isVaultOpen, setIsVaultOpen] = useState(false)
+  const [mediaPreview, setMediaPreview] = useState<{ file: File; objectUrl: string; type: 'image' | 'video' } | null>(null)
 
-  // Auto-focus en textarea cuando se monta o cambia conversación
-  useEffect(() => {
-    if (textareaRef.current && !disabled) {
-      textareaRef.current.focus();
-    }
-  }, [conversationId, disabled]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const { compress } = useImageCompression()
 
-  // Auto-resize textarea
   useEffect(() => {
-    const textarea = textareaRef.current;
+    if (textareaRef.current && !disabled) textareaRef.current.focus()
+  }, [conversationId, disabled])
+
+  useEffect(() => {
+    const textarea = textareaRef.current
     if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+      textarea.style.height = 'auto'
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`
     }
-  }, [message]);
+  }, [message])
 
-  // Limpiar typing timeout al desmontar
   useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-    };
-  }, []);
+    return () => { if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current) }
+  }, [])
 
-  /**
-   * Manejar cambio en el textarea
-   * Notifica typing indicator con debounce
-   */
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newValue = e.target.value;
-    setMessage(newValue);
-
-    // Notificar typing indicator
+    setMessage(e.target.value)
     if (onTypingChange) {
-      onTypingChange(true);
-
-      // Reset timeout de typing
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-
-      // Auto-stop typing después de 3 segundos sin escribir
-      typingTimeoutRef.current = setTimeout(() => {
-        onTypingChange(false);
-      }, 3000);
+      onTypingChange(true)
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+      typingTimeoutRef.current = setTimeout(() => onTypingChange(false), 3000)
     }
-  };
+  }
 
-  /**
-   * Manejar upload completo
-   */
+  const handleEmojiSelect = (emoji: string) => {
+    const textarea = textareaRef.current
+    if (!textarea) { setMessage(m => m + emoji); return }
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const next = message.slice(0, start) + emoji + message.slice(end)
+    setMessage(next)
+    setTimeout(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + emoji.length, start + emoji.length)
+    }, 0)
+  }
+
   const handleUploadComplete = (uploaded: ChatAttachment[]) => {
-    setAttachments((prev) => [...prev, ...uploaded]);
-    setIsUploadOpen(false);
-  };
+    setAttachments(prev => [...prev, ...uploaded])
+    setIsUploadOpen(false)
+  }
 
-  /**
-   * Remover attachment
-   */
   const handleRemoveAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
+    setAttachments(prev => prev.filter((_, i) => i !== index))
+  }
 
-  /**
-   * Formatear tamaño de archivo
-   */
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
+  const handleVaultSelect = (files: MarketingVaultFile[]) => {
+    const vaultAttachments: ChatAttachment[] = files.map(f => ({
+      url: f.url ?? '',
+      name: f.name,
+      size: 0,
+      type: f.isImage ? 'image/jpeg' : 'application/octet-stream',
+    }))
+    setAttachments(prev => [...prev, ...vaultAttachments])
+  }
 
-  /**
-   * Enviar mensaje
-   */
-  const handleSend = async () => {
-    const trimmedMessage = message.trim();
-    if ((!trimmedMessage && attachments.length === 0) || isSending) return;
+  // Gestiona el pegado / selección de media (imágenes y videos con preview)
+  const handleMediaFile = async (file: File) => {
+    const isImage = file.type.startsWith('image/')
+    const isVideo = file.type.startsWith('video/')
 
+    if (!isImage && !isVideo) return false
+
+    if (isVideo && file.size > VIDEO_MAX_MB * 1024 * 1024) {
+      toast.error(`El video excede el límite de ${VIDEO_MAX_MB} MB. Por favor comprímelo antes de enviarlo.`)
+      return true
+    }
+
+    let processedFile = file
+    if (isImage) {
+      try { processedFile = await compress(file) } catch { /* silencio */ }
+    }
+
+    const objectUrl = URL.createObjectURL(processedFile)
+    setMediaPreview({ file: processedFile, objectUrl, type: isImage ? 'image' : 'video' })
+    return true
+  }
+
+  const handleConfirmMedia = async () => {
+    if (!mediaPreview) return
+    const { file, objectUrl, type } = mediaPreview
+    URL.revokeObjectURL(objectUrl)
+    setMediaPreview(null)
+
+    // Upload inmediato y agregar como attachment
     try {
-      setIsSending(true);
-
-      // Detener typing indicator
-      if (onTypingChange) {
-        onTypingChange(false);
-      }
-
-      // Enviar mensaje con attachments
-      await onSendMessage(
-        trimmedMessage || 'Archivo adjunto',
-        replyToMessage?.id,
-        attachments.length > 0 ? attachments : undefined
-      );
-
-      // Limpiar input y attachments
-      setMessage('');
-      setAttachments([]);
-
-      // Cancelar reply
-      if (onCancelReply) {
-        onCancelReply();
-      }
+      const { supabase } = await import('@/lib/supabase')
+      const ext = file.name.split('.').pop() || (type === 'image' ? 'jpg' : 'mp4')
+      const path = `${conversationId}/${Date.now()}-${Math.random().toString(36).slice(7)}.${ext}`
+      const { error } = await supabase.storage.from('chat-attachments').upload(path, file)
+      if (error) throw error
+      const { data } = supabase.storage.from('chat-attachments').getPublicUrl(path)
+      setAttachments(prev => [...prev, { url: data.publicUrl, name: file.name, size: file.size, type: file.type }])
     } catch {
-      // Error será manejado por el componente padre
-      // El hook useChat ya muestra el error en el estado
+      toast.error('No se pudo subir el archivo')
+    }
+  }
+
+  const handleCancelMedia = () => {
+    if (mediaPreview) URL.revokeObjectURL(mediaPreview.objectUrl)
+    setMediaPreview(null)
+  }
+
+  // Pegado de imágenes desde clipboard
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const items = Array.from(e.clipboardData?.items ?? [])
+    const mediaItem = items.find(i => i.type.startsWith('image/') || i.type.startsWith('video/'))
+    if (!mediaItem) return
+    const file = mediaItem.getAsFile()
+    if (file) {
+      e.preventDefault()
+      await handleMediaFile(file)
+    }
+  }
+
+  const handleSend = async () => {
+    const trimmed = message.trim()
+    if ((!trimmed && attachments.length === 0) || isSending) return
+    try {
+      setIsSending(true)
+      if (onTypingChange) onTypingChange(false)
+      await onSendMessage(trimmed || 'Archivo adjunto', replyToMessage?.id, attachments.length ? attachments : undefined)
+      setMessage('')
+      setAttachments([])
+      if (onCancelReply) onCancelReply()
+    } catch {
+      // Error manejado por el padre
     } finally {
-      setIsSending(false);
-
-      // Re-focus en textarea
-      if (textareaRef.current) {
-        textareaRef.current.focus();
-      }
+      setIsSending(false)
+      textareaRef.current?.focus()
     }
-  };
+  }
 
-  /**
-   * Manejar teclas de acceso
-   * Enter solo = enviar
-   * Shift+Enter = nueva línea
-   * Esc = cancelar reply
-   */
+  const handleAudioReady = async (blob: Blob, duration: number, waveform: number[]) => {
+    if (onSendAudio) await onSendAudio(blob, duration, waveform)
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Enter sin Shift: enviar
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-      return;
-    }
-    
-    // Esc: cancelar reply
-    if (e.key === 'Escape' && replyToMessage) {
-      e.preventDefault();
-      onCancelReply?.();
-      announce('Respuesta cancelada', 'polite');
-      textareaRef.current?.focus();
-    }
-  };
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); return }
+    if (e.key === 'Escape' && replyToMessage) { e.preventDefault(); onCancelReply?.(); announce('Respuesta cancelada', 'polite'); textareaRef.current?.focus() }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  const canSend = (message.trim().length > 0 || attachments.length > 0) && !disabled && !isSending
 
   return (
-    <div className="border-t bg-background">
-      {/* Screen reader announcements */}
-      <output className="sr-only" aria-live="polite" aria-atomic="true">
+    <div className="border-t bg-background relative">
+      <output className="sr-only" aria-live="polite" aria-atomic>
         {isSending && 'Enviando mensaje...'}
-        {attachments.length > 0 && `${attachments.length} archivo${attachments.length > 1 ? 's' : ''} adjunto${attachments.length > 1 ? 's' : ''}`}
       </output>
-      
-      {/* Preview de mensaje al que se responde */}
+
+      {/* Preview de reply */}
       {replyToMessage && (
         <div className="px-3 py-2 sm:px-4 bg-muted/50 border-b flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="text-xs font-medium text-muted-foreground mb-0.5">
               Respondiendo a {replyToMessage.sender?.full_name || 'Usuario'}
             </div>
-            <p className="text-sm text-foreground line-clamp-1">
-              {replyToMessage.body || '(mensaje sin contenido)'}
-            </p>
+            <p className="text-sm line-clamp-1">{replyToMessage.body || '(mensaje sin contenido)'}</p>
           </div>
           {onCancelReply && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 sm:h-6 sm:w-6 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex-shrink-0"
-              onClick={onCancelReply}
-              aria-label="Cancelar respuesta"
-              title="Cancelar respuesta (Esc)"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onCancelReply} aria-label="Cancelar respuesta">
+              <X className="h-4 w-4" />
             </Button>
           )}
         </div>
       )}
 
-      {/* Preview de attachments seleccionados */}
+      {/* Preview de attachments */}
       {attachments.length > 0 && (
         <div className="px-3 py-2 sm:px-4 bg-muted/30 border-b">
-          <div className="text-xs font-medium text-muted-foreground mb-2">
-            Archivos adjuntos ({attachments.length})
-          </div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Adjuntos ({attachments.length})</p>
           <div className="flex flex-wrap gap-2">
-            {attachments.map((attachment, index) => (
-              <div
-                key={`${attachment.name}-${attachment.size}-${index}`}
-                className="flex items-center gap-2 px-2 py-1 bg-background border rounded-md text-sm"
-              >
-                <FileIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="truncate max-w-[150px]">{attachment.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {formatFileSize(attachment.size)}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                  onClick={() => handleRemoveAttachment(index)}
-                  aria-label={`Eliminar archivo ${attachment.name}`}
-                >
-                  <X className="h-3 w-3" aria-hidden="true" />
+            {attachments.map((a, i) => (
+              <div key={`${a.name}-${i}`} className="flex items-center gap-2 px-2 py-1 bg-background border rounded-md text-sm">
+                {a.type.startsWith('image/') ? (
+                  <img src={a.url} alt={a.name} className="h-8 w-8 object-cover rounded" />
+                ) : (
+                  <FileIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                )}
+                <span className="truncate max-w-[120px]">{a.name}</span>
+                {a.size > 0 && <span className="text-xs text-muted-foreground">{formatFileSize(a.size)}</span>}
+                <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={() => handleRemoveAttachment(i)} aria-label={`Eliminar ${a.name}`}>
+                  <X className="h-3 w-3" />
                 </Button>
               </div>
             ))}
@@ -251,34 +258,33 @@ export function ChatInput({
         </div>
       )}
 
-      {/* Input area */}
+      {/* Input principal */}
       <div className="px-3 py-2 sm:px-4 sm:py-3 flex items-end gap-1 sm:gap-2">
-        {/* Botón adjuntar con Popover - oculto en móvil muy pequeño */}
-        <Popover open={isUploadOpen} onOpenChange={setIsUploadOpen}>
-          <PopoverTrigger asChild>
+        {/* Adjuntar */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="flex-shrink-0 h-9 w-9 sm:h-10 sm:w-10 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 hidden xs:flex"
+              className="flex-shrink-0 h-9 w-9 hidden xs:flex"
               disabled={disabled}
-              title="Adjuntar archivo"
+              title="Adjuntar"
               aria-label="Adjuntar archivo"
-              aria-haspopup="dialog"
-              aria-expanded={isUploadOpen}
             >
-              <Paperclip className="h-5 w-5" aria-hidden="true" />
+              <Paperclip className="h-5 w-5" />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent side="top" align="start" className="w-80 sm:w-96 p-0">
-            <FileUpload
-              conversationId={conversationId}
-              messageId={`temp-${Date.now()}`}
-              onUploadComplete={handleUploadComplete}
-              maxFiles={5}
-              maxSizeMB={10}
-            />
-          </PopoverContent>
-        </Popover>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start">
+            <DropdownMenuItem onSelect={() => setIsUploadOpen(true)}>
+              <FileIcon className="h-4 w-4 mr-2" /> Archivo del dispositivo
+            </DropdownMenuItem>
+            {isBusinessSide && businessId && (
+              <DropdownMenuItem onSelect={() => setIsVaultOpen(true)}>
+                <FolderOpen className="h-4 w-4 mr-2" /> Vault de marketing
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Textarea */}
         <Textarea
@@ -286,53 +292,94 @@ export function ChatInput({
           value={message}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder={placeholder}
           disabled={disabled || isSending}
-          className={cn(
-            'min-h-[44px] sm:min-h-[40px] max-h-[120px] resize-none text-base',
-            'focus-visible:ring-1'
-          )}
+          className={cn('min-h-[44px] sm:min-h-[40px] max-h-[120px] resize-none text-base focus-visible:ring-1')}
           rows={1}
           aria-label="Escribe un mensaje"
-          aria-describedby="chat-input-hint"
-          aria-multiline="true"
+          aria-multiline
         />
 
-        {/* Botón emoji (futuro) - oculto en móvil */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="flex-shrink-0 h-9 w-9 sm:h-10 sm:w-10 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 hidden sm:flex"
-          disabled={disabled}
-          title="Emojis (próximamente)"
-          aria-label="Agregar emoji (próximamente)"
-        >
-          <Smile className="h-5 w-5" aria-hidden="true" />
-        </Button>
+        {/* Emoji */}
+        <div className="relative hidden sm:flex">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="flex-shrink-0 h-9 w-9"
+            disabled={disabled}
+            title="Emojis"
+            aria-label="Agregar emoji"
+            onClick={() => setIsEmojiOpen(o => !o)}
+          >
+            <Smiley size={20} />
+          </Button>
+          <EmojiPicker isOpen={isEmojiOpen} onEmojiSelect={handleEmojiSelect} onClose={() => setIsEmojiOpen(false)} />
+        </div>
 
-        {/* Botón enviar - más grande en móvil */}
+        {/* Audio recorder */}
+        {onSendAudio && (
+          <AudioRecorder onAudioReady={handleAudioReady} disabled={disabled} />
+        )}
+
+        {/* Enviar */}
         <Button
           onClick={handleSend}
-          disabled={(!message.trim() && attachments.length === 0) || disabled || isSending}
+          disabled={!canSend}
           size="icon"
-          className="flex-shrink-0 h-10 w-10 sm:h-10 sm:w-10 min-h-[48px] min-w-[48px] sm:min-h-0 sm:min-w-0"
-          aria-label={isSending ? 'Enviando mensaje...' : 'Enviar mensaje'}
+          className="flex-shrink-0 h-10 w-10 min-h-[48px] min-w-[48px] sm:min-h-0 sm:min-w-0"
+          aria-label={isSending ? 'Enviando...' : 'Enviar mensaje'}
           aria-busy={isSending}
         >
-          <Send className="h-5 w-5" aria-hidden="true" />
+          <Send className="h-5 w-5" />
         </Button>
       </div>
 
-      {/* Hint de shortcuts - oculto en móvil */}
-      <div id="chat-input-hint" className="hidden sm:block px-4 pb-2 text-xs text-muted-foreground">
+      <div className="hidden sm:block px-4 pb-2 text-xs text-muted-foreground">
         <kbd className="px-1 py-0.5 bg-muted rounded">Enter</kbd> para enviar ·{' '}
         <kbd className="px-1 py-0.5 bg-muted rounded">Shift+Enter</kbd> para nueva línea
-        {replyToMessage && (
-          <>
-            {' '}· <kbd className="px-1 py-0.5 bg-muted rounded">Esc</kbd> para cancelar respuesta
-          </>
-        )}
+        {replyToMessage && <> · <kbd className="px-1 py-0.5 bg-muted rounded">Esc</kbd> para cancelar</>}
       </div>
+
+      {/* Popover de upload de archivos */}
+      {isUploadOpen && (
+        <div className="absolute bottom-full left-0 mb-2 w-80 sm:w-96 z-30 shadow-lg border bg-background rounded-lg p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Subir archivo</span>
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsUploadOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <FileUpload
+            conversationId={conversationId}
+            messageId={`temp-${Date.now()}`}
+            onUploadComplete={handleUploadComplete}
+            maxFiles={5}
+            maxSizeMB={10}
+          />
+        </div>
+      )}
+
+      {/* Media preview modal */}
+      {mediaPreview && (
+        <MediaPreview
+          file={mediaPreview.file}
+          type={mediaPreview.type}
+          objectUrl={mediaPreview.objectUrl}
+          onConfirm={handleConfirmMedia}
+          onCancel={handleCancelMedia}
+        />
+      )}
+
+      {/* Marketing vault picker */}
+      {businessId && (
+        <MarketingVaultPicker
+          businessId={businessId}
+          isOpen={isVaultOpen}
+          onClose={() => setIsVaultOpen(false)}
+          onSelect={handleVaultSelect}
+        />
+      )}
     </div>
-  );
+  )
 }

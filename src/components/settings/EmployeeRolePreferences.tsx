@@ -36,6 +36,7 @@ import {
 } from '@phosphor-icons/react'
 import { useEmployeeProfile, type Certification } from '@/hooks/useEmployeeProfile'
 import { supabase } from '@/lib/supabase'
+import { EmployeeWorkScheduleEditor } from './EmployeeWorkScheduleEditor'
 
 interface EmployeeRolePreferencesProps {
   userId: string
@@ -386,6 +387,25 @@ export function EmployeeRolePreferences({ userId, businessId }: EmployeeRolePref
           </div>
         </CardContent>
       </Card>
+
+      {/* Horario Laboral (para indicador de presencia en chat) */}
+      {businessId && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Horario Laboral
+            </CardTitle>
+            <CardDescription>
+              Define tus horas de trabajo. Cuando estés desconectado dentro de este horario,
+              los clientes verán un indicador amarillo en lugar de gris.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <EmployeeWorkScheduleEditor employeeId={userId} businessId={businessId} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Información Profesional */}
       <Card>

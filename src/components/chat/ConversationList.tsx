@@ -1,77 +1,59 @@
-import React, { useState } from 'react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { Search, Pin, Archive, X } from 'lucide-react';
-import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import type { ConversationPreview } from '@/hooks/useConversations';
-import { cn } from '@/lib/utils';
+import React, { useState } from 'react'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
+import { Search, Archive, X, ChevronDown, ChevronRight } from 'lucide-react'
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { PresenceDot } from './PresenceDot'
+import { useUserPresence } from '@/hooks/useUserPresence'
+import type { ConversationPreview } from '@/hooks/useConversations'
+import type { RelationshipType } from '@/types/types'
+import { cn } from '@/lib/utils'
 
 interface ConversationListProps {
-  conversations: ConversationPreview[];
-  activeConversationId: string | null;
-  onSelectConversation: (conversationId: string) => void;
-  totalUnreadCount?: number;
-  loading?: boolean;
+  conversations: ConversationPreview[]
+  activeConversationId: string | null
+  onSelectConversation: (conversationId: string) => void
+  totalUnreadCount?: number
+  loading?: boolean
+  /** ID del usuario actual — necesario para resolver labels de relación */
+  currentUserId?: string
 }
 
-/**
- * ConversationList Component
- * 
- * Lista lateral de conversaciones con:
- * - Búsqueda de conversaciones
- * - Preview del último mensaje
- * - Badge de mensajes no leídos
- * - Indicador de conversaciones fijadas
- * - Ordenamiento: pinned > last_message_at
- * - Scroll infinito (futuro)
- */
 export function ConversationList({
   conversations,
   activeConversationId,
   onSelectConversation,
   totalUnreadCount = 0,
-  loading = false
+  loading = false,
+  currentUserId,
 }: ConversationListProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('')
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
-  // Filtrar conversaciones por búsqueda
-  const filteredConversations = conversations.filter(conv => {
-    if (!searchQuery.trim()) return true;
+  // Obtener todos los other_user IDs para presence
+  const otherUserIds = conversations.map(c => c.other_user?.id).filter(Boolean) as string[]
+  const presenceMap = useUserPresence(otherUserIds)
 
-    const query = searchQuery.toLowerCase();
-    const name = conv.name?.toLowerCase() || '';
-    const displayName = conv.display_name?.toLowerCase() || '';
-    const otherUserName = conv.other_user?.full_name?.toLowerCase() || '';
-    const otherUserEmail = conv.other_user?.email?.toLowerCase() || '';
-    const preview = conv.last_message_preview?.toLowerCase() || '';
-
+  const filtered = conversations.filter(conv => {
+    if (!searchQuery.trim()) return true
+    const q = searchQuery.toLowerCase()
     return (
-      name.includes(query) ||
-      displayName.includes(query) ||
-      otherUserName.includes(query) ||
-      otherUserEmail.includes(query) ||
-      preview.includes(query)
-    );
-  });
+      conv.name?.toLowerCase().includes(q) ||
+      conv.display_name?.toLowerCase().includes(q) ||
+      conv.other_user?.full_name?.toLowerCase().includes(q) ||
+      conv.other_user?.email?.toLowerCase().includes(q) ||
+      conv.last_message_preview?.toLowerCase().includes(q)
+    )
+  })
 
-  // Ordenar: pinned primero, luego por último mensaje
-  const sortedConversations = [...filteredConversations].sort((a, b) => {
-    // Pinned primero (si el usuario tiene la conversación pinned)
-    const aPinned = a.members?.find(m => m.user_id)?.user_id ? false : false; // TODO: Agregar is_pinned
-    const bPinned = b.members?.find(m => m.user_id)?.user_id ? false : false; // TODO: Agregar is_pinned
-    
-    if (aPinned && !bPinned) return -1;
-    if (!aPinned && bPinned) return 1;
+  // Agrupar por relationship_type
+  const groups = buildGroups(filtered, currentUserId)
 
-    // Luego por último mensaje
-    const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
-    const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
-    return bTime - aTime;
-  });
+  const toggleGroup = (key: string) => setCollapsed(p => ({ ...p, [key]: !p[key] }))
 
   return (
     <div className="flex flex-col h-full border-r bg-background">
@@ -85,166 +67,203 @@ export function ConversationList({
             </Badge>
           )}
         </div>
-
-        {/* Búsqueda */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar conversaciones..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-9 pr-9"
           />
           {searchQuery && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
-              onClick={() => setSearchQuery('')}
-            >
+            <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6" onClick={() => setSearchQuery('')}>
               <X className="h-4 w-4" />
             </Button>
           )}
         </div>
       </div>
 
-      {/* Lista de conversaciones */}
       <ScrollArea className="flex-1">
-        {loading && sortedConversations.length === 0 && (
-          <div className="p-8 text-center text-muted-foreground">
-            Cargando conversaciones...
-          </div>
+        {loading && filtered.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground">Cargando conversaciones...</div>
         )}
-        
-        {!loading && sortedConversations.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="p-8 text-center text-muted-foreground">
             {searchQuery ? 'No se encontraron conversaciones' : 'No hay conversaciones'}
           </div>
         )}
-        
-        {sortedConversations.length > 0 && (
-          <div className="divide-y">
-            {sortedConversations.map((conversation) => (
-              <ConversationItem
-                key={conversation.id}
-                conversation={conversation}
-                isActive={conversation.id === activeConversationId}
-                onClick={() => onSelectConversation(conversation.id)}
-              />
-            ))}
-          </div>
-        )}
+
+        {groups.map(group => {
+          const isOpen = !collapsed[group.key]
+          return (
+            <div key={group.key}>
+              {group.label && (
+                <button
+                  type="button"
+                  onClick={() => toggleGroup(group.key)}
+                  className="w-full flex items-center gap-1 px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors"
+                >
+                  {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                  {group.label}
+                  {group.unread > 0 && (
+                    <Badge variant="default" className="ml-auto rounded-full h-4 min-w-[16px] px-1 text-[10px]">
+                      {group.unread}
+                    </Badge>
+                  )}
+                </button>
+              )}
+              {isOpen && (
+                <div className="divide-y">
+                  {group.convs.map(conv => (
+                    <ConversationItem
+                      key={conv.id}
+                      conversation={conv}
+                      isActive={conv.id === activeConversationId}
+                      onClick={() => onSelectConversation(conv.id)}
+                      presence={presenceMap.get(conv.other_user?.id ?? '')}
+                      currentUserId={currentUserId}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
       </ScrollArea>
     </div>
-  );
+  )
 }
 
-/**
- * ConversationItem Component
- * 
- * Item individual de conversación
- */
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+interface ConvGroup {
+  key: string
+  label?: string
+  convs: ConversationPreview[]
+  unread: number
+}
+
+function buildGroups(convs: ConversationPreview[], currentUserId?: string): ConvGroup[] {
+  const sorted = [...convs].sort((a, b) => {
+    const aTime = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
+    const bTime = b.last_message_at ? new Date(b.last_message_at).getTime() : 0
+    return bTime - aTime
+  })
+
+  const buckets: Record<string, ConversationPreview[]> = {
+    client_as_client: [],
+    client_as_business: [],
+    collaborator: [],
+    support: [],
+    legacy: [],
+  }
+
+  for (const conv of sorted) {
+    const rel = (conv as ConversationPreview & { relationship_type?: string | null; client_id?: string | null })
+    if (!rel.relationship_type) { buckets.legacy.push(conv); continue }
+    if (rel.relationship_type === 'support') { buckets.support.push(conv); continue }
+    if (rel.relationship_type === 'business_collaborator') { buckets.collaborator.push(conv); continue }
+    if (rel.relationship_type === 'client_business') {
+      if (rel.client_id === currentUserId) buckets.client_as_client.push(conv)
+      else buckets.client_as_business.push(conv)
+      continue
+    }
+    buckets.legacy.push(conv)
+  }
+
+  const groups: ConvGroup[] = []
+
+  const addGroup = (key: string, label: string, list: ConversationPreview[]) => {
+    if (!list.length) return
+    const unread = list.reduce((s, c) => s + (c.unread_count || 0), 0)
+    groups.push({ key, label, convs: list, unread })
+  }
+
+  addGroup('client_as_client', 'Como cliente', buckets.client_as_client)
+  addGroup('client_as_business', 'Mis negocios', buckets.client_as_business)
+  addGroup('collaborator', 'Equipo', buckets.collaborator)
+  addGroup('support', 'Soporte', buckets.support)
+
+  // Legacy sin etiqueta (comportamiento anterior)
+  if (buckets.legacy.length) {
+    const unread = buckets.legacy.reduce((s, c) => s + (c.unread_count || 0), 0)
+    groups.push({ key: 'legacy', convs: buckets.legacy, unread })
+  }
+
+  return groups
+}
+
+// ─── ConversationItem ─────────────────────────────────────────────────────────
+
 interface ConversationItemProps {
-  conversation: ConversationPreview;
-  isActive: boolean;
-  onClick: () => void;
+  conversation: ConversationPreview
+  isActive: boolean
+  onClick: () => void
+  presence?: ReturnType<ReturnType<typeof useUserPresence>['get']>
+  currentUserId?: string
 }
 
-function ConversationItem({ conversation, isActive, onClick }: ConversationItemProps) {
-  // Obtener título de la conversación
-  const title =
-    conversation.type === 'direct'
-      ? conversation.display_name || // Nombre personalizado o nombre del otro usuario
-        conversation.other_user?.full_name ||
-        conversation.other_user?.email ||
-        'Usuario'
-      : conversation.name || 'Grupo';
+function ConversationItem({ conversation, isActive, onClick, presence }: ConversationItemProps) {
+  const rel = conversation as ConversationPreview & {
+    relationship_type?: RelationshipType | null
+    business?: { name: string; logo_url?: string | null }
+  }
 
-  // Obtener iniciales para avatar
-  const initials = title
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  let title: string
+  let avatarSrc: string | null | undefined
 
-  // Formatear timestamp del último mensaje
-  const lastMessageDate = conversation.last_message_at 
-    ? new Date(conversation.last_message_at) 
-    : new Date();
-  const now = new Date();
-  const isToday =
-    lastMessageDate.getDate() === now.getDate() &&
-    lastMessageDate.getMonth() === now.getMonth() &&
-    lastMessageDate.getFullYear() === now.getFullYear();
+  if (rel.relationship_type === 'client_business' && rel.business) {
+    title = rel.business.name
+    avatarSrc = rel.business.logo_url
+  } else {
+    title = conversation.display_name || conversation.other_user?.full_name || conversation.other_user?.email || 'Usuario'
+    avatarSrc = conversation.other_user?.avatar_url
+  }
 
+  const lastMessageDate = conversation.last_message_at ? new Date(conversation.last_message_at) : new Date()
+  const now = new Date()
+  const isToday = lastMessageDate.toDateString() === now.toDateString()
   const timestamp = conversation.last_message_at
     ? isToday
       ? format(lastMessageDate, 'HH:mm', { locale: es })
       : format(lastMessageDate, 'd MMM', { locale: es })
-    : '';
+    : ''
 
-  const hasUnread = (conversation.unread_count || 0) > 0;
-  
-  // Verificar si está pinned (desde members del usuario actual)
-  // TODO: Agregar campo is_pinned a conversation_members
-  const isPinned = false; // conversation.members?.some(m => m.is_pinned) || false;
+  const hasUnread = (conversation.unread_count || 0) > 0
 
   return (
     <button
       onClick={onClick}
-      className={cn(
-        'w-full p-4 flex items-start gap-3 hover:bg-muted/50 transition-colors text-left',
-        isActive && 'bg-muted'
-      )}
+      className={cn('w-full p-4 flex items-start gap-3 hover:bg-muted/50 transition-colors text-left', isActive && 'bg-muted')}
     >
-      {/* Avatar */}
-      <ProfileAvatar
-        src={conversation.other_user?.avatar_url}
-        alt={title}
-        fallbackText={title}
-        size="lg"
-        className="shrink-0"
-        maxRetries={5}
-        retryDelay={800}
-      />
+      {/* Avatar con PresenceDot */}
+      <div className="relative shrink-0">
+        <ProfileAvatar
+          src={avatarSrc}
+          alt={title}
+          fallbackText={title}
+          size="lg"
+          maxRetries={5}
+          retryDelay={800}
+        />
+        {presence && (
+          <PresenceDot
+            status={presence.status}
+            className="absolute bottom-0 right-0"
+          />
+        )}
+      </div>
 
-      {/* Contenido */}
       <div className="flex-1 min-w-0">
-        {/* Título y timestamp */}
         <div className="flex items-start justify-between gap-2 mb-1">
           <div className="flex items-center gap-1.5 flex-1 min-w-0">
-            {/* TODO: Implementar is_pinned desde conversation_members */}
-            {false && (
-              <Pin className="h-3.5 w-3.5 text-primary shrink-0" />
-            )}
-            {conversation.is_archived && (
-              <Archive className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            )}
-            <h3
-              className={cn(
-                'font-medium truncate',
-                hasUnread && 'font-semibold'
-              )}
-            >
-              {title}
-            </h3>
+            {conversation.is_archived && <Archive className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+            <h3 className={cn('font-medium truncate', hasUnread && 'font-semibold')}>{title}</h3>
           </div>
-          {timestamp && (
-            <span className="text-xs text-muted-foreground shrink-0">
-              {timestamp}
-            </span>
-          )}
+          {timestamp && <span className="text-xs text-muted-foreground shrink-0">{timestamp}</span>}
         </div>
-
-        {/* Preview y unread badge */}
         <div className="flex items-center justify-between gap-2">
-          <p
-            className={cn(
-              'text-sm text-muted-foreground truncate',
-              hasUnread && 'font-medium text-foreground'
-            )}
-          >
+          <p className={cn('text-sm text-muted-foreground truncate', hasUnread && 'font-medium text-foreground')}>
             {conversation.last_message_preview || 'Sin mensajes'}
           </p>
           {hasUnread && (
@@ -255,5 +274,5 @@ function ConversationItem({ conversation, isActive, onClick }: ConversationItemP
         </div>
       </div>
     </button>
-  );
+  )
 }

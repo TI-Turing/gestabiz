@@ -22,9 +22,6 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import type {
   Conversation,
   ConversationMember,
-  Message,
-  SendMessagePayload,
-  CreateDirectConversationPayload,
   CreateGroupConversationPayload,
   ConversationFilters,
   ChatStats,
@@ -44,6 +41,17 @@ export interface ConversationPreview extends Conversation {
     avatar_url?: string
   }
   member_count?: number
+  // Campos del modelo de relación (pueden ser null en conversaciones legacy)
+  relationship_type?: 'client_business' | 'business_collaborator' | 'support' | null
+  client_id?: string | null
+  counterpart_user_id?: string | null
+  business_info?: {
+    id: string
+    name: string
+    logo_url?: string
+    allow_chat_with_professionals?: boolean
+  } | null
+  counterpart_role?: 'owner' | 'admin' | 'employee' | null
 }
 
 export interface UseConversationsReturn {
