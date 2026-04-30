@@ -40,6 +40,15 @@
     - **Propuesta de Valor orientada a ventas**: diagnóstico del problema, solución, ROI, comparativa competitiva (Calendly, Booksy, Fresha, y locales), verticales atendidos, roadmap, CTA. Resaltar que Gestabiz es más completa y robusta que los líderes del mercado.
     - **Al documentar un cambio**: actualizar el script `generate_product_docs.py` en las secciones correspondientes (resumen + detalle + pitch si aplica), regenerar los .docx, y verificar que ambos archivos quedaron actualizados antes del commit.
 14. **Mantener Vault Obsidian actualizado** ⭐ OBLIGATORIA — Cada cambio funcional en el código DEBE reflejarse en la nota Obsidian correspondiente en `Obsidian/Gestabiz/`. Cambio en sistema existente → actualizar nota en `Sistemas/`. Nuevo sistema → crear nota y agregar a `Índice.md`. Cambio arquitectónico → actualizar `Arquitectura/`. Bug documentado → `Bugs/`. Decisión técnica → `Decisiones/`. Cambio de planes/pricing → `Negocio/`. Feature nueva → `Features/`. Sesión significativa → `Sesiones Claude/`. Siempre usar wikilinks `[[nombre-nota]]` para conectar notas relacionadas. Exenciones: cambios cosméticos, refactors sin impacto funcional, fixes de typos.
+15. **NUNCA ejecutar comandos destructivos o irreversibles sin confirmación explícita del usuario** 🚨 REGLA ABSOLUTA — Los siguientes comandos están PROHIBIDOS a menos que el usuario los solicite explícitamente con palabras como "sí, hazlo", "confirmo" o "ejecuta":
+    - `supabase db reset` (borra toda la data local — el usuario PIERDE DÍAS de datos de prueba)
+    - `supabase db push` (aplica migraciones a ambientes remotos DEV/PROD)
+    - `rm -rf` o cualquier eliminación masiva de archivos
+    - `DROP TABLE`, `TRUNCATE`, `DELETE FROM` sin `WHERE` en SQL
+    - `git reset --hard`, `git push --force`, `git clean -fd`
+    - Cualquier operación que no pueda deshacerse con un simple `git revert` o `Ctrl+Z`
+    - **Alternativas seguras**: ante la duda, usar `supabase migration up` (no destructivo) en vez de `db reset`; proponer el comando al usuario y esperar su OK antes de ejecutar.
+    - **Consecuencia de ignorar esta regla**: el usuario pierde horas o días de trabajo de datos de prueba y configuración local que no puede recuperarse. Esta regla existe porque un agente ejecutó `db reset` sin autorización y causó pérdida de datos de desarrollo.
 
 ---
 
