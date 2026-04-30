@@ -24,7 +24,14 @@ export function AudioMessage({ url, duration, waveform = [], isOwnMessage }: Aud
     const audio = audioRef.current
     if (!audio) return
     const onTime = () => setCurrentTime(audio.currentTime)
-    const onDuration = () => setAudioDuration(audio.duration || duration)
+    const onDuration = () => {
+      // WebM/Opus from MediaRecorder often lacks duration metadata → audio.duration = Infinity
+      // Infinity is truthy, so `audio.duration || duration` would silently keep Infinity.
+      // Use the stored duration_seconds prop as fallback in that case.
+      const d = audio.duration
+      if (isFinite(d) && d > 0) setAudioDuration(d)
+      // else: keep initial state (duration prop)
+    }
     const onEnded = () => { setIsPlaying(false); setCurrentTime(0) }
     audio.addEventListener('timeupdate', onTime)
     audio.addEventListener('loadedmetadata', onDuration)
@@ -57,6 +64,7 @@ export function AudioMessage({ url, duration, waveform = [], isOwnMessage }: Aud
   const progress = audioDuration > 0 ? currentTime / audioDuration : 0
 
   const formatTime = (s: number) => {
+    if (!isFinite(s) || isNaN(s) || s < 0) return '0:00'
     const m = Math.floor(s / 60)
     return `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`
   }
