@@ -56,6 +56,7 @@ export function SimpleChatLayout({
   const { setActiveConversation: setGlobalActiveConversation } = useNotificationContext();
 
   const [showChat, setShowChat] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const autoOpenedRef = useRef(false);
   const fetchRetryCountRef = useRef(0);
@@ -63,6 +64,13 @@ export function SimpleChatLayout({
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    if (!lightboxUrl) return;
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxUrl(null); };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [lightboxUrl]);
 
   // WebRTC call
   const otherId = activeConversation?.other_user?.id;
@@ -339,12 +347,11 @@ export function SimpleChatLayout({
                                       <div className={`${message.content && message.content !== 'Archivo adjunto' ? 'mt-2 ' : ''}space-y-2`}>
                                         {atts.map((att) => (
                                           att.type.startsWith('image/') ? (
-                                            <a
+                                            <button
                                               key={att.url}
-                                              href={att.url}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="block"
+                                              type="button"
+                                              onClick={() => setLightboxUrl(att.url)}
+                                              className="block p-0 border-0 bg-transparent"
                                             >
                                               <img
                                                 src={att.url}
@@ -352,7 +359,7 @@ export function SimpleChatLayout({
                                                 className="max-w-[240px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                                 loading="lazy"
                                               />
-                                            </a>
+                                            </button>
                                           ) : att.type.startsWith('video/') ? (
                                             <video
                                               key={att.url}
@@ -410,6 +417,32 @@ export function SimpleChatLayout({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Lightbox de imágenes */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+          onClick={() => setLightboxUrl(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vista de imagen"
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxUrl(null)}
+            className="absolute top-4 right-4 text-white bg-black/50 hover:bg-black/70 rounded-full p-2 transition-colors"
+            aria-label="Cerrar"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="Vista completa"
+            className="max-w-[90vw] max-h-[90vh] rounded-lg object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
 
