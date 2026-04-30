@@ -167,6 +167,16 @@ export function CallModal({
             </div>
           </div>
         )}
+        {(callState === 'failed' || callState === 'ended') && (
+          <Button
+            onClick={onHangUp}
+            variant="ghost"
+            className="text-white/70 hover:text-white hover:bg-white/10 mt-2"
+            aria-label="Cerrar"
+          >
+            Cerrar
+          </Button>
+        )}
       </div>
     </div>
   )

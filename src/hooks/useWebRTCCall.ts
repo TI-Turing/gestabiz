@@ -304,7 +304,12 @@ export function useWebRTCCall(currentUserId: string): UseWebRTCCallReturn {
 
   // ── Colgar ───────────────────────────────────────────────────────────────
   const hangUp = useCallback(async () => {
-    if (!activeCall) return
+    // Si no hay llamada activa (ej: estado failed), simplemente limpiar y volver a idle
+    if (!activeCall) {
+      cleanup()
+      setCallState('idle')
+      return
+    }
 
     const durationSeconds = callState === 'in-call'
       ? Math.floor((Date.now() - callStartTimeRef.current) / 1000)
