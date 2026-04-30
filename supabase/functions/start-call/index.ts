@@ -29,12 +29,13 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'conversation_id and callee_id are required' }), { status: 400, headers: CORS })
     }
 
-    // Verificar que el caller es participante de la conversación
+    // Verificar que el caller es participante de la conversación (usa chat_participants)
     const { data: member } = await db
-      .from('conversation_members')
+      .from('chat_participants')
       .select('user_id')
       .eq('conversation_id', conversation_id)
       .eq('user_id', user.id)
+      .is('left_at', null)
       .maybeSingle()
 
     if (!member) {

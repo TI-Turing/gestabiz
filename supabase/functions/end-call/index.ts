@@ -62,8 +62,8 @@ serve(async (req) => {
 
     if (updateErr) throw updateErr
 
-    // Insertar mensaje call_log en el hilo
-    await db.from('messages').insert({
+    // Insertar mensaje call_log en el hilo (usa chat_messages)
+    await db.from('chat_messages').insert({
       conversation_id: callSession.conversation_id,
       sender_id: user.id,
       type: 'call_log',
