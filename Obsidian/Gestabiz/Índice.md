@@ -103,7 +103,7 @@ Contexto del negocio, auditorías y estrategia general.
 
 ---
 
-## Decisiones (4 notas)
+## Decisiones (6 notas)
 
 Decisiones arquitectónicas y trade-offs importantes.
 
@@ -111,6 +111,8 @@ Decisiones arquitectónicas y trade-offs importantes.
 - [[decision-antifraude-referrals]] — Por qué no se necesitan reglas anti-fraude complejas en el programa de referrals
 - [[lock-in-estrategia-datos-clientes]] — Lock-in por datos: cómo la base de datos del negocio se convierte en una fosa competitiva vs. AgendaPro y Fresha
 - [[ventajas-estructurales-no-explotadas]] — 17 ventajas competitivas latentes en la arquitectura: multi-rol nativo, modelo flexible, mobile híbrido, permisos enterprise, founder único y más
+- [[modelo-cobro-payg-fase2]] — Migración de suscripciones fijas a módulos + packs de consumo (WhatsApp). Pros, contras, recomendación, impacto en sistemas (Abr 2026)
+- [[decision-citas-virtuales-vs-calendly]] — Fase 4: extender WebRTC a video+pantalla para entrar al territorio de Calendly con ventaja de datos (Abr 2026)
 
 ---
 
