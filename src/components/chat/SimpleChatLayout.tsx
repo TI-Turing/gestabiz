@@ -79,6 +79,7 @@ export function SimpleChatLayout({
     activeCall,
     incomingCall,
     isMuted,
+    remoteStream,
     startCall,
     answerCall,
     rejectCall,
@@ -454,7 +455,7 @@ export function SimpleChatLayout({
           callerName={callerName}
           callerAvatar={callerAvatar}
           isMuted={isMuted}
-          remoteStream={null}
+          remoteStream={remoteStream}
           onAnswer={answerCall}
           onReject={rejectCall}
           onHangUp={hangUp}

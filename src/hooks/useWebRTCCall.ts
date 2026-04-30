@@ -32,6 +32,7 @@ export interface UseWebRTCCallReturn {
   callState: CallState
   activeCall: CallSession | null
   localStream: MediaStream | null
+  remoteStream: MediaStream | null
   isMuted: boolean
   incomingCall: IncomingCallPayload | null
   startCall: (calleeId: string, conversationId: string, callType?: 'voice' | 'video') => Promise<void>
@@ -71,6 +72,7 @@ export function useWebRTCCall(currentUserId: string): UseWebRTCCallReturn {
   const [callState, setCallState] = useState<CallState>('idle')
   const [activeCall, setActiveCall] = useState<CallSession | null>(null)
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
   const [isMuted, setIsMuted] = useState(false)
   const [incomingCall, setIncomingCall] = useState<IncomingCallPayload | null>(null)
 
@@ -99,6 +101,11 @@ export function useWebRTCCall(currentUserId: string): UseWebRTCCallReturn {
   // ── Crear RTCPeerConnection ───────────────────────────────────────────────
   const createPC = useCallback(() => {
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS })
+    pc.ontrack = (e) => {
+      if (e.streams?.[0]) {
+        setRemoteStream(e.streams[0])
+      }
+    }
     pcRef.current = pc
     return pc
   }, [])
@@ -120,6 +127,7 @@ export function useWebRTCCall(currentUserId: string): UseWebRTCCallReturn {
 
     localStream?.getTracks().forEach(t => t.stop())
     setLocalStream(null)
+    setRemoteStream(null)
 
     if (signalingChannelRef.current) {
       supabase.removeChannel(signalingChannelRef.current)
@@ -258,12 +266,16 @@ export function useWebRTCCall(currentUserId: string): UseWebRTCCallReturn {
           setCallState('ended')
           setActiveCall(null)
         })
-        .subscribe()
+        .subscribe((status) => {
+          // Notificar al caller solo cuando la suscripción está confirmada,
+          // evitando una race condition donde el caller podría enviar el
+          // offer antes de que el callee esté escuchando.
+          if (status === 'SUBSCRIBED') {
+            channel.send({ type: 'broadcast', event: 'call_answered', payload: {} })
+          }
+        })
 
       signalingChannelRef.current = channel
-
-      // Notificar al caller que se contestó
-      channel.send({ type: 'broadcast', event: 'call_answered', payload: {} })
 
       setActiveCall({
         id: incomingCall.call_id,
@@ -350,6 +362,7 @@ export function useWebRTCCall(currentUserId: string): UseWebRTCCallReturn {
     callState,
     activeCall,
     localStream,
+    remoteStream,
     isMuted,
     incomingCall,
     startCall,
