@@ -838,7 +838,7 @@ export function useChat(userId: string | null) {
         }
       )
       .subscribe((status) => {
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           logger.error('Chat participants realtime subscription failed', new Error(`Status: ${status}`), {
             component: 'useChat',
             channel: 'chat_participants',
@@ -977,7 +977,7 @@ export function useChat(userId: string | null) {
         }
       )
       .subscribe((status) => {
-        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           logger.error('Chat messages realtime subscription failed', new Error(`Status: ${status}`), {
             component: 'useChat',
             channel: 'chat_messages',
