@@ -268,6 +268,8 @@ export function useChat(userId: string | null) {
           edited_at,
           deleted_at,
           metadata,
+          duration_seconds,
+          waveform,
           created_at,
           updated_at,
           sender:profiles(id, full_name, email, avatar_url)

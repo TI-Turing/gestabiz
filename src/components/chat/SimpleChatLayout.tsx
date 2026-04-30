@@ -8,6 +8,7 @@ import { useNotificationContext } from '@/contexts/NotificationContext';
 import { useWebRTCCall } from '@/hooks/useWebRTCCall';
 import { useUserPresence } from '@/hooks/useUserPresence';
 import { ChatInput } from './ChatInput';
+import { AudioMessage } from './AudioMessage';
 import { CallModal } from './CallModal';
 import { PresenceDot } from './PresenceDot';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -318,7 +319,16 @@ export function SimpleChatLayout({
                                   {message.sender.full_name || message.sender.email}
                                 </div>
                               )}
-                              <div className="wrap-break-word">{message.content}</div>
+                              {message.type === 'audio' ? (
+                                <AudioMessage
+                                  url={(message.metadata as { audio_url?: string })?.audio_url || ''}
+                                  duration={message.duration_seconds || 0}
+                                  waveform={message.waveform || undefined}
+                                  isOwnMessage={message.sender_id === userId}
+                                />
+                              ) : (
+                                <div className="wrap-break-word">{message.content}</div>
+                              )}
                               <div className="text-xs opacity-70 mt-1 flex items-center gap-1.5">
                                 {new Date(message.sent_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}
                                 <ReadReceipts
