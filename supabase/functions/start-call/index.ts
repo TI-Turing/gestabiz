@@ -11,13 +11,14 @@ serve(async (req) => {
 
   try {
     const jwt = req.headers.get('Authorization')?.replace('Bearer ', '')
-    const supabase = createClient(
+
+    // Service role client — bypasses RLS (usuario verificado manualmente con auth.getUser)
+    const db = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt)
+    const { data: { user }, error: authErr } = await db.auth.getUser(jwt)
     if (authErr || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS })
     }
@@ -29,19 +30,19 @@ serve(async (req) => {
     }
 
     // Verificar que el caller es participante de la conversación
-    const { data: member } = await supabase
+    const { data: member } = await db
       .from('conversation_members')
-      .select('id')
+      .select('user_id')
       .eq('conversation_id', conversation_id)
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     if (!member) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: CORS })
     }
 
     // Insertar sesión de llamada
-    const { data: callSession, error: insertErr } = await supabase
+    const { data: callSession, error: insertErr } = await db
       .from('call_sessions')
       .insert({
         conversation_id,
@@ -56,7 +57,7 @@ serve(async (req) => {
     if (insertErr) throw insertErr
 
     // Broadcast a través de Realtime al callee
-    await supabase.channel(`call:${callSession.id}`).send({
+    await db.channel(`call:${callSession.id}`).send({
       type: 'broadcast',
       event: 'incoming_call',
       payload: {

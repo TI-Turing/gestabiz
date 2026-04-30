@@ -11,13 +11,14 @@ serve(async (req) => {
 
   try {
     const jwt = req.headers.get('Authorization')?.replace('Bearer ', '')
-    const supabase = createClient(
+
+    // Service role client — bypasses RLS (usuario verificado manualmente con auth.getUser)
+    const db = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt)
+    const { data: { user }, error: authErr } = await db.auth.getUser(jwt)
     if (authErr || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS })
     }
@@ -29,7 +30,7 @@ serve(async (req) => {
     }
 
     // Obtener la sesión de llamada
-    const { data: callSession, error: fetchErr } = await supabase
+    const { data: callSession, error: fetchErr } = await db
       .from('call_sessions')
       .select('*')
       .eq('id', call_id)
@@ -50,7 +51,7 @@ serve(async (req) => {
     const durationSeconds = answeredAt ? Math.round((now.getTime() - answeredAt.getTime()) / 1000) : null
 
     // Actualizar sesión
-    const { error: updateErr } = await supabase
+    const { error: updateErr } = await db
       .from('call_sessions')
       .update({
         status,
@@ -62,7 +63,7 @@ serve(async (req) => {
     if (updateErr) throw updateErr
 
     // Insertar mensaje call_log en el hilo
-    await supabase.from('messages').insert({
+    await db.from('messages').insert({
       conversation_id: callSession.conversation_id,
       sender_id: user.id,
       type: 'call_log',
@@ -78,7 +79,7 @@ serve(async (req) => {
     })
 
     // Broadcast evento de fin de llamada
-    await supabase.channel(`call:${call_id}`).send({
+    await db.channel(`call:${call_id}`).send({
       type: 'broadcast',
       event: 'call_ended',
       payload: { call_id, status, duration_seconds: durationSeconds },
