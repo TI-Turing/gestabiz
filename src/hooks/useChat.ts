@@ -791,7 +791,7 @@ export function useChat(userId: string | null) {
           table: 'chat_participants',
           filter: `user_id=eq.${userId}`,
         },
-        (payload) => {
+        async (payload) => {
           // 🔥 FIX: NO hacer fetchConversations - causa 1000+ queries
           // Solo actualizar el estado local con los nuevos datos
           const updated = payload.new as ChatParticipant;
@@ -807,9 +807,45 @@ export function useChat(userId: string | null) {
             }
             return conv;
           }));
+
+          // ✅ FIX REALTIME: Cuando llega un mensaje nuevo (unread_count sube),
+          // actualizar last_message_at y last_message_preview en la lista de
+          // conversaciones. Una sola query por mensaje recibido — no causa bucle.
+          if ((updated.unread_count ?? 0) > 0) {
+            const { data: convData } = await supabase
+              .from('chat_conversations')
+              .select('id, last_message_at, last_message_preview, updated_at')
+              .eq('id', updated.conversation_id)
+              .single();
+
+            if (convData) {
+              setConversations(prev => prev.map(conv => {
+                if (conv.id === convData.id) {
+                  return {
+                    ...conv,
+                    last_message_at: convData.last_message_at,
+                    last_message_preview: convData.last_message_preview,
+                  };
+                }
+                return conv;
+              }).sort((a, b) => {
+                const dateA = new Date(a.last_message_at).getTime();
+                const dateB = new Date(b.last_message_at).getTime();
+                return dateB - dateA;
+              }));
+            }
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          logger.error('Chat participants realtime subscription failed', new Error(`Status: ${status}`), {
+            component: 'useChat',
+            channel: 'chat_participants',
+            userId,
+          });
+        }
+      });
     
     return () => {
       supabase.removeChannel(channel);
@@ -941,6 +977,13 @@ export function useChat(userId: string | null) {
         }
       )
       .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          logger.error('Chat messages realtime subscription failed', new Error(`Status: ${status}`), {
+            component: 'useChat',
+            channel: 'chat_messages',
+            activeConversationId,
+          });
+        }
       });
     
     // ✅ FIX CRÍTICO: usar id estable por instancia para evitar colisiones
