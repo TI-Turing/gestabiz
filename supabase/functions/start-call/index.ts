@@ -57,17 +57,39 @@ serve(async (req) => {
 
     if (insertErr) throw insertErr
 
-    // Broadcast a través de Realtime al callee
-    await db.channel(`call:${callSession.id}`).send({
-      type: 'broadcast',
-      event: 'incoming_call',
-      payload: {
-        call_id: callSession.id,
-        caller_id: user.id,
-        call_type,
-        conversation_id,
-      },
-    })
+    // Broadcast al callee vía REST (no requiere WebSocket en Edge Function)
+    // El callee escucha en canal user-calls:<callee_id>
+    const broadcastRes = await fetch(
+      `${Deno.env.get('SUPABASE_URL')}/realtime/v1/api/broadcast`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!}`,
+        },
+        body: JSON.stringify({
+          messages: [
+            {
+              topic: `user-calls:${callee_id}`,
+              event: 'incoming_call',
+              payload: {
+                call_id: callSession.id,
+                caller_id: user.id,
+                call_type,
+                conversation_id,
+              },
+            },
+          ],
+        }),
+      }
+    )
+
+    if (!broadcastRes.ok) {
+      const broadcastErr = await broadcastRes.text()
+      console.error('Realtime broadcast failed:', broadcastErr)
+      // No lanzamos error — la llamada se creó, el cliente puede hacer polling
+    }
 
     return new Response(
       JSON.stringify({ success: true, call_id: callSession.id }),
