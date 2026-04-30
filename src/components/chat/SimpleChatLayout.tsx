@@ -331,39 +331,44 @@ export function SimpleChatLayout({
                                   {message.content && message.content !== 'Archivo adjunto' && (
                                     <div className="wrap-break-word">{message.content}</div>
                                   )}
-                                  {Array.isArray(message.attachments) && message.attachments.length > 0 && (
-                                    <div className={`${message.content && message.content !== 'Archivo adjunto' ? 'mt-2 ' : ''}space-y-2`}>
-                                      {message.attachments.map((att) => (
-                                        att.type.startsWith('image/') ? (
-                                          <a
-                                            key={att.url}
-                                            href={att.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="block"
-                                          >
-                                            <img
+                                  {(() => {
+                                    const atts = typeof message.attachments === 'string'
+                                      ? (() => { try { return JSON.parse(message.attachments as unknown as string) } catch { return null } })()
+                                      : message.attachments
+                                    return Array.isArray(atts) && atts.length > 0 ? (
+                                      <div className={`${message.content && message.content !== 'Archivo adjunto' ? 'mt-2 ' : ''}space-y-2`}>
+                                        {atts.map((att) => (
+                                          att.type.startsWith('image/') ? (
+                                            <a
+                                              key={att.url}
+                                              href={att.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="block"
+                                            >
+                                              <img
+                                                src={att.url}
+                                                alt={att.name}
+                                                className="max-w-[240px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                                loading="lazy"
+                                              />
+                                            </a>
+                                          ) : att.type.startsWith('video/') ? (
+                                            <video
+                                              key={att.url}
                                               src={att.url}
-                                              alt={att.name}
-                                              className="max-w-[240px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                              loading="lazy"
-                                            />
-                                          </a>
-                                        ) : att.type.startsWith('video/') ? (
-                                          <video
-                                            key={att.url}
-                                            src={att.url}
-                                            controls
-                                            className="max-w-[240px] rounded-lg"
-                                            aria-label={att.name}
-                                          >
-                                            <track kind="captions" />
+                                              controls
+                                              className="max-w-[240px] rounded-lg"
+                                              aria-label={att.name}
+                                            >
+                                              <track kind="captions" />
                                           </video>
                                         ) : null
                                       ))}
                                     </div>
-                                  )}
-                                  {!message.content && (!message.attachments || message.attachments.length === 0) && (
+                                    ) : null
+                                  })()}
+                                  {!message.content && (!message.attachments || (Array.isArray(message.attachments) && message.attachments.length === 0)) && (
                                     <div className="wrap-break-word text-muted-foreground italic">Mensaje vacío</div>
                                   )}
                                 </>

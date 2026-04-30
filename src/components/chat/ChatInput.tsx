@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { FileUpload } from './FileUpload'
 import { EmojiPicker } from './EmojiPicker'
 import { MediaPreview } from './MediaPreview'
 import { MarketingVaultPicker } from './MarketingVaultPicker'
@@ -53,13 +52,13 @@ export function ChatInput({
   const [message, setMessage] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [attachments, setAttachments] = useState<ChatAttachment[]>([])
-  const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [isEmojiOpen, setIsEmojiOpen] = useState(false)
   const [isVaultOpen, setIsVaultOpen] = useState(false)
   const [mediaPreview, setMediaPreview] = useState<{ file: File; objectUrl: string; type: 'image' | 'video' } | null>(null)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const micButtonRef = useRef<HTMLButtonElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pointerStartXRef = useRef<number>(0)
   const swipeCancelRef = useRef(false)
@@ -110,9 +109,49 @@ export function ChatInput({
     }, 0)
   }
 
-  const handleUploadComplete = (uploaded: ChatAttachment[]) => {
-    setAttachments(prev => [...prev, ...uploaded])
-    setIsUploadOpen(false)
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = '' // Permite re-seleccionar el mismo archivo
+
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      toast.error('Solo se permiten imágenes y videos')
+      return
+    }
+    if (file.type.startsWith('video/') && file.size > VIDEO_MAX_MB * 1024 * 1024) {
+      toast.error(`El video excede el límite de ${VIDEO_MAX_MB} MB`)
+      return
+    }
+
+    try {
+      setIsSending(true)
+      let processedFile: File = file
+      if (file.type.startsWith('image/')) {
+        try { processedFile = await compress(file) } catch { /* silencio */ }
+      }
+      const { supabase } = await import('@/lib/supabase')
+      const ext = file.name.split('.').pop() || (file.type.startsWith('image/') ? 'jpg' : 'mp4')
+      const path = `${conversationId}/${Date.now()}-${Math.random().toString(36).slice(7)}.${ext}`
+      const { error: uploadError } = await supabase.storage.from('chat-attachments').upload(path, processedFile)
+      if (uploadError) throw uploadError
+      const { data: signedData, error: signError } = await supabase.storage
+        .from('chat-attachments')
+        .createSignedUrl(path, 31536000)
+      if (signError) throw signError
+      if (onTypingChange) onTypingChange(false)
+      await onSendMessage('Archivo adjunto', replyToMessage?.id, [{
+        url: signedData.signedUrl,
+        name: file.name,
+        size: processedFile.size,
+        type: file.type,
+      }])
+      if (onCancelReply) onCancelReply()
+    } catch {
+      toast.error('No se pudo subir el archivo')
+    } finally {
+      setIsSending(false)
+      textareaRef.current?.focus()
+    }
   }
 
   const handleRemoveAttachment = (index: number) => {
@@ -342,7 +381,7 @@ export function ChatInput({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="top" align="start">
-              <DropdownMenuItem onSelect={() => setIsUploadOpen(true)}>
+              <DropdownMenuItem onSelect={() => fileInputRef.current?.click()}>
                 <FileIcon className="h-4 w-4 mr-2" /> Archivo del dispositivo
               </DropdownMenuItem>
               {isBusinessSide && businessId && (
@@ -490,24 +529,14 @@ export function ChatInput({
         {replyToMessage && <> · <kbd className="px-1 py-0.5 bg-muted rounded">Esc</kbd> para cancelar</>}
       </div>
 
-      {/* Popover de upload de archivos */}
-      {isUploadOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-80 sm:w-96 z-30 shadow-lg border bg-background rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Subir archivo</span>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsUploadOpen(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <FileUpload
-            conversationId={conversationId}
-            messageId={`temp-${Date.now()}`}
-            onUploadComplete={handleUploadComplete}
-            maxFiles={5}
-            maxSizeMB={10}
-          />
-        </div>
-      )}
+      {/* Selector de archivo del dispositivo */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime"
+        className="hidden"
+        onChange={handleFileChange}
+      />
 
       {/* Media preview modal */}
       {mediaPreview && (

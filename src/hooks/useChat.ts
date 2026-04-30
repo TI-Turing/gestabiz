@@ -420,7 +420,7 @@ export function useChat(userId: string | null) {
           p_sender_id: userId,
           p_content: params.content,
           p_type: params.type || 'text',
-          p_attachments: params.attachments ? JSON.stringify(params.attachments) : null,
+          p_attachments: params.attachments ?? null,
           p_reply_to_id: params.reply_to_id || null,
           p_metadata: params.metadata ?? null,
           p_duration_seconds: params.duration_seconds ?? null,
