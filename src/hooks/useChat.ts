@@ -69,7 +69,7 @@ export interface ChatMessage {
   conversation_id: string;
   sender_id: string;
   content: string;
-  type: 'text' | 'image' | 'file' | 'system';
+  type: 'text' | 'image' | 'file' | 'system' | 'audio' | 'video' | 'call_log';
   attachments: ChatAttachment[] | null;
   sent_at: string;
   delivered_at: string | null;
@@ -78,6 +78,8 @@ export interface ChatMessage {
   edited_at: string | null;
   deleted_at: string | null;
   metadata: Record<string, unknown>;
+  duration_seconds: number | null;
+  waveform: number[] | null;
   created_at: string;
   updated_at: string;
   
@@ -393,7 +395,9 @@ export function useChat(userId: string | null) {
         reply_to_id: params.reply_to_id || null,
         edited_at: null,
         deleted_at: null,
-        metadata: {},
+        metadata: (params.metadata as Record<string, unknown>) || {},
+        duration_seconds: params.duration_seconds ?? null,
+        waveform: params.waveform || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         is_sent: false,
@@ -416,6 +420,9 @@ export function useChat(userId: string | null) {
           p_type: params.type || 'text',
           p_attachments: params.attachments ? JSON.stringify(params.attachments) : null,
           p_reply_to_id: params.reply_to_id || null,
+          p_metadata: params.metadata ?? null,
+          p_duration_seconds: params.duration_seconds ?? null,
+          p_waveform: params.waveform ?? null,
         });
       
       if (rpcError) {

@@ -160,8 +160,8 @@ export function MessageBubble({
           ) : (message.type as ChatMessageType) === 'audio' ? (
             <AudioMessage
               url={message.metadata?.audio_url as string || ''}
-              duration={(message as unknown as { duration_seconds?: number }).duration_seconds || 0}
-              waveform={message.metadata?.waveform as number[] | undefined}
+              duration={message.duration_seconds || 0}
+              waveform={message.waveform || undefined}
               isOwnMessage={isOwnMessage}
             />
           ) : (message.type as ChatMessageType) === 'video' ? (
