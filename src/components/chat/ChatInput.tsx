@@ -164,8 +164,11 @@ export function ChatInput({
       const path = `${conversationId}/${Date.now()}-${Math.random().toString(36).slice(7)}.${ext}`
       const { error } = await supabase.storage.from('chat-attachments').upload(path, file)
       if (error) throw error
-      const { data } = supabase.storage.from('chat-attachments').getPublicUrl(path)
-      setAttachments(prev => [...prev, { url: data.publicUrl, name: file.name, size: file.size, type: file.type }])
+      const { data: signedData, error: signError } = await supabase.storage
+        .from('chat-attachments')
+        .createSignedUrl(path, 31536000) // 1 año
+      if (signError) throw signError
+      setAttachments(prev => [...prev, { url: signedData.signedUrl, name: file.name, size: file.size, type: file.type }])
     } catch {
       toast.error('No se pudo subir el archivo')
     }

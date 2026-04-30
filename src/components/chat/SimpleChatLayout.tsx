@@ -327,7 +327,46 @@ export function SimpleChatLayout({
                                   isOwnMessage={message.sender_id === userId}
                                 />
                               ) : (
-                                <div className="wrap-break-word">{message.content}</div>
+                                <>
+                                  {message.content && message.content !== 'Archivo adjunto' && (
+                                    <div className="wrap-break-word">{message.content}</div>
+                                  )}
+                                  {Array.isArray(message.attachments) && message.attachments.length > 0 && (
+                                    <div className={`${message.content && message.content !== 'Archivo adjunto' ? 'mt-2 ' : ''}space-y-2`}>
+                                      {message.attachments.map((att) => (
+                                        att.type.startsWith('image/') ? (
+                                          <a
+                                            key={att.url}
+                                            href={att.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="block"
+                                          >
+                                            <img
+                                              src={att.url}
+                                              alt={att.name}
+                                              className="max-w-[240px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                              loading="lazy"
+                                            />
+                                          </a>
+                                        ) : att.type.startsWith('video/') ? (
+                                          <video
+                                            key={att.url}
+                                            src={att.url}
+                                            controls
+                                            className="max-w-[240px] rounded-lg"
+                                            aria-label={att.name}
+                                          >
+                                            <track kind="captions" />
+                                          </video>
+                                        ) : null
+                                      ))}
+                                    </div>
+                                  )}
+                                  {!message.content && (!message.attachments || message.attachments.length === 0) && (
+                                    <div className="wrap-break-word text-muted-foreground italic">Mensaje vacío</div>
+                                  )}
+                                </>
                               )}
                               <div className="text-xs opacity-70 mt-1 flex items-center gap-1.5">
                                 {new Date(message.sent_at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}

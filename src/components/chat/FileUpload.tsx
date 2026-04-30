@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import * as Sentry from '@sentry/react'
-import { Upload, X, File, Image as ImageIcon, FileText, Archive, Video } from 'lucide-react';
+import { Upload, X, File, Image as ImageIcon, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/lib/supabase';
@@ -46,14 +46,7 @@ export function FileUpload({
     'image/webp',
     'video/mp4',
     'video/webm',
-    'video/quicktime',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'text/plain',
-    'application/zip'
+    'video/quicktime'
   ]
 }: FileUploadProps) {
   const [files, setFiles] = useState<File[]>([]);
@@ -194,10 +187,16 @@ export function FileUpload({
 
         setUploadProgress(prev => ({ ...prev, [rawFile.name]: 100 }));
 
-        const { data: urlData } = supabase.storage.from('chat-attachments').getPublicUrl(filePath);
+        const { data: signedData, error: signError } = await supabase.storage
+          .from('chat-attachments')
+          .createSignedUrl(filePath, 31536000); // 1 año
+
+        if (signError) {
+          throw new Error(`Error al obtener URL: ${signError.message}`);
+        }
 
         uploadedAttachments.push({
-          url: urlData.publicUrl,
+          url: signedData.signedUrl,
           name: rawFile.name,
           size: file.size,
           type: file.type
@@ -226,8 +225,6 @@ export function FileUpload({
   const getFileIcon = (type: string) => {
     if (type.startsWith('image/')) return <ImageIcon className="h-4 w-4" />;
     if (type.startsWith('video/')) return <Video className="h-4 w-4" />;
-    if (type === 'application/pdf') return <FileText className="h-4 w-4" />;
-    if (type.includes('zip') || type.includes('rar')) return <Archive className="h-4 w-4" />;
     return <File className="h-4 w-4" />;
   };
 
@@ -271,7 +268,7 @@ export function FileUpload({
           </label>
         </p>
         <p className="text-xs text-muted-foreground">
-          Máximo {maxFiles} archivos, {maxSizeMB}MB cada uno
+          Solo imágenes y videos · Máx. {maxFiles} archivos, {maxSizeMB}MB c/u (videos {VIDEO_MAX_MB}MB)
         </p>
       </div>
 
