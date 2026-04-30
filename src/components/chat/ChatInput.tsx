@@ -158,14 +158,27 @@ export function ChatInput({
     setAttachments(prev => prev.filter((_, i) => i !== index))
   }
 
-  const handleVaultSelect = (files: MarketingVaultFile[]) => {
-    const vaultAttachments: ChatAttachment[] = files.map(f => ({
-      url: f.url ?? '',
-      name: f.name,
-      size: 0,
-      type: f.isImage ? 'image/jpeg' : 'application/octet-stream',
-    }))
-    setAttachments(prev => [...prev, ...vaultAttachments])
+  const handleVaultSelect = async (files: MarketingVaultFile[]) => {
+    // Generar URLs firmadas con TTL de 7 días para los archivos del vault (bucket privado)
+    const { supabase: supabaseClient } = await import('@/lib/supabase')
+    const attachmentsWithUrls: ChatAttachment[] = await Promise.all(
+      files.map(async (f) => {
+        let url = f.url ?? ''
+        if (f.path) {
+          const { data } = await supabaseClient.storage
+            .from('business-marketing-vault')
+            .createSignedUrl(f.path, 604800) // 7 días
+          if (data?.signedUrl) url = data.signedUrl
+        }
+        return {
+          url,
+          name: f.name,
+          size: 0,
+          type: f.isImage ? 'image/jpeg' : 'application/octet-stream',
+        }
+      })
+    )
+    setAttachments(prev => [...prev, ...attachmentsWithUrls])
   }
 
   // Gestiona el pegado / selección de media (imágenes y videos con preview)

@@ -8,7 +8,7 @@ Se usa junto con el sistema `claude-mem` (MCP) para persistencia cross-sesión d
 
 ---
 
-## Sistemas (22 notas)
+## Sistemas (23 notas)
 
 Documentación técnica de cada módulo funcional del producto.
 
@@ -36,6 +36,7 @@ Documentación técnica de cada módulo funcional del producto.
 | [[sistema-referrals]] | Programa de referidos: cupones, comisiones MP, kill-switch |
 | [[sistema-google-calendar]] | OAuth Google, sync bidireccional, calendar_sync_settings |
 | [[sistema-mobile-hybrid]] | Expo + WebView, auth bridging, EAS Build (.aab/.apk/.ipa) |
+| [[sistema-marketing]] | Marketing Vault: upload/organización/envío chat+WhatsApp+email, plan Pro+ |
 
 ---
 
@@ -91,6 +92,7 @@ Specs de features en desarrollo, pendientes o ideas futuras.
 - [[SEO-SEM-estrategia-2026]] — Estrategia SEO/SEM 2026 (resumen ejecutivo)
 - [[SEO-SEM-Strategy-Colombia-LATAM]] — SEO/SEM completo: keywords, competidores, technical SEO, content strategy
 - [[facturacion-electronica-matias-api]] — Integración facturación electrónica vía Matias API
+- [[feed-publicaciones-cliente]] — Fase 3: tabla marketing_publications, feed en dashboard cliente, realtime, KPIs
 
 ---
 
@@ -103,7 +105,7 @@ Contexto del negocio, auditorías y estrategia general.
 
 ---
 
-## Decisiones (6 notas)
+## Decisiones (7 notas)
 
 Decisiones arquitectónicas y trade-offs importantes.
 
@@ -113,6 +115,7 @@ Decisiones arquitectónicas y trade-offs importantes.
 - [[ventajas-estructurales-no-explotadas]] — 17 ventajas competitivas latentes en la arquitectura: multi-rol nativo, modelo flexible, mobile híbrido, permisos enterprise, founder único y más
 - [[modelo-cobro-payg-fase2]] — Migración de suscripciones fijas a módulos + packs de consumo (WhatsApp). Pros, contras, recomendación, impacto en sistemas (Abr 2026)
 - [[decision-citas-virtuales-vs-calendly]] — Fase 4: extender WebRTC a video+pantalla para entrar al territorio de Calendly con ventaja de datos (Abr 2026)
+- [[tdd-metodologia-desarrollo]] — Adopción de TDD como metodología oficial (Red→Green→Refactor), infraestructura disponible (Abr 2026)
 
 ---
 

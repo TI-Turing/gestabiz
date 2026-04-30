@@ -2058,6 +2058,7 @@ export interface MarketingVaultFile {
   last_accessed_at: string
   metadata?: Record<string, unknown>
   // Computed
+  path: string
   url?: string
   isImage?: boolean
 }

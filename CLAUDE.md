@@ -200,6 +200,14 @@ Contenido de la nota...
     - **Agrupación por planes**: todas las features agrupadas por plan (Gratuito → Básico → Pro), aclarando que cada plan incluye lo del anterior más sus exclusivas.
     - **Propuesta de Valor orientada a ventas**: diagnóstico del problema, solución, ROI, comparativa con Calendly/Booksy/Fresha y competidores locales, verticales, planes, roadmap, CTA. Enfatizar que Gestabiz supera en completitud y robustez a los líderes del mercado.
     - **Workflow al cambiar algo**: editar `scripts/generate_product_docs.py` en las secciones correspondientes (resumen + detalle + pitch) → ejecutar `python scripts/generate_product_docs.py` → verificar ambos .docx → commit.
+17. **TDD — Test primero, luego código** — Toda nueva funcionalidad, hook, servicio o componente se desarrolla siguiendo el ciclo Red → Green → Refactor:
+    - **Red**: escribir la prueba unitaria que define el comportamiento esperado (debe fallar)
+    - **Green**: escribir el mínimo código necesario para que la prueba pase
+    - **Refactor**: limpiar el código sin romper las pruebas
+    - Las pruebas viven en `__tests__/` dentro de la carpeta del archivo que testean
+    - Nombrado: `NombreArchivo.test.ts` o `NombreArchivo.test.tsx`
+    - Usar las utilidades en `src/test-utils/` (renderWithProviders, mock factories, supabase mocks)
+    - Correr `npm run test:watch` durante el ciclo Red→Green para feedback inmediato
 
 ---
 
@@ -619,6 +627,19 @@ import { PermissionGate } from '@/components/ui/PermissionGate'
 - **Edge Function**: `send-bug-report-email`
 - **Severidades**: Critical, High, Medium, Low
 - **Logger**: `src/lib/logger.ts` — logger centralizado con integración a `error_logs`, `login_logs` y Sentry
+
+### 27. Sistema de Marketing Vault — COMPLETADO (Abr 2026)
+
+- **Componentes**: `src/components/admin/marketing/MarketingManager.tsx` (vista principal con dos paneles, upload drag & drop, lightbox), `src/components/admin/marketing/SendAssetModal.tsx` (envío multi-canal: WhatsApp/Email con RecipientPicker)
+- **Picker de chat**: `src/components/chat/MarketingVaultPicker.tsx` — ya existente, integrado en ChatInput
+- **Hooks**: `useMarketingVault` (lista + signed URLs batch), `useUploadMarketingAsset`, `useDeleteMarketingAsset`, `useCreateMarketingFolder` — todos en `src/hooks/useMarketingVault.ts`
+- **Edge Functions**: `send-marketing-whatsapp` (WhatsApp Cloud API, ≤50 destinatarios, detecta tipo image/video/document), `send-marketing-email` (Brevo, HTML responsive con imagen embebida o link de descarga, footer con logo del negocio)
+- **Storage**: bucket `business-marketing-vault` (private, 50 MB/archivo); carpetas virtuales con archivo `.keep`
+- **Acceso sidebar**: `/app/admin/marketing` — lazy loaded, protegido con `planWrap('marketing', ...)`
+- **Planes**: solo `pro` y superiores — negocios en `free`/`basico` ven pantalla de upsell
+- **CRÍTICO**: bucket privado — NUNCA usar `getPublicUrl()`, siempre `createSignedUrl()`. TTL: 1h para thumbnails, 7d para adjuntos en chat y envíos
+- **CRÍTICO**: `MarketingVaultFile` tiene campo obligatorio `path: string` — necesario para generar signed URLs on-demand
+- **Fase 3 pendiente**: tabla `marketing_publications`, feed en dashboard cliente — ver spec en `Obsidian/Gestabiz/Features/feed-publicaciones-cliente.md`
 
 ---
 

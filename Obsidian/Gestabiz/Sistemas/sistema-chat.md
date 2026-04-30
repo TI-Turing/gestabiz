@@ -129,6 +129,17 @@ Actualización de presencia: Supabase Realtime Presence (heartbeat 30s + onbefor
 - `supabase/migrations/20260428000001-7` — 7 migraciones
 - `supabase/functions/start-call/`, `supabase/functions/end-call/`
 
+## Integración con Marketing Vault
+
+El bucket `business-marketing-vault` está accesible desde el chat mediante `MarketingVaultPicker`:
+
+- Al adjuntar desde vault, `ChatInput.handleVaultSelect` genera signed URL TTL **7 días** (no 1h) para garantizar que el destinatario pueda ver el archivo durante la conversación.
+- Hook `useMarketingVault` ya usa `createSignedUrls` en batch (TTL 1h para thumbnails).
+- Los archivos `.keep` (marcadores de carpetas vacías) son filtrados antes de mostrarlos.
+- El campo `path: string` es obligatorio en `MarketingVaultFile` para poder generar signed URLs on-demand.
+
+Ver spec completo del módulo de marketing: [[sistema-marketing]]
+
 ## Notas Relacionadas
 
 - [[sistema-notificaciones]] — `send-unread-chat-emails` notifica mensajes no leídos
