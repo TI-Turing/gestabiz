@@ -297,6 +297,12 @@ verify_jwt = false
 [functions.create-test-users]
 verify_jwt = false
 
+[functions.start-call]
+verify_jwt = false
+
+[functions.end-call]
+verify_jwt = false
+
 [analytics]
 enabled = false
 
