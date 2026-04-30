@@ -84,7 +84,8 @@ describe('SUPABASE_KEY_PATTERN — keys aceptadas y rechazadas', () => {
 
   describe('Keys válidas', () => {
     it.each([
-      'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH',
+      // NOTA: usar claves ficticias — NUNCA usar claves reales en tests
+      'sb_publishable_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
       'sb_publishable_' + 'x'.repeat(30),
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiJ9.abc123',
     ])('acepta "%s"', (key) => {
@@ -167,8 +168,8 @@ describe('isDemoMode derivado de credenciales', () => {
   })
 
   it('hasValidCredentials es true para proyecto DEV real', () => {
-    const url = 'https://dkancockzvcqorqbwtyh.supabase.co'
-    const key = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH_longkeysuffix'
+    const url = 'https://test-project-id-fake.supabase.co'
+    const key = 'sb_publishable_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 
     const URL_PATTERN = /^(https:\/\/[a-z0-9-]+\.supabase\.co|http:\/\/(localhost|127\.0\.0\.1):54321)$/
     const KEY_PATTERN = /^(sb_publishable_|eyJ)/

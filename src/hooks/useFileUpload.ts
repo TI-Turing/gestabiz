@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { logger } from '@/lib/logger'
 import * as Sentry from '@sentry/react'
 
-export type StorageBucket = 'business-logos' | 'location-images' | 'service-images' | 'user-avatars' | 'location-videos'
+export type StorageBucket = 'business-logos' | 'location-images' | 'service-images' | 'user-avatars' | 'location-videos' | 'chat-attachments' | 'business-marketing-vault'
 
 interface UploadOptions {
   maxSizeMB?: number
@@ -25,11 +25,13 @@ const DEFAULT_OPTIONS: UploadOptions = {
 }
 
 const BUCKET_LIMITS: Record<StorageBucket, number> = {
-  'business-logos': 2, // 2 MB
-  'location-images': 5, // 5 MB
-  'service-images': 2, // 2 MB
-  'user-avatars': 2, // 2 MB
-  'location-videos': 50, // 50 MB
+  'business-logos': 2,
+  'location-images': 5,
+  'service-images': 2,
+  'user-avatars': 2,
+  'location-videos': 50,
+  'chat-attachments': 10,
+  'business-marketing-vault': 50,
 }
 
 export function useFileUpload(bucket: StorageBucket) {

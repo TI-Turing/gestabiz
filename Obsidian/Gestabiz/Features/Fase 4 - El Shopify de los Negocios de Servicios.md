@@ -1,6 +1,6 @@
 ---
 date: 2026-04-25
-tags: [roadmap, fase-4, shopify, pagos, promociones, crm, estadisticas, recordatorios]
+tags: [roadmap, fase-4, shopify, pagos, promociones, crm, estadisticas, recordatorios, citas-virtuales, calendly, webrtc]
 status: vision
 ---
 
@@ -162,7 +162,70 @@ El salto conceptual de Fase 4 es claro: pasar de ser una herramienta de agendami
 
 ## Módulos Adicionales a Considerar en Fase 4
 
-### 6. Tienda Online del Negocio
+### 6. Citas Virtuales — Entrando al Territorio de Calendly
+
+**Origen**: las llamadas de voz en el chat (WebRTC, implementadas en v1.0.x) abren la puerta natural a citas completamente en línea.
+
+**La tesis**: Calendly es simple y rápido pero vacío de contexto. Gestabiz sacrifica esa simplicidad a cambio de una **base de datos nutrida** del negocio: historial del cliente, notas del profesional, pagos, reseñas. Eso es una ventaja estructural enorme para negocios que atienden personas de forma recurrente.
+
+**Modalidades de cita virtual**:
+- **Llamada de voz** (ya existe en chat — reutilizar WebRTC)
+- **Videollamada** (activar cámara en la sesión existente de WebRTC)
+- **Compartir pantalla** (para asesorías, clases, consultas técnicas)
+- **Chat de texto** (ya existe)
+- **Combinada**: video + pantalla compartida + chat simultáneo
+
+**Flujo de cita virtual**:
+1. Cliente reserva cita en el wizard (igual que siempre)
+2. Al llegar la hora → notificación push/email con botón "Unirse a la sesión"
+3. Ambas partes entran a la sala virtual desde la app (no requiere Zoom, Meet ni software externo)
+4. Sala efímera: desaparece al terminar la cita
+5. Post-cita: reseña, pago automático, próxima cita sugerida
+
+**Nuevos verticales habilitados** (hoy Gestabiz no los tiene):
+
+| Vertical | Tipo de cita | Por qué Gestabiz gana vs. Calendly |
+|----------|-------------|-------------------------------------|
+| Psicólogos / terapeutas | Video privado + notas de sesión | Historial clínico del paciente, notas privadas, recurrencia |
+| Abogados | Video + compartir pantalla | Documentos del caso, facturación integrada |
+| Nutricionistas | Video + formulario pre-cita | Progreso del cliente, seguimiento de métricas |
+| Tutores / profesores | Video + pantalla | Historial de clases, materiales por sesión |
+| Coaches de vida / fitness | Video | Metas, seguimiento, paquetes de sesiones |
+| Médicos (telemedicina) | Video + historial | Recetas digitales, historial de consultas |
+| Asesores financieros | Video + pantalla | Portafolio del cliente, notas privadas |
+| Diseñadores / freelancers | Video + pantalla | Proyectos, entregas, facturación |
+
+**Qué diferencia Gestabiz de Calendly en este segmento**:
+
+| Dimensión | Calendly | Gestabiz |
+|-----------|----------|---------|
+| Scheduling | ⭐ Muy simple y rápido | ✅ Wizard completo (sedes, empleados, servicios) |
+| Base de datos del cliente | ❌ No existe | ✅ Historial completo, notas, pagos, reseñas |
+| Contexto pre-cita | ❌ Sin formularios clínicos | ✅ Formularios configurables de intake |
+| Cobro integrado | ⚠️ Solo Stripe básico | ✅ Stripe + PayU + MercadoPago + anticipos |
+| Notas de sesión | ❌ No | ✅ Notas privadas del profesional (Fase 4) |
+| Chat con el cliente | ❌ No | ✅ Chat en tiempo real + historial |
+| Videollamada nativa | ❌ Delega a Zoom/Meet | ✅ WebRTC integrado (sin salir de la app) |
+| Multi-empleado | ⚠️ Limitado | ✅ Jerarquía completa, horarios por empleado |
+| Recordatorios | ⚠️ Básicos | ✅ Escalonados, multi-canal, confirmación |
+| Analytics del negocio | ❌ Mínimo | ✅ Dashboard ejecutivo + reportes |
+
+**Trade-off explícito**: Gestabiz NO intenta ganarle a Calendly en simplicidad de setup. El objetivo es ser la herramienta que el profesional no puede abandonar porque tiene AÑOS de datos de sus clientes dentro.
+
+**Implementación técnica**:
+- WebRTC ya funciona para voz — extender a video y pantalla es incremental
+- Sala virtual: tabla `virtual_rooms` (appointment_id, token, started_at, ended_at)
+- Grabación opcional (consentimiento explícito del cliente)
+- HIPAA / privacidad: salas efímeras, sin grabación por defecto, cifrado end-to-end
+
+**Tablas nuevas**:
+- `virtual_rooms`: sala por cita (token, estado, duración)
+- `session_notes`: notas post-sesión del profesional (privadas, por appointment_id)
+- `appointment_type`: nueva columna en `appointments` → `'in_person' | 'virtual' | 'hybrid'`
+
+---
+
+### 7. Tienda Online del Negocio
 
 - El negocio puede vender **productos físicos** (shampoos, cremas, aceites, suplementos) directamente desde su perfil público en Gestabiz
 - Carrito de compra simple + checkout con los mismos gateways de pago
@@ -226,7 +289,9 @@ Equivalente al "App Store" de Shopify:
 |-----------|--------|---------|---------|
 | 🔴 Alta | Pagos a clientes (prepago + anticipo) | Muy alto (monetización directa) | Alto |
 | 🔴 Alta | Recordatorios escalonados + confirmación | Muy alto (reduce no-shows) | Medio |
+| 🔴 Alta | **Citas virtuales (video + pantalla)** — WebRTC incremental | Muy alto (nuevos verticales) | Medio |
 | 🟠 Media | CRM avanzado (notas, etiquetas, formularios) | Alto (retención) | Medio |
+| 🟠 Media | Notas de sesión post-cita (psicólogos, coaches) | Alto (lock-in profesional) | Bajo |
 | 🟠 Media | Promociones y cupones | Alto (adquisición) | Medio |
 | 🟠 Media | Dashboard ejecutivo mejorado | Alto (engagement admin) | Bajo |
 | 🟡 Normal | Paquetes de sesiones y suscripciones de cliente | Medio-alto | Alto |
@@ -260,6 +325,8 @@ Equivalente al "App Store" de Shopify:
 
 - [[Fase 2 - Contabilidad, DIAN y App Móvil]]
 - [[Fase 3 - IA, Automatización y Agentes]]
+- [[decision-citas-virtuales-vs-calendly]]
+- [[sistema-chat]]
 - [[sistema-billing]]
 - [[sistema-contable]]
 - [[sistema-notificaciones]]

@@ -18,7 +18,7 @@ Documentación técnica de cada módulo funcional del producto.
 | [[sistema-permisos]] | PermissionGate, 79 permisos, 9 templates, RPC service |
 | [[sistema-ausencias]] | Ausencias, vacaciones, aprobación obligatoria, balance |
 | [[sistema-notificaciones]] | Email/SMS/WhatsApp, in-app, recordatorios cron |
-| [[sistema-chat]] | Chat en tiempo real, Realtime, FloatingChatButton |
+| [[sistema-chat]] | Chat v2: WebRTC, audio, emojis, modelo de relación, presencia, vault marketing |
 | [[sistema-busqueda]] | Full-text search, RPCs, trigram, vistas materializadas |
 | [[sistema-billing]] | Stripe/PayU/MercadoPago, planes, suscripciones |
 | [[sistema-contable]] | IVA/ICA/Retención, transacciones, exports PDF/CSV |
@@ -103,7 +103,7 @@ Contexto del negocio, auditorías y estrategia general.
 
 ---
 
-## Decisiones (4 notas)
+## Decisiones (6 notas)
 
 Decisiones arquitectónicas y trade-offs importantes.
 
@@ -111,6 +111,8 @@ Decisiones arquitectónicas y trade-offs importantes.
 - [[decision-antifraude-referrals]] — Por qué no se necesitan reglas anti-fraude complejas en el programa de referrals
 - [[lock-in-estrategia-datos-clientes]] — Lock-in por datos: cómo la base de datos del negocio se convierte en una fosa competitiva vs. AgendaPro y Fresha
 - [[ventajas-estructurales-no-explotadas]] — 17 ventajas competitivas latentes en la arquitectura: multi-rol nativo, modelo flexible, mobile híbrido, permisos enterprise, founder único y más
+- [[modelo-cobro-payg-fase2]] — Migración de suscripciones fijas a módulos + packs de consumo (WhatsApp). Pros, contras, recomendación, impacto en sistemas (Abr 2026)
+- [[decision-citas-virtuales-vs-calendly]] — Fase 4: extender WebRTC a video+pantalla para entrar al territorio de Calendly con ventaja de datos (Abr 2026)
 
 ---
 

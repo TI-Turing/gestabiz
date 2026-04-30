@@ -79,8 +79,13 @@ status: activo
 ### Reclutamiento
 `job_vacancies`, `job_applications`, `employee_profiles`
 
-### Chat
-`conversations`, `messages`, `chat_participants`
+### Chat (v2 — Rediseño Abr 2026)
+- `conversations` — +columnas `relationship_type`, `client_id`, `counterpart_user_id`; UNIQUE index por relación
+- `messages` — +`duration_seconds`, `waveform JSONB`; tipos extendidos: audio, video, call_log
+- `chat_participants` — sin cambios
+- `user_presence` — (user_id PK, status online/offline, last_seen_at) — semáforo de presencia
+- `employee_work_schedule` — (business_id, employee_id, day_of_week 0-6, start_time, end_time) — horario laboral para semáforo amarillo
+- `call_sessions` — ciclo de vida de llamadas P2P (ringing/answered/rejected/missed/ended/failed)
 
 ### Reviews
 `reviews` (rating 1-5, review_type: 'business'|'employee')
@@ -124,7 +129,8 @@ Refresco: cron cada 5 min con `CONCURRENTLY` (no bloquea queries).
 |--------|--------|-----|
 | `avatars` | public | Fotos de perfil |
 | `cvs` | private | CVs de aplicantes |
-| `chat-attachments` | private | Archivos de chat |
+| `chat-attachments` | private | Archivos de chat (imágenes, videos, audio) |
+| `business-marketing-vault` | private (50MB) | Material de marketing del negocio — selector en ChatInput |
 | `bug-report-evidences` | private | Screenshots de bugs |
 
 ## RLS (Row Level Security)

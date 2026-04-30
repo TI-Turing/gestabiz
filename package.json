@@ -1,7 +1,7 @@
 {
   "name": "Gestabiz",
   "private": true,
-  "version": "1.0.10",
+  "version": "1.0.28",
   "type": "module",
   "scripts": {
     "prepare": "husky",
@@ -82,12 +82,14 @@
     "@types/react-datepicker": "^6.2.0",
     "@types/uuid": "^10.0.0",
     "@vercel/analytics": "^2.0.1",
+    "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "d3": "^7.9.0",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.5.2",
+    "emoji-picker-react": "^4.19.1",
     "framer-motion": "^12.6.2",
     "input-otp": "^1.4.2",
     "jspdf": "^3.0.3",
@@ -116,6 +118,7 @@
     "tw-animate-css": "^1.2.4",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
+    "wavesurfer.js": "^7.12.6",
     "xlsx": "^0.18.5",
     "zod": "^3.25.76"
   },

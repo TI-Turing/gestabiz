@@ -12,13 +12,15 @@ interface FloatingChatButtonProps {
   userId: string
   businessId?: string
   initialConversationId?: string | null
+  isBusinessSide?: boolean
   onOpenChange?: (isOpen: boolean) => void
 }
 
-export function FloatingChatButton({ 
-  userId, 
+export function FloatingChatButton({
+  userId,
   businessId,
   initialConversationId = null,
+  isBusinessSide = false,
   onOpenChange
 }: Readonly<FloatingChatButtonProps>) {
   const [isOpen, setIsOpen] = useState(false)
@@ -148,11 +150,12 @@ export function FloatingChatButton({
 
             {/* Chat Content */}
             <div className="flex-1 min-h-0 overflow-hidden">
-              <SimpleChatLayout 
-                userId={userId} 
+              <SimpleChatLayout
+                userId={userId}
                 businessId={businessId}
                 initialConversationId={initialConversationId}
                 onMessagesRead={handleMessagesRead}
+                isBusinessSide={isBusinessSide}
               />
             </div>
           </div>
