@@ -15,6 +15,7 @@ import { MediaPreview } from './MediaPreview'
 import { MarketingVaultPicker } from './MarketingVaultPicker'
 import { useImageCompression } from '@/hooks/useImageCompression'
 import { useAudioRecorder } from '@/hooks/useAudioRecorder'
+import { useIsMobile } from '@/hooks/use-mobile'
 import type { MessageWithSender } from '@/hooks/useMessages'
 import type { ChatAttachment } from '@/hooks/useChat'
 import type { MarketingVaultFile } from '@/types/types'
@@ -60,11 +61,16 @@ export function ChatInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const micButtonRef = useRef<HTMLButtonElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const pointerStartXRef = useRef<number>(0)
+  const swipeCancelRef = useRef(false)
   const { compress } = useImageCompression()
+  const isMobile = useIsMobile()
+  const [swipeDelta, setSwipeDelta] = useState(0)
 
   // Audio recorder inline
   const { state: audioState, duration: audioDuration, waveformData, startRecording, stopRecording, cancelRecording } = useAudioRecorder()
   const isRecording = audioState === 'recording'
+  const isCancelling = isMobile && swipeDelta > 60
 
   useEffect(() => {
     if (textareaRef.current && !disabled) textareaRef.current.focus()
@@ -200,15 +206,46 @@ export function ChatInput({
     }
   }
 
+  // Desktop: click para empezar / click para enviar
+  const handleMicClickDesktop = async () => {
+    if (!onSendAudio) return
+    if (!isRecording) {
+      await startRecording()
+    } else {
+      const result = await stopRecording()
+      if (result && onSendAudio) {
+        await onSendAudio(result.blob, result.duration, result.waveform)
+      }
+    }
+  }
+
+  // Mobile: mantener presionado para grabar
   const handleMicPointerDown = async (e: React.PointerEvent<HTMLButtonElement>) => {
     if (!onSendAudio) return
     e.preventDefault()
     micButtonRef.current?.setPointerCapture(e.pointerId)
+    pointerStartXRef.current = e.clientX
+    swipeCancelRef.current = false
+    setSwipeDelta(0)
     await startRecording()
+  }
+
+  // Mobile: detectar deslizamiento izquierdo para cancelar
+  const handleMicPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isRecording) return
+    const delta = Math.max(0, pointerStartXRef.current - e.clientX)
+    swipeCancelRef.current = delta > 60
+    setSwipeDelta(delta)
   }
 
   const handleMicPointerUp = async () => {
     if (!isRecording) return
+    if (swipeCancelRef.current) {
+      cancelRecording()
+      setSwipeDelta(0)
+      return
+    }
+    setSwipeDelta(0)
     const result = await stopRecording()
     if (result && onSendAudio) {
       await onSendAudio(result.blob, result.duration, result.waveform)
@@ -217,6 +254,7 @@ export function ChatInput({
 
   const handleMicPointerLeave = () => {
     if (isRecording) cancelRecording()
+    setSwipeDelta(0)
   }
 
   const formatAudioDuration = (s: number) => {
@@ -315,11 +353,14 @@ export function ChatInput({
 
         {/* Textarea — reemplazado por UI de grabación cuando isRecording */}
         {isRecording ? (
-          <div className="flex-1 flex items-center gap-2 px-2 py-1 bg-muted/40 rounded-lg min-h-[44px]">
+          <div className={cn(
+            'flex-1 flex items-center gap-2 px-2 py-1 rounded-lg min-h-[44px] transition-colors',
+            isCancelling ? 'bg-destructive/20' : 'bg-muted/40'
+          )}>
             {/* Cancel */}
             <button
               type="button"
-              onClick={cancelRecording}
+              onClick={() => { cancelRecording(); setSwipeDelta(0) }}
               className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted shrink-0"
               title="Cancelar grabación"
               aria-label="Cancelar grabación"
@@ -330,17 +371,25 @@ export function ChatInput({
             <span className="text-sm font-mono text-destructive tabular-nums w-10 shrink-0">
               {formatAudioDuration(audioDuration)}
             </span>
-            {/* Waveform */}
-            <div className="flex items-center gap-0.5 h-5 flex-1">
-              {waveformData.slice(-20).map((amp, i) => (
-                <div
-                  key={i}
-                  className="flex-1 bg-destructive rounded-full transition-all duration-75"
-                  style={{ height: `${Math.max(15, amp * 100)}%` }}
-                />
-              ))}
+            {/* Waveform / indicador de cancelación */}
+            <div className="flex items-center gap-0.5 h-5 flex-1 overflow-hidden">
+              {isCancelling ? (
+                <span className="text-sm text-destructive font-medium whitespace-nowrap">
+                  ← Soltar para cancelar
+                </span>
+              ) : (
+                waveformData.slice(-20).map((amp, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 bg-destructive rounded-full transition-all duration-75"
+                    style={{ height: `${Math.max(15, amp * 100)}%` }}
+                  />
+                ))
+              )}
             </div>
-            <span className="text-xs text-muted-foreground shrink-0">Suelta para enviar</span>
+            <span className={cn('text-xs shrink-0', isCancelling ? 'text-destructive' : 'text-muted-foreground')}>
+              {isMobile ? (isCancelling ? '' : 'Suelta para enviar') : 'Clic para enviar'}
+            </span>
           </div>
         ) : (
           <Textarea
@@ -393,11 +442,17 @@ export function ChatInput({
             ref={micButtonRef}
             type="button"
             disabled={disabled}
-            onPointerDown={handleMicPointerDown}
-            onPointerUp={handleMicPointerUp}
-            onPointerLeave={handleMicPointerLeave}
-            title={isRecording ? 'Suelta para enviar' : 'Mantén presionado para grabar'}
-            aria-label={isRecording ? 'Soltar para enviar audio' : 'Grabar nota de voz'}
+            onClick={!isMobile ? handleMicClickDesktop : undefined}
+            onPointerDown={isMobile ? handleMicPointerDown : undefined}
+            onPointerUp={isMobile ? handleMicPointerUp : undefined}
+            onPointerLeave={isMobile ? handleMicPointerLeave : undefined}
+            onPointerMove={isMobile ? handleMicPointerMove : undefined}
+            title={isRecording
+              ? (isMobile ? 'Suelta para enviar' : 'Clic para enviar')
+              : (isMobile ? 'Mantén presionado para grabar' : 'Clic para grabar')}
+            aria-label={isRecording
+              ? (isMobile ? 'Soltar para enviar audio' : 'Enviar audio grabado')
+              : 'Grabar nota de voz'}
             className={cn(
               'flex-shrink-0 h-10 w-10 min-h-[48px] min-w-[48px] sm:min-h-0 sm:min-w-0',
               'flex items-center justify-center rounded-full transition-colors select-none touch-none',

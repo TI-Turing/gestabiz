@@ -170,19 +170,22 @@ export function SimpleChatLayout({
   const handleSendAudio = async (blob: Blob, duration: number, waveform: number[]) => {
     if (!activeConversation) return;
     try {
-      const filename = `${userId}/audio-${Date.now()}.webm`;
+      const filename = `${activeConversation.id}/${userId}/audio-${Date.now()}.webm`;
       const { data, error: uploadError } = await supabase.storage
         .from('chat-attachments')
         .upload(filename, blob, { contentType: 'audio/webm' });
       if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('chat-attachments').getPublicUrl(data.path);
+      const { data: signedData, error: signError } = await supabase.storage
+        .from('chat-attachments')
+        .createSignedUrl(data.path, 31536000); // 1 año — bucket privado requiere signed URL
+      if (signError) throw signError;
       await sendMessage({
         conversation_id: activeConversation.id,
         content: '',
         type: 'audio',
         duration_seconds: Math.round(duration),
         waveform,
-        metadata: { audio_url: publicUrl },
+        metadata: { audio_url: signedData.signedUrl, audio_path: data.path },
       });
     } catch (err) {
       toast.error('Error al enviar audio');
