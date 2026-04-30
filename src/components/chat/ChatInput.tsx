@@ -150,7 +150,7 @@ export function ChatInput({
       toast.error('No se pudo subir el archivo')
     } finally {
       setIsSending(false)
-      textareaRef.current?.focus()
+      requestAnimationFrame(() => textareaRef.current?.focus())
     }
   }
 
@@ -244,7 +244,8 @@ export function ChatInput({
       // Error manejado por el padre
     } finally {
       setIsSending(false)
-      textareaRef.current?.focus()
+      // Diferir el foco hasta después del re-render (el textarea está disabled={isSending})
+      requestAnimationFrame(() => textareaRef.current?.focus())
     }
   }
 
@@ -523,11 +524,11 @@ export function ChatInput({
         )}
       </div>
 
-      <div className="hidden sm:block px-4 pb-2 text-xs text-muted-foreground">
+      {/* <div className="hidden sm:block px-4 pb-2 text-xs text-muted-foreground">
         <kbd className="px-1 py-0.5 bg-muted rounded">Enter</kbd> para enviar ·{' '}
         <kbd className="px-1 py-0.5 bg-muted rounded">Shift+Enter</kbd> para nueva línea
         {replyToMessage && <> · <kbd className="px-1 py-0.5 bg-muted rounded">Esc</kbd> para cancelar</>}
-      </div>
+      </div> */}
 
       {/* Selector de archivo del dispositivo */}
       <input
