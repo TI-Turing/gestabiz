@@ -11,6 +11,7 @@ vi.mock('@/lib/supabase', () => {
     supabase: {
       rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
       channel: vi.fn(),
+      removeChannel: vi.fn().mockResolvedValue(undefined),
     },
   };
 });
@@ -254,7 +255,8 @@ describe('useFavorites', () => {
 
     renderHook(() => useFavorites('user-001'), { wrapper: getWrapper() });
 
-    expect(supabase.channel).toHaveBeenCalledWith('favorites:user-001');
+    // El canal usa un nombre único con timestamp para evitar conflictos en renders múltiples
+    expect(supabase.channel).toHaveBeenCalledWith(expect.stringMatching(/^favorites:user-001:\d+$/));
   });
 
   it('should not setup realtime subscription when userId is undefined', () => {

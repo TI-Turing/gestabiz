@@ -296,7 +296,7 @@ export function DateTimeSelection({
       }
 
       // Regla 2: Validar traslado
-      if (isAvailable && !transferValidation.isAvailable) {
+      if (isAvailable && transferValidation && !transferValidation.isAvailable) {
         isAvailable = false;
         unavailableReason = transferValidation.reason || 'Empleado en período de traslado';
       }
@@ -476,7 +476,7 @@ export function DateTimeSelection({
 
         // Traslado
         const transfer = await validateAvailability(employeeId, businessId, new Date(dayCursor), locationId);
-        if (!transfer.isAvailable) {
+        if (transfer && !transfer.isAvailable) {
           disabledSet.add(dateStr);
           disabledTitle[dateStr] = transfer.reason || 'No disponible por traslado';
           dayCursor.setDate(dayCursor.getDate() + 1);

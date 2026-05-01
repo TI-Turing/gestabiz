@@ -26,7 +26,7 @@ export interface AudioRecorderResult {
 }
 
 const WAVEFORM_POINTS = 40
-const MIME_TYPE = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+const MIME_TYPE = typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
   ? 'audio/webm;codecs=opus'
   : 'audio/webm'
 
