@@ -131,7 +131,7 @@ export function ChatInput({
       }
       const { supabase } = await import('@/lib/supabase')
       const ext = file.name.split('.').pop() || (file.type.startsWith('image/') ? 'jpg' : 'mp4')
-      const path = `${conversationId}/${Date.now()}-${Math.random().toString(36).slice(7)}.${ext}`
+      const path = `${conversationId}/${crypto.randomUUID()}.${ext}`
       const { error: uploadError } = await supabase.storage.from('chat-attachments').upload(path, processedFile)
       if (uploadError) throw uploadError
       const { data: signedData, error: signError } = await supabase.storage
@@ -200,7 +200,7 @@ export function ChatInput({
     try {
       const { supabase } = await import('@/lib/supabase')
       const ext = file.name.split('.').pop() || (type === 'image' ? 'jpg' : 'mp4')
-      const path = `${conversationId}/${Date.now()}-${Math.random().toString(36).slice(7)}.${ext}`
+      const path = `${conversationId}/${crypto.randomUUID()}.${ext}`
       const { error } = await supabase.storage.from('chat-attachments').upload(path, file)
       if (error) throw error
       const { data: signedData, error: signError } = await supabase.storage
