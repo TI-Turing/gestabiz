@@ -1,10 +1,13 @@
 import React, { Suspense, lazy, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import * as Sentry from '@sentry/react'
 import { Toaster } from '@/components/ui/sonner'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { APP_CONFIG } from '@/constants'
-import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
+
+// QueryClient singleton (extraído a src/lib/queryClient.ts para que useAuthSimple
+// pueda limpiarlo en signOut sin import circular).
+import { queryClient } from '@/lib/queryClient'
 
 // Import contexts directly instead of lazy loading them
 import { ThemeProvider } from '@/contexts/ThemeContext'
@@ -13,65 +16,19 @@ import { AppStateProvider } from '@/contexts/AppStateContext'
 import { NotificationProvider } from '@/contexts/NotificationContext'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 
+// Vercel Analytics
+import { Analytics } from '@vercel/analytics/react'
+
 // Google Analytics 4
 import { initializeGA4 } from '@/lib/ga4'
 import { hasAnalyticsConsent } from '@/hooks/useAnalytics'
 import { CookieConsent } from '@/components/CookieConsent'
 import { AlertProvider } from '@/components/ui/custom-alert'
 
-const toSentryError = (error: unknown): Error => {
-  if (error instanceof Error) {
-    return error
-  }
-
-  if (typeof error === 'object' && error !== null) {
-    const maybeMessage = (error as { message?: unknown }).message
-    if (typeof maybeMessage === 'string' && maybeMessage.trim().length > 0) {
-      return new Error(maybeMessage)
-    }
-    return new Error(`Non-Error object captured: ${JSON.stringify(error)}`)
-  }
-
-  return new Error(String(error))
-}
-
 // Permission Testing Page (dev only - tree-shaken in production)
-const PermissionTestingPage = import.meta.env.DEV 
+const PermissionTestingPage = import.meta.env.DEV
   ? lazy(() => import('@/components/admin/permissions/PermissionTestingPage').then(m => ({ default: m.PermissionTestingPage })))
   : null
-
-// Create a client con Sentry error handler global (React Query v5)
-// QueryCache.onError captura automáticamente TODOS los errores de React Query (70+ hooks)
-const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    onError: (error, query) => {
-      // Solo capturar errores inesperados (no errores de autenticación esperados)
-      const errMsg = error instanceof Error ? error.message : String(error)
-      const isExpected = errMsg.includes('JWT') || errMsg.includes('not authenticated') || errMsg.includes('PGRST116')
-      if (!isExpected) {
-        Sentry.captureException(toSentryError(error), {
-          tags: { source: 'react-query', type: 'query' },
-          extra: { queryKey: JSON.stringify(query.queryKey), rawError: error },
-        })
-      }
-    },
-  }),
-  mutationCache: new MutationCache({
-    onError: (error, _variables, _context, mutation) => {
-      Sentry.captureException(toSentryError(error), {
-        tags: { source: 'react-query', type: 'mutation' },
-        extra: { mutationKey: JSON.stringify(mutation.options.mutationKey), rawError: error },
-      })
-    },
-  }),
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-})
 
 // Lazy load main application components
 const LandingPage = lazy(() => import('@/components/landing/LandingPage').then(m => ({ default: m.LandingPage })))
@@ -231,6 +188,8 @@ function App() {
                       <CookieConsent />
                       {/* Toaster global para todas las rutas, incluidas públicas */}
                       <Toaster richColors closeButton />
+                      {/* Vercel Analytics */}
+                      <Analytics />
                     </AlertProvider>
                   </AuthProvider>
                 </AppStateProvider>

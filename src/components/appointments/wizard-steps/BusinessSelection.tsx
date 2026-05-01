@@ -5,7 +5,7 @@ import { Check, Building2, Filter, Search, Star } from 'lucide-react';
 import { MapPin } from '@phosphor-icons/react';
 import BusinessProfile from '@/components/business/BusinessProfile';
 import { cn } from '@/lib/utils';
-import { withCache } from '@/lib/cache';
+import { withCache, invalidateCache } from '@/lib/cache';
 import supabase from '@/lib/supabase';
 import { usePreferredCity } from '@/hooks/usePreferredCity';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -64,7 +64,7 @@ export function BusinessSelection({
   const [remainingBusinessIds, setRemainingBusinessIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalResults, setTotalResults] = useState<number>(0);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const PAGE_SIZE = 12;
   const hasLoadedRef = useRef(false);
   // Cargar última búsqueda guardada (si existe)
@@ -202,9 +202,19 @@ export function BusinessSelection({
           },
         });
       }, 120_000);
-      if (error) throw error as Error;
+      if (error) {
+        // No conservar respuestas de error en el cache — la próxima apertura del modal reintentará
+        invalidateCache(cacheKey);
+        throw error as Error;
+      }
       const result = (data as any) || {};
       const cityOnly = (result.businesses || []) as Business[];
+
+      // Si el cargado inicial devuelve 0 negocios, limpiar el cache para permitir reintento
+      // al volver a abrir el modal (evita cachear resultados vacíos por cold-start o timing)
+      if (cityOnly.length === 0) {
+        invalidateCache(cacheKey);
+      }
 
       // Guardar metadata de ciudad y conteos provenientes de la función Edge
       setLocationsCountMap(result.locationsCountMap || {});
@@ -254,10 +264,16 @@ export function BusinessSelection({
     // Esperar a que esté disponible preferredRegionId para incluirlo en la primera solicitud
     if (!hookCityData.preferredRegionId) return;
 
+    // Esperar a que el estado de autenticación esté resuelto.
+    // Sin este guard, loadBusinesses se llama con user?.id = undefined y luego
+    // hasLoadedRef bloquea el re-intento cuando auth finalmente carga, quedando
+    // la lista vacía de forma intermitente.
+    if (authLoading) return;
+
     hasLoadedRef.current = true;
     setLoading(true);
     void loadBusinesses();
-  }, [loadBusinesses, autoLoad, hookCityData.preferredRegionId]);
+  }, [loadBusinesses, autoLoad, hookCityData.preferredRegionId, authLoading]);
 
   // Si hay una búsqueda previa persistida, aplicarla al montar
   useEffect(() => {
@@ -400,7 +416,10 @@ export function BusinessSelection({
           },
         });
       }, 120_000);
-      if (error) throw error as Error;
+      if (error) {
+        invalidateCache(cacheKeySearch);
+        throw error as Error;
+      }
       const result = (data as any) || {};
       const cityOnly = (result.businesses || []) as Business[];
       setLocationsCountMap(result.locationsCountMap || {});
@@ -462,7 +481,10 @@ export function BusinessSelection({
           },
         });
       }, 120_000);
-      if (error) throw error as Error;
+      if (error) {
+        invalidateCache(cacheKeyLoadMore);
+        throw error as Error;
+      }
       const result = (data as any) || {};
       const nextRows = (result.businesses || []) as Business[];
 
@@ -519,7 +541,10 @@ export function BusinessSelection({
           },
         });
       }, 120_000);
-      if (error) throw error as Error;
+      if (error) {
+        invalidateCache(cacheKeyApply);
+        throw error as Error;
+      }
       const result = (data as any) || {};
       const rows = (result.businesses || []) as Business[];
       setLocationsCountMap(result.locationsCountMap || {});

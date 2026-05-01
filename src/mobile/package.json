@@ -12,9 +12,13 @@
     "submit:android": "eas submit --platform android",
     "submit:ios": "eas submit --platform ios",
     "preview": "expo start --tunnel",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@expo-google-fonts/outfit": "^0.4.3",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/datetimepicker": "8.2.0",
     "@react-navigation/bottom-tabs": "^6.6.1",
@@ -23,6 +27,7 @@
     "@react-navigation/stack": "^6.4.1",
     "@supabase/supabase-js": "^2.38.0",
     "@tanstack/react-query": "^5.0.0",
+    "date-fns": "^4.1.0",
     "expo": "~51.0.39",
     "expo-auth-session": "~5.5.2",
     "expo-calendar": "~13.0.3",
@@ -55,8 +60,13 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^29.5.14",
     "@types/react": "~18.2.45",
     "@types/react-native": "~0.72.2",
+    "jest": "^29.7.0",
+    "jest-expo": "~51.0.0",
     "typescript": "^5.3.0"
   },
   "private": true

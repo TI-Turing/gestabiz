@@ -2,12 +2,14 @@ import React from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Pencil, Reply, Trash2, Download } from 'lucide-react';
-import { PushPin, ProhibitInset } from '@phosphor-icons/react';
+import { PushPin, ProhibitInset, Phone, PhoneX } from '@phosphor-icons/react';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { Button } from '@/components/ui/button';
 import { MessageStatus } from './MessageStatus';
 import { ImagePreview } from './ImagePreview';
+import { AudioMessage } from './AudioMessage';
 import type { MessageWithSender } from '@/hooks/useMessages';
+import type { ChatMessageType } from '@/types/types';
 import { cn } from '@/lib/utils';
 import { animations } from '@/lib/animations';
 
@@ -74,14 +76,7 @@ export function MessageBubble({
   const isDeleted = message.is_deleted; // Nuevo campo: soft delete
   const isEdited = message.edited_at !== null; // Nuevo campo: edited_at
 
-  // Obtener iniciales para avatar
   const senderName = message.sender?.full_name || message.sender?.email || 'U';
-  const initials = senderName
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
 
   // Formatear timestamp (usa created_at en vez de sent_at)
   const timestamp = format(new Date(message.created_at), 'HH:mm', { locale: es });
@@ -157,46 +152,61 @@ export function MessageBubble({
             </div>
           )}
 
-          {/* Contenido del mensaje con highlight (usa 'body' en vez de 'content') */}
-          <p className="text-sm sm:text-base whitespace-pre-wrap wrap-break-word">
-            {isDeleted 
-              ? <span className="flex items-center gap-1 opacity-50"><ProhibitInset size={16} weight="fill" /> Mensaje eliminado</span>
-              : highlightText(message.body || '', searchQuery)
-            }
-          </p>
-
-          {/* Attachments desde metadata (JSONB) */}
-          {message.metadata && !isDeleted && (
-            <div className="mt-2 space-y-2">
-              {/* Preview de imagen si existe */}
-              {message.metadata.image_url && (
-                <ImagePreview
-                  key={message.metadata.image_url}
-                  src={message.metadata.image_url}
-                  alt="Imagen adjunta"
-                  className="max-w-xs h-auto"
-                />
-              )}
-              
-              {/* Link de descarga para archivos */}
-              {message.metadata.file_url && (
-                <a
-                  href={message.metadata.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs hover:underline group"
-                  aria-label={`Descargar ${message.metadata.file_name || 'archivo'}`}
-                >
-                  <Download className="h-3 w-3" aria-hidden="true" />
-                  <span className="truncate">{message.metadata.file_name || 'Archivo adjunto'}</span>
-                  {message.metadata.file_size && (
-                    <span className="text-muted-foreground">
-                      ({formatFileSize(message.metadata.file_size)})
-                    </span>
+          {/* Contenido según tipo de mensaje */}
+          {isDeleted ? (
+            <span className="flex items-center gap-1 opacity-50 text-sm">
+              <ProhibitInset size={16} weight="fill" /> Mensaje eliminado
+            </span>
+          ) : (message.type as ChatMessageType) === 'audio' ? (
+            <AudioMessage
+              url={message.metadata?.audio_url as string || ''}
+              duration={message.duration_seconds || 0}
+              waveform={message.waveform || undefined}
+              isOwnMessage={isOwnMessage}
+            />
+          ) : (message.type as ChatMessageType) === 'video' ? (
+            <video
+              src={message.metadata?.video_url as string || ''}
+              controls
+              className="max-w-xs rounded-lg"
+              aria-label="Video adjunto"
+            />
+          ) : (message.type as ChatMessageType) === 'call_log' ? (
+            <CallLogBubble metadata={message.metadata} isOwnMessage={isOwnMessage} />
+          ) : (
+            <>
+              <p className="text-sm sm:text-base whitespace-pre-wrap wrap-break-word">
+                {highlightText(message.body || '', searchQuery)}
+              </p>
+              {/* Attachments desde metadata */}
+              {message.metadata && (
+                <div className="mt-2 space-y-2">
+                  {message.metadata.image_url && (
+                    <ImagePreview
+                      key={message.metadata.image_url as string}
+                      src={message.metadata.image_url as string}
+                      alt="Imagen adjunta"
+                      className="max-w-xs h-auto"
+                    />
                   )}
-                </a>
+                  {message.metadata.file_url && (
+                    <a
+                      href={message.metadata.file_url as string}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-xs hover:underline"
+                      aria-label={`Descargar ${message.metadata.file_name || 'archivo'}`}
+                    >
+                      <Download className="h-3 w-3" />
+                      <span className="truncate">{String(message.metadata.file_name || 'Archivo adjunto')}</span>
+                      {message.metadata.file_size && (
+                        <span className="text-muted-foreground">({formatFileSize(Number(message.metadata.file_size))})</span>
+                      )}
+                    </a>
+                  )}
+                </div>
               )}
-            </div>
+            </>
           )}
 
           {/* Footer: timestamp, status, indicador de editado */}
@@ -282,4 +292,34 @@ export function MessageBubble({
       </div>
     </article>
   );
+}
+
+function CallLogBubble({
+  metadata,
+  isOwnMessage,
+}: {
+  metadata?: Record<string, unknown>
+  isOwnMessage: boolean
+}) {
+  const status = (metadata?.status as string) || 'ended'
+  const duration = metadata?.duration as number | undefined
+  const isMissed = status === 'missed' || status === 'rejected'
+
+  const formatDur = (s: number) => {
+    const m = Math.floor(s / 60)
+    return m > 0 ? `${m} min ${s % 60} seg` : `${s} seg`
+  }
+
+  return (
+    <div className={cn('flex items-center gap-2 text-sm', isOwnMessage ? 'text-primary-foreground/90' : 'text-foreground')}>
+      {isMissed ? (
+        <PhoneX size={16} weight="fill" className="text-destructive shrink-0" />
+      ) : (
+        <Phone size={16} weight="fill" className="text-green-500 shrink-0" />
+      )}
+      <span>
+        {isMissed ? 'Llamada perdida' : `Llamada de voz${duration ? ` — ${formatDur(duration)}` : ''}`}
+      </span>
+    </div>
+  )
 }

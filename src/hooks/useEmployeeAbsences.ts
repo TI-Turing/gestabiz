@@ -1,5 +1,5 @@
 ﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -179,9 +179,9 @@ export function useEmployeeAbsences(businessId: string) {
 
       try {
         const invalidDays: string[] = [];
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const current = new Date(start);
+        const start = parseISO(startDate);
+        const end = parseISO(endDate);
+        const current = parseISO(startDate);
 
         while (current <= end) {
           const dayOfWeek = current.getDay();

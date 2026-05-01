@@ -12,6 +12,17 @@ Triple gateway de pagos (Stripe, PayU Latam, MercadoPago) con factory pattern, s
 
 Gestabiz soporta 3 gateways de pago para cobertura global/LATAM. El gateway activo se determina por `VITE_PAYMENT_GATEWAY`. El `PaymentGatewayFactory` instancia el gateway correcto inyectándole el cliente Supabase singleton.
 
+## ⚠️ DISCREPANCIA: Realidad vs Documentación (25 Abr 2026)
+
+La documentación en `.github/copilot-instructions.md:2141-2145` y `CLAUDE.md:2141-2145` menciona planes `Gratuito/Inicio (90k)/Profesional (180k)/Empresarial`. Sin embargo, la realidad del código es:
+- `src/lib/pricingPlans.ts:15-16` y `PlanUpgradeModal.tsx:39-58` definen:
+  - Gratuito (free, 0 COP)
+  - **Básico** (basico, ~90k COP)
+  - **Pro** (pro, ~180k COP)
+  - Empresarial aún está deshabilitado
+
+Este vault y el código fuente son la **fuente de verdad**. Las instrucciones de Copilot deben actualizarse en la próxima sesión (Opción B del histórico de commits).
+
 ## Gateways
 
 | Gateway | Cobertura | Variable |

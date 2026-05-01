@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import * as Location from 'expo-location'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -18,6 +18,9 @@ export interface UseGeolocationResult {
 }
 
 // ─── Hook: useGeolocation ─────────────────────────────────────────────────────
+//
+// Purely manual — no auto-fetch on mount. Call `refreshLocation()` to trigger
+// a location request (e.g. from a useEffect that responds to a user toggle).
 
 export function useGeolocation(): UseGeolocationResult {
   const [coords, setCoords] = useState<Coords | null>(null)
@@ -54,10 +57,6 @@ export function useGeolocation(): UseGeolocationResult {
       setLoading(false)
     }
   }, [])
-
-  useEffect(() => {
-    fetchLocation()
-  }, [fetchLocation])
 
   return { coords, loading, error, permissionStatus, refreshLocation: fetchLocation }
 }

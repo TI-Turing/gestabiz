@@ -24,7 +24,7 @@ Gestabiz es una plataforma SaaS **todo-en-uno** para PyMEs de servicios (salones
 
 | Servidor | Alcance | Propósito |
 |----------|---------|-----------|
-| `supabase` | Proyecto (`.claude/mcp.json`) | SQL directo, migraciones, Edge Functions. DEV: `dkancockzvcqorqbwtyh` / PROD: `emknatoknbomvmyumqju` |
+| `supabase` | Proyecto (`.claude/mcp.json`) | SQL directo, migraciones, Edge Functions. LOCAL: `http://localhost:54321` / DEV: `dkancockzvcqorqbwtyh` / PROD: `emknatoknbomvmyumqju` |
 | `chrome-devtools` | Proyecto (`.claude/mcp.json`) | Inspección de Network, Console y DOM en tiempo real |
 | `pencil` | Global (`~/.claude/settings.json`) | Editor de diseño `.pen` — generar y editar pantallas UI/UX |
 | `claude-mem` | Global (plugin `claude-mem@thedotmack`) | Memoria persistente cross-sesión: `make-plan`, `do`, `mem-search`, `smart-explore` |
@@ -175,11 +175,26 @@ Contenido de la nota...
 8. **Incrementar versión en cada commit** — actualizar `package.json`. Patrón: PATCH en cada commit, MINOR en releases, MAJOR en cambios disruptivos
 9. **Reutilizar Card Components** — ver sección "Sistema de Cards Reutilizables"
 10. **useAuth() nunca useAuthSimple()** — siempre consumir desde el context
-11. **NUNCA modificar Supabase de producción directamente** — cualquier cambio en BD (tablas, funciones, RLS) o Edge Functions que afecte producción DEBE hacerse mediante migración SQL en `supabase/migrations/` o deploy de Edge Function. El usuario decide cuándo desplegarlo. Ante un bug en prod: identificar causa y mostrar el fix.
+11. **NUNCA escribir en Supabase remoto (DEV ni PROD)** ⭐ CRÍTICO — Los ambientes DEV (`dkancockzvcqorqbwtyh`) y PROD (`emknatoknbomvmyumqju`) son de **solo lectura** para Claude. Permitido: `SELECT`, consultas de diagnóstico vía MCP. Prohibido: cualquier DDL, DML, `apply_migration`, `execute_sql` con escritura, `deploy_edge_function`. Todo cambio al schema o Edge Functions se hace en LOCAL y llega a DEV/PROD exclusivamente via CI/CD (git push → pipeline). Los 3 ambientes deben tener schema idéntico; si algo falla en PROD debe fallar también en LOCAL. Ante un bug en prod: identificar causa, reproducir en local, mostrar el fix — nunca parchear directo en remoto.
 12. **NUNCA deployar Edge Functions directamente** — el flujo correcto es: editar la función → commit → push a la rama correspondiente → el workflow CI/CD hace el deploy automáticamente. Solo se acepta `npx supabase functions deploy` manual con autorización explícita del usuario para un fix de emergencia puntual.
-13. **NUNCA aplicar migraciones a producción o DEV directamente** — crear la migración SQL → commit → push → el usuario ejecuta `npx supabase db push` localmente. Nunca ejecutar migraciones directamente en Supabase UI ni con `npx supabase db push` apuntando a PROD o DEV sin autorización explícita.
-14. **Validar impacto en Edge Functions antes de alterar tablas** ⭐ CRÍTICO — Antes de agregar, renombrar o eliminar cualquier columna de una tabla de Supabase, buscar en `supabase/functions/` todas las Edge Functions que consultan esa tabla y verificar que ningún `select()`, `update()` o `insert()` referencia la columna afectada. Si alguna función la usa, actualizar primero el código de esa función (o en el mismo commit) para evitar errores 500 en producción. Aplica también a columnas que se asumen existentes en código TypeScript del frontend.
-15. **Documentar cada cambio funcional** — cada nuevo feat, cambio de flujo, creación/eliminación de flujo debe actualizar los dos documentos del producto: `docs/Manual_Usuario_Gestabiz.docx` (guía funcional de usuario) y `docs/Propuesta_Valor_Gestabiz.docx` (pitch comercial). Cambios UI/UX menores no requieren update; cambios de comportamiento, permisos, planes, o flujos sí. Mantener ambos en sincronía con el código.
+12b. **Toda Edge Function nueva DEBE tener `verify_jwt = false` en `supabase/config.toml`** ⭐ CRÍTICO — El proyecto usa claves `sb_publishable_*` (formato ES256) como `SUPABASE_ANON_KEY`. El gateway Kong local no puede validar ese formato, por lo que `verifyJWT: true` (el default) provoca un 401 antes de que la función llegue a ejecutarse. La autenticación real se hace dentro de cada función con `supabase.auth.getUser()` usando el Bearer token del header. Al crear una función nueva, siempre agregar al final de `config.toml`:
+    ```toml
+    [functions.<nombre-funcion>]
+    verify_jwt = false
+    ```
+    Sin esta entrada, la función fallará con 401 en local. Verificar en `docker inspect supabase_edge_runtime_*` que `verifyJWT` sea `false` tras reiniciar el stack. Lección aprendida: `start-call` y `end-call` omitieron esta línea y devolvieron 401 hasta que se corrigió en v1.0.21.
+13. **NUNCA aplicar migraciones a DEV o PROD directamente** — flujo obligatorio: crear migración SQL → probar con `supabase db reset --local` → commit → push → CI/CD aplica en DEV/PROD. Nunca usar `supabase db push` apuntando a DEV o PROD, nunca aplicar desde Supabase UI, sin autorización explícita del usuario.
+14. **NUNCA ejecutar comandos destructivos o irreversibles sin confirmación explícita del usuario** 🚨 REGLA ABSOLUTA — Los siguientes comandos están PROHIBIDOS a menos que el usuario los solicite explícitamente con palabras como "sí, hazlo", "confirmo" o "ejecuta":
+    - `supabase db reset` (borra toda la data local — el usuario PIERDE DÍAS de datos de prueba)
+    - `supabase db push` (aplica migraciones a ambientes remotos DEV/PROD)
+    - `rm -rf` o cualquier eliminación masiva de archivos
+    - `DROP TABLE`, `TRUNCATE`, `DELETE FROM` sin `WHERE` en SQL
+    - `git reset --hard`, `git push --force`, `git clean -fd`
+    - Cualquier operación que no pueda deshacerse con un simple `git revert` o `Ctrl+Z`
+    - **Alternativas seguras**: ante la duda, usar `supabase migration up` (no destructivo) en vez de `db reset`; proponer el comando al usuario y esperar su OK antes de ejecutar.
+    - **Consecuencia de ignorar esta regla**: el usuario pierde horas o días de trabajo de datos de prueba y configuración local que no puede recuperarse. Esta regla existe porque un agente ejecutó `db reset` sin autorización y causó pérdida de datos de desarrollo.
+15. **Validar impacto en Edge Functions antes de alterar tablas** ⭐ CRÍTICO — Antes de agregar, renombrar o eliminar cualquier columna de una tabla de Supabase, buscar en `supabase/functions/` todas las Edge Functions que consultan esa tabla y verificar que ningún `select()`, `update()` o `insert()` referencia la columna afectada. Si alguna función la usa, actualizar primero el código de esa función (o en el mismo commit) para evitar errores 500 en producción. Aplica también a columnas que se asumen existentes en código TypeScript del frontend.
+16. **Documentar cada cambio funcional** — cada nuevo feat, cambio de flujo, creación/eliminación de flujo debe actualizar los dos documentos del producto: `docs/Manual_Usuario_Gestabiz.docx` (guía funcional de usuario) y `docs/Propuesta_Valor_Gestabiz.docx` (pitch comercial). Cambios UI/UX menores no requieren update; cambios de comportamiento, permisos, planes, o flujos sí. Mantener ambos en sincronía con el código.
     - **Fuente única de verdad**: `scripts/generate_product_docs.py` — los .docx se regeneran con `python scripts/generate_product_docs.py`. No editar los .docx a mano: editar el script y regenerar.
     - **Estructura obligatoria en ambos documentos**: Portada con logo Gestabiz + atribución a Ti Turing → Índice hipervinculado → **Parte 1: Resumen Ejecutivo** (alto nivel, con hipervínculos al detalle) → **Parte 2: Detalle Exhaustivo** (reglas, excepciones, flujos normales y alternos, cada botón y validación — mucho más extensa en el Manual) → Placeholders de capturas de pantalla → Pie con logo Ti Turing.
     - **Agrupación por planes**: todas las features agrupadas por plan (Gratuito → Básico → Pro), aclarando que cada plan incluye lo del anterior más sus exclusivas.
@@ -722,9 +737,59 @@ Capa de abstracción sobre Supabase para operaciones CRUD:
 
 ## BASE DE DATOS SUPABASE
 
-**Solo en la nube** (no hay instancia local).
-- **DEV**: `dkancockzvcqorqbwtyh` — proyecto original con data de prueba
-- **PROD**: `emknatoknbomvmyumqju` — proyecto nuevo, limpio
+**Tres ambientes** — el flujo de trabajo estándar usa LOCAL en el día a día:
+
+| Ambiente | Proyecto | URL | Claude puede escribir |
+|----------|----------|-----|----------------------|
+| **LOCAL** ⭐ | Docker local | `http://localhost:54321` | **Sí** — desarrollo diario, todas las operaciones |
+| **DEV** | `dkancockzvcqorqbwtyh` | `https://dkancockzvcqorqbwtyh.supabase.co` | **Solo lectura** — consultas de diagnóstico únicamente |
+| **PROD** | `emknatoknbomvmyumqju` | `https://emknatoknbomvmyumqju.supabase.co` | **Solo lectura** — consultas de diagnóstico únicamente |
+
+**Regla de paridad**: los 3 ambientes deben tener schema idéntico (excepto data). Si algo falla en PROD, debe fallar también en LOCAL. Usar `supabase db reset --local` para verificar antes de hacer PR.
+
+**Stack local**: `npx supabase start` → Studio en `http://localhost:54323`, DB en `postgresql://postgres:postgres@localhost:54322/postgres`
+**Para apuntar la app al local**: `.env.local` (ya configurado, toma prioridad sobre `.env`)
+
+### Supabase Local — Reglas Operativas
+
+**Stack local** (configurado en `supabase/config.toml`):
+- API: `http://localhost:54321`
+- DB: `postgresql://postgres:postgres@localhost:54322/postgres`
+- Studio: `http://localhost:54323`
+- Inbucket (emails capturados): `http://localhost:54324`
+- `.env.local` apunta automáticamente a localhost — toma prioridad sobre `.env`
+
+**Flujo obligatorio para cambios de schema**:
+1. Crear migración SQL en `supabase/migrations/`
+2. Probar con `supabase db reset --local` (debe pasar sin errores)
+3. Commit + push a la rama de feature
+4. CI/CD aplica la migración en DEV y luego en PROD al mergear
+
+**Cuándo consultar DEV/PROD (solo lectura)**:
+- Diagnóstico de bug reportado en producción
+- Comparar data real vs local para reproducir un problema
+- Verificar que una migración ya se aplicó en el pipeline
+
+**Cuándo NO usar DEV/PROD**:
+- Nunca para aplicar migraciones o cambios de schema
+- Nunca para modificar Edge Functions directamente
+- Nunca para insertar, actualizar o eliminar datos como parte del desarrollo
+
+**Comandos**:
+```bash
+supabase start                                          # Iniciar stack local
+supabase stop                                           # Detener
+supabase db reset                                       # Recrea desde cero (todas las migraciones)
+supabase functions serve <name> --env-file .env.local   # Servir edge function local
+supabase db diff                                        # Detectar schema drift vs migraciones
+```
+
+**Regla obligatoria**: toda migración nueva DEBE probarse con `supabase db reset` local antes de hacer commit. Si rompe el reset, no se commitea.
+
+**Troubleshooting rápido**:
+- Puerto ocupado → `supabase stop && supabase start`
+- Conflicto de migraciones → `supabase db reset --linked=false`
+- App ve DEV en vez de local → verificar que `.env.local` existe con `VITE_SUPABASE_URL=http://localhost:54321`
 
 ### Tablas principales (40+)
 
@@ -940,27 +1005,30 @@ npm run pre-deploy        # Checks pre-deploy
 ## VARIABLES DE ENTORNO
 
 **Web** — ver templates en `environments/`. Archivos gitignoreados:
-- `.env.development` → local/dev (apunta a `dkancockzvcqorqbwtyh`)
-- `.env.staging` → build de dev (idem)
+- `.env.local` ⭐ **ACTIVO en desarrollo** — apunta al stack LOCAL Docker (`http://localhost:54321`). Toma prioridad sobre `.env` cuando existe.
+- `.env` → apunta a DEV remoto (`dkancockzvcqorqbwtyh`). Se usa cuando `.env.local` no existe (modo pruebas remotas).
+- `.env.staging` → build de dev/staging (apunta a DEV remoto)
 - `.env.production` → build de prod (apunta a `emknatoknbomvmyumqju`)
 
+> **Regla de oro**: para desarrollo local siempre usar `.env.local` → `VITE_SUPABASE_URL=http://localhost:54321`. El DEV remoto (`dkancockzvcqorqbwtyh`) es para pruebas remotas/QA, no para el día a día.
+
 ```bash
-# Ejemplo .env.development (DEV)
-VITE_SUPABASE_URL=https://dkancockzvcqorqbwtyh.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJ...
+# .env.local (LOCAL Docker — desarrollo diario)
+# NOTA: Reemplazar los valores placeholder con los reales del gestor de secretos del equipo
+VITE_SUPABASE_URL=http://localhost:54321
+VITE_SUPABASE_ANON_KEY=sb_publishable_your_local_anon_key_here
 VITE_APP_URL=http://localhost:5173
-VITE_APP_NAME=Gestabiz
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_...
-VITE_PAYMENT_GATEWAY=stripe|payu|mercadopago
-VITE_GOOGLE_CLIENT_ID=...
-VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
-VITE_DEMO_MODE=true   # Cliente Supabase simulado
+VITE_APP_NAME=Gestabiz [LOCAL]
+VITE_PAYMENT_GATEWAY=mercadopago
+VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+# VITE_GA_MEASUREMENT_ID=   ← desactivado en local para no contaminar analytics
+VITE_DEMO_MODE=false
 ```
 
 **Vercel — variables por entorno** (configuradas vía API, no dashboard):
 - `VITE_GOOGLE_CLIENT_ID` / `VITE_GOOGLE_CLIENT_SECRET`:
-  - `production` → cliente PROD (`...7cqaibtabnrm7evqfv4ak2tri8f63us7`)
-  - `development` + `preview` → cliente DEV (`...qk668fv00cpto430petb79c3h4tkvla6`)
+  - `production` → cliente PROD (obtener del gestor de secretos del equipo)
+  - `development` + `preview` → cliente DEV (obtener del gestor de secretos del equipo)
 - `VITE_SUPABASE_ANON_KEY`: usar formato nuevo `sb_publishable_*` (**los JWT legacy `eyJ...` están deshabilitados desde Abr 2026**)
 - **NUNCA** exponer service role key con prefijo `VITE_` — solo en Edge Functions
 
@@ -1049,7 +1117,8 @@ SUPABASE_SERVICE_ROLE_KEY  # Solo para scripts, nunca en frontend
 - **Organización**: TI-Turing (https://github.com/TI-Turing)
 - **Repo**: https://github.com/TI-Turing/Gestabiz
 - **Deploy**: Vercel (configurado en `vercel.json`)
-- **Supabase DEV**: `dkancockzvcqorqbwtyh` (proyecto original, data de prueba)
+- **Supabase LOCAL** ⭐: Docker local — `http://localhost:54321` (desarrollo diario, espejo de DEV)
+- **Supabase DEV**: `dkancockzvcqorqbwtyh` (pruebas remotas / QA — ya no se usa desde local en el día a día)
 - **Supabase PROD**: `emknatoknbomvmyumqju` (proyecto nuevo, limpio)
 - **Versión**: 1.0.3
 - **Fase**: BETA completada — no se agregan nuevos flujos funcionales; solo bugs, optimizaciones y features puntuales solicitadas

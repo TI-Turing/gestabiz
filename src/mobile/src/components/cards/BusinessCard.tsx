@@ -170,7 +170,7 @@ export function BusinessCard({ business, variant = 'default', onPress, onSelect 
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,  // paridad web rounded-md
     overflow: 'hidden',
   },
   bannerContainer: {
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,  // paridad web rounded-md
     padding: spacing.sm,
     gap: spacing.sm,
   },

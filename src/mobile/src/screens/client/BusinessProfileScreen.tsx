@@ -1,15 +1,17 @@
-import React, { useState } from 'react'
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Linking } from 'react-native'
+﻿import React, { useState } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, Image, Linking } from 'react-native'
 import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '../../lib/supabase'
-import { colors, spacing, typography, radius } from '../../theme'
+import { useTheme } from '../../contexts/ThemeContext'
+import { spacing, typography, radius } from '../../theme'
 import Screen from '../../components/ui/Screen'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
+import AppHeader from '../../components/ui/AppHeader'
 import { Business, Service, Location, Review } from '../../types'
 import { QUERY_CONFIG, QUERY_KEYS } from '../../lib/queryClient'
 
-type Tab = 'servicios' | 'info' | 'resenas'
+type Tab = 'servicios' | 'sedes' | 'resenas' | 'acerca'
 
 async function fetchBusinessProfile(businessId: string) {
   const [bizRes, servRes, locRes, revRes] = await Promise.all([
@@ -29,6 +31,7 @@ async function fetchBusinessProfile(businessId: string) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function BusinessProfileScreen({ route, navigation }: { route: any; navigation: any }) {
   const { businessId } = route.params
+  const { theme } = useTheme()
   const [tab, setTab] = useState<Tab>('servicios')
 
   const { data, isLoading } = useQuery({
@@ -48,15 +51,23 @@ export default function BusinessProfileScreen({ route, navigation }: { route: an
   if (!data?.business) return null
 
   const { business, services, locations, reviews } = data
+  const TABS: { key: Tab; label: string }[] = [
+    { key: 'servicios', label: 'Servicios' },
+    { key: 'sedes', label: 'Sedes' },
+    { key: 'resenas', label: 'Reseñas' },
+    { key: 'acerca', label: 'Acerca' },
+  ]
 
   return (
     <Screen scrollable>
+      <AppHeader title={business.name} onBack={() => navigation.goBack()} />
+
       {/* Banner */}
       {business.banner_url ? (
         <Image source={{ uri: business.banner_url }} style={styles.banner} resizeMode="cover" />
       ) : (
-        <View style={[styles.banner, { backgroundColor: colors.primary }]}>
-          <Ionicons name="business-outline" size={48} color={colors.text + '66'} />
+        <View style={[styles.banner, { backgroundColor: theme.primary }]}>
+          <Ionicons name="business-outline" size={48} color="rgba(255,255,255,0.5)" />
         </View>
       )}
 
@@ -65,65 +76,106 @@ export default function BusinessProfileScreen({ route, navigation }: { route: an
         {business.logo_url && (
           <Image source={{ uri: business.logo_url }} style={styles.logo} />
         )}
-        <Text style={styles.bizName}>{business.name}</Text>
+        <Text style={[styles.bizName, { color: theme.text }]}>{business.name}</Text>
         {avgRating != null && (
           <View style={styles.ratingRow}>
             <Ionicons name="star" size={16} color="#f59e0b" />
-            <Text style={styles.ratingText}>{avgRating.toFixed(1)} ({reviews.length} reseñas)</Text>
+            <Text style={[styles.ratingText, { color: theme.textSecondary }]}>{avgRating.toFixed(1)} ({reviews.length} reseñas)</Text>
           </View>
         )}
-        {business.description && <Text style={styles.desc}>{business.description}</Text>}
+        {business.description && <Text style={[styles.desc, { color: theme.textSecondary }]}>{business.description}</Text>}
       </View>
 
       {/* CTA reservar */}
       <TouchableOpacity
-        style={styles.bookBtn}
-        onPress={() => navigation.navigate('Reservar')}
+        style={[styles.bookBtn, { backgroundColor: theme.primary }]}
+        onPress={() => navigation.navigate('Reservar', { preselectedBusinessId: business.id })}
       >
-        <Ionicons name="calendar-outline" size={20} color={colors.text} />
+        <Ionicons name="calendar-outline" size={20} color="#fff" />
         <Text style={styles.bookBtnText}>Reservar cita</Text>
       </TouchableOpacity>
 
       {/* Tabs */}
-      <View style={styles.tabs}>
-        {(['servicios', 'info', 'resenas'] as Tab[]).map((t) => (
-          <TouchableOpacity key={t} style={[styles.tab, tab === t && styles.tabActive]} onPress={() => setTab(t)}>
-            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {{ servicios: 'Servicios', info: 'Info', resenas: 'Reseñas' }[t]}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View style={[styles.tabs, { borderBottomColor: theme.border }]}>
+        {TABS.map((t) => {
+          const active = tab === t.key
+          return (
+            <TouchableOpacity
+              key={t.key}
+              style={[styles.tab, active && { borderBottomWidth: 2, borderBottomColor: theme.primary }]}
+              onPress={() => setTab(t.key)}
+            >
+              <Text style={[
+                styles.tabText,
+                { color: active ? theme.primary : theme.textSecondary },
+                active && { fontWeight: '700' },
+              ]}>
+                {t.label}
+              </Text>
+            </TouchableOpacity>
+          )
+        })}
       </View>
 
       {/* Tab content */}
       {tab === 'servicios' && services.map((s) => (
-        <View key={s.id} style={styles.serviceRow}>
+        <View key={s.id} style={[styles.serviceRow, { borderBottomColor: theme.border }]}>
           <View style={styles.serviceInfo}>
-            <Text style={styles.serviceName}>{s.name}</Text>
-            <Text style={styles.serviceMeta}>{s.duration} min</Text>
+            <Text style={[styles.serviceName, { color: theme.text }]}>{s.name}</Text>
+            <Text style={[styles.serviceMeta, { color: theme.textSecondary }]}>{s.duration} min</Text>
           </View>
           <Text style={styles.servicePrice}>{formatCOP(s.price)}</Text>
         </View>
       ))}
 
-      {tab === 'info' && (
+      {tab === 'sedes' && (
         <View style={styles.infoSection}>
-          {locations.map((loc) => (
-            <View key={loc.id} style={styles.locationCard}>
-              <Text style={styles.locName}>{loc.name}</Text>
-              <Text style={styles.locAddress}>{loc.address}</Text>
-              <Text style={styles.locHours}>{loc.opens_at} — {loc.closes_at}</Text>
-              {loc.phone && (
-                <TouchableOpacity onPress={() => Linking.openURL(`tel:${loc.phone}`)}>
-                  <Text style={styles.locPhone}>{loc.phone}</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          ))}
+          {locations.length === 0 ? (
+            <Text style={[styles.noReviews, { color: theme.textSecondary }]}>Este negocio aún no tiene sedes registradas.</Text>
+          ) : (
+            locations.map((loc) => (
+              <View key={loc.id} style={[styles.locationCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+                <View style={styles.locHeader}>
+                  <Ionicons name="location-outline" size={18} color={theme.primary} />
+                  <Text style={[styles.locName, { color: theme.text }]}>{loc.name}</Text>
+                </View>
+                <Text style={[styles.locAddress, { color: theme.textSecondary }]}>{loc.address}</Text>
+                <View style={styles.locMetaRow}>
+                  <Ionicons name="time-outline" size={14} color={theme.textSecondary} />
+                  <Text style={[styles.locHours, { color: theme.textSecondary }]}>{loc.opens_at} — {loc.closes_at}</Text>
+                </View>
+                {loc.phone && (
+                  <TouchableOpacity
+                    style={styles.locMetaRow}
+                    onPress={() => Linking.openURL(`tel:${loc.phone}`)}
+                  >
+                    <Ionicons name="call-outline" size={14} color={theme.primary} />
+                    <Text style={[styles.locPhone, { color: theme.primary }]}>{loc.phone}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))
+          )}
+        </View>
+      )}
+
+      {tab === 'acerca' && (
+        <View style={styles.infoSection}>
+          {business.description ? (
+            <Text style={[styles.aboutText, { color: theme.text }]}>{business.description}</Text>
+          ) : (
+            <Text style={[styles.noReviews, { color: theme.textSecondary }]}>Sin descripción adicional.</Text>
+          )}
           {business.phone && (
             <TouchableOpacity style={styles.contactBtn} onPress={() => Linking.openURL(`tel:${business.phone}`)}>
-              <Ionicons name="call-outline" size={18} color={colors.primary} />
-              <Text style={styles.contactText}>{business.phone}</Text>
+              <Ionicons name="call-outline" size={18} color={theme.primary} />
+              <Text style={[styles.contactText, { color: theme.primary }]}>{business.phone}</Text>
+            </TouchableOpacity>
+          )}
+          {business.email && (
+            <TouchableOpacity style={styles.contactBtn} onPress={() => Linking.openURL(`mailto:${business.email}`)}>
+              <Ionicons name="mail-outline" size={18} color={theme.primary} />
+              <Text style={[styles.contactText, { color: theme.primary }]}>{business.email}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -131,18 +183,18 @@ export default function BusinessProfileScreen({ route, navigation }: { route: an
 
       {tab === 'resenas' && (
         reviews.length === 0
-          ? <Text style={styles.noReviews}>Sin reseñas aún</Text>
+          ? <Text style={[styles.noReviews, { color: theme.textSecondary }]}>Sin reseñas aún</Text>
           : reviews.map((r) => (
-            <View key={r.id} style={styles.reviewCard}>
+            <View key={r.id} style={[styles.reviewCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
               <View style={styles.reviewHeader}>
-                <Text style={styles.reviewerName}>{r.reviewer?.full_name ?? 'Usuario'}</Text>
+                <Text style={[styles.reviewerName, { color: theme.text }]}>{r.reviewer?.full_name ?? 'Usuario'}</Text>
                 <View style={styles.stars}>
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Ionicons key={i} name={i < r.rating ? 'star' : 'star-outline'} size={14} color="#f59e0b" />
                   ))}
                 </View>
               </View>
-              {r.comment && <Text style={styles.reviewComment}>{r.comment}</Text>}
+              {r.comment && <Text style={[styles.reviewComment, { color: theme.textSecondary }]}>{r.comment}</Text>}
             </View>
           ))
       )}
@@ -154,34 +206,35 @@ const styles = StyleSheet.create({
   banner: { height: 180, width: '100%', alignItems: 'center', justifyContent: 'center' },
   headerInfo: { padding: spacing.base },
   logo: { width: 60, height: 60, borderRadius: radius.lg, marginBottom: spacing.sm },
-  bizName: { fontSize: typography['2xl'], fontWeight: '800', color: colors.text },
+  bizName: { fontSize: typography['2xl'], fontWeight: '800' },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  ratingText: { fontSize: typography.sm, color: colors.textSecondary },
-  desc: { fontSize: typography.sm, color: colors.textSecondary, marginTop: spacing.sm, lineHeight: 20 },
-  bookBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, margin: spacing.base, borderRadius: radius.lg, padding: spacing.base, gap: spacing.xs },
-  bookBtnText: { fontSize: typography.lg, fontWeight: '700', color: colors.text },
-  tabs: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: colors.border, marginHorizontal: spacing.base },
+  ratingText: { fontSize: typography.sm },
+  desc: { fontSize: typography.sm, marginTop: spacing.sm, lineHeight: 20 },
+  bookBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: spacing.base, borderRadius: radius.lg, padding: spacing.base, gap: spacing.xs },
+  bookBtnText: { fontSize: typography.lg, fontWeight: '700', color: '#fff' },
+  tabs: { flexDirection: 'row', borderBottomWidth: 1, marginHorizontal: spacing.base },
   tab: { flex: 1, paddingVertical: spacing.sm, alignItems: 'center' },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: colors.primary },
-  tabText: { color: colors.textSecondary, fontWeight: '500' },
-  tabTextActive: { color: colors.primary, fontWeight: '700' },
-  serviceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.base, paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
+  tabText: { fontWeight: '500' },
+  serviceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.base, paddingVertical: spacing.sm, borderBottomWidth: 1 },
   serviceInfo: {},
-  serviceName: { fontSize: typography.base, fontWeight: '600', color: colors.text },
-  serviceMeta: { fontSize: typography.sm, color: colors.textSecondary },
-  servicePrice: { fontSize: typography.base, fontWeight: '700', color: colors.success },
+  serviceName: { fontSize: typography.base, fontWeight: '600' },
+  serviceMeta: { fontSize: typography.sm },
+  servicePrice: { fontSize: typography.base, fontWeight: '700', color: '#22c55e' },
   infoSection: { padding: spacing.base },
-  locationCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.base, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.cardBorder },
-  locName: { fontSize: typography.base, fontWeight: '700', color: colors.text },
-  locAddress: { fontSize: typography.sm, color: colors.textSecondary, marginTop: 2 },
-  locHours: { fontSize: typography.sm, color: colors.primary, marginTop: 4 },
-  locPhone: { fontSize: typography.sm, color: colors.info, marginTop: 2 },
+  locationCard: { borderRadius: radius.lg, padding: spacing.base, marginBottom: spacing.sm, borderWidth: 1 },
+  locHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  locMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  locName: { fontSize: typography.base, fontWeight: '700' },
+  locAddress: { fontSize: typography.sm, marginTop: 2 },
+  locHours: { fontSize: typography.sm },
+  locPhone: { fontSize: typography.sm },
   contactBtn: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.sm },
-  contactText: { color: colors.primary, fontSize: typography.base },
-  reviewCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.base, marginHorizontal: spacing.base, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.cardBorder },
+  contactText: { fontSize: typography.base },
+  aboutText: { fontSize: typography.base, lineHeight: 22 },
+  reviewCard: { borderRadius: radius.lg, padding: spacing.base, marginHorizontal: spacing.base, marginBottom: spacing.sm, borderWidth: 1 },
   reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.xs },
-  reviewerName: { fontSize: typography.sm, fontWeight: '700', color: colors.text },
+  reviewerName: { fontSize: typography.sm, fontWeight: '700' },
   stars: { flexDirection: 'row', gap: 2 },
-  reviewComment: { fontSize: typography.sm, color: colors.textSecondary, lineHeight: 20 },
-  noReviews: { color: colors.textSecondary, padding: spacing.base, textAlign: 'center' },
+  reviewComment: { fontSize: typography.sm, lineHeight: 20 },
+  noReviews: { padding: spacing.base, textAlign: 'center' },
 })

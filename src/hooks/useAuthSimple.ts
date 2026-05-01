@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { User as SupabaseUser, Session } from '@supabase/supabase-js'
 import * as Sentry from '@sentry/react'
 import { supabase } from '@/lib/supabase'
+import { resetQueryClient } from '@/lib/queryClient'
 import { User } from '@/types'
 import type { Database } from '@/types/database'
 
@@ -354,6 +355,10 @@ export function useAuthSimple() {
   const signOut = useCallback(async () => {
     debugLog('👋 Signing out...')
     await supabase.auth.signOut()
+    // Limpia toda la cache de React Query para evitar que los datos del
+    // usuario anterior queden visibles si otra cuenta inicia sesión en la
+    // misma pestaña. Ref: auditoria-completa-abril-2026.md §1.2.
+    resetQueryClient()
   }, [])
 
   // ✅ Estabilizar el objeto de retorno: solo cambia cuando cambian los valores reales.

@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Ventas — Gestabiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #6c63ff;
+    --accent2: #ff6b6b;
+    --accent3: #43e97b;
+    --accent4: #f7b731;
+    --text: #e8e8f0;
+    --muted: #7a7a9a;
+    --white: #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0;
+    width: 260px;
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 0 0 40px 0;
+  }
+
+  .sidebar-logo {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .sidebar-logo .brand {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.5px;
+  }
+  .sidebar-logo .brand span { color: var(--accent); }
+  .sidebar-logo .sub {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 4px;
+  }
+
+  .nav-section {
+    padding: 8px 0;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    padding: 8px 24px 4px;
+    font-weight: 500;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 24px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+    font-size: 13.5px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+  .nav-item:hover, .nav-item.active {
+    background: rgba(108,99,255,0.08);
+    color: var(--white);
+    border-left-color: var(--accent);
+  }
+  .nav-item .num {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    opacity: 0.7;
+    min-width: 18px;
+  }
+  .nav-item.active .num { opacity: 1; }
+
+  /* MAIN */
+  .main {
+    margin-left: 260px;
+    min-height: 100vh;
+  }
+
+  .hero {
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a1030 50%, #0f1a1f 100%);
+    padding: 70px 60px 60px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(108,99,255,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .hero-tag {
+    display: inline-block;
+    background: rgba(108,99,255,0.15);
+    border: 1px solid rgba(108,99,255,0.3);
+    color: var(--accent);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -1.5px;
+    color: var(--white);
+    max-width: 700px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 16px;
+    margin-top: 16px;
+    max-width: 560px;
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 32px;
+    margin-top: 40px;
+  }
+
+  .hero-stat {
+    text-align: center;
+  }
+
+  .hero-stat .val {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--white);
+  }
+
+  .hero-stat .val span { color: var(--accent); }
+
+  .hero-stat .lbl {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  /* CONTENT */
+  .content {
+    padding: 0;
+  }
+
+  .section {
+    display: none;
+    padding: 50px 60px;
+    animation: fadeIn 0.3s ease;
+    max-width: 900px;
+  }
+
+  .section.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .section h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.8px;
+    line-height: 1.2;
+  }
+
+  .section-desc {
+    color: var(--muted);
+    margin-top: 10px;
+    font-size: 14.5px;
+    font-weight: 300;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-title .icon {
+    font-size: 18px;
+  }
+
+  .card p {
+    color: #b0b0c8;
+    font-size: 14.5px;
+    margin-bottom: 10px;
+  }
+
+  .card p:last-child { margin-bottom: 0; }
+
+  /* CALLOUT */
+  .callout {
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 18px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .callout.green {
+    background: rgba(67,233,123,0.07);
+    border: 1px solid rgba(67,233,123,0.2);
+  }
+
+  .callout.red {
+    background: rgba(255,107,107,0.07);
+    border: 1px solid rgba(255,107,107,0.2);
+  }
+
+  .callout.yellow {
+    background: rgba(247,183,49,0.07);
+    border: 1px solid rgba(247,183,49,0.2);
+  }
+
+  .callout.purple {
+    background: rgba(108,99,255,0.07);
+    border: 1px solid rgba(108,99,255,0.2);
+  }
+
+  .callout-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+
+  .callout-body { flex: 1; }
+  .callout-body strong {
+    display: block;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    margin-bottom: 4px;
+  }
+  .callout.green strong { color: var(--accent3); }
+  .callout.red strong { color: var(--accent2); }
+  .callout.yellow strong { color: var(--accent4); }
+  .callout.purple strong { color: var(--accent); }
+  .callout-body p { font-size: 14px; color: #b0b0c8; margin: 0; }
+
+  /* DIALOGUE */
+  .dialogue-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .dialogue-header {
+    padding: 12px 20px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dialogue-header.them { background: rgba(255,107,107,0.08); color: var(--accent2); }
+  .dialogue-header.you { background: rgba(108,99,255,0.08); color: var(--accent); }
+
+  .dialogue-body {
+    padding: 16px 20px;
+    font-size: 14.5px;
+    font-style: italic;
+    color: #d0d0e8;
+    line-height: 1.65;
+  }
+
+  /* STEPS */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+
+  .step {
+    display: flex;
+    gap: 20px;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .step:last-child { border-bottom: none; }
+
+  .step-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(108,99,255,0.15);
+    border: 2px solid rgba(108,99,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .step-content h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+
+  .step-content p {
+    font-size: 14px;
+    color: #b0b0c8;
+    margin-bottom: 8px;
+  }
+
+  .step-content p:last-child { margin-bottom: 0; }
+
+  /* LIST */
+  .list { list-style: none; padding: 0; }
+  .list li {
+    padding: 7px 0;
+    padding-left: 20px;
+    position: relative;
+    font-size: 14.5px;
+    color: #b8b8d0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .list li:last-child { border-bottom: none; }
+  .list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 12px;
+  }
+
+  /* OBJECTIONS TABLE */
+  .obj-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+
+  .obj-q {
+    padding: 14px 20px;
+    background: rgba(255,107,107,0.06);
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 500;
+    color: #e8a0a0;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .obj-q::before { content: '💬'; font-size: 14px; flex-shrink: 0; }
+
+  .obj-a {
+    padding: 14px 20px;
+    font-size: 14px;
+    color: #b8c8b8;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-style: italic;
+  }
+
+  .obj-a::before { content: '✓'; color: var(--accent3); font-style: normal; flex-shrink: 0; font-weight: 700; }
+
+  /* PRICING TABLE */
+  .pricing-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 4px;
+  }
+
+  .pricing-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 18px;
+  }
+
+  .pricing-card.featured {
+    border-color: var(--accent);
+    background: rgba(108,99,255,0.05);
+  }
+
+  .plan-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .plan-price {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+
+  .plan-price .currency { font-size: 13px; color: var(--muted); }
+
+  .plan-desc { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+
+  .plan-features { list-style: none; padding: 0; }
+  .plan-features li {
+    font-size: 12.5px;
+    color: #9898b8;
+    padding: 4px 0;
+    padding-left: 16px;
+    position: relative;
+  }
+  .plan-features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--accent3);
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .badge.do { background: rgba(67,233,123,0.15); color: var(--accent3); border: 1px solid rgba(67,233,123,0.2); }
+  .badge.dont { background: rgba(255,107,107,0.15); color: var(--accent2); border: 1px solid rgba(255,107,107,0.2); }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 28px 0;
+  }
+
+  /* H3 */
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+    margin: 28px 0 14px;
+  }
+
+  h3:first-child { margin-top: 0; }
+
+  /* HIGHLIGHT */
+  .highlight {
+    background: rgba(108,99,255,0.12);
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 14.5px;
+    color: #d0d0f0;
+    font-style: italic;
+  }
+
+  /* NAV BOTTOM */
+  .section-nav {
+    display: flex;
+    gap: 12px;
+    margin-top: 50px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn {
+    padding: 11px 22px;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+
+  .btn-primary:hover { background: #7c74ff; }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover { color: var(--white); border-color: var(--accent); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* MOBILE */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-260px); }
+    .main { margin-left: 0; }
+    .hero { padding: 40px 24px; }
+    .hero h1 { font-size: 32px; }
+    .section { padding: 32px 24px; }
+    .pricing-cards { grid-template-columns: 1fr; }
+    .hero-stats { gap: 20px; }
+  }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    margin: 0 24px 0;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  em { color: var(--accent4); font-style: normal; font-weight: 500; }
+  strong { color: var(--white); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">Gesta<span>biz</span></div>
+    <div class="sub">Para vendedores externos · 2026</div>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:12%"></div></div>
+
+  <div class="nav-section">
+    <div class="nav-label">Preparación</div>
+    <div class="nav-item active" onclick="showSection('s1', this)"><span class="num">01</span> Mentalidad y actitud</div>
+    <div class="nav-item" onclick="showSection('s2', this)"><span class="num">02</span> Cómo vestirte</div>
+    <div class="nav-item" onclick="showSection('s3', this)"><span class="num">03</span> Antes de salir</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">En el negocio</div>
+    <div class="nav-item" onclick="showSection('s4', this)"><span class="num">04</span> Cómo llegar</div>
+    <div class="nav-item" onclick="showSection('s5', this)"><span class="num">05</span> El saludo</div>
+    <div class="nav-item" onclick="showSection('s6', this)"><span class="num">06</span> La conversación inicial</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Producto</div>
+    <div class="nav-item" onclick="showSection('s7', this)"><span class="num">07</span> Los 9 pilares</div>
+    <div class="nav-item" onclick="showSection('s8', this)"><span class="num">08</span> Orden según negocio</div>
+    <div class="nav-item" onclick="showSection('s9', this)"><span class="num">09</span> La demostración</div>
+    <div class="nav-item" onclick="showSection('s10', this)"><span class="num">10</span> Precios y planes</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">El cierre</div>
+    <div class="nav-item" onclick="showSection('s11', this)"><span class="num">11</span> Cómo cerrar</div>
+    <div class="nav-item" onclick="showSection('s12', this)"><span class="num">12</span> Cuando dicen que sí</div>
+    <div class="nav-item" onclick="showSection('s13', this)"><span class="num">13</span> Cuando dicen que no</div>
+    <div class="nav-item" onclick="showSection('s14', this)"><span class="num">14</span> Manejo de objeciones</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Casos especiales</div>
+    <div class="nav-item" onclick="showSection('s15', this)"><span class="num">15</span> Administrador, no dueño</div>
+    <div class="nav-item" onclick="showSection('s16', this)"><span class="num">16</span> Seguimiento</div>
+    <div class="nav-item" onclick="showSection('s17', this)"><span class="num">17</span> Errores fatales</div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="hero">
+    <div class="hero-tag">Campo · Bogotá · 2026</div>
+    <h1>Tu manual de ventas para <span>Gestabiz</span></h1>
+    <p>Todo lo que necesitas para salir a vender Gestabiz y cobrar tu comisión. Guiones reales, objeciones con respuesta lista y el proceso exacto de prospecto a pago — sin rodeos.</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="val">17<span> caps</span></div><div class="lbl">Secciones</div></div>
+      <div class="hero-stat"><div class="val">9<span></span></div><div class="lbl">Pilares del producto</div></div>
+      <div class="hero-stat"><div class="val">30<span>d</span></div><div class="lbl">Trial gratis</div></div>
+      <div class="hero-stat"><div class="val">$60<span>K</span></div><div class="lbl">Por cliente cerrado</div></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- S1: MENTALIDAD -->
+    <div class="section active" id="s1">
+      <div class="section-header">
+        <div class="section-num">Sección 01</div>
+        <h2>Mentalidad y actitud</h2>
+        <p class="section-desc">Antes de abrir cualquier puerta, tienes que tener esto claro en la cabeza.</p>
+      </div>
+
+      <div class="callout purple">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <strong>La regla de oro</strong>
+          <p>No vas a <em>vender</em>. Vas a <em>ayudar</em>. La diferencia está en cómo entras, cómo hablas y cómo te sientes. La gente compra cuando confía, no cuando la presionan.</p>
+        </div>
+      </div>
+
+      <h3>Cómo debes pensar antes de entrar</h3>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Tú tienes algo valioso</h4>
+            <p>Gestabiz le resuelve un problema real a esos negocios. No estás pidiendo un favor ni molestando. Estás ofreciendo algo que les puede ahorrar tiempo y hacerles ganar más plata. Entra con esa convicción.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>El "no" no es personal</h4>
+            <p>Si te dicen que no, no te rechazaron a <em>ti</em>. Simplemente ese negocio no está listo todavía, o no lo presentaste en el momento correcto. Nada más. Siguiente.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Sé tú mismo, no un vendedor</h4>
+            <p>La gente huele cuando alguien está actuando. No uses tono de vendedor. Habla como hablas siempre. Cuando eres natural y directo, inspiras confianza.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Meta del día, no de la visita</h4>
+            <p>Proponte visitar mínimo 8–10 negocios al día. Si cierras 1 de cada 10, eso está bien. Si cierras 3, está excelente. El juego de ventas en la calle es un juego de volumen y actitud constante.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout yellow">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <strong>Trampa mental a evitar</strong>
+          <p>No intentes convencer a nadie. Tu trabajo es <em>mostrar</em> y preguntar. Si hay dolor, ellos se convencen solos. Si no hay dolor, no pierdas tiempo.</p>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-primary" onclick="showSection('s2', document.querySelector('[onclick*=s2]'))">Siguiente → Cómo vestirte</button>
+      </div>
+    </div>
+
+    <!-- S2: VESTIMENTA -->
+    <div class="section" id="s2">
+      <div class="section-header">
+        <div class="section-num">Sección 02</div>
+        <h2>Cómo vestirte</h2>
+        <p class="section-desc">Tu imagen comunica antes de que abras la boca. Tiene que decir: confiable, profesional, pero cercano.</p>
+      </div>
+
+      <div class="callout purple">
+        <div class="callout-icon">👔</div>
+        <div class="callout-body">
+          <strong>El objetivo de tu look</strong>
+          <p>Que el dueño del salón piense "este man parece serio, sabe de lo que habla". No un ejecutivo intimidante, no un estudiante. Profesional accesible.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">✅</span> Lo que sí debes usar</div>
+        <ul class="list">
+          <li>Camisa de botones o polo limpio y bien planchado (colores neutros: azul, blanco, gris, negro)</li>
+          <li>Jean oscuro limpio o pantalón casual de tela — sin rotos, sin desteñido</li>
+          <li>Zapatos o tenis limpios (no chanclas, nunca)</li>
+          <li>Cabello arreglado, cara afeitada o barba bien perfilada</li>
+          <li>Si llevas maletín o mochila: que sea discreto y en buen estado</li>
+          <li>Teléfono cargado al 100% antes de salir — lo vas a necesitar para la demo</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">❌</span> Lo que NO debes usar</div>
+        <ul class="list">
+          <li>Camiseta de cuello redondo arrugada o con logos muy llamativos</li>
+          <li>Jean claro o roto</li>
+          <li>Tenis deportivos de colores muy llamativos (Jordan, Nike Air Max exagerados)</li>
+          <li>Accesorios exagerados: cadenas gruesas, aretes grandes</li>
+          <li>Ropa que huela a cigarrillo o sudor</li>
+          <li>Audífonos en el cuello o puestos al llegar — deja eso guardado antes de entrar</li>
+        </ul>
+      </div>
+
+      <div class="callout green">
+        <div class="callout-icon">💅</div>
+        <div class="callout-body">
+          <strong>Truco práctico</strong>
+          <p>Visitas salones de belleza y barberías. Esos dueños <em>le ponen atención a cómo se ven las personas</em>. Tu presentación personal es parte de tu pitch sin que digas nada.</p>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s1', document.querySelector('[onclick*=s1]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s3', document.querySelector('[onclick*=s3]'))">Siguiente → Antes de salir</button>
+      </div>
+    </div>
+
+    <!-- S3: ANTES DE SALIR -->
+    <div class="section" id="s3">
+      <div class="section-header">
+        <div class="section-num">Sección 03</div>
+        <h2>Antes de salir de casa</h2>
+        <p class="section-desc">El 80% del éxito de una visita se decide antes de llegar. Tu checklist obligatorio.</p>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Teléfono cargado, pantalla limpia</h4>
+            <p>La demo la vas a hacer desde tu celular. Tiene que estar al 100%, sin notificaciones que aparezcan encima, sin mensajes de WhatsApp mostrándose. Activa el modo "No molestar" antes de entrar a cada negocio.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Abre Gestabiz antes de salir</h4>
+            <p>Practica la demo en casa. Sabe exactamente qué vas a mostrar, en qué orden y qué botones tocar. Una demo con dudas o pantallas de error mata la venta al instante.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Define tu zona del día</h4>
+            <p>Elige un barrio específico y recórrelo completo. No saltes de Chapinero a Kennedy. Zona a zona, calle por calle. Así ahorras tiempo y tienes energía para más visitas.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Lleva papel y esfero</h4>
+            <p>Si alguien te da un contacto, el nombre de otro negocio, o quiere que lo llames después, anótalo en ese momento. No confíes solo en el celular.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h4>Come bien y toma agua</h4>
+            <p>Esto no es un chiste. Si llegas con hambre o con sed, tu energía y tu tono bajan. Los negocios perciben eso. Desayuna antes de empezar, lleva agua.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout yellow">
+        <div class="callout-icon">📋</div>
+        <div class="callout-body">
+          <strong>¿Cuándo visitar?</strong>
+          <p>Los mejores horarios son <em>martes a sábado</em>, entre <em>10am–12pm</em> y <em>3pm–6pm</em>. Los lunes muchos salones están cerrados. A mediodía el dueño generalmente está ocupado atendiendo. Evita las horas pico de servicio.</p>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s2', document.querySelector('[onclick*=s2]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s4', document.querySelector('[onclick*=s4]'))">Siguiente → Cómo llegar</button>
+      </div>
+    </div>
+
+    <!-- S4: CÓMO LLEGAR -->
+    <div class="section" id="s4">
+      <div class="section-header">
+        <div class="section-num">Sección 04</div>
+        <h2>Cómo llegar al negocio</h2>
+        <p class="section-desc">Lo que haces en los primeros 30 segundos define si te van a escuchar o no.</p>
+      </div>
+
+      <div class="callout red">
+        <div class="callout-icon">🚫</div>
+        <div class="callout-body">
+          <strong>Nunca llegues en hora pico de servicio</strong>
+          <p>Si el salón está lleno de clientes y el estilista está en medio de un servicio, ese no es el momento. Observa desde afuera. Si hay más de 2 personas siendo atendidas y el dueño está ocupado, vuelve más tarde o ese día no.</p>
+        </div>
+      </div>
+
+      <h3>La lectura antes de entrar</h3>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Para 5 segundos afuera</h4>
+            <p>Mira el negocio. ¿Tiene letrero? ¿Cuántos empleados hay? ¿Hay agenda escrita en papel en algún lado? ¿Tienen Instagram puesto en alguna pantalla? Eso te da contexto para la conversación.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Entra con calma</h4>
+            <p>No entres como si estuvieras apurado. Entra despacio, da un vistazo, saluda con la mirada antes de hablar. Eso transmite seguridad. La prisa huele a desesperación.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Ubica quién manda</h4>
+            <p>A veces quien está en la recepción no es el dueño. No hagas el pitch a quien no puede tomar la decisión. Pregunta por el administrador o el encargado. Si no están, déjalo para después.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="highlight">
+        "Cuando entro, busco a alguien que no esté atendiendo a nadie y que tenga cara de estar pendiente del negocio. Ese suele ser el encargado."
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s3', document.querySelector('[onclick*=s3]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s5', document.querySelector('[onclick*=s5]'))">Siguiente → El saludo</button>
+      </div>
+    </div>
+
+    <!-- S5: SALUDO -->
+    <div class="section" id="s5">
+      <div class="section-header">
+        <div class="section-num">Sección 05</div>
+        <h2>El saludo</h2>
+        <p class="section-desc">La primera impresión no se repite. Este momento lo tienes que dominar.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">👋</span> El saludo correcto</div>
+        <p>Llega, da los buenos días/tardes con una sonrisa natural (no exagerada), haz contacto visual directo. Si hay alguien libre, ve a esa persona. No grites desde la entrada.</p>
+      </div>
+
+      <h3>Guión de apertura — palabra por palabra</h3>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header you">Tú dices</div>
+        <div class="dialogue-body">"Buenas tardes, ¿cómo están? Mire, yo vengo a mostrarles algo que creamos para negocios como el de ustedes — es una app para manejar las citas y los clientes. ¿Hay alguien a quien le pueda mostrar un momentico?"</div>
+      </div>
+
+      <div class="callout green">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <strong>Por qué funciona esto</strong>
+          <p>Dices exactamente qué es y qué necesitas, sin rodeos. No preguntas "¿tiene un minuto?" porque eso les da la oportunidad de decir que no. Preguntas por alguien específico, lo que crea un próximo paso natural.</p>
+        </div>
+      </div>
+
+      <h3>Variantes según la situación</h3>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header them">Si te preguntan: "¿Para qué es?"</div>
+        <div class="dialogue-body">"Es una plataforma que les ayuda a organizar las citas de los clientes, ver qué empleados tienen disponibilidad y tener todo el historial del negocio en un solo lugar. ¿El dueño está?"</div>
+      </div>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header them">Si te dicen: "El dueño no está"</div>
+        <div class="dialogue-body">"Perfecto, ¿a qué horas suele estar? Le dejo mi número y si quiere puedo volver cuando esté él." — Anota el nombre del negocio, la hora y vuelve. No pierdas el tiempo con quien no decide.</div>
+      </div>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header them">Si el dueño es quien te atendió</div>
+        <div class="dialogue-body">"Qué bueno, entonces con usted mismo. Mire, le cuento en menos de 5 minutos y si le interesa lo vemos más a fondo, si no, no le quito más tiempo."</div>
+      </div>
+
+      <div class="callout yellow">
+        <div class="callout-icon">⚡</div>
+        <div class="callout-body">
+          <strong>Clave de tono</strong>
+          <p>Habla como le hablarías a un conocido que acaba de abrir un negocio. Ni formal-encartonado ni confianzudo. Cálido y directo.</p>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s4', document.querySelector('[onclick*=s4]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s6', document.querySelector('[onclick*=s6]'))">Siguiente → Conversación inicial</button>
+      </div>
+    </div>
+
+    <!-- S6: CONVERSACIÓN INICIAL -->
+    <div class="section" id="s6">
+      <div class="section-header">
+        <div class="section-num">Sección 06</div>
+        <h2>La conversación inicial</h2>
+        <p class="section-desc">Antes de hablar de Gestabiz, tienes que entender el negocio. Haz preguntas, no speeches.</p>
+      </div>
+
+      <div class="callout purple">
+        <div class="callout-icon">🎯</div>
+        <div class="callout-body">
+          <strong>La táctica del dolor</strong>
+          <p>La gente no compra software. Compra la solución a un problema que los está molestando. Tu trabajo en los primeros 2 minutos es encontrar ese dolor.</p>
+        </div>
+      </div>
+
+      <h3>Las preguntas que hacen la diferencia</h3>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>"¿Cómo manejan ahorita las citas de los clientes?"</h4>
+            <p>Esta es tu pregunta de oro. Las respuestas típicas son: "por WhatsApp", "en un cuaderno", "de memoria", "la clienta llama directamente al estilista". Cualquiera de esas respuestas es una oportunidad.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>"¿Y les ha pasado que alguien no llega a la cita sin avisar?"</h4>
+            <p>El 99% va a decir que sí. Eso duele. El tiempo perdido, el turno vacío, el empleado esperando. Deja que lo cuenten. No interrumpas.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>"¿Cuántos empleados tienen aquí?"</h4>
+            <p>Esto te ayuda a entender el tamaño del negocio y qué plan tiene sentido. También muestra que te interesa entender su operación.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>"¿Los clientes piden cita con anticipación o llegan directamente?"</h4>
+            <p>Si la mayoría llega sin cita, la solución es ayudarles a empezar a usar citas. Si ya usan citas, la solución es organizarlas mejor.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout green">
+        <div class="callout-icon">👂</div>
+        <div class="callout-body">
+          <strong>Regla de escucha activa</strong>
+          <p>Cuando hablen, asiente. Dí "entiendo", "claro", "eso pasa mucho". No rellenes los silencios. Deja que el dueño sienta que lo estás oyendo de verdad.</p>
+        </div>
+      </div>
+
+      <h3>Las señales que te dicen qué mostrar primero</h3>
+
+      <p style="color:#b0b0c8; font-size:14.5px; margin-bottom:16px;">Lo que te digan en esta conversación decide por dónde arrancar la demo. <em>No siempre es la agenda primero.</em> Estas son las señales clave:</p>
+
+      <div class="obj-item">
+        <div class="obj-q">"Manejamos todo por WhatsApp, damos atención personalizada"</div>
+        <div class="obj-a">Empieza por <strong>el Chat integrado</strong>. Muéstrales cómo el cliente elige con qué empleado conversar, cómo queda el historial, y cómo el recordatorio de cita sale automático sin reemplazar la asesoría. El combo más efectivo en salones con atención personalizada.</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">"Se nos pierden turnos, los clientes no llegan"</div>
+        <div class="obj-a">Empieza por <strong>los Recordatorios automáticos</strong> y el <strong>Pago en línea al reservar</strong>. El argumento: "Si pagan antes, llegan."</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">"Tenemos 2 o más sedes"</div>
+        <div class="obj-a">Empieza por <strong>Reportes consolidados + Transferencia entre sedes</strong>. Ese dueño necesita control central, no agenda bonita.</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">"No sé cuánto realmente me está quedando del mes"</div>
+        <div class="obj-a">Empieza por <strong>el módulo Contable</strong>: ventas + gastos + impuestos colombianos (IVA, ICA, Retención) + reportes exportables. Su contador los amará.</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">"No me llegan clientes nuevos, vivo de los de siempre"</div>
+        <div class="obj-a">Empieza por <strong>Perfil público + Reviews + SEO</strong>. "Su negocio sale en Google sin pagar publicidad."</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">"Tengo sillas/mesas/cabinas/canchas/consultorios que se alquilan"</div>
+        <div class="obj-a">Empieza por <strong>el módulo de Recursos</strong>. Esta es la función diferenciadora — casi ninguna competencia la tiene. 15 tipos de recursos distintos.</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">"Los empleados hacen lo que quieren, no sé qué pasa"</div>
+        <div class="obj-a">Empieza por <strong>Permisos granulares + Jerarquía + Ausencias con aprobación</strong>. Control sin micromanagement.</div>
+      </div>
+
+      <div class="callout purple">
+        <div class="callout-icon">🎯</div>
+        <div class="callout-body">
+          <strong>Sin señal clara</strong>
+          <p>Si no te dan ninguna señal fuerte, arranca con el combo estándar: <em>Agenda + Recordatorios + Historial de cliente</em>. Esos tres son universales.</p>
+        </div>
+      </div>
+
+      <h3>El puente hacia la demo</h3>
+
+      <div class="highlight">
+        Una vez que identificas el dolor, usas eso como puente: <br><br>
+        "Listo, lo que me está contando es exactamente lo primero que le voy a mostrar. ¿Le puedo enseñar cómo funciona en menos de 5 minutos?"
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s5', document.querySelector('[onclick*=s5]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s7', document.querySelector('[onclick*=s7]'))">Siguiente → Los 9 pilares</button>
+      </div>
+    </div>
+
+    <!-- S7: LOS 9 PILARES -->
+    <div class="section" id="s7">
+      <div class="section-header">
+        <div class="section-num">Sección 07</div>
+        <h2>Los 9 pilares de Gestabiz</h2>
+        <p class="section-desc">Todas las funcionalidades agrupadas por el dolor que resuelven. Memoriza el gancho de cada pilar — es lo que vas a usar en la conversación.</p>
+      </div>
+
+      <div class="callout purple">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <strong>La verdad comercial</strong>
+          <p>Gestabiz NO es "la mejor agenda de citas". Es el <em>único todo-en-uno hecho para Colombia</em>. La ventaja es la <strong>amplitud</strong>: 9 pilares en una sola cuenta, en pesos, con soporte en español.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📅</span> Pilar 1 — Organización de citas</div>
+        <p><strong>Qué incluye:</strong> Wizard de reserva multi-paso, agenda por empleado/sede/recurso, bloqueo automático por ausencias y festivos colombianos (54 festivos cargados), detección de conflictos, confirmación y cancelación sin login (por email).</p>
+        <p><strong>Dolor que resuelve:</strong> "Se nos pierden turnos, no sabemos quién viene mañana, el WhatsApp es un caos."</p>
+        <p><strong>Gancho:</strong> <em>"Dejan de perder turnos por desorganización — todo el negocio lo ven en una sola pantalla."</em></p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">💬</span> Pilar 2 — Comunicación con el cliente ⭐</div>
+        <p><strong>Qué incluye:</strong> Chat en tiempo real integrado, el cliente elige con qué empleado conversar (solo los que el admin habilita), historial completo guardado, recordatorios automáticos por Email, SMS y WhatsApp Business.</p>
+        <p><strong>Dolor que resuelve:</strong> "Atendemos por WhatsApp para dar asesoría personalizada pero se pierde todo, no hay historial, y cada empleado tiene su chat aparte."</p>
+        <p><strong>Gancho:</strong> <em>"Sigan dando la misma atención personalizada por chat, pero organizada — con historial, por empleado, y los recordatorios llegan solos."</em></p>
+        <p style="color:#f7b731;"><strong>★ El pilar que más frecuentemente cierra el interés en salones y barberías.</strong></p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">👥</span> Pilar 3 — Gestión de equipo</div>
+        <p><strong>Qué incluye:</strong> Jerarquía con niveles, 79 tipos de permisos granulares, horarios por empleado con descanso de almuerzo, ausencias y vacaciones con aprobación obligatoria, transferencia de empleados entre sedes.</p>
+        <p><strong>Dolor que resuelve:</strong> "No sé qué está haciendo cada empleado, quién puede cambiar precios, quién está de vacaciones."</p>
+        <p><strong>Gancho:</strong> <em>"Delegan sin perder el control — cada empleado ve solo lo que le corresponde."</em></p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🏢</span> Pilar 4 — Recursos físicos (DIFERENCIADOR)</div>
+        <p><strong>Qué incluye:</strong> 15 tipos de recursos (cabinas, sillas, mesas, canchas, consultorios, habitaciones, escritorios, equipos, vehículos, espacios, lanes, campos, estaciones, parqueaderos, camas). Reserva con detección de overlap. Servicios asignables a recursos o a personas.</p>
+        <p><strong>Dolor que resuelve:</strong> "Tengo espacios/equipos que alquilo, no solo personas — ninguna app me sirve."</p>
+        <p><strong>Gancho:</strong> <em>"Si tienen cabinas, mesas, canchas, habitaciones o cualquier espacio que se alquila, esto lo manejan igual que las citas de empleados."</em></p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">💰</span> Pilar 5 — Ventas y contabilidad</div>
+        <p><strong>Qué incluye:</strong> Ventas rápidas (cobro sin cita previa), transacciones automáticas, IVA + ICA + Retención en la Fuente (Colombia), reportes financieros por sede/empleado/periodo, gastos recurrentes, exportar a PDF/CSV/Excel.</p>
+        <p><strong>Dolor que resuelve:</strong> "No sé cuánto realmente me queda al mes, le pago al contador mucho, manejo todo en Excel."</p>
+        <p><strong>Gancho:</strong> <em>"Su contador les va a agradecer — y ustedes dejan de vivir en Excel."</em></p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🌐</span> Pilar 6 — Crecimiento (SEO + Reviews)</div>
+        <p><strong>Qué incluye:</strong> URL pública indexable por Google (/negocio/su-slug), reviews reales solo de clientes con cita completada, ratings por negocio y por empleado, búsqueda pública con ts_rank.</p>
+        <p><strong>Dolor que resuelve:</strong> "No sé cómo conseguir clientes nuevos sin pagar publicidad."</p>
+        <p><strong>Gancho:</strong> <em>"Su negocio aparece en Google sin pagar publicidad — y las reseñas de clientes reales les traen más gente."</em></p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">👤</span> Pilar 7 — CRM de clientes</div>
+        <p><strong>Qué incluye:</strong> Historial completo por cliente (fechas, servicios, gasto total), avatar, contacto, notas. Favoritos. Dashboard del cliente muestra sus reservas y lugares preferidos.</p>
+        <p><strong>Dolor que resuelve:</strong> "No sé quiénes son mis mejores clientes, ni cuándo deberían volver."</p>
+        <p><strong>Gancho:</strong> <em>"Sepan cuánto vale cada cliente y cuándo es momento de traerlo de vuelta."</em></p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">💼</span> Pilar 8 — Reclutamiento</div>
+        <p><strong>Qué incluye:</strong> Publicar vacantes, matching automático empleado-vacante (considera horario, habilidades, conflictos), reviews obligatorias al contratar o finalizar contrato.</p>
+        <p><strong>Dolor que resuelve:</strong> "Cuando necesito contratar tengo que poner avisos en Facebook, no tengo filtro."</p>
+        <p><strong>Gancho:</strong> <em>"Cuando necesiten gente, la app les manda candidatos filtrados."</em></p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">💳</span> Pilar 9 — Pagos en línea</div>
+        <p><strong>Qué incluye:</strong> Stripe (internacional), PayU Latam (Colombia), MercadoPago. Cliente paga al reservar. Webhooks automáticos.</p>
+        <p><strong>Dolor que resuelve:</strong> "Los clientes no llegan (no-shows), hacen reserva y se pierden."</p>
+        <p><strong>Gancho:</strong> <em>"El cliente paga antes de venir — se acabaron los no-shows."</em></p>
+      </div>
+
+      <div class="callout yellow">
+        <div class="callout-icon">🎯</div>
+        <div class="callout-body">
+          <strong>Cómo usar esto en campo</strong>
+          <p>No presentes los 9 pilares. Tu trabajo es <em>escuchar en la conversación inicial</em> (sección 06) y decidir cuáles 2-3 pilares son los que resuelven el dolor de ese negocio. La siguiente sección te dice qué combo usar por tipo de negocio.</p>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s6', document.querySelector('[onclick*=s6]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s8', document.querySelector('[onclick*=s8]'))">Siguiente → Orden según negocio</button>
+      </div>
+    </div>
+
+    <!-- S8: ORDEN SEGÚN NEGOCIO -->
+    <div class="section" id="s8">
+      <div class="section-header">
+        <div class="section-num">Sección 08</div>
+        <h2>Orden de demo según el tipo de negocio</h2>
+        <p class="section-desc">Qué mostrar primero cuando ya sabes qué tipo de negocio tienes enfrente. Son combos de 3 pilares, no tours completos.</p>
+      </div>
+
+      <div class="callout green">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <strong>La regla</strong>
+          <p>Siempre muestra <em>3 pilares</em>. El primero le pega al dolor principal. El segundo complementa. El tercero sorprende. Después te callas y preguntas: <em>"¿Qué le parece?"</em></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">💇</span> Salones de belleza / Barberías</div>
+        <p><strong>Combo:</strong> Chat con cliente (P2) → Agenda + Recordatorios (P1) → Historial + Reviews (P7 + P6)</p>
+        <p><strong>Por qué:</strong> Asesoran por WhatsApp, el turno perdido duele, viven de recurrencia. El combo más efectivo documentado en salones de Bogotá.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">💆</span> Spas / Centros estéticos</div>
+        <p><strong>Combo:</strong> Recursos — cabinas (P4) → Agenda por cabina y empleado (P1) → Chat con cliente (P2)</p>
+        <p><strong>Por qué:</strong> Cabinas ocupadas es el recurso limitante, más que los empleados. Diferenciador total vs Booksy/Calendly.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🏥</span> Clínicas / Consultorios médicos</div>
+        <p><strong>Combo:</strong> Recursos — consultorios (P4) → Historial de paciente (P7) → Recordatorios (P1) + Facturación (P5)</p>
+        <p><strong>Por qué:</strong> El consultorio es recurso físico separado del médico. La facturación con impuestos colombianos cierra el trato.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">💪</span> Gimnasios / Centros deportivos</div>
+        <p><strong>Combo:</strong> Clases grupales — resource_model group_class (P4) → Reservas con capacidad (P1) → Ventas rápidas + Membresías (P5)</p>
+        <p><strong>Por qué:</strong> Las clases grupales son un modelo especial que la competencia rara vez maneja bien.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🏢</span> Coworkings</div>
+        <p><strong>Combo:</strong> Recursos — escritorios y salas (P4) → Pagos al reservar (P9) → Check-in QR + Reportes (P5)</p>
+        <p><strong>Por qué:</strong> Son 100% operación de recursos físicos con pago por uso. Gestabiz es de los pocos que maneja recursos nativamente.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🏨</span> Hoteles (pequeños, boutique)</div>
+        <p><strong>Combo:</strong> Recursos — habitaciones (P4) → Pagos en línea (P9) → Perfil público + Reviews (P6)</p>
+        <p><strong>Por qué:</strong> Gestabiz no compite con Booking, pero para hoteles pequeños sin sistema, es suficiente.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🍽️</span> Restaurantes (con reserva)</div>
+        <p><strong>Combo:</strong> Recursos — mesas (P4) → Reservas con confirmación por email (P1) → Chat con cliente (P2)</p>
+        <p><strong>Por qué:</strong> Restaurantes medianos que no quieren OpenTable. Las mesas son el recurso. El chat es para confirmar menús especiales.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🏬</span> Negocios con múltiples sedes</div>
+        <p><strong>Combo:</strong> Reportes consolidados (P5) → Transferencia entre sedes + Permisos por sede (P3) → Perfil público multi-sede (P6)</p>
+        <p><strong>Por qué:</strong> El dueño de negocio grande no quiere "app de citas". Quiere <em>control central</em>. Véndele eso.</p>
+      </div>
+
+      <div class="callout purple">
+        <div class="callout-icon">🧠</div>
+        <div class="callout-body">
+          <strong>Adaptación en vivo</strong>
+          <p>Si durante la demo descubres un dolor nuevo (ej: "ah, y nos roban plata"), salta al pilar que lo resuelve (en ese caso: Ventas rápidas + Reportes por empleado). No seas esclavo del orden — sé esclavo del dolor.</p>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s7', document.querySelector('[onclick*=s7]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s9', document.querySelector('[onclick*=s9]'))">Siguiente → La demostración</button>
+      </div>
+    </div>
+
+    <!-- S9: DEMO (adaptativa) -->
+    <div class="section" id="s9">
+      <div class="section-header">
+        <div class="section-num">Sección 09</div>
+        <h2>La demostración adaptativa</h2>
+        <p class="section-desc">La demo no es un tour fijo. Es una historia que cambia según el dolor que identificaste en la sección 06.</p>
+      </div>
+
+      <div class="callout red">
+        <div class="callout-icon">🚫</div>
+        <div class="callout-body">
+          <strong>Error más común en la demo</strong>
+          <p>Mostrar todo lo que tiene la app de arriba a abajo. Eso abruma y aburre. Muestra <em>solo los 3 pilares que resuelven el dolor que ellos te dijeron</em>. 3 funciones bien mostradas valen más que 10 de pasada.</p>
+        </div>
+      </div>
+
+      <h3>Estructura de la demo (5–7 minutos)</h3>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Personaliza desde el inicio (30 seg)</h4>
+            <p>Cuando abras la app, di: "Imagínese que este es el perfil de su negocio, aquí con el nombre del salón." Haz que se vean en eso. No digas "la plataforma tiene...", di "ustedes podrían..."</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Pilar 1 — ataca el dolor principal (2 min)</h4>
+            <p>El pilar que corresponda según sección 08. Si es salón → Chat. Si es clínica → Recursos. Si es multi-sede → Reportes consolidados. <em>Empieza por donde duele más.</em></p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Pilar 2 — complementa el primero (2 min)</h4>
+            <p>"Y adicionalmente, como ya están acá los datos..." — conecta el segundo pilar con el primero. Ejemplo: después del Chat, muestra cómo el recordatorio sale automático desde ahí mismo.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Pilar 3 — la sorpresa (1 min)</h4>
+            <p>Algo que no se esperaban. Para salones es Perfil público + Reviews. Para spas es Facturación automática. Ese momento "ah, también hace eso" es lo que cierra la venta.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h4>Cierra con una pregunta (30 seg)</h4>
+            <p>"¿Qué le parece? ¿Cree que esto les serviría para lo que me contaba al inicio?" — Anclas la demo al dolor que te dijeron. Si dicen que sí, vas al cierre (sección 11). Si tienen dudas, vas a objeciones (sección 14).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout green">
+        <div class="callout-icon">📱</div>
+        <div class="callout-body">
+          <strong>Tip físico</strong>
+          <p>Cuando hagas la demo, <em>pon el celular en la mano de ellos</em> si puedes. Que lo toquen, que lo exploren. La gente compra lo que siente que ya maneja.</p>
+        </div>
+      </div>
+
+      <div class="callout yellow">
+        <div class="callout-icon">⚡</div>
+        <div class="callout-body">
+          <strong>Si el dueño no está y hablas con un empleado o administrador</strong>
+          <p>Haz la demo igual, pero al final pide dos cosas: (1) que le cuente al dueño hoy o mañana, (2) su WhatsApp o tarjeta para enviar la propuesta por escrito. <em>Nunca dejes a un aliado interno sin municiones.</em> Ver sección 15.</p>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s8', document.querySelector('[onclick*=s8]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s10', document.querySelector('[onclick*=s10]'))">Siguiente → Precios y planes</button>
+      </div>
+    </div>
+
+    <!-- S10: PRECIOS -->
+    <div class="section" id="s10">
+      <div class="section-header">
+        <div class="section-num">Sección 10</div>
+        <h2>Cómo presentar los precios</h2>
+        <p class="section-desc">El precio siempre asusta más cuando no se ha anclado el valor. Así lo presentas.</p>
+      </div>
+
+      <div class="pricing-cards">
+        <div class="pricing-card">
+          <div class="plan-name">Gratuito</div>
+          <div class="plan-price">$0</div>
+          <div class="plan-desc">Para comenzar</div>
+          <ul class="plan-features">
+            <li>50 citas al mes</li>
+            <li>Funciones básicas</li>
+            <li>Sin tarjeta de crédito</li>
+          </ul>
+        </div>
+        <div class="pricing-card featured">
+          <div class="plan-name">Básico ⭐</div>
+          <div class="plan-price"><span class="currency">$</span>89.900 <span class="currency">COP</span></div>
+          <div class="plan-desc">Lo que necesitas para operar</div>
+          <ul class="plan-features">
+            <li>Citas ilimitadas</li>
+            <li>Gestión de empleados</li>
+            <li>Historial de clientes</li>
+            <li>Recordatorios automáticos</li>
+            <li>30 días gratis</li>
+          </ul>
+        </div>
+        <div class="pricing-card">
+          <div class="plan-name">Pro</div>
+          <div class="plan-price"><span class="currency">$</span>159.900 <span class="currency">COP</span></div>
+          <div class="plan-desc">Para crecer</div>
+          <ul class="plan-features">
+            <li>Todo lo del Básico</li>
+            <li>Reportes avanzados</li>
+            <li>Módulo de gastos</li>
+            <li>Soporte prioritario</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Cómo decir el precio en voz alta</h3>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header you">Cómo presentarlo</div>
+        <div class="dialogue-body">"El plan que más usan los negocios como el suyo vale ochenta y nueve mil novecientos al mes — menos de lo que cobra un solo servicio. Y además los primeros 30 días son completamente gratis, sin pagar nada, para que lo prueben y vean si les funciona antes de comprometerse con algo."</div>
+      </div>
+
+      <div class="callout purple">
+        <div class="callout-icon">🧠</div>
+        <div class="callout-body">
+          <strong>El ancla de precio</strong>
+          <p>Antes de decir el precio, di el beneficio. "Imagínese recuperar solo 2 turnos que se les pierden al mes..." — eso ancla el valor. Después el precio suena pequeño.</p>
+        </div>
+      </div>
+
+      <div class="callout green">
+        <div class="callout-icon">🎁</div>
+        <div class="callout-body">
+          <strong>El poder del trial</strong>
+          <p>El argumento más fuerte que tienes es el trial de 30 días. Usa esto siempre: <em>"No les estoy pidiendo que paguen nada hoy. Los 30 días son gratis, sin tarjeta. Solo creen la cuenta."</em> Eso elimina el riesgo percibido.</p>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s9', document.querySelector('[onclick*=s9]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s11', document.querySelector('[onclick*=s11]'))">Siguiente → Cómo cerrar</button>
+      </div>
+    </div>
+
+    <!-- S11: CIERRE -->
+    <div class="section" id="s11">
+      <div class="section-header">
+        <div class="section-num">Sección 11</div>
+        <h2>Cómo cerrar la venta</h2>
+        <p class="section-desc">El cierre no es un momento de presión. Es el resultado natural de una buena conversación.</p>
+      </div>
+
+      <div class="callout yellow">
+        <div class="callout-icon">🎯</div>
+        <div class="callout-body">
+          <strong>Tu objetivo en este punto</strong>
+          <p>Que creen la cuenta ahora mismo, contigo. No "que lo piensen". No "que te llamen". Ahora. El 70% de los "lo pienso" nunca vuelven.</p>
+        </div>
+      </div>
+
+      <h3>La frase de cierre directa</h3>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header you">Cierre estándar</div>
+        <div class="dialogue-body">"¿Qué le parece si lo configuramos ahorita mismo? Le toma menos de 3 minutos crear la cuenta y ya queda listo para empezar a usarlo. Y si en 30 días no les gustó, no pagan nada, no pasa nada."</div>
+      </div>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header you">Cierre con urgencia blanda</div>
+        <div class="dialogue-body">"Mire, ahorita que estamos acá, le configuro yo mismo el negocio para que no tenga que hacerlo solo después. Le meto el nombre, los servicios y ya. ¿Con qué correo lo hacemos?"</div>
+      </div>
+
+      <h3>El cierre por próximo paso</h3>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header you">Si no quiere registrarse en el momento</div>
+        <div class="dialogue-body">"Listo, sin problema. ¿Le puedo mandar el link por WhatsApp para que lo mire esta noche con más calma? ¿Me da su número y yo le mando un mensajito con el acceso y los 30 días gratis?"</div>
+      </div>
+
+      <div class="callout red">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-body">
+          <strong>Error a evitar en el cierre</strong>
+          <p>No preguntes "¿Qué piensa?" ni "¿Le interesaría?". Esas preguntas abiertas invitan al "lo pienso". Pregunta siempre con el próximo paso concreto: "¿Con qué correo lo hacemos?"</p>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s10', document.querySelector('[onclick*=s10]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s12', document.querySelector('[onclick*=s12]'))">Siguiente → Cuando dicen que sí</button>
+      </div>
+    </div>
+
+    <!-- S12: SÍ -->
+    <div class="section" id="s12">
+      <div class="section-header">
+        <div class="section-num">Sección 12</div>
+        <h2>Cuando dicen que sí</h2>
+        <p class="section-desc">No celebres antes de tiempo. El "sí" es solo el comienzo.</p>
+      </div>
+
+      <div class="callout green">
+        <div class="callout-icon">🎉</div>
+        <div class="callout-body">
+          <strong>Tu reacción ideal</strong>
+          <p>Sonríe con calma. Di "perfecto". No hagas un show. Los vendedores que se emocionan demasiado hacen que el comprador se arrepienta.</p>
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Configura la cuenta ahí mismo</h4>
+            <p>"Listo, vamos a crear la cuenta ahora para que quede todo configurado y no tenga que hacerlo solo. ¿Me presta el correo que más usa para el negocio?"</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Agrega el primer empleado o servicio</h4>
+            <p>No te vayas sin que la cuenta tenga algo adentro. Una cuenta vacía se abandona. Con datos reales adentro, la probabilidad de que la usen es mucho más alta.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Deja un número de contacto o WhatsApp</h4>
+            <p>"Si tienen alguna duda o algo no les funciona, escríbanme directo por acá. Yo mismo les ayudo." — Eso crea confianza y reduce el churn del primer mes.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Antes de irte, planta la próxima conversación</h4>
+            <p>"En una semana le escribo para ver cómo les está yendo, ¿le parece?" — Así tienes una razón para volver a contactarlos y convertir el trial en pago.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout green" style="margin-top:28px;">
+        <div class="callout-icon">💰</div>
+        <div class="callout-body">
+          <strong>Así cobras tu comisión</strong>
+          <p>Cuando el negocio activa el Plan Inicio, recibes <em>$30.000 COP</em>. Cuando hace su primer pago (~30 días después), recibes <em>$30.000 COP más</em>. Total: <em>$60.000 COP por cliente cerrado</em>. Para que la comisión quede a tu nombre, debes registrar el lead antes de que se creen la cuenta — escríbele al equipo con nombre del negocio, contacto y sector.</p>
+        </div>
+      </div>
+
+      <div class="highlight">
+        El objetivo del primer "sí" no es la venta. Es que usen la app la primera semana. Si la usan, pagan. Si no la usan, se van. Tu trabajo no termina cuando crean la cuenta — y tu segunda comisión depende de que ese negocio pague el primer mes.
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s11', document.querySelector('[onclick*=s11]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s13', document.querySelector('[onclick*=s13]'))">Siguiente → Cuando dicen que no</button>
+      </div>
+    </div>
+
+    <!-- S13: NO -->
+    <div class="section" id="s13">
+      <div class="section-header">
+        <div class="section-num">Sección 13</div>
+        <h2>Cuando dicen que no</h2>
+        <p class="section-desc">El "no" de hoy no es el "no" de siempre. Así lo manejas.</p>
+      </div>
+
+      <div class="callout purple">
+        <div class="callout-icon">💡</div>
+        <div class="callout-body">
+          <strong>Mentalidad clave</strong>
+          <p>Hay dos tipos de "no": el "no ahorita" y el "no nunca". El 80% de los "no" que vas a escuchar son "no ahorita". Tu trabajo es saber cuál es cuál y dejar la puerta abierta.</p>
+        </div>
+      </div>
+
+      <h3>Respuestas según el tipo de "no"</h3>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header them">Si dicen: "Gracias pero no nos interesa"</div>
+        <div class="dialogue-body">"Tranquilo, sin problema. ¿Me regala decirme por qué? Solo para entender mejor, no para convencerlo de nada." — Escucha la razón. A veces hay una objeción fácil de resolver. Si no, acepta el no con elegancia: "Listo, con mucho gusto. Si en algún momento lo vuelven a pensar, cuenten con nosotros."</div>
+      </div>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header them">Si dicen: "Ahorita no tenemos tiempo"</div>
+        <div class="dialogue-body">"Claro, sin problema. ¿A qué horas suele estar más tranquilo para que vuelva en otro momento?" — Si te dan una hora, eso no es un "no", es un "vuelva después". Vuelve.</div>
+      </div>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header them">Si dicen: "Déjeme el contacto y yo lo llamo"</div>
+        <div class="dialogue-body">"Con mucho gusto, pero mejor le dejo yo el mío a usted para que no se pierda nada." — Dale tu WhatsApp. Pero no esperes que te llamen. Escríbeles tú en 2 o 3 días.</div>
+      </div>
+
+      <div class="callout yellow">
+        <div class="callout-icon">🔄</div>
+        <div class="callout-body">
+          <strong>Regla del "no"</strong>
+          <p>Nunca te vayas de un "no" sin un <em>próximo paso</em>. Puede ser: una fecha para volver, tu número de WhatsApp guardado en el celular de ellos, o al menos el nombre del dueño para cuando regreses.</p>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s12', document.querySelector('[onclick*=s12]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s14', document.querySelector('[onclick*=s14]'))">Siguiente → Manejo de objeciones</button>
+      </div>
+    </div>
+
+    <!-- S14: OBJECIONES -->
+    <div class="section" id="s14">
+      <div class="section-header">
+        <div class="section-num">Sección 14</div>
+        <h2>Manejo de objeciones</h2>
+        <p class="section-desc">Las objeciones no son un problema. Son preguntas disfrazadas. Así las respondes.</p>
+      </div>
+
+      <div class="callout purple">
+        <div class="callout-icon">🧠</div>
+        <div class="callout-body">
+          <strong>La fórmula</strong>
+          <p>Cuando alguien pone una objeción: <em>valida → pregunta → responde → cierra</em>. Nunca contradigas directamente. Siempre empieza con "entiendo" o "tiene razón en eso".</p>
+        </div>
+      </div>
+
+      <h3>Las 4 objeciones más comunes en campo</h3>
+
+      <div class="callout yellow">
+        <div class="callout-icon">📋</div>
+        <div class="callout-body">
+          <strong>Estas son las que vas a escuchar SÍ o SÍ</strong>
+          <p>En campo, estas 4 objeciones cubren la mayoría de los rechazos. Tenlas memorizadas antes de salir.</p>
+        </div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">OBJECIÓN REAL #1: "El dueño no está" (gatekeeper)</div>
+        <div class="obj-a"><strong>Respuesta:</strong> "Perfecto, ¿a qué hora suele estar él / ella? Y de paso, ¿cómo se llama? Le dejo mi tarjeta y vuelvo en ese horario para no tener que volver a explicar todo." — Anota hora exacta + nombre del dueño. Sin eso, ese negocio queda perdido. Vuelve. No dejes solo la tarjeta y te vayas.</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">OBJECIÓN REAL #2: "Nosotros ya manejamos todo por WhatsApp, damos atención personalizada"</div>
+        <div class="obj-a"><strong>Respuesta:</strong> "Me parece excelente — esa atención personalizada es su diferenciador, no la quiero tocar. Por eso Gestabiz <em>no reemplaza el WhatsApp, lo complementa</em>. Tiene un Chat integrado donde sus clientes siguen consultando con ustedes, pero: se guarda el historial, pueden filtrar por empleado, y las reservas llegan automáticas sin que nadie tenga que responder a las 11 de la noche. La atención la siguen dando ustedes. ¿Le muestro cómo funciona?" — Saca el celular y muestra el Chat + la reserva en vivo. Ese fue el combo ganador hoy.</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">OBJECIÓN REAL #3: "Ya usamos una app para eso"</div>
+        <div class="obj-a"><strong>Respuesta:</strong> "Qué bueno, ¿cuál usan?" — Escucha (anota el nombre). Luego: "Perfecto. Y cuénteme, ¿qué les falta ahí? ¿Manejar los gastos? ¿Facturación con impuestos colombianos? ¿Chat con el cliente? ¿Reviews?" — Gestabiz casi siempre tiene 2-3 cosas que la competencia no tiene. Pilar por pilar, le muestras lo que el otro no hace. Recuerda: <em>nuestra ventaja es la amplitud, no la profundidad</em>.</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">OBJECIÓN REAL #4: "Negocio grande, hable con el área comercial / con los dueños"</div>
+        <div class="obj-a"><strong>Respuesta:</strong> "Con muchísimo gusto. ¿Me podría dar el contacto directo de esa persona? Nombre, correo y WhatsApp. Y adicionalmente, para cuando llegue la propuesta, ¿cuántas sedes tienen y cuántos empleados por sede?" — Los datos te permiten mandar una propuesta específica multi-sede (Pilar 3 + 5). NUNCA salgas con "que me llamen". Salís con contacto directo + envías propuesta escrita ese mismo día.</div>
+      </div>
+
+      <h3>Objeciones adicionales</h3>
+
+      <div class="obj-item">
+        <div class="obj-q">"Eso es muy caro para nosotros"</div>
+        <div class="obj-a">"Entiendo, y se lo pregunto sin compromiso: ¿cuánto les cuesta ahorita un turno que se pierde porque el cliente no avisó? Solo en un mes. La plataforma vale menos que eso. Y los primeros 30 días son gratis, así que no les cuesta nada probarlo."</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">"No tenemos tiempo para aprender algo nuevo"</div>
+        <div class="obj-a">"Sí, eso lo entiendo, y es válido. Por eso yo mismo le ayudo a configurarlo hoy. No tiene que aprender nada solo. Y si en algún momento tiene una duda me escribe directo. En 10 minutos está listo para usar."</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">"¿Y si dejo de pagarlo, qué pasa con mis datos?"</div>
+        <div class="obj-a">"Sus datos son suyos. Si en algún momento deciden no continuar, pueden exportar toda la información. No se pierde nada."</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">"¿Eso es colombiano o es de fuera?"</div>
+        <div class="obj-a">"Es colombiano, lo hacemos desde Bogotá. Por eso los pagos son en pesos, el soporte está en español y entiende cómo funcionan los negocios de acá."</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">"¿Y si la app se cae o tiene un error?"</div>
+        <div class="obj-a">"Buen punto. Tenemos soporte directo por WhatsApp. Si algo no funciona, lo resolvemos ese mismo día. Y el plan Pro tiene soporte prioritario."</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">"Tenemos que hablar con el otro socio / dueño"</div>
+        <div class="obj-a">"Perfecto, con mucho gusto. ¿Podría quedar con usted una cita para volver cuando estén los dos? Así les explico a ambos y resuelven las dudas juntos." — Si no te dan fecha, pregunta: "¿Cuándo suele venir?"</div>
+      </div>
+
+      <div class="obj-item">
+        <div class="obj-q">"Ya probé otras apps y no funcionaron"</div>
+        <div class="obj-a">"¿Cuál probó?" — Escucha. Luego: "Entiendo. Muchas son muy complicadas o no están pensadas para el mercado colombiano. Gestabiz está hecho específicamente para salones y barberías de acá. Pero no le pido que confíe en mi palabra, los 30 días gratis son para que lo vea usted mismo."</div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s13', document.querySelector('[onclick*=s13]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s15', document.querySelector('[onclick*=s15]'))">Siguiente → Administrador, no dueño</button>
+      </div>
+    </div>
+
+    <!-- S15: ADMINISTRADOR, NO DUEÑO -->
+    <div class="section" id="s15">
+      <div class="section-header">
+        <div class="section-num">Sección 15</div>
+        <h2>Cuando hablas con un administrador, no el dueño</h2>
+        <p class="section-desc">El caso más común en negocios medianos y grandes. Si lo manejas bien, ganas un aliado interno que vende por ti.</p>
+      </div>
+
+      <div class="callout purple">
+        <div class="callout-icon">🎯</div>
+        <div class="callout-body">
+          <strong>La verdad incómoda</strong>
+          <p>Un administrador entusiasmado es <em>mejor</em> que un dueño tibio. El administrador vive el dolor operativo todos los días — el dueño solo ve los números. Si el administrador ama la app, <strong>él la va a vender internamente</strong>. Tu trabajo no es venderle a él — es darle las municiones para que venda al dueño.</p>
+        </div>
+      </div>
+
+      <h3>Los 6 pasos cuando te atiende un administrador</h3>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Confirma su rol antes de empezar</h4>
+            <p>"Antes de mostrarle, ¿usted es quién toma las decisiones o hay alguien más?" — No es ofensivo, es profesional. Sabes si estás hablando con el decisor, el influenciador o el bloqueador.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Haz la demo igual que si fuera el dueño</h4>
+            <p>No bajes la energía. El administrador siente en piel propia el dolor — los turnos perdidos, el WhatsApp caótico, los empleados que no llegan. Muestra los 3 pilares del combo (sección 08) con ejemplos de su operación real.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Pregunta explícitamente: "¿Le ayudaría en su día a día?"</h4>
+            <p>Si la respuesta es sí, acabas de ganar un defensor interno. Hazle saber que esa opinión importa: <em>"Perfecto. Entonces lo que necesito es que usted le cuente al dueño hoy o mañana, porque usted conoce el negocio mejor que nadie."</em></p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>Pide los datos para enviar la propuesta por escrito</h4>
+            <p>Tarjeta del negocio, WhatsApp del administrador, email. Anota además: nombre del dueño, horario en que está, cuántas sedes tienen, cuántos empleados. <em>Todo esto lo vas a necesitar para la propuesta.</em></p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h4>Ofrécele hacer tú la presentación a los dueños</h4>
+            <p>"Si quiere, yo puedo hacer una presentación corta de 15 minutos con los dueños — así les resuelvo cualquier duda de precios o implementación en el momento. ¿Cuándo podría ser?" — El administrador no sabe responder objeciones técnicas ni de precio. No lo dejes solo con esa tarea.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <h4>El mismo día: envíale la propuesta por WhatsApp</h4>
+            <p>La emoción dura 24-48 horas. Si no le envías ese mismo día, la conversación con el dueño pierde fuerza. Ver plantilla abajo.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Plantilla de WhatsApp al administrador — mismo día</h3>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header you">Mensaje el mismo día (2-3 horas después de la visita)</div>
+        <div class="dialogue-body">"Hola [nombre], fue un gusto conocerla hoy. Le dejo aquí lo que vimos:<br><br>
+        • Link de Gestabiz: [URL]<br>
+        • 30 días de prueba gratis, sin tarjeta<br>
+        • Video de 2 minutos con las 3 funcionalidades que vimos: [link]<br><br>
+        Cualquier duda que tengan los dueños me escriben directo, y si quieren puedo ir a hacerles una demo corta cuando ustedes me digan.<br><br>
+        ¡Éxitos hoy!"</div>
+      </div>
+
+      <div class="callout green">
+        <div class="callout-icon">✅</div>
+        <div class="callout-body">
+          <strong>Por qué funciona este mensaje</strong>
+          <p>(1) Es corto y no presiona. (2) Le da al administrador algo que puede <em>reenviar</em> al dueño tal cual. (3) Ofrece apoyo sin pedir nada. (4) El video de 2 minutos hace que el dueño vea el producto sin que el administrador tenga que explicar.</p>
+        </div>
+      </div>
+
+      <div class="callout yellow">
+        <div class="callout-icon">⏰</div>
+        <div class="callout-body">
+          <strong>Seguimiento con el administrador</strong>
+          <p>Día 2: "¿Tuvo oportunidad de contarle a los dueños? ¿Quieren que haga la demo con ellos?" — Día 5 si no responde: "Hola [nombre], le escribo para saber si decidieron algo. Si necesitan más tiempo no hay problema, solo quería confirmar que no se perdió el mensaje." — Día 10 sin respuesta: último intento con un recurso extra (caso de éxito de otro negocio similar).</p>
+        </div>
+      </div>
+
+      <div class="highlight">
+        La administradora reacia al inicio que se convierte en defensora al final es el perfil típico. Si logras ese cambio, <em>ella vende por ti</em>. Ese es el activo más valioso que puedes conseguir en una visita.
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s14', document.querySelector('[onclick*=s14]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s16', document.querySelector('[onclick*=s16]'))">Siguiente → Seguimiento</button>
+      </div>
+    </div>
+
+    <!-- S16: SEGUIMIENTO -->
+    <div class="section" id="s16">
+      <div class="section-header">
+        <div class="section-num">Sección 16</div>
+        <h2>El seguimiento post-visita</h2>
+        <p class="section-desc">La venta de verdad empieza después de que te fuiste. Así no dejas morir ningún lead.</p>
+      </div>
+
+      <h3>Protocolo de seguimiento</h3>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Misma tarde: anota todo</h4>
+            <p>Nombre del negocio, dirección, nombre del contacto, qué dijeron, en qué quedaron. Si no lo anotas hoy, lo olvidas mañana. Puede ser en un Excel simple o en las notas del celular.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>A los 3 días: mensaje de seguimiento</h4>
+            <p>Para los que dijeron "lo pensamos": envía un WhatsApp corto y sin presión.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>A los 7 días para los que registraron cuenta</h4>
+            <p>"¿Cómo les está yendo con Gestabiz? ¿Alguna pregunta o algo que no les haya quedado claro?" — Ese mensaje puede ser la diferencia entre que paguen o que abandonen.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>A los 10–12 días para los que no se han registrado</h4>
+            <p>Una sola visita de refuerzo si la zona lo permite, o un segundo mensaje. Después de 2 intentos sin respuesta, pasa al siguiente. No gastes energía en quien no la quiere.</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Mensajes de WhatsApp que funcionan</h3>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header you">Mensaje de seguimiento día 3</div>
+        <div class="dialogue-body">"Hola [nombre], buenas tardes. Le escribo para ver si tuvieron la oportunidad de pensar en lo de Gestabiz. Recuerde que los 30 días de prueba son completamente gratis, sin comprometerse a nada. ¿Quiere que le mande el link para que lo vean hoy?"</div>
+      </div>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header you">Mensaje de check-in a usuarios activos (día 7)</div>
+        <div class="dialogue-body">"Hola [nombre], ¿cómo están? Quería saber si han podido usar la plataforma esta semana y si les ha servido. Si tienen alguna duda o quieren que los ayude con algo, aquí estoy."</div>
+      </div>
+
+      <div class="dialogue-block">
+        <div class="dialogue-header you">Mensaje a un administrador (gatekeeper) — día 2</div>
+        <div class="dialogue-body">"Hola [nombre], ¿cómo le fue presentándole la propuesta a los dueños? Cualquier duda que tengan, les puedo resolver en una reunión corta cuando quieran — o por aquí mismo. Sin presión, solo confirmo que no se haya perdido el mensaje."</div>
+      </div>
+
+      <div class="callout purple">
+        <div class="callout-icon">📞</div>
+        <div class="callout-body">
+          <strong>Sistema simple de seguimiento</strong>
+          <p>Crea un Excel con: <em>Fecha visita · Negocio · Contacto · WhatsApp · Estado (frío / tibio / caliente / inscrito) · Próxima acción · Fecha próxima acción</em>. Revísalo todos los días a las 8pm. 5 minutos de disciplina diaria = 40% más cierres.</p>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s15', document.querySelector('[onclick*=s15]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s17', document.querySelector('[onclick*=s17]'))">Siguiente → Errores fatales</button>
+      </div>
+    </div>
+
+    <!-- S17: ERRORES -->
+    <div class="section" id="s17">
+      <div class="section-header">
+        <div class="section-num">Sección 17</div>
+        <h2>Los errores que te van a costar ventas</h2>
+        <p class="section-desc">Léelos, memorízalos, evítalos. Cada uno de estos ha quemado ventas que estaban listas para cerrar.</p>
+      </div>
+
+      <div class="callout red">
+        <div class="callout-icon">💀</div>
+        <div class="callout-body">
+          <strong>Error fatal #1: Hablar más de lo que escuchas</strong>
+          <p>Si tú hablas el 70% del tiempo, estás perdiendo. El dueño tiene que sentir que entendiste su negocio, no que le vendiste un producto. Pregunta más, habla menos.</p>
+        </div>
+      </div>
+
+      <div class="callout red">
+        <div class="callout-icon">💀</div>
+        <div class="callout-body">
+          <strong>Error fatal #2: Ir al precio sin demostrar valor</strong>
+          <p>Si preguntan "¿y cuánto vale?" antes de la demo, di: "Se lo cuento enseguida, primero déjeme mostrarle qué incluye." Nunca sueltes el precio en el aire sin que hayan visto el producto.</p>
+        </div>
+      </div>
+
+      <div class="callout red">
+        <div class="callout-icon">💀</div>
+        <div class="callout-body">
+          <strong>Error fatal #3: No cerrar en el momento</strong>
+          <p>"Lo dejo pensando" sin un próximo paso concreto = venta muerta. Siempre cierra con una acción: registrar la cuenta ahora, agendar una cita para volver, o mandar el link por WhatsApp.</p>
+        </div>
+      </div>
+
+      <div class="callout red">
+        <div class="callout-icon">💀</div>
+        <div class="callout-body">
+          <strong>Error fatal #4: La app con errores o lenta</strong>
+          <p>Si la demo falla en vivo, la venta muere. Practica antes. Asegúrate de tener buena señal. Ten el WiFi del teléfono probado. Una demo con pantalla de carga es peor que no hacer demo.</p>
+        </div>
+      </div>
+
+      <div class="callout red">
+        <div class="callout-icon">💀</div>
+        <div class="callout-body">
+          <strong>Error fatal #5: Llegar en mal momento y no saberlo leer</strong>
+          <p>Si el negocio está en hora pico y el dueño está estresado, ese no es el momento. Leer la situación y saber retirarse con elegancia es más profesional que insistir. "Veo que están ocupados, con mucho gusto vuelvo más tarde."</p>
+        </div>
+      </div>
+
+      <div class="callout red">
+        <div class="callout-icon">💀</div>
+        <div class="callout-body">
+          <strong>Error fatal #6: Sonar desesperado</strong>
+          <p>Si mencionas que "necesitas clientes" o "apenas estás empezando"... la venta se muere. La gente compra de quien tiene éxito, no de quien lo necesita. Proyecta confianza aunque por dentro estés nervioso.</p>
+        </div>
+      </div>
+
+      <div class="callout red">
+        <div class="callout-icon">💀</div>
+        <div class="callout-body">
+          <strong>Error fatal #7: No hacer seguimiento</strong>
+          <p>El 80% de las ventas requieren más de un contacto. Si visitas y no vuelves a escribir, regalaste el tiempo de esa visita. El seguimiento es donde se gana la plata.</p>
+        </div>
+      </div>
+
+      <div class="callout red">
+        <div class="callout-icon">💀</div>
+        <div class="callout-body">
+          <strong>Error fatal #8: Salir del local sin el lead activado</strong>
+          <p>Si alguien mostró interés real — aunque sea un administrador, no el dueño — y tú te vas sin (1) su WhatsApp, (2) el nombre del dueño, y (3) el trial activado o la propuesta lista para enviar ese mismo día... acabas de perder el lead más valioso de tu día. La emoción se enfría en 24-48 horas. Siempre sal con el siguiente paso concreto activado.</p>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="callout green">
+        <div class="callout-icon">🏆</div>
+        <div class="callout-body">
+          <strong>El resumen de todo el manual</strong>
+          <p>Entra con confianza. Pregunta antes de hablar. Escucha las señales (sección 06). Muestra 3 pilares que resuelven el dolor de ese negocio (sección 08). Cierra con un próximo paso concreto. Si hablas con un administrador, dale municiones (sección 15). Haz seguimiento. Y repite. Eso es todo.</p>
+        </div>
+      </div>
+
+      <div class="section-nav">
+        <button class="btn btn-secondary" onclick="showSection('s16', document.querySelector('[onclick*=s16]'))">← Atrás</button>
+        <button class="btn btn-primary" onclick="showSection('s1', document.querySelector('[onclick*=s1]'))">↑ Volver al inicio</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const sections = ['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10','s11','s12','s13','s14','s15','s16','s17'];
+  
+  function showSection(id, navEl) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    
+    document.getElementById(id).classList.add('active');
+    if (navEl) navEl.classList.add('active');
+    
+    const idx = sections.indexOf(id) + 1;
+    document.getElementById('progressFill').style.width = (idx / sections.length * 100) + '%';
+    
+    document.querySelector('.main').scrollTo({ top: 0 });
+    window.scrollTo({ top: 0 });
+  }
+</script>
+
+</body>
+</html>

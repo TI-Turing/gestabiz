@@ -3,13 +3,37 @@ import { View, Text, StyleSheet } from 'react-native'
 import { AppointmentStatus } from '../../types'
 import { radius, spacing, typography } from '../../theme'
 
-const STATUS_CONFIG: Record<AppointmentStatus, { label: string; bg: string; text: string }> = {
-  scheduled: { label: 'Programada', bg: '#1e1b4b', text: '#8B4FFF' },
-  confirmed: { label: 'Confirmada', bg: '#064e3b', text: '#34d399' },
-  cancelled: { label: 'Cancelada', bg: '#450a0a', text: '#f87171' },
-  completed: { label: 'Completada', bg: '#1f2937', text: '#9ca3af' },
-  no_show: { label: 'No asistió', bg: '#431407', text: '#fb923c' },
-  pending: { label: 'Pendiente', bg: '#422006', text: '#fbbf24' },
+/**
+ * StatusBadge — Badge de estado de cita.
+ * Paridad con web: colores semánticos con fondo translúcido sobre el color del estado.
+ *
+ * Refactor (sprint mobile-client-parity-2026-04): antes los colores eran hardcoded
+ * con bg dark + text light, lo que se veía MAL en light theme. Ahora usa tokens
+ * del theme y opacidad para adaptarse al modo activo.
+ */
+
+interface StatusConfig {
+  label: string
+  /** Color base del estado (texto en light, fondo opaco en dark) */
+  color: string
+}
+
+const getConfig = (status: AppointmentStatus): StatusConfig => {
+  switch (status) {
+    case 'scheduled':
+      return { label: 'Programada', color: '#6820F7' }
+    case 'confirmed':
+      return { label: 'Confirmada', color: '#10B981' }
+    case 'cancelled':
+      return { label: 'Cancelada', color: '#D63B3B' }
+    case 'completed':
+      return { label: 'Completada', color: '#888888' }
+    case 'no_show':
+      return { label: 'No asistió', color: '#F97316' }
+    case 'pending':
+    default:
+      return { label: 'Pendiente', color: '#F59E0B' }
+  }
 }
 
 interface StatusBadgeProps {
@@ -18,15 +42,20 @@ interface StatusBadgeProps {
 }
 
 export default function StatusBadge({ status, size = 'sm' }: StatusBadgeProps) {
-  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending
+  const config = getConfig(status)
   const isSmall = size === 'sm'
 
+  // Fondo: color base con 15% opacidad → se adapta a light y dark.
+  const bg = `${config.color}26` // hex 26 ≈ 15% opacity
+  // Texto: el color base puro en ambos temas tiene buen contraste sobre el bg translúcido.
+  const textColor = config.color
+
   return (
-    <View style={[styles.badge, { backgroundColor: config.bg }]}>
+    <View style={[styles.badge, { backgroundColor: bg, borderColor: `${config.color}40` }]}>
       <Text
         style={[
           styles.label,
-          { color: config.text, fontSize: isSmall ? typography.xs : typography.sm },
+          { color: textColor, fontSize: isSmall ? typography.xs : typography.sm },
         ]}
       >
         {config.label}
@@ -40,6 +69,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs - 1,
     borderRadius: radius.full,
+    borderWidth: 1,
     alignSelf: 'flex-start',
   },
   label: {

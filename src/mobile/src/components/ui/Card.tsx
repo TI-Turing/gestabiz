@@ -17,12 +17,13 @@ interface CardProps {
 
 export default function Card({ children, style, onPress, padding = true }: CardProps) {
   const { theme } = useTheme()
+  // Paridad con web: cards usan rounded-md (4px) + sombra purple sutil.
   const cardBase: ViewStyle = {
     backgroundColor: theme.card,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: theme.cardBorder,
-    ...shadows.sm,
+    ...shadows.card,
   }
   const paddingStyle: ViewStyle | undefined = padding ? { padding: spacing.base } : undefined
 

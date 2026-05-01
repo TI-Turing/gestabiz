@@ -1656,6 +1656,11 @@ export interface Conversation {
   display_name?: string // Para conversaciones directas: nombre del otro usuario
   display_avatar?: string
   unread_count?: number // Del usuario actual
+
+  // Campos del modelo de relación (chat redesign 2026-04-28)
+  relationship_type?: 'client_business' | 'business_collaborator' | 'support' | null
+  client_id?: string | null
+  counterpart_user_id?: string | null
 }
 
 // Miembro de conversación
@@ -1701,6 +1706,10 @@ export interface Message {
   type: MessageType
   body?: string
   metadata: MessageMetadata
+
+  // Campos multimedia ampliados (chat redesign 2026-04-28)
+  duration_seconds?: number | null  // Audio, video y call_log
+  waveform?: number[] | null        // Amplitudes de onda para audio
   
   // Features
   reply_to?: string
@@ -1975,3 +1984,86 @@ export type {
 export type {
   UseEmployeeMetricsOptions,
 } from '@/hooks/useEmployeeMetrics'
+
+// =====================================================
+// CHAT REDESIGN — TIPOS NUEVOS (2026-04-28)
+// =====================================================
+
+/** Tipo de relación para hilos de chat */
+export type RelationshipType = 'client_business' | 'business_collaborator' | 'support'
+
+/**
+ * Tipos de mensaje ampliados con multimedia y logs de llamadas.
+ * Extiende MessageType (text|image|file|system) con audio, video y call_log.
+ */
+export type ChatMessageType = 'text' | 'image' | 'file' | 'system' | 'audio' | 'video' | 'call_log'
+
+/** Sesión de llamada WebRTC */
+export interface CallSession {
+  id: string
+  conversation_id: string
+  caller_id: string
+  callee_id: string
+  call_type: 'voice' | 'video'
+  status: 'ringing' | 'answered' | 'rejected' | 'missed' | 'ended' | 'failed'
+  started_at: string
+  answered_at?: string | null
+  ended_at?: string | null
+  duration_seconds?: number | null
+}
+
+/** Bloque de horario laboral de un empleado */
+export interface WorkScheduleSlot {
+  id: string
+  business_id: string
+  employee_id: string
+  day_of_week: number  // 0=Dom, 1=Lun ... 6=Sab
+  start_time: string   // HH:MM
+  end_time: string     // HH:MM
+  is_active: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+/** Estado de presencia en el semáforo del chat */
+export type PresenceStatus = 'online' | 'away' | 'offline'
+
+/** Info de presencia enriquecida para UI */
+export interface UserPresenceInfo {
+  status: PresenceStatus
+  color: 'green' | 'yellow' | 'gray'
+  tooltip: string
+}
+
+/** Conversación enriquecida con datos de relación para el chat rediseñado */
+export interface ConversationWithRelationship extends Conversation {
+  relationship_type?: RelationshipType | null
+  client_id?: string | null
+  counterpart_user_id?: string | null
+  business_info?: {
+    id: string
+    name: string
+    logo_url?: string
+    allow_chat_with_professionals?: boolean
+  }
+  counterpart_role?: 'owner' | 'admin' | 'employee' | null
+}
+
+/** Archivo del vault de marketing */
+export interface MarketingVaultFile {
+  name: string
+  id: string
+  updated_at: string
+  created_at: string
+  last_accessed_at: string
+  metadata?: Record<string, unknown>
+  // Computed
+  url?: string
+  isImage?: boolean
+}
+
+/** Carpeta del vault de marketing */
+export interface MarketingVaultFolder {
+  name: string
+  files: MarketingVaultFile[]
+}

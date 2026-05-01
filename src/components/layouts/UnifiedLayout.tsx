@@ -1145,10 +1145,11 @@ export function UnifiedLayout({
 
       {/* Floating Chat Button - Visible for all roles */}
       {user && (
-        <FloatingChatButton 
-          userId={user.id} 
+        <FloatingChatButton
+          userId={user.id}
           businessId={business?.id}
           initialConversationId={chatConversationId}
+          isBusinessSide={currentRole === 'admin' || currentRole === 'employee'}
           onOpenChange={(isOpen) => {
             if (!isOpen && onChatClose) {
               onChatClose()
