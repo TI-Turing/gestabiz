@@ -303,6 +303,28 @@ verify_jwt = false
 [functions.end-call]
 verify_jwt = false
 
+# Sistema de Pagos Anticipados (Plan B - MercadoPago Marketplace 1:1 OAuth)
+[functions.mp-oauth-init]
+verify_jwt = false
+
+[functions.mp-oauth-callback]
+verify_jwt = false
+
+[functions.mp-oauth-disconnect]
+verify_jwt = false
+
+[functions.mp-oauth-refresh]
+verify_jwt = false
+
+[functions.create-appointment-deposit-preference]
+verify_jwt = false
+
+[functions.refund-appointment-deposit]
+verify_jwt = false
+
+[functions.release-expired-appointment-holds]
+verify_jwt = false
+
 [analytics]
 enabled = false
 

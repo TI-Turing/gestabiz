@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { QUERY_CONFIG } from '@/lib/queryConfig';
+import { useAppointmentFees } from '@/hooks/useAppointmentPayments';
 
 export interface ServiceCardData {
   id: string;
@@ -58,6 +59,8 @@ interface ServiceCardProps {
   renderActions?: (id: string) => React.ReactNode;
   /** Modo compacto: sin imagen, layout horizontal para listas de gestión */
   compact?: boolean;
+  /** Mostrar info financiera del anticipo + ganancia neta (solo vista admin) */
+  showFinancials?: boolean;
 }
 
 export function ServiceCard({
@@ -72,6 +75,7 @@ export function ServiceCard({
   className,
   renderActions,
   compact = false,
+  showFinancials = false,
 }: Readonly<ServiceCardProps>) {
   const seed = initialData ?? serviceProp;
   const resolvedId = serviceId ?? seed?.id;
@@ -82,6 +86,13 @@ export function ServiceCard({
     initialData: seed,
     enabled: !!resolvedId,
     ...QUERY_CONFIG.STABLE,
+  });
+
+  // Fees solo si hay business_id, price y showFinancials=true
+  const { data: fees } = useAppointmentFees({
+    businessId: service?.business_id,
+    serviceId: service?.id,
+    enabled: showFinancials && !!service?.business_id && !!service?.id && !!service?.price,
   });
 
   if (!service) {
@@ -133,6 +144,22 @@ export function ServiceCard({
             </span>
           )}
         </div>
+        {showFinancials && fees && fees.isEnabled && fees.depositRequired > 0 && (
+          <div className="mt-3 pt-3 border-t border-dashed text-xs space-y-1">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Anticipo ({fees.depositPercentage}%)</span>
+              <span className="font-medium tabular-nums">
+                ${fees.depositRequired.toLocaleString('es-CO')}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Ganancia neta del anticipo</span>
+              <span className="font-semibold text-green-700 tabular-nums">
+                ${fees.netToBusiness.toLocaleString('es-CO')}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -197,6 +224,11 @@ export function ServiceCard({
         {service.price != null && (
           <p className="text-xs font-semibold text-primary mt-0.5">
             ${service.price.toLocaleString('es-CO')}
+          </p>
+        )}
+        {showFinancials && fees && fees.isEnabled && fees.depositRequired > 0 && (
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            Anticipo {fees.depositPercentage}%: ${fees.depositRequired.toLocaleString('es-CO')}
           </p>
         )}
         {service.business && (

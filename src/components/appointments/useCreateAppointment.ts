@@ -16,8 +16,10 @@ interface UseCreateAppointmentParams {
   userId?: string
   appointmentToEdit?: Appointment | null
   onSuccess?: () => void
+  /** Called with the new appointment ID after a successful INSERT (not on edits) */
+  onCreated?: (appointmentId: string) => void
   setIsSubmitting: (v: boolean) => void
-  createAppointmentWithNotifications: (data: Record<string, unknown>) => Promise<unknown>
+  createAppointmentWithNotifications: (data: Record<string, unknown>) => Promise<{ id: string } | null | undefined>
   analytics: {
     trackBookingCompleted: (p: {
       businessId: string; businessName?: string; serviceId: string; serviceName?: string
@@ -61,6 +63,7 @@ export function useCreateAppointment({
   userId,
   appointmentToEdit,
   onSuccess,
+  onCreated,
   setIsSubmitting,
   createAppointmentWithNotifications,
   analytics,
@@ -130,9 +133,10 @@ export function useCreateAppointment({
         toast.success(t('appointments.wizard_success.modified'))
       } else {
         logger.debug('[WIZARD] Creando cita con notificaciones automáticas')
-        await createAppointmentWithNotifications(
+        const newApt = await createAppointmentWithNotifications(
           appointmentData as unknown as Record<string, unknown>,
         )
+        if (newApt?.id) onCreated?.(newApt.id)
 
         analytics.trackBookingCompleted({
           businessId: finalBusinessId || '',

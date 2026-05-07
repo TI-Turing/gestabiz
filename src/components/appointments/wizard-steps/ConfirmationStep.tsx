@@ -6,8 +6,10 @@ import { Calendar, Clock, MapPin, User, Scissors, Phone } from 'lucide-react';
 import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePaymentSettings, useAppointmentFees } from '@/hooks/useAppointmentPayments';
 
 interface WizardData {
+  businessId?: string | null;
   serviceId: string | null;
   service: { name: string; duration: number; duration_minutes?: number; price?: number } | null;
   date: Date | null;
@@ -60,6 +62,17 @@ export function ConfirmationStep({
   const { service, date, startTime, endTime, notes, location, employee } = wizardData;
   const { t, language } = useLanguage();
   const dateLocale = language === 'es' ? es : enUS;
+
+  // Show deposit notice on confirmation step so users know what's coming next
+  const businessId = wizardData.businessId ?? undefined;
+  const feesEnabled = !!businessId && !!wizardData.serviceId && (service?.price ?? 0) > 0 && !isAdminBooking;
+  const { data: paymentSettings } = usePaymentSettings(businessId ?? '');
+  const { data: fees } = useAppointmentFees({
+    businessId: businessId ?? '',
+    serviceId: wizardData.serviceId ?? '',
+    enabled: feesEnabled && !!paymentSettings?.advance_payment_enabled,
+  });
+  const showDepositNotice = feesEnabled && !!paymentSettings?.advance_payment_enabled && fees && fees.isEnabled && fees.depositRequired > 0;
 
   return (
     <div className="p-6 space-y-6">
@@ -179,6 +192,23 @@ export function ConfirmationStep({
           )}
         </div>
       </Card>
+
+      {/* Deposit notice — shown when business requires advance payment */}
+      {showDepositNotice && fees && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+          <p className="font-semibold text-amber-800 mb-1">
+            {paymentSettings?.advance_payment_required ? '⚠️ Anticipo requerido' : '💡 Anticipo opcional disponible'}
+          </p>
+          <p className="text-amber-700">
+            Al confirmar se solicitará un anticipo de{' '}
+            <strong>${fees.depositRequired.toLocaleString('es-CO')}</strong>
+            {' '}({fees.depositPercentage}% del precio).
+            {paymentSettings?.advance_payment_required
+              ? ' No podrás continuar sin pagarlo.'
+              : ' Puedes pagarlo ahora o en el negocio.'}
+          </p>
+        </div>
+      )}
 
       {/* Notes Section */}
       <div className="space-y-3">

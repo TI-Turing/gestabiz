@@ -181,6 +181,10 @@ interface Appointment {
   commission_amount?: number;
   net_amount?: number;
   other_deductions?: number;
+  // Anticipo digital (pagos anticipados)
+  deposit_status?: string;
+  deposit_paid?: number;
+  deposit_required?: number;
 }
 
 interface LocationWithHours {
@@ -314,6 +318,29 @@ const AppointmentModal = React.memo<AppointmentModalProps>(({
               </span>
             </div>
 
+            {/* Anticipo digital cobrado + saldo a cobrar en sede */}
+            {appointment.deposit_status === 'paid' && (appointment.deposit_paid ?? 0) > 0 && (
+              <div className="mt-3 p-3 rounded-md border border-amber-200 bg-amber-50 space-y-2">
+                <h4 className="text-sm font-semibold text-amber-800 flex items-center gap-2">
+                  💳 Anticipo cobrado digitalmente
+                </h4>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Anticipo pagado (MP):</span>
+                    <span className="font-medium text-green-700">
+                      ${(appointment.deposit_paid ?? 0).toLocaleString('es-CO')} COP
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Saldo a cobrar al cliente:</span>
+                    <span className="font-semibold text-foreground">
+                      ${Math.max(0, (appointment.service_price ?? 0) - (appointment.deposit_paid ?? 0)).toLocaleString('es-CO')} COP
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Desglose de montos si la cita está pagada */}
             {appointment.payment_status === 'paid' && appointment.gross_amount && (
               <div className="mt-3 p-3 bg-muted/50 rounded-md border border-border">
@@ -440,6 +467,14 @@ const AppointmentModal = React.memo<AppointmentModalProps>(({
                   <Mail className="h-4 w-4 mr-2" />
                   Reenviar Email
                 </Button>
+              </div>
+            )}
+
+            {/* Aviso de devolución si hay anticipo pagado */}
+            {appointment.deposit_status === 'paid' && (appointment.deposit_paid ?? 0) > 0 && (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <strong>⚠️ Anticipo pagado ${(appointment.deposit_paid ?? 0).toLocaleString('es-CO')} COP.</strong>{' '}
+                Al cancelar se calculará la devolución automáticamente según la política del negocio.
               </div>
             )}
 
@@ -676,6 +711,9 @@ export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ busi
           commission_amount,
           net_amount,
           other_deductions,
+          deposit_status,
+          deposit_paid,
+          deposit_required,
           services (
             id,
             name,
@@ -741,7 +779,10 @@ export const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ busi
         gross_amount: apt.gross_amount as number | undefined,
         commission_amount: apt.commission_amount as number | undefined,
         net_amount: apt.net_amount as number | undefined,
-        other_deductions: apt.other_deductions as number | undefined
+        other_deductions: apt.other_deductions as number | undefined,
+        deposit_status: apt.deposit_status as string | undefined,
+        deposit_paid: apt.deposit_paid as number | undefined,
+        deposit_required: apt.deposit_required as number | undefined,
       }));
 
       if (DEBUG_MODE) {

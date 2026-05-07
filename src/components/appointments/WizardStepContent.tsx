@@ -14,6 +14,7 @@ import {
   ConfirmationStep,
   SuccessStep,
 } from './wizard-steps'
+import { DepositCheckoutStep } from './wizard-steps/DepositCheckoutStep'
 // TODO: Reimportar ResourceSelection cuando se implemente la selección de recursos en el wizard
 // import { ResourceSelection } from './ResourceSelection'
 import type { WizardData, WizardBusiness } from './wizard-types'
@@ -43,6 +44,10 @@ interface WizardStepContentProps {
   onClose: () => void
   onStartChat?: (conversationId: string) => void
   isAdminBooking?: boolean
+  /** ID de la cita recién creada (set by useCreateAppointment after INSERT) */
+  createdAppointmentId?: string | null
+  /** Avanzar al siguiente paso (SuccessStep) desde el DepositCheckoutStep */
+  onDepositSkip?: () => void
 }
 
 export function WizardStepContent({
@@ -69,6 +74,8 @@ export function WizardStepContent({
   onClose,
   onStartChat,
   isAdminBooking,
+  createdAppointmentId,
+  onDepositSkip,
 }: Readonly<WizardStepContentProps>) {
   const effectiveBusiness = wizardData.businessId || businessId || ''
 
@@ -202,6 +209,18 @@ export function WizardStepContent({
           isEditing={!!appointmentToEdit}
           onSubmit={onSubmit}
           isAdminBooking={isAdminBooking}
+        />
+      )}
+
+      {/* Deposit checkout — entre confirmation y success */}
+      {currentStep === getStepNumber('depositCheckout') && (
+        <DepositCheckoutStep
+          appointmentId={createdAppointmentId ?? null}
+          businessId={effectiveBusiness}
+          serviceId={wizardData.serviceId ?? ''}
+          servicePrice={wizardData.service?.price}
+          isAdminBooking={isAdminBooking}
+          onAdvance={onDepositSkip ?? (() => {})}
         />
       )}
 

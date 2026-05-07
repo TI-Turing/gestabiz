@@ -116,6 +116,18 @@ export const QUERY_CONFIG = {
       ['business-closed-days', businessId, yearMonth] as const,
     HOLIDAY_POLICY: (businessId: string, locationId?: string | null) =>
       ['holiday-policy', businessId, locationId ?? 'no-location'] as const,
+
+    // ── Pagos anticipados (Sistema de Pagos) ─────────────────────────────
+    PAYMENT_SETTINGS: (businessId: string) =>
+      ['payment-settings', businessId] as const,
+    MP_CONNECTION: (businessId: string) =>
+      ['mp-connection', businessId] as const,
+    APPOINTMENT_FEES: (businessId: string, serviceId: string, overridePrice?: number) =>
+      ['appointment-fees', businessId, serviceId, overridePrice ?? null] as const,
+    APPOINTMENT_REFUND_PREVIEW: (appointmentId: string) =>
+      ['appointment-refund-preview', appointmentId] as const,
+    APPOINTMENT_PAYMENT_EVENTS: (appointmentId: string) =>
+      ['appointment-payment-events', appointmentId] as const,
   },
 }
 

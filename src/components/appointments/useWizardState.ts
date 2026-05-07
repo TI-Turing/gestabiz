@@ -69,6 +69,7 @@ export function useWizardState({
     dateTime: t('appointments.wizard.stepLabels.dateTime'),
     clientData: t('appointments.clientData.stepLabel'),
     confirmation: t('appointments.wizard.stepLabels.confirmation'),
+    depositCheckout: 'Anticipo',
     success: t('appointments.wizard.stepLabels.success'),
   }
 
@@ -165,10 +166,11 @@ export function useWizardState({
   // ── Step order ──────────────────────────────────────────────────────────────
   const stepOrder = React.useMemo<string[]>(() => {
     const base = businessId
-      ? ['location', 'service', 'employee', 'dateTime', 'confirmation', 'success']
-      : ['business', 'location', 'service', 'employee', 'dateTime', 'confirmation', 'success']
+      ? ['location', 'service', 'employee', 'dateTime', 'confirmation', 'depositCheckout', 'success']
+      : ['business', 'location', 'service', 'employee', 'dateTime', 'confirmation', 'depositCheckout', 'success']
 
     // Admin booking: insert clientData step between dateTime and confirmation
+    // (admins book without deposit flow — depositCheckout auto-skips for isAdminBooking)
     if (isAdminBooking) {
       const confIdx = base.indexOf('confirmation')
       base.splice(confIdx, 0, 'clientData')
@@ -240,7 +242,7 @@ export function useWizardState({
   }, [dataCache.locations, dataCache.services, wizardData.locationId])
 
   const getDisplaySteps = React.useCallback((): string[] =>
-    stepOrder.filter(s => s !== 'success' && s !== 'employeeBusiness'),
+    stepOrder.filter(s => s !== 'success' && s !== 'employeeBusiness' && s !== 'depositCheckout'),
   [stepOrder])
 
   const getEffectiveSteps = React.useCallback((): string[] => {

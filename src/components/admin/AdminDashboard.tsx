@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, MapPin, Briefcase, Users, FileText, Shield, CreditCard, BriefcaseBusiness, ShoppingCart, Calendar, CalendarOff, Box, Wallet, UserCheck, BarChart3 } from 'lucide-react'
+import { LayoutDashboard, MapPin, Briefcase, Users, FileText, Shield, CreditCard, BriefcaseBusiness, ShoppingCart, Calendar, CalendarOff, Box, Wallet, UserCheck, BarChart3, Receipt } from 'lucide-react'
 import { UnifiedLayout } from '@/components/layouts/UnifiedLayout'
 import { usePreferredLocation } from '@/hooks/usePreferredLocation'
 import { APP_CONFIG } from '@/constants'
@@ -38,6 +38,7 @@ const ClientsManager = lazy(() => lazyWithRetry(
 ))
 const SalesHistoryPage = lazy(() => import('./SalesHistoryPage').then(m => ({ default: m.SalesHistoryPage })))
 const CompleteUnifiedSettings = lazy(() => import('@/components/settings/CompleteUnifiedSettings'))
+const PaymentsManagementPage = lazy(() => import('@/components/payments/PaymentsManagementPage').then(m => ({ default: m.PaymentsManagementPage })))
 
 interface AdminDashboardProps {
   business: Business
@@ -194,6 +195,7 @@ export function AdminDashboard({
       planItem('expenses',    'Egresos',                                <Wallet className="h-5 w-5" />),
       planItem('reports',     t('adminDashboard.sidebar.reports'),      <FileText className="h-5 w-5" />),
       planItem('billing',     t('adminDashboard.sidebar.billing'),      <CreditCard className="h-5 w-5" />),
+      planItem('payments',    'Cobros anticipados',                     <Receipt className="h-5 w-5" />),
       planItem('permissions', t('adminDashboard.sidebar.permissions'),  <Shield className="h-5 w-5" />),
     ]
     // Módulos disponibles en el plan activo primero, bloqueados al final
@@ -272,6 +274,8 @@ export function AdminDashboard({
         return planWrap('reports', <ReportsPage businessId={business.id} user={user} />)
       case 'billing':
         return wrap(<BillingDashboard businessId={business.id} ownerId={business.owner_id} />)
+      case 'payments':
+        return planWrap('payments', <PaymentsManagementPage businessId={business.id} />)
       case 'permissions':
         return planWrap('permissions',
           <PermissionsManager

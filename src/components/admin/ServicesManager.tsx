@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { usePlanFeatures } from '@/hooks/usePlanFeatures'
 import { PlanLimitBanner } from '@/components/ui/PlanLimitBanner'
+import { ServiceDepositInfo } from '@/components/payments/ServiceDepositInfo'
 import {
   Briefcase,
   Plus,
@@ -839,6 +840,12 @@ export function ServicesManager({ businessId }: ServicesManagerProps) {
                     ))}
                   </div>
                 )}
+                <ServiceDepositInfo
+                  businessId={businessId}
+                  serviceId={service.id}
+                  servicePrice={service.price}
+                  className="mt-3 pt-3 border-t border-dashed border-border/50"
+                />
               </CardContent>
                   </>
                 )

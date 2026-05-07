@@ -56,6 +56,9 @@ import { profilePage } from './profilePage'
 import { cookieConsent } from './cookieConsent'
 import { referrals } from './referrals'
 
+// Payments system
+import { payments } from './payments'
+
 export const en = {
   common,
   auth,
@@ -129,5 +132,7 @@ export const en = {
   employeeProfile,
   // Referral program
   referrals,
+  // Advance payment system
+  payments,
 }
 

@@ -273,7 +273,13 @@ export type Permission =
   | 'settings.view'
   | 'settings.edit_own'
   | 'settings.edit_business'
-  
+
+  // Payments (4) — Sistema de pagos anticipados de citas
+  | 'payments.configure'        // Configurar % anticipo, política, conexión MP
+  | 'payments.refund'           // Emitir devolución manual
+  | 'payments.view'             // Ver dashboard de cobros
+  | 'payments.connect_account'  // Conectar/desconectar cuenta MP del negocio
+
   // Legacy permissions (backward compatibility)
   | 'read_appointments' 
   | 'write_appointments' 

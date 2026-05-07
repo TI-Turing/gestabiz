@@ -166,6 +166,12 @@ export const ALL_PERMISSIONS: Permission[] = [
   'settings.view',
   'settings.edit_own',
   'settings.edit_business',
+
+  // Payments (4) — Sistema de pagos anticipados de citas
+  'payments.configure',
+  'payments.refund',
+  'payments.view',
+  'payments.connect_account',
 ]
 
 /**
@@ -259,6 +265,12 @@ export const PERMISSION_DESCRIPTIONS: Record<string, string> = {
   'settings.view': 'Ver configuración',
   'settings.edit_own': 'Editar perfil propio',
   'settings.edit_business': 'Editar configuración del negocio',
+
+  // Payments
+  'payments.configure': 'Configurar cobro de anticipos y política de cancelación',
+  'payments.refund': 'Emitir devoluciones manuales',
+  'payments.view': 'Ver dashboard de cobros y movimientos',
+  'payments.connect_account': 'Conectar o desconectar cuenta de MercadoPago del negocio',
 }
 
 /**
@@ -387,6 +399,15 @@ export const PERMISSION_CATEGORIES = {
       'settings.view',
       'settings.edit_own',
       'settings.edit_business',
+    ] as Permission[],
+  },
+  payments: {
+    label: 'Pagos',
+    permissions: [
+      'payments.configure',
+      'payments.refund',
+      'payments.view',
+      'payments.connect_account',
     ] as Permission[],
   },
 }

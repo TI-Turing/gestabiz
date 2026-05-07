@@ -9,7 +9,7 @@
  *  - WizardFooter.tsx        — botones de navegación
  *  - WizardStepContent.tsx   — enrutador de pasos
  */
-import React from 'react'
+import React, { useState } from 'react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -41,6 +41,7 @@ export function AppointmentWizard({
   adminPreferredLocationId,
 }: Readonly<AppointmentWizardProps>) {
   const { t } = useLanguage()
+  const [createdAppointmentId, setCreatedAppointmentId] = useState<string | null>(null)
   const { preferredCityName, preferredRegionName } = usePreferredCity()
   const dataCache = useWizardDataCache(businessId ?? null)
   const analytics = useAnalytics()
@@ -70,10 +71,11 @@ export function AppointmentWizard({
     userId,
     appointmentToEdit,
     onSuccess,
+    onCreated: setCreatedAppointmentId,
     setIsSubmitting: state.setIsSubmitting,
     createAppointmentWithNotifications: createAppointmentWithNotifications as (
       data: Record<string, unknown>,
-    ) => Promise<unknown>,
+    ) => Promise<{ id: string } | null | undefined>,
     analytics,
     isAdminBooking,
   })
@@ -99,7 +101,9 @@ export function AppointmentWizard({
   } = state
 
   const successStep = getStepNumber('success')
+  const depositCheckoutStep = getStepNumber('depositCheckout')
   const isSuccess = currentStep >= successStep
+  const isDepositCheckout = currentStep === depositCheckoutStep
 
   const handleConfirm = async () => {
     const success = await createAppointment()
@@ -160,9 +164,12 @@ export function AppointmentWizard({
           onClose={handleClose}
           onStartChat={onStartChat}
           isAdminBooking={isAdminBooking}
+          createdAppointmentId={createdAppointmentId}
+          onDepositSkip={handleNext}
         />
 
-        {!isSuccess && (
+        {/* DepositCheckoutStep has its own action buttons — hide the generic WizardFooter */}
+        {!isSuccess && !isDepositCheckout && (
           <WizardFooter
             currentStep={currentStep}
             minStep={businessId ? 1 : 0}

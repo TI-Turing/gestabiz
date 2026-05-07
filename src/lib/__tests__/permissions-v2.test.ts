@@ -259,8 +259,8 @@ describe('ALL_PERMISSIONS constant', () => {
 })
 
 describe('PERMISSION_CATEGORIES constant', () => {
-  it('has 12 categories', () => {
-    expect(Object.keys(PERMISSION_CATEGORIES)).toHaveLength(12)
+  it('has 13 categories (incluye payments — sistema de pagos anticipados)', () => {
+    expect(Object.keys(PERMISSION_CATEGORIES)).toHaveLength(13)
   })
 
   it('every category has a label and non-empty permissions array', () => {

@@ -8,7 +8,7 @@ Se usa junto con el sistema `claude-mem` (MCP) para persistencia cross-sesión d
 
 ---
 
-## Sistemas (22 notas)
+## Sistemas (23 notas)
 
 Documentación técnica de cada módulo funcional del producto.
 
@@ -36,6 +36,7 @@ Documentación técnica de cada módulo funcional del producto.
 | [[sistema-referrals]] | Programa de referidos: cupones, comisiones MP, kill-switch |
 | [[sistema-google-calendar]] | OAuth Google, sync bidireccional, calendar_sync_settings |
 | [[sistema-mobile-hybrid]] | Expo + WebView, auth bridging, EAS Build (.aab/.apk/.ipa) |
+| [[sistema-pagos-anticipados]] | Anticipos MP Marketplace 1:1, HMAC webhook, hold TTL, política de cancelación |
 
 ---
 
