@@ -116,35 +116,42 @@ export function AdminRolePreferences({ business }: AdminRolePreferencesProps) {
 
   return (
     <>
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1 scrollbar-none flex-nowrap">
         <Button
           variant={activeSubTab === 'info' ? 'default' : 'outline'}
           onClick={() => setActiveSubTab('info')}
-          className="flex items-center gap-2"
+          size="sm"
+          className="flex items-center gap-1.5 shrink-0"
         >
           <Building2 className="h-4 w-4" />
-          {t('settings.businessInfo.tabs.info')}
+          <span className="hidden sm:inline">{t('settings.businessInfo.tabs.info')}</span>
+          <span className="sm:hidden">Info</span>
         </Button>
         <Button
           variant={activeSubTab === 'notifications' ? 'default' : 'outline'}
           onClick={() => setActiveSubTab('notifications')}
-          className="flex items-center gap-2"
+          size="sm"
+          className="flex items-center gap-1.5 shrink-0"
         >
           <Bell className="h-4 w-4" />
-          {t('settings.businessInfo.tabs.notifications')}
+          <span className="hidden sm:inline">{t('settings.businessInfo.tabs.notifications')}</span>
+          <span className="sm:hidden">Notifs</span>
         </Button>
         <Button
           variant={activeSubTab === 'branding' ? 'default' : 'outline'}
           onClick={() => setActiveSubTab('branding')}
-          className="flex items-center gap-2"
+          size="sm"
+          className="flex items-center gap-1.5 shrink-0"
         >
           <ImageIcon className="h-4 w-4" />
-          Logo y Banner
+          <span className="hidden sm:inline">Logo y Banner</span>
+          <span className="sm:hidden">Logo</span>
         </Button>
         <Button
           variant={activeSubTab === 'calendario' ? 'default' : 'outline'}
           onClick={() => setActiveSubTab('calendario')}
-          className="flex items-center gap-2"
+          size="sm"
+          className="flex items-center gap-1.5 shrink-0"
         >
           <Calendar className="h-4 w-4" />
           Calendario
@@ -152,15 +159,18 @@ export function AdminRolePreferences({ business }: AdminRolePreferencesProps) {
         <Button
           variant={activeSubTab === 'tracking' ? 'default' : 'outline'}
           onClick={() => setActiveSubTab('tracking')}
-          className="flex items-center gap-2"
+          size="sm"
+          className="flex items-center gap-1.5 shrink-0"
         >
           <Calendar className="h-4 w-4" />
-          {t('settings.businessInfo.tabs.tracking')}
+          <span className="hidden sm:inline">{t('settings.businessInfo.tabs.tracking')}</span>
+          <span className="sm:hidden">Tracking</span>
         </Button>
         <Button
           variant={activeSubTab === 'chat' ? 'default' : 'outline'}
           onClick={() => setActiveSubTab('chat')}
-          className="flex items-center gap-2"
+          size="sm"
+          className="flex items-center gap-1.5 shrink-0"
         >
           <ChatText className="h-4 w-4" />
           Chat
@@ -168,7 +178,8 @@ export function AdminRolePreferences({ business }: AdminRolePreferencesProps) {
         <Button
           variant={activeSubTab === 'payments' ? 'default' : 'outline'}
           onClick={() => setActiveSubTab('payments')}
-          className="flex items-center gap-2"
+          size="sm"
+          className="flex items-center gap-1.5 shrink-0"
         >
           <CreditCard className="h-4 w-4" />
           Pagos
