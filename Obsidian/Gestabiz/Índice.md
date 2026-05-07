@@ -104,7 +104,7 @@ Contexto del negocio, auditorías y estrategia general.
 
 ---
 
-## Decisiones (6 notas)
+## Decisiones (7 notas)
 
 Decisiones arquitectónicas y trade-offs importantes.
 
@@ -114,6 +114,7 @@ Decisiones arquitectónicas y trade-offs importantes.
 - [[ventajas-estructurales-no-explotadas]] — 17 ventajas competitivas latentes en la arquitectura: multi-rol nativo, modelo flexible, mobile híbrido, permisos enterprise, founder único y más
 - [[modelo-cobro-payg-fase2]] — Migración de suscripciones fijas a módulos + packs de consumo (WhatsApp). Pros, contras, recomendación, impacto en sistemas (Abr 2026)
 - [[decision-citas-virtuales-vs-calendly]] — Fase 4: extender WebRTC a video+pantalla para entrar al territorio de Calendly con ventaja de datos (Abr 2026)
+- [[decision-pagos-anticipados-modelo-payout]] — Por qué el dinero va a la cuenta MP del negocio (Plan B Marketplace) y no al banco directamente. Intermediación financiera, retención en la fuente, costos comparados (May 2026)
 
 ---
 
