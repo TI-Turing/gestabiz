@@ -17,6 +17,8 @@ interface SignUpData {
   password: string
   full_name?: string
   phone?: string
+  document_type_id?: string
+  document_number?: string
 }
 
 interface SignInData {
@@ -373,14 +375,16 @@ export function useAuth() {
         // If there's a session (email confirmation disabled), create profile and log in
         if (authData.session) {
           // Create profile in profiles table
-          const { error: profileError } = await supabase
-            .from('profiles')
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { error: profileError } = await (supabase.from('profiles') as any)
             .insert({
               id: authData.user.id,
               email: authData.user.email,
               full_name: data.full_name || '',
               phone: data.phone || '',
-              role: 'client', // Default role
+              document_type_id: data.document_type_id || null,
+              document_number: data.document_number || null,
+              role: 'client',
               is_active: true
             })
 

@@ -14,8 +14,9 @@ import logoGestabiz from '@/assets/images/gestabiz/gestabiz_logo_light.svg'
 import { toast } from 'sonner'
 import { useAnalytics } from '@/hooks/useAnalytics'
 import { AlertCircle } from 'lucide-react'
-import { Flask, EnvelopeSimple, Warning } from '@phosphor-icons/react'
+import { Flask, EnvelopeSimple, Warning, Phone, IdentificationCard } from '@phosphor-icons/react'
 import logoTiTuring from '@/assets/images/tt/1.png'
+import { DocumentTypeSelect } from '@/components/catalog/DocumentTypeSelect'
 
 interface AuthScreenProps { 
   onLogin?: (user: User) => void
@@ -44,7 +45,10 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: ''
+    name: '',
+    phone: '',
+    document_type_id: '',
+    document_number: '',
   })
 
   // Extract redirect params from URL
@@ -197,7 +201,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.email || !formData.password || !formData.name) {
+    if (!formData.email || !formData.password || !formData.name || !formData.phone || !formData.document_type_id || !formData.document_number) {
       setFormError(t('common.messages.requiredFields'))
       return
     }
@@ -205,10 +209,13 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
     setIsSigningIn(true)
     try {
       const result = await Promise.race([
-        signUp({ 
-          email: formData.email, 
+        signUp({
+          email: formData.email,
           password: formData.password,
-          full_name: formData.name
+          full_name: formData.name,
+          phone: formData.phone,
+          document_type_id: formData.document_type_id,
+          document_number: formData.document_number,
         }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 12000))
       ])
@@ -424,7 +431,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
             <form onSubmit={isSignUpMode ? handleSignUp : handleSignIn} className="space-y-6">
             {/* Name Input (only for Sign Up) */}
             {isSignUpMode && (
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <Input
                   type="text"
                   placeholder={t('auth.namePlaceholder')}
@@ -433,6 +440,43 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
                   className="w-full bg-background border-0 text-foreground placeholder:text-muted-foreground h-12 rounded-lg px-4 focus-visible:ring-2 focus-visible:ring-primary"
                   required
                 />
+                {/* Phone */}
+                <div className="relative">
+                  <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  <Input
+                    type="tel"
+                    placeholder={t('auth.phonePlaceholder') || 'Teléfono (ej: 300 123 4567)'}
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className="w-full bg-background border-0 text-foreground placeholder:text-muted-foreground h-12 rounded-lg pl-10 pr-4 focus-visible:ring-2 focus-visible:ring-primary"
+                    required
+                  />
+                </div>
+                {/* Document type + number */}
+                <div className="flex gap-2">
+                  <div className="w-2/5">
+                    <DocumentTypeSelect
+                      countryId="CO"
+                      forCompany={false}
+                      value={formData.document_type_id}
+                      onChange={(v) => handleInputChange('document_type_id', v)}
+                      placeholder={t('auth.documentTypePlaceholder') || 'Tipo doc.'}
+                      required
+                      className="h-12 bg-background border-0 text-foreground rounded-lg focus-visible:ring-2 focus-visible:ring-primary"
+                    />
+                  </div>
+                  <div className="relative flex-1">
+                    <IdentificationCard size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                    <Input
+                      type="text"
+                      placeholder={t('auth.documentNumberPlaceholder') || 'N.° de documento'}
+                      value={formData.document_number}
+                      onChange={(e) => handleInputChange('document_number', e.target.value)}
+                      className="w-full bg-background border-0 text-foreground placeholder:text-muted-foreground h-12 rounded-lg pl-10 pr-4 focus-visible:ring-2 focus-visible:ring-primary"
+                      required
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
@@ -594,7 +638,7 @@ export default function AuthScreen({ onLogin, onLoginSuccess }: Readonly<AuthScr
                 type="button"
                 onClick={() => {
                   setIsSignUpMode(!isSignUpMode)
-                  setFormData({ email: '', password: '', name: '' })
+                  setFormData({ email: '', password: '', name: '', phone: '', document_type_id: '', document_number: '' })
                 }}
                 className="text-primary hover:text-primary/80 font-medium transition-colors cursor-pointer"
               >

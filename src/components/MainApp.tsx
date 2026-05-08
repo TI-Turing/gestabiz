@@ -6,6 +6,9 @@ import { useAdminBusinesses } from '@/hooks/useAdminBusinesses'
 import { useEmployeeBusinesses } from '@/hooks/useEmployeeBusinesses'
 import { EmployeeOnboarding } from '@/components/employee/EmployeeOnboarding'
 import { AdminOnboarding } from '@/components/admin/AdminOnboarding'
+import { CompleteProfileModal } from '@/components/auth/CompleteProfileModal'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
 import { AdminDashboard } from '@/components/admin/AdminDashboard'
 import { EmployeeDashboard } from '@/components/employee/EmployeeDashboard'
 import { ClientDashboard } from '@/components/client/ClientDashboard'
@@ -16,6 +19,7 @@ interface MainAppProps {
 
 function MainApp({ onLogout }: Readonly<MainAppProps>) {
   const { user, signOut } = useAuth()
+  const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedBusinessId, setSelectedBusinessId] = React.useState<string | undefined>()
   const [isCreatingNewBusiness, setIsCreatingNewBusiness] = React.useState(false)
@@ -99,6 +103,33 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
     }
   }, [activeRole, businessesLength, activeBusinessId, selectedBusinessId, isCreatingNewBusiness, user?.id])
   
+  // Check profile completeness for mandatory fiscal fields (DIAN)
+  const { data: profileCompleteness } = useQuery({
+    queryKey: ['profile-completeness', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null
+      const { data } = await supabase
+        .from('profiles')
+        .select('phone, document_type_id, document_number')
+        .eq('id', user.id)
+        .single() as unknown as {
+          data: { phone: string | null; document_type_id: string | null; document_number: string | null } | null
+        }
+      return data
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5,
+  })
+
+  const missingProfileFields = profileCompleteness ? {
+    phone: !profileCompleteness.phone,
+    documentType: !profileCompleteness.document_type_id,
+    documentNumber: !profileCompleteness.document_number,
+  } : null
+
+  const profileIncomplete = missingProfileFields &&
+    (missingProfileFields.phone || missingProfileFields.documentType || missingProfileFields.documentNumber)
+
   // Si no hay usuario autenticado, no renderizar nada (el App.tsx maneja esto)
   if (!user) {
     return null
@@ -230,7 +261,20 @@ function MainApp({ onLogout }: Readonly<MainAppProps>) {
   }
 
   // All roles now use UnifiedLayout via their respective dashboards
-  return <>{renderCurrentView()}</>
+  return (
+    <>
+      {renderCurrentView()}
+      {profileIncomplete && missingProfileFields && (
+        <CompleteProfileModal
+          userId={user.id}
+          missingFields={missingProfileFields}
+          onComplete={() => {
+            void queryClient.invalidateQueries({ queryKey: ['profile-completeness', user.id] })
+          }}
+        />
+      )}
+    </>
+  )
 }
 
 export default MainApp

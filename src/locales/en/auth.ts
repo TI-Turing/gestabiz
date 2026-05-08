@@ -57,6 +57,13 @@ export const auth = {
   accountInactive: 'Your account is inactive. You will not be able to sign in until you reactivate your account',
   mustSignIn: 'You must sign in to create an appointment',
   rememberMe: 'Remember me',
+  phonePlaceholder: 'Phone (e.g. 300 123 4567)',
+  documentTypePlaceholder: 'Doc type',
+  documentNumberPlaceholder: 'Document number',
+  completeProfileTitle: 'Complete your profile',
+  completeProfileDesc: 'We need a few additional details required by Colombian electronic invoicing regulations (DIAN).',
+  identityDocumentLabel: 'Identity document',
+  documentPrivacyNote: 'This information is stored securely and only used for electronic invoice issuance under Law 1581/2012.',
 }
 
 // Email Verification Modal

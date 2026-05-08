@@ -55,6 +55,7 @@ import { employeeProfile } from './employeeProfile'
 import { profilePage } from './profilePage'
 import { cookieConsent } from './cookieConsent'
 import { referrals } from './referrals'
+import { electronicBilling } from './electronicBilling'
 
 export const en = {
   common,
@@ -129,5 +130,7 @@ export const en = {
   employeeProfile,
   // Referral program
   referrals,
+  // Electronic billing (DIAN / Matias API)
+  electronicBilling,
 }
 

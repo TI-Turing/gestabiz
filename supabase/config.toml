@@ -303,6 +303,21 @@ verify_jwt = false
 [functions.end-call]
 verify_jwt = false
 
+[functions.dian-enroll-business]
+verify_jwt = false
+
+[functions.emit-electronic-invoice]
+verify_jwt = false
+
+[functions.emit-credit-note]
+verify_jwt = false
+
+[functions.matias-webhook]
+verify_jwt = false
+
+[functions.dian-resolution-monitor]
+verify_jwt = false
+
 [analytics]
 enabled = false
 

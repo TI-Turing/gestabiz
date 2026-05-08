@@ -18,7 +18,9 @@ import {
   ImageSquare as ImageIcon,
   Calendar,
   ChatText,
+  Receipt,
 } from '@phosphor-icons/react'
+import { DianFiscalSettings } from '../billing/dian/DianFiscalSettings'
 import { supabase } from '@/lib/supabase'
 import type { Business } from '@/types/types'
 import { PhoneInput } from '@/components/ui/PhoneInput'
@@ -49,7 +51,7 @@ export function AdminRolePreferences({ business }: AdminRolePreferencesProps) {
   })
   const [phonePrefix, setPhonePrefix] = useState('+57')
   const [isSaving, setIsSaving] = useState(false)
-  const [activeSubTab, setActiveSubTab] = useState<'info' | 'branding' | 'notifications' | 'tracking' | 'calendario' | 'chat'>('info')
+  const [activeSubTab, setActiveSubTab] = useState<'info' | 'branding' | 'notifications' | 'tracking' | 'calendario' | 'chat' | 'fiscal'>('info')
   const [workOnHolidays, setWorkOnHolidays] = useState<boolean>(business.work_on_holidays ?? false)
   const [isSavingHolidays, setIsSavingHolidays] = useState(false)
 
@@ -162,6 +164,14 @@ export function AdminRolePreferences({ business }: AdminRolePreferencesProps) {
         >
           <ChatText className="h-4 w-4" />
           Chat
+        </Button>
+        <Button
+          variant={activeSubTab === 'fiscal' ? 'default' : 'outline'}
+          onClick={() => setActiveSubTab('fiscal')}
+          className="flex items-center gap-2"
+        >
+          <Receipt className="h-4 w-4" />
+          Fiscal / DIAN
         </Button>
       </div>
 
@@ -349,6 +359,7 @@ export function AdminRolePreferences({ business }: AdminRolePreferencesProps) {
       {activeSubTab === 'notifications' && <BusinessNotificationSettings businessId={business.id} />}
       {activeSubTab === 'tracking' && <NotificationTracking businessId={business.id} />}
       {activeSubTab === 'chat' && <BusinessChatSettings businessId={business.id} />}
+      {activeSubTab === 'fiscal' && <DianFiscalSettings businessId={business.id} />}
       {activeSubTab === 'calendario' && (
         <div className="space-y-6">
           {/* Toggle: abrir en festivos */}

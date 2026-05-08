@@ -57,6 +57,13 @@ export const auth = {
   accountInactive: 'Tu cuenta está inactiva. No podrás iniciar sesión hasta reactivar tu cuenta',
   mustSignIn: 'Debes iniciar sesión para crear una cita',
   rememberMe: 'Recuérdame',
+  phonePlaceholder: 'Teléfono (ej: 300 123 4567)',
+  documentTypePlaceholder: 'Tipo doc.',
+  documentNumberPlaceholder: 'N.° de documento',
+  completeProfileTitle: 'Completa tu perfil',
+  completeProfileDesc: 'Para continuar necesitamos algunos datos adicionales requeridos por la normativa colombiana de facturación electrónica (DIAN).',
+  identityDocumentLabel: 'Documento de identidad',
+  documentPrivacyNote: 'Estos datos se almacenan de forma segura y solo se usan para emisión de facturas electrónicas según la Ley 1581/2012.',
 }
 
 // Modal de Verificación de Email

@@ -2067,3 +2067,149 @@ export interface MarketingVaultFolder {
   name: string
   files: MarketingVaultFile[]
 }
+
+// ============================================================
+// FACTURACIÓN ELECTRÓNICA DIAN — Matias API
+// ============================================================
+
+export type DianEnvironment = 'sandbox' | 'production'
+
+export type ElectronicInvoiceStatus =
+  | 'pending'
+  | 'accepted'
+  | 'rejected'
+  | 'failed_permanent'
+  | 'cancelled'
+
+export type ElectronicInvoiceDocumentType = 'invoice' | 'pos' | 'credit_note'
+
+/** Configuración de habilitación DIAN y Matias API del negocio */
+export interface BusinessDianSoftware {
+  id: string
+  business_id: string
+  environment: DianEnvironment
+  /** Path del certificado .p12 en Storage (nunca exponer el archivo en frontend) */
+  certificate_storage_path: string | null
+  certificate_expires_at: string | null
+  /** true = Software ID propio (Ruta 1 avanzada); false = usa Software ID de Matias */
+  own_software_id: string | null
+  is_enrolled: boolean
+  enrolled_at: string | null
+  // Datos DIAN del negocio
+  dv: number | null
+  type_organization_id: 1 | 2 | null  // 1=Jurídica, 2=Natural
+  tax_responsibilities: string[]
+  ciiu_code: string | null
+  municipality_dian_code: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** Resolución de numeración DIAN (Formulario 1876) */
+export interface BusinessDianResolution {
+  id: string
+  business_id: string
+  resolution_number: string
+  prefix: string | null
+  from_number: number
+  to_number: number
+  current_number: number
+  valid_from: string
+  valid_to: string
+  is_active: boolean
+  document_type: ElectronicInvoiceDocumentType
+  created_at: string
+  updated_at: string
+  // Computed (frontend)
+  available_documents?: number
+  percent_used?: number
+  days_until_expiry?: number
+  is_exhausted?: boolean
+  is_expired?: boolean
+}
+
+/** Factura electrónica, documento POS o nota crédito emitida ante la DIAN */
+export interface ElectronicInvoice {
+  id: string
+  business_id: string
+  appointment_id: string | null
+  transaction_id: string | null
+  client_id: string | null
+  document_type: ElectronicInvoiceDocumentType
+  prefix: string | null
+  document_number: number
+  full_document_number: string
+  cufe: string | null
+  cude: string | null
+  status: ElectronicInvoiceStatus
+  retry_count: number
+  next_retry_at: string | null
+  error_message: string | null
+  matias_response: Record<string, unknown> | null
+  dian_response: Record<string, unknown> | null
+  xml_storage_path: string | null
+  pdf_storage_path: string | null
+  parent_invoice_id: string | null
+  credit_note_reason: string | null
+  total_amount: number
+  buyer_snapshot: ElectronicInvoiceBuyerSnapshot | null
+  issued_at: string
+  created_at: string
+  updated_at: string
+  // Relations (populated on joins)
+  parent_invoice?: ElectronicInvoice
+  credit_notes?: ElectronicInvoice[]
+}
+
+/** Snapshot del comprador al momento de emitir la factura (para auditoría) */
+export interface ElectronicInvoiceBuyerSnapshot {
+  company_name: string
+  dni: string
+  identity_document_id: number  // Código Matias: CC=13, NIT=31, CE=22, PA=41, TI=12
+  type_organization_id: 1 | 2
+  tax_regime_id: 48 | 49         // 48=Responsable IVA, 49=No responsable
+  email: string | null
+  address: string | null
+  city_id: number | null
+  country_id: number | null
+  is_consumer_final: boolean
+}
+
+/** Consentimiento de tratamiento de datos (Habeas Data Ley 1581/2012) */
+export interface DataProcessingConsent {
+  id: string
+  user_id: string
+  purpose: 'account' | 'electronic_invoicing' | 'marketing'
+  policy_version: string
+  accepted_at: string
+  ip_address: string | null
+  user_agent: string | null
+  revoked_at: string | null
+  created_at: string
+}
+
+/** Payload para emitir una factura via Edge Function emit-electronic-invoice */
+export interface EmitInvoicePayload {
+  business_id: string
+  appointment_id?: string
+  transaction_id?: string
+  buyer?: {
+    company_name: string
+    dni: string
+    identity_document_id: number
+    type_organization_id: 1 | 2
+    tax_regime_id: 48 | 49
+    email?: string
+  }
+  use_consumer_final?: boolean
+  document_type?: ElectronicInvoiceDocumentType
+}
+
+/** Payload para emitir nota crédito via Edge Function emit-credit-note */
+export interface EmitCreditNotePayload {
+  business_id: string
+  parent_invoice_id: string
+  credit_note_reason: string
+  partial_amount?: number
+  trigger_refund?: boolean
+}
