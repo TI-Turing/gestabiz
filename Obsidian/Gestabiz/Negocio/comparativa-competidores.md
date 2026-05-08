@@ -40,13 +40,43 @@ Análisis de Gestabiz frente a soluciones internacionales y locales del mercado 
 
 ## Competidores Locales (Colombia)
 
+### Siigo 🔥 (líder PyME en Colombia)
+
+Siigo no es competidor en citas, pero **sí lo es en el bolsillo del dueño de negocio**: si una PyME ya paga Siigo para facturación/contabilidad, justificar Gestabiz encima requiere ser muy claros con la propuesta de valor diferenciada.
+
+| Aspecto | Siigo | Gestabiz |
+|---|---|---|
+| Citas y agenda | ❌ No | ✅ [[sistema-citas]] |
+| Recursos físicos (mesas, canchas, salones) | ❌ No | ✅ [[sistema-modelo-flexible]] |
+| Facturación electrónica DIAN | ✅ Líder, validada | 🟡 Planeado [[facturacion-electronica-matias-api]] |
+| POS (productos físicos) | ✅ Sí + Gastrobar | 🟡 Solo ventas rápidas, sin DIAN |
+| Inventarios | ✅ Sí | ❌ No |
+| Nómina electrónica | ✅ Sí | ❌ No (planeado Fase 5) |
+| Contabilidad PUC + libro auxiliar | ✅ Completa | 🟡 Básica (IVA/ICA/Retención) |
+| App móvil | ✅ Nativa | ✅ [[sistema-mobile-hybrid]] |
+| Permisos granulares por empleado | ❌ Solo usuarios | ✅ 79 permisos [[sistema-permisos]] |
+| Reseñas públicas SEO | ❌ | ✅ [[sistema-perfiles-publicos]] |
+| Chat tiempo real con clientes | ❌ | ✅ [[sistema-chat]] |
+| Reclutamiento + matching | ❌ | ✅ [[sistema-vacantes]] |
+| Programa contadores partners | ✅ "Siigo Contador" gratis | 🟡 Planeado Fase 5 |
+| Precio entrada | $9.992 COP/mes (24 docs) | $90k COP/mes (Inicio) |
+| Empresas activas Colombia | 300.000+ | <100 (BETA) |
+
+**Estrategia frente a Siigo** (ver [[Fase 5 - Competencia Directa con Siigo]]):
+- **Corto plazo**: posicionar Gestabiz como complemento ("usa Siigo para tu contabilidad y Gestabiz para tu agenda + clientes")
+- **Mediano plazo**: cerrar brechas de inventario, POS pro y facturación DIAN para que Gestabiz pueda **reemplazar** a Siigo en negocios de servicios
+- **Largo plazo**: replicar modelo de partners contadores y ofrecer migración asistida desde Siigo con 3 meses gratis
+
+### Otros locales
+
 La mayoría de soluciones locales son:
 - Apps artesanales sin mantenimiento
 - WhatsApp Business como "sistema"
 - Cuadernos y Excel
 - Agendapro (Chile, parcialmente en CO)
+- Luna chatbot WhatsApp (ver [[competencia-luna-barberia]])
 
-**Ventaja Gestabiz**: solución profesional diseñada desde cero para LATAM con impuestos colombianos nativos.
+**Ventaja Gestabiz**: solución profesional diseñada desde cero para LATAM con impuestos colombianos nativos y agenda + ventas + equipo + clientes en una sola app.
 
 ## Resumen Competitivo
 

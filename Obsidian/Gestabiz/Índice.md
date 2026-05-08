@@ -8,7 +8,7 @@ Se usa junto con el sistema `claude-mem` (MCP) para persistencia cross-sesión d
 
 ---
 
-## Sistemas (23 notas)
+## Sistemas (24 notas)
 
 Documentación técnica de cada módulo funcional del producto.
 
@@ -37,10 +37,11 @@ Documentación técnica de cada módulo funcional del producto.
 | [[sistema-google-calendar]] | OAuth Google, sync bidireccional, calendar_sync_settings |
 | [[sistema-mobile-hybrid]] | Expo + WebView, auth bridging, EAS Build (.aab/.apk/.ipa) |
 | [[sistema-pagos-anticipados]] | Anticipos MP Marketplace 1:1, HMAC webhook, hold TTL, política de cancelación |
+| [[sistema-facturacion-electronica]] | DIAN/Matias API: FE, POS electrónico, notas crédito, wizard habilitación, monitor resolución |
 
 ---
 
-## Arquitectura (9 notas)
+## Arquitectura (10 notas)
 
 Decisiones técnicas transversales y patrones del codebase.
 
@@ -55,6 +56,7 @@ Decisiones técnicas transversales y patrones del codebase.
 | [[react-query-cache]] | STABLE/FREQUENT/REALTIME, query keys, deduplication |
 | [[sistema-cards]] | Cards self-fetch por ID, patrón reutilizable |
 | [[i18n]] | ~2,200 claves ES/EN, ~44 archivos por idioma |
+| [[autoskills]] | CLI auto-detección de stack → descarga skills para agentes IA en `.agents/skills/` |
 
 ---
 
@@ -76,13 +78,14 @@ Estrategia comercial, pricing, go-to-market y posicionamiento.
 
 ---
 
-## Features (11 notas)
+## Features (12 notas)
 
 Specs de features en desarrollo, pendientes o ideas futuras.
 
 - [[Fase 2 - Contabilidad, DIAN y App Móvil]] — Módulo contable completo, facturación electrónica DIAN, app móvil
 - [[Fase 3 - IA, Automatización y Agentes]] — Agentes LLM, procesos automáticos, AI marketing assistant
 - [[Fase 4 - El Shopify de los Negocios de Servicios]] — Pagos a clientes, recordatorios escalonados, promociones, CRM avanzado, estadísticas, marketplace, widget embebible
+- [[Fase 5 - Competencia Directa con Siigo]] — Plataforma administrativa horizontal: inventarios, POS pro, facturación DIAN, nómina electrónica, modo contador. Copiar al líder colombiano (300k empresas) y mejorarlo
 - [[Ideas Futuras - Social Media MCP y Marketing IA]] — MCP para redes sociales, publicación automática con IA
 - [[QR-con-branding-Gestabiz]] — QR con icono de Gestabiz centrado + logo y texto "Reserva tu próxima cita aquí"
 - [[analisis-competitivo-roadmap]] — Roadmap competitivo y análisis de mercado
@@ -92,6 +95,7 @@ Specs de features en desarrollo, pendientes o ideas futuras.
 - [[SEO-SEM-estrategia-2026]] — Estrategia SEO/SEM 2026 (resumen ejecutivo)
 - [[SEO-SEM-Strategy-Colombia-LATAM]] — SEO/SEM completo: keywords, competidores, technical SEO, content strategy
 - [[facturacion-electronica-matias-api]] — Integración facturación electrónica vía Matias API
+- [[test-plan-facturacion-electronica]] — Plan de pruebas completo: 14 secciones, ~80 checks antes de llevar a producción
 
 ---
 
@@ -104,7 +108,7 @@ Contexto del negocio, auditorías y estrategia general.
 
 ---
 
-## Decisiones (7 notas)
+## Decisiones (9 notas)
 
 Decisiones arquitectónicas y trade-offs importantes.
 
@@ -115,16 +119,19 @@ Decisiones arquitectónicas y trade-offs importantes.
 - [[modelo-cobro-payg-fase2]] — Migración de suscripciones fijas a módulos + packs de consumo (WhatsApp). Pros, contras, recomendación, impacto en sistemas (Abr 2026)
 - [[decision-citas-virtuales-vs-calendly]] — Fase 4: extender WebRTC a video+pantalla para entrar al territorio de Calendly con ventaja de datos (Abr 2026)
 - [[decision-pagos-anticipados-modelo-payout]] — Por qué el dinero va a la cuenta MP del negocio (Plan B Marketplace) y no al banco directamente. Intermediación financiera, retención en la fuente, costos comparados (May 2026)
+- [[decision-cedula-cliente-obligatoria]] — Tipo + número de documento obligatorio para clientes (DIAN Res. 000202/2025), fallback Consumidor Final
+- [[decision-licencia-facturacion-electronica]] — FE como add-on anual independiente del plan, carrito de funcionalidades, modelo Matias Casa de Software
 
 ---
 
-## Bugs (3 notas)
+## Bugs (4 notas)
 
 Bugs conocidos, gotchas y soluciones documentadas.
 
 - [[bug-session-disconnection-on-tab-switch]] — Desconexión de sesión al cambiar de tab
 - [[landing-page-dark-mode-fixed]] — Fix de dark mode en landing page
 - [[secretos-en-scripts-gitguardian]] — Secretos en historial de git (rotar PROD service role key)
+- [[auditoria-seguridad-2026-05-06]] — Auditoría de seguridad (3 críticos, 4 altos, 3 medios) — May 2026
 
 ---
 

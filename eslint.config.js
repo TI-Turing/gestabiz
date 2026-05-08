@@ -36,6 +36,9 @@ export default tseslint.config(
       'tailwind.config.js',
       // Scripts de utilidad (no son código de producción)
       'scripts/**',
+      // Vault Obsidian y skills/agents (no son código de producción)
+      'Obsidian/**',
+      '.agents/**',
     ],
   },
   {
