@@ -109,20 +109,91 @@ Publicación automática en Instagram, Facebook, TikTok
 
 ---
 
+---
+
+## Tier A — Utilidad Real (Brainstorm Mayo 2026)
+
+> Estas 5 features vienen del [[brainstorm-features-utiles-mayo-2026]] (Tier A). Se agregan a Fase 3 porque requieren más infraestructura que la Fase S pero aportan valor alto y diferenciación real.
+
+### A1 — Cobro Automático de Propinas al Empleado
+
+**Concepto**: al cerrar el servicio, el cliente puede dejar propina vía Gestabiz (sugerencias 10%/15%/20% o libre). La propina va al empleado que lo atendió, no al negocio. Gestabiz toma comisión menor (1-2%).
+
+**Por qué Fase 3**: requiere layer de payout al empleado (cuenta bancaria verificada), compliance tributario colombiano, y que [[sistema-pagos-anticipados]] esté maduro.
+
+**Impacto**: empleados felices = retención. Square construyó billones con esto en USA. Nuevo en LATAM.
+
+---
+
+### A2 — Wallet del Cliente / Saldo a Favor + Gift Cards
+
+**Concepto**: cada cliente tiene un saldo monetario en el negocio. Se puede recargar (gift card), acumular por cancelaciones, devoluciones, paquetes pre-pagados. Se descuenta en próximas citas.
+
+**Por qué Fase 3**: el saldo del cliente es pasivo contable del negocio. Requiere que [[sistema-contable]] soporte pasivos corrientes. Necesita gestión de vencimiento y política legal de devolución.
+
+**Tablas nuevas**: `client_wallets` (business_id, client_id, balance, currency), `wallet_transactions` (amount, type, appointment_id, description).
+
+**Impacto**: lock-in financiero — "tengo $30k a favor en X salón" bloquea el churn.
+
+---
+
+### A3 — Importador IA desde WhatsApp del Negocio
+
+**Concepto**: el dueño exporta su chat de WhatsApp Business y Claude lo procesa, extrayendo citas pasadas, datos de clientes y servicios. Convierte el historial informal en datos estructurados de Gestabiz.
+
+**Por qué Fase 3**: requiere integración con Claude API ([[Fase 3 - IA, Automatización y Agentes]] sección 4) y procesamiento de documentos. Costo de tokens considerable (validar modelo de precio).
+
+**Flujo**: WhatsApp → exportar .txt → subir a Gestabiz → Claude extrae → preview para aprobar → importar.
+
+**Impacto**: reduce la fricción de migración a casi cero. Trae historial real desde el día 1.
+
+---
+
+### A4 — Resumen Diario Push al Dueño
+
+**Concepto**: cada noche a las 8pm el dueño recibe push de 1 línea en el celular: "Hoy: 15 citas, $850k facturado, 1 cancelación, 0 no-shows." Sin abrir la app.
+
+**Por qué Fase 3**: técnicamente es simple, pero necesita la app móvil en stores con push notifications configurado ([[sistema-mobile-hybrid]]). Sin push nativo, vale poco.
+
+**Personalizable**: el dueño elige qué métricas quiere ver. Puede silenciarlo.
+
+**Impacto**: genera hábito diario, convierte a Gestabiz en parte del ritual del dueño. Bajo costo, alto retorno.
+
+---
+
+### A5 — Fotos Antes/Después con Consentimiento Digital
+
+**Concepto**: para estética, dermatología, fisioterapia. El cliente firma digitalmente al registrarse un consentimiento de uso de imagen. El profesional toma fotos vinculadas a cliente + cita desde la app. Galería privada del negocio.
+
+**Por qué Fase 3**: requiere storage significativo, manejo legal de consentimientos (Habeas Data), permisos granulares por empleado, y política de retención/eliminación.
+
+**Usos opcionales**: portafolio público del negocio (solo con permiso explícito adicional del cliente).
+
+**Tablas nuevas**: `client_consents` (client_id, business_id, consent_type, signed_at), `service_photos` (appointment_id, client_id, photo_url, phase: before/after, is_public).
+
+**Impacto**: habilita el feature más usado en marketing de estética. Lock-in visual del profesional.
+
+---
+
 ## Dependencias antes de iniciar Fase 3
 
-- Fase 2 completada (contabilidad + DIAN + mobile)
+- Fase S completada (features de utilidad base)
+- Fase 2 completada (contabilidad + DIAN + mobile en stores)
 - Al menos 50+ negocios activos para tener datos suficientes para ML/IA
 - Definición de plan de precios que incluya features de IA (probablemente solo Plan Pro/Empresarial)
 
 ## Notas Relacionadas
 
+- [[brainstorm-features-utiles-mayo-2026]] — Origen del Tier A integrado aquí
+- [[Fase S - Utilidad Real del Día a Día]] — Fase anterior
 - [[sistema-notificaciones]] — WhatsApp Business API y email ya funcional
 - [[sistema-chat]] — Chat en tiempo real para agente conversacional
 - [[edge-functions]] — Runtime Deno para agentes IA
-- [[sistema-contable]] — Datos para análisis predictivo
+- [[sistema-contable]] — Datos para análisis predictivo + wallet
 - [[planes-y-precios]] — Features IA en Plan Pro/Empresarial
 - [[base-de-datos]] — RAG sobre tablas de Supabase
+- [[sistema-mobile-hybrid]] — Push notifications para Resumen Diario (A4)
+- [[sistema-pagos-anticipados]] — Base para propinas (A1) y wallet (A2)
 - [[Ideas Futuras - Social Media MCP y Marketing IA]] — Marketing con IA detallado
 - [[analisis-competitivo-roadmap]] — Features Fase 3-4 del roadmap
 - [[estrategia-producto-y-negocio]] — Marketing y automatización

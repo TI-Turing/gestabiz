@@ -78,12 +78,13 @@ Estrategia comercial, pricing, go-to-market y posicionamiento.
 
 ---
 
-## Features (12 notas)
+## Features (15 notas)
 
 Specs de features en desarrollo, pendientes o ideas futuras.
 
 - [[Fase 2 - Contabilidad, DIAN y App Móvil]] — Módulo contable completo, facturación electrónica DIAN, app móvil
-- [[Fase 3 - IA, Automatización y Agentes]] — Agentes LLM, procesos automáticos, AI marketing assistant
+- [[Fase S - Utilidad Real del Día a Día]] — 5 features esenciales: cierre caja, walk-in QR, notas sesión, OCR cédula, modo offline
+- [[Fase 3 - IA, Automatización y Agentes]] — Agentes LLM, automatización, AI assistant + Tier A: propinas, wallet, importador WhatsApp, fotos antes/después
 - [[Fase 4 - El Shopify de los Negocios de Servicios]] — Pagos a clientes, recordatorios escalonados, promociones, CRM avanzado, estadísticas, marketplace, widget embebible
 - [[Fase 5 - Competencia Directa con Siigo]] — Plataforma administrativa horizontal: inventarios, POS pro, facturación DIAN, nómina electrónica, modo contador. Copiar al líder colombiano (300k empresas) y mejorarlo
 - [[Ideas Futuras - Social Media MCP y Marketing IA]] — MCP para redes sociales, publicación automática con IA
@@ -96,6 +97,8 @@ Specs de features en desarrollo, pendientes o ideas futuras.
 - [[SEO-SEM-Strategy-Colombia-LATAM]] — SEO/SEM completo: keywords, competidores, technical SEO, content strategy
 - [[facturacion-electronica-matias-api]] — Integración facturación electrónica vía Matias API
 - [[test-plan-facturacion-electronica]] — Plan de pruebas completo: 14 secciones, ~80 checks antes de llevar a producción
+- [[business-brain-ia]] — Agente IA autónomo por negocio: escribe notas invisibles, responde preguntas del admin con contexto acumulado
+- [[brainstorm-features-utiles-mayo-2026]] — 35 ideas rankeadas por utilidad real (cierre caja, walk-in QR, OCR cédula, offline mode, etc.)
 
 ---
 
