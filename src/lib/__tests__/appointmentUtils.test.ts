@@ -6,8 +6,11 @@ import {
   getAppointmentsByDateRange,
   groupAppointmentsByDate,
   getAvailableTimeSlots,
+  getAppointmentAssigneeLabel,
+  getAppointmentAssigneeAvatar,
+  getAppointmentAssigneeKind,
 } from '@/lib/appointmentUtils'
-import type { Appointment, AppointmentFilter } from '@/types'
+import type { Appointment, AppointmentFilter, BusinessResource } from '@/types'
 
 const apt = (overrides: Partial<Appointment> = {}): Appointment =>
   ({
@@ -161,6 +164,106 @@ describe('appointmentUtils', () => {
       const cancelled = apt({ date: '2025-06-15', startTime: '10:00', endTime: '11:00', status: 'cancelled' })
       const slots = getAvailableTimeSlots([cancelled], '2025-06-15', { start: '09:00', end: '12:00' }, 60)
       expect(slots).toContain('10:00')
+    })
+  })
+
+  describe('getAppointmentAssigneeLabel', () => {
+    const resource = (overrides: Partial<BusinessResource> = {}): BusinessResource =>
+      ({
+        id: 'r1',
+        business_id: 'b1',
+        name: 'Pista 1',
+        resource_type: 'lane',
+        is_active: true,
+        ...overrides,
+      }) as BusinessResource
+
+    it('prioriza el nombre del empleado cuando existe', () => {
+      const a = apt({
+        employee: { id: 'e1', full_name: 'Ana López', email: 'a@x.com', role: 'professional' } as Appointment['employee'],
+        resource: resource(),
+      })
+      expect(getAppointmentAssigneeLabel(a)).toBe('Ana López')
+    })
+
+    it('hace fallback al nombre del recurso si no hay empleado', () => {
+      const a = apt({ employee: undefined, resource: resource({ name: 'Cancha de tenis 3' }) })
+      expect(getAppointmentAssigneeLabel(a)).toBe('Cancha de tenis 3')
+    })
+
+    it('retorna em-dash cuando no hay ni empleado ni recurso', () => {
+      const a = apt({ employee: undefined, resource: undefined })
+      expect(getAppointmentAssigneeLabel(a)).toBe('—')
+    })
+
+    it('respeta el fallback personalizado', () => {
+      const a = apt({ employee: undefined, resource: undefined })
+      expect(getAppointmentAssigneeLabel(a, 'Sin asignar')).toBe('Sin asignar')
+    })
+
+    it('ignora full_name vacío y cae al recurso', () => {
+      const a = apt({
+        employee: { id: 'e1', full_name: '   ', email: 'a@x.com', role: 'professional' } as Appointment['employee'],
+        resource: resource({ name: 'Sala VIP' }),
+      })
+      expect(getAppointmentAssigneeLabel(a)).toBe('Sala VIP')
+    })
+  })
+
+  describe('getAppointmentAssigneeAvatar', () => {
+    it('retorna avatar del empleado si está disponible', () => {
+      const a = apt({
+        employee: {
+          id: 'e1',
+          full_name: 'Ana',
+          email: 'a@x.com',
+          role: 'professional',
+          avatar_url: 'https://cdn/a.jpg',
+        } as Appointment['employee'],
+      })
+      expect(getAppointmentAssigneeAvatar(a)).toBe('https://cdn/a.jpg')
+    })
+
+    it('cae a la imagen del recurso si no hay empleado', () => {
+      const a = apt({
+        employee: undefined,
+        resource: {
+          id: 'r1',
+          business_id: 'b1',
+          name: 'Cancha',
+          resource_type: 'court',
+          is_active: true,
+          image_url: 'https://cdn/court.jpg',
+        } as BusinessResource,
+      })
+      expect(getAppointmentAssigneeAvatar(a)).toBe('https://cdn/court.jpg')
+    })
+
+    it('retorna null cuando no hay ninguna imagen', () => {
+      const a = apt({ employee: undefined, resource: undefined })
+      expect(getAppointmentAssigneeAvatar(a)).toBeNull()
+    })
+  })
+
+  describe('getAppointmentAssigneeKind', () => {
+    it('detecta employee cuando hay employee_id', () => {
+      const a = apt({ employee_id: 'e1', resource_id: undefined })
+      expect(getAppointmentAssigneeKind(a)).toBe('employee')
+    })
+
+    it('detecta resource cuando solo hay resource_id', () => {
+      const a = apt({ employee_id: undefined, resource_id: 'r1' })
+      expect(getAppointmentAssigneeKind(a)).toBe('resource')
+    })
+
+    it('prefiere employee cuando ambos están presentes (hybrid edge case)', () => {
+      const a = apt({ employee_id: 'e1', resource_id: 'r1' })
+      expect(getAppointmentAssigneeKind(a)).toBe('employee')
+    })
+
+    it('retorna null cuando no hay asignee', () => {
+      const a = apt({ employee_id: undefined, resource_id: undefined })
+      expect(getAppointmentAssigneeKind(a)).toBeNull()
     })
   })
 })

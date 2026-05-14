@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/select'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
-import { Search, CheckCircle2, DollarSign, TrendingUp } from 'lucide-react'
+import { Search, CheckCircle2, DollarSign, TrendingUp, User, Box } from 'lucide-react'
 import { format, subDays, startOfDay } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { QUERY_CONFIG } from '@/lib/queryConfig'
@@ -29,6 +29,8 @@ interface AptRow {
   start_time: string
   client_id: string
   service_id: string
+  employee_id: string | null
+  resource_id: string | null
   price: number | null
 }
 
@@ -38,6 +40,8 @@ interface SaleDisplay {
   client_id: string
   client_name: string
   service_name: string
+  assignee_label: string
+  assignee_kind: 'employee' | 'resource' | null
   price: number | null
 }
 
@@ -62,7 +66,7 @@ async function fetchSales(businessId: string, since: string): Promise<SaleDispla
   // 1. Obtener citas completadas con columnas reales de la tabla
   const { data: apts, error: aptsError } = await supabase
     .from('appointments')
-    .select('id, start_time, client_id, service_id, price')
+    .select('id, start_time, client_id, service_id, employee_id, resource_id, price')
     .eq('business_id', businessId)
     .eq('status', 'completed')
     .gte('start_time', since)
@@ -74,31 +78,60 @@ async function fetchSales(businessId: string, since: string): Promise<SaleDispla
 
   const rows = apts as AptRow[]
 
-  // 2. Batch fetch de perfiles de clientes
-  const clientIds = [...new Set(rows.map((a) => a.client_id).filter(Boolean))]
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, full_name')
-    .in('id', clientIds)
+  // 2. Batch fetch de perfiles (clientes + empleados en una sola llamada)
+  const profileIds = [
+    ...new Set([
+      ...rows.map((a) => a.client_id),
+      ...rows.map((a) => a.employee_id).filter((id): id is string => !!id),
+    ].filter(Boolean)),
+  ]
+  const profilesRes = profileIds.length
+    ? await supabase.from('profiles').select('id, full_name').in('id', profileIds)
+    : null
 
   // 3. Batch fetch de servicios
   const serviceIds = [...new Set(rows.map((a) => a.service_id).filter(Boolean))]
-  const { data: services } = await supabase
-    .from('services')
-    .select('id, name')
-    .in('id', serviceIds)
+  const servicesRes = serviceIds.length
+    ? await supabase.from('services').select('id, name').in('id', serviceIds)
+    : null
 
-  const profileMap = new Map<string, string | null>((profiles ?? []).map((p) => [p.id as string, p.full_name as string | null]))
-  const serviceMap = new Map<string, string>((services ?? []).map((s) => [s.id as string, s.name as string]))
+  // 4. Batch fetch de recursos (para reservas de bowling/canchas/etc.)
+  const resourceIds = [...new Set(rows.map((a) => a.resource_id).filter((id): id is string => !!id))]
+  const resourcesRes = resourceIds.length
+    ? await supabase.from('business_resources').select('id, name').in('id', resourceIds)
+    : null
 
-  return rows.map((apt) => ({
-    id: apt.id,
-    start_time: apt.start_time,
-    client_id: apt.client_id,
-    client_name: profileMap.get(apt.client_id) || 'Cliente sin nombre',
-    service_name: serviceMap.get(apt.service_id) || 'Servicio',
-    price: apt.price,
-  }))
+  const profileMap = new Map<string, string | null>(
+    ((profilesRes?.data ?? []) as Array<{ id: string; full_name: string | null }>).map((p) => [p.id, p.full_name]),
+  )
+  const serviceMap = new Map<string, string>(
+    ((servicesRes?.data ?? []) as Array<{ id: string; name: string }>).map((s) => [s.id, s.name]),
+  )
+  const resourceMap = new Map<string, string>(
+    ((resourcesRes?.data ?? []) as Array<{ id: string; name: string }>).map((r) => [r.id, r.name]),
+  )
+
+  return rows.map((apt) => {
+    const employeeName = apt.employee_id ? profileMap.get(apt.employee_id) ?? null : null
+    const resourceName = apt.resource_id ? resourceMap.get(apt.resource_id) ?? null : null
+    const assignee_label = employeeName?.trim() || resourceName?.trim() || '—'
+    const assignee_kind: SaleDisplay['assignee_kind'] = apt.employee_id
+      ? 'employee'
+      : apt.resource_id
+        ? 'resource'
+        : null
+
+    return {
+      id: apt.id,
+      start_time: apt.start_time,
+      client_id: apt.client_id,
+      client_name: profileMap.get(apt.client_id) || 'Cliente sin nombre',
+      service_name: serviceMap.get(apt.service_id) || 'Servicio',
+      assignee_label,
+      assignee_kind,
+      price: apt.price,
+    }
+  })
 }
 
 export function SalesHistoryPage({ businessId }: SalesHistoryPageProps) {
@@ -124,7 +157,8 @@ export function SalesHistoryPage({ businessId }: SalesHistoryPageProps) {
     return sales.filter(
       (s) =>
         s.client_name.toLowerCase().includes(q) ||
-        s.service_name.toLowerCase().includes(q),
+        s.service_name.toLowerCase().includes(q) ||
+        s.assignee_label.toLowerCase().includes(q),
     )
   }, [sales, search])
 
@@ -187,7 +221,7 @@ export function SalesHistoryPage({ businessId }: SalesHistoryPageProps) {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar cliente o servicio..."
+            placeholder="Buscar cliente, servicio o atendido por..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -241,12 +275,22 @@ export function SalesHistoryPage({ businessId }: SalesHistoryPageProps) {
               </div>
               <div className="w-px h-10 bg-border hidden sm:block shrink-0" />
 
-              {/* Servicio */}
+              {/* Servicio + asignee */}
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm line-clamp-1">{sale.service_name}</p>
                 <p className="text-xs text-muted-foreground">
                   {format(new Date(sale.start_time), "d MMM · HH:mm", { locale: es })}
                 </p>
+                {sale.assignee_kind && (
+                  <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
+                    {sale.assignee_kind === 'resource' ? (
+                      <Box className="h-3 w-3 shrink-0" />
+                    ) : (
+                      <User className="h-3 w-3 shrink-0" />
+                    )}
+                    <span className="truncate">{sale.assignee_label}</span>
+                  </div>
+                )}
               </div>
 
               {/* Cliente (clicable) */}

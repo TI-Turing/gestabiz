@@ -286,7 +286,7 @@ describe('SalesHistoryPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Juan Perez')).toBeInTheDocument()
     })
-    const searchInput = screen.getByPlaceholderText('Buscar cliente o servicio...')
+    const searchInput = screen.getByPlaceholderText('Buscar cliente, servicio o atendido por...')
     await userEvent.type(searchInput, 'Juan')
     expect(screen.getByText('Juan Perez')).toBeInTheDocument()
     expect(screen.queryByText('Ana Lopez')).not.toBeInTheDocument()
@@ -320,7 +320,7 @@ describe('SalesHistoryPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Manicure')).toBeInTheDocument()
     })
-    const searchInput = screen.getByPlaceholderText('Buscar cliente o servicio...')
+    const searchInput = screen.getByPlaceholderText('Buscar cliente, servicio o atendido por...')
     await userEvent.type(searchInput, 'Pedicure')
     expect(screen.getByText('Pedicure')).toBeInTheDocument()
     expect(screen.queryByText('Manicure')).not.toBeInTheDocument()
@@ -344,7 +344,7 @@ describe('SalesHistoryPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Juan')).toBeInTheDocument()
     })
-    const searchInput = screen.getByPlaceholderText('Buscar cliente o servicio...')
+    const searchInput = screen.getByPlaceholderText('Buscar cliente, servicio o atendido por...')
     await userEvent.type(searchInput, 'noexiste123')
     expect(screen.getByText('No hay resultados para esa búsqueda')).toBeInTheDocument()
   })

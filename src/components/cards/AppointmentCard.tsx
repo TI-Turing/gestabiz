@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, Clock, MapPin, User, Briefcase, Building2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Briefcase, Building2, Box } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { cn } from '@/lib/utils';
@@ -41,6 +41,12 @@ export interface AppointmentCardData {
     full_name: string;
     avatar_url?: string | null;
   } | null;
+  resource?: {
+    id: string;
+    name: string;
+    resource_type?: string | null;
+    image_url?: string | null;
+  } | null;
   locationData?: {
     id: string;
     name: string;
@@ -57,6 +63,7 @@ async function fetchAppointment(appointmentId: string): Promise<AppointmentCardD
       businesses:business_id(id, name, logo_url, banner_url),
       services:service_id(id, name, duration_minutes, price, currency, image_url, category),
       profiles:employee_id(id, full_name, avatar_url),
+      business_resources:resource_id(id, name, resource_type, image_url),
       locations:location_id(id, name, address, city)
     `)
     .eq('id', appointmentId)
@@ -77,6 +84,7 @@ async function fetchAppointment(appointmentId: string): Promise<AppointmentCardD
     business: row.businesses as AppointmentCardData['business'],
     service: row.services as AppointmentCardData['service'],
     employee: row.profiles as AppointmentCardData['employee'],
+    resource: row.business_resources as AppointmentCardData['resource'],
     locationData: row.locations as AppointmentCardData['locationData'],
   };
 }
@@ -184,7 +192,7 @@ export function AppointmentCard({
           <Briefcase className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <span className="truncate">{serviceName}</span>
         </div>
-        {(appointment.business || appointment.employee) && (
+        {(appointment.business || appointment.employee || appointment.resource) && (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-muted-foreground">
             {appointment.business && (
               <span className="flex items-center gap-1 min-w-0">
@@ -192,12 +200,17 @@ export function AppointmentCard({
                 <span className="truncate">{appointment.business.name}</span>
               </span>
             )}
-            {appointment.employee && (
+            {appointment.employee ? (
               <span className="flex items-center gap-1 min-w-0">
                 <User className="h-3 w-3 shrink-0" />
                 <span className="truncate">{appointment.employee.full_name}</span>
               </span>
-            )}
+            ) : appointment.resource ? (
+              <span className="flex items-center gap-1 min-w-0">
+                <Box className="h-3 w-3 shrink-0" />
+                <span className="truncate">{appointment.resource.name}</span>
+              </span>
+            ) : null}
           </div>
         )}
         {children}
@@ -210,6 +223,7 @@ export function AppointmentCard({
     const bgImage =
       appointment.backgroundImageUrl ||
       appointment.service?.image_url ||
+      appointment.resource?.image_url ||
       appointment.business?.banner_url ||
       null;
     const businessLogo = appointment.business?.logo_url || null;
@@ -289,8 +303,8 @@ export function AppointmentCard({
             )}
           </div>
 
-          {/* Employee with ProfileAvatar */}
-          {appointment.employee?.full_name && (
+          {/* Employee with ProfileAvatar OR Resource fallback */}
+          {appointment.employee?.full_name ? (
             <div className={cn(
               'flex items-center gap-3 p-2 rounded-lg border',
               hasBg ? 'bg-black/30 backdrop-blur-sm border-white/10' : 'bg-card/50 border-border/50',
@@ -311,7 +325,35 @@ export function AppointmentCard({
                 <p className={cn('text-xs', subtleColor)}>Profesional</p>
               </div>
             </div>
-          )}
+          ) : appointment.resource?.name ? (
+            <div className={cn(
+              'flex items-center gap-3 p-2 rounded-lg border',
+              hasBg ? 'bg-black/30 backdrop-blur-sm border-white/10' : 'bg-card/50 border-border/50',
+            )}>
+              {appointment.resource.image_url ? (
+                <img
+                  src={appointment.resource.image_url}
+                  alt={appointment.resource.name}
+                  className="h-8 w-8 rounded-lg object-cover shrink-0"
+                />
+              ) : (
+                <div className={cn(
+                  'h-8 w-8 rounded-lg shrink-0 flex items-center justify-center',
+                  hasBg ? 'bg-white/20' : 'bg-muted',
+                )}>
+                  <Box className={cn('h-4 w-4', hasBg ? 'text-white' : 'text-muted-foreground')} />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className={cn('text-sm font-medium line-clamp-1', textColor)}>
+                  {appointment.resource.name}
+                </p>
+                <p className={cn('text-xs capitalize', subtleColor)}>
+                  {appointment.resource.resource_type || 'Espacio'}
+                </p>
+              </div>
+            </div>
+          ) : null}
 
           {/* Date & Time */}
           <div className={cn('flex items-center gap-2 text-sm pt-1', mutedColor)}>
@@ -384,12 +426,17 @@ export function AppointmentCard({
             </div>
           )}
 
-          {appointment.employee && (
+          {appointment.employee ? (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <User className="h-4 w-4" />
               <span>{appointment.employee.full_name}</span>
             </div>
-          )}
+          ) : appointment.resource ? (
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <Box className="h-4 w-4" />
+              <span>{appointment.resource.name}</span>
+            </div>
+          ) : null}
 
           {(appointment.locationData || appointment.location) && (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">

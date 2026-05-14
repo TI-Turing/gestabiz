@@ -1,5 +1,37 @@
 import { Appointment, AppointmentFilter } from '@/types'
 
+/**
+ * Etiqueta del "asignee" de una cita: prioriza el nombre del empleado y
+ * cae al nombre del recurso físico cuando la cita es de tipo physical_resource
+ * o group_class. Útil para listados que mezclan ambos modelos sin tener que
+ * ramificar en cada vista.
+ */
+export function getAppointmentAssigneeLabel(apt: Appointment, fallback = '—'): string {
+  const employeeName = apt.employee?.full_name?.trim()
+  if (employeeName) return employeeName
+  const resourceName = apt.resource?.name?.trim()
+  if (resourceName) return resourceName
+  return fallback
+}
+
+/**
+ * URL de avatar/imagen del asignee. Empleado tiene `avatar_url`, recurso
+ * tiene `image_url`. Retorna null si no hay ninguna.
+ */
+export function getAppointmentAssigneeAvatar(apt: Appointment): string | null {
+  return apt.employee?.avatar_url ?? apt.resource?.image_url ?? null
+}
+
+/**
+ * Detecta el "tipo" de asignee a partir de los IDs en la fila (sin requerir
+ * que estén poblados los objetos). Útil para ramificar lógica de UI/filtros.
+ */
+export function getAppointmentAssigneeKind(apt: Appointment): 'employee' | 'resource' | null {
+  if (apt.employee_id) return 'employee'
+  if (apt.resource_id) return 'resource'
+  return null
+}
+
 function inDateRange(apt: Appointment, dateRange: { start: string; end: string }): boolean {
   const src = apt.start_time || (apt.date && apt.startTime ? `${apt.date}T${apt.startTime}` : undefined)
   if (!src) return false

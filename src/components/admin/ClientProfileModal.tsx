@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
-import { Mail, Phone, Calendar, Clock, CheckCircle2 } from 'lucide-react'
+import { Mail, Phone, Calendar, Clock, CheckCircle2, User, Box } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { QUERY_CONFIG } from '@/lib/queryConfig'
@@ -31,8 +31,12 @@ interface AppointmentHistoryRow {
   start_time: string
   status: string
   service_id: string | null
+  employee_id: string | null
+  resource_id: string | null
   price: number | null
   service_name?: string
+  assignee_label?: string
+  assignee_kind?: 'employee' | 'resource' | null
 }
 
 interface ClientProfileModalProps {
@@ -106,7 +110,7 @@ export function ClientProfileModal({
       // 1. Obtener citas del cliente
       const { data, error } = await supabase
         .from('appointments')
-        .select('id, start_time, status, service_id, price')
+        .select('id, start_time, status, service_id, employee_id, resource_id, price')
         .eq('business_id', businessId)
         .eq('client_id', clientId!)
         .order('start_time', { ascending: false })
@@ -114,18 +118,53 @@ export function ClientProfileModal({
       if (error) throw error
       if (!data || data.length === 0) return []
 
-      // 2. Batch fetch de nombres de servicios
-      const serviceIds = [...new Set(data.map((a) => a.service_id).filter(Boolean))] as string[]
-      const { data: services } = serviceIds.length
+      const rows = data as Array<{
+        id: string
+        start_time: string
+        status: string
+        service_id: string | null
+        employee_id: string | null
+        resource_id: string | null
+        price: number | null
+      }>
+
+      // 2. Batch fetch de servicios
+      const serviceIds = [...new Set(rows.map((a) => a.service_id).filter((id): id is string => !!id))]
+      const servicesRes = serviceIds.length
         ? await supabase.from('services').select('id, name').in('id', serviceIds)
-        : { data: [] }
+        : null
+      const serviceMap = new Map<string, string>(
+        ((servicesRes?.data ?? []) as Array<{ id: string; name: string }>).map((s) => [s.id, s.name]),
+      )
 
-      const serviceMap = new Map((services ?? []).map((s) => [s.id, s.name as string]))
+      // 3. Batch fetch de empleados (asignees humanos)
+      const employeeIds = [...new Set(rows.map((a) => a.employee_id).filter((id): id is string => !!id))]
+      const employeesRes = employeeIds.length
+        ? await supabase.from('profiles').select('id, full_name').in('id', employeeIds)
+        : null
+      const employeeMap = new Map<string, string | null>(
+        ((employeesRes?.data ?? []) as Array<{ id: string; full_name: string | null }>).map((p) => [p.id, p.full_name]),
+      )
 
-      return data.map((apt) => ({
-        ...apt,
-        service_name: apt.service_id ? serviceMap.get(apt.service_id) ?? 'Servicio' : 'Servicio',
-      })) as AppointmentHistoryRow[]
+      // 4. Batch fetch de recursos (asignees físicos)
+      const resourceIds = [...new Set(rows.map((a) => a.resource_id).filter((id): id is string => !!id))]
+      const resourcesRes = resourceIds.length
+        ? await supabase.from('business_resources').select('id, name').in('id', resourceIds)
+        : null
+      const resourceMap = new Map<string, string>(
+        ((resourcesRes?.data ?? []) as Array<{ id: string; name: string }>).map((r) => [r.id, r.name]),
+      )
+
+      return rows.map((apt): AppointmentHistoryRow => {
+        const employeeName = apt.employee_id ? employeeMap.get(apt.employee_id) ?? null : null
+        const resourceName = apt.resource_id ? resourceMap.get(apt.resource_id) ?? null : null
+        return {
+          ...apt,
+          service_name: apt.service_id ? serviceMap.get(apt.service_id) ?? 'Servicio' : 'Servicio',
+          assignee_label: employeeName?.trim() || resourceName?.trim() || '',
+          assignee_kind: apt.employee_id ? 'employee' : apt.resource_id ? 'resource' : null,
+        }
+      })
     },
     enabled: !!clientId && !!businessId && isOpen,
     ...QUERY_CONFIG.FREQUENT,
@@ -276,6 +315,16 @@ export function ClientProfileModal({
                               locale: es,
                             })}
                           </p>
+                          {apt.assignee_kind && apt.assignee_label && (
+                            <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
+                              {apt.assignee_kind === 'resource' ? (
+                                <Box className="h-3 w-3 shrink-0" />
+                              ) : (
+                                <User className="h-3 w-3 shrink-0" />
+                              )}
+                              <span className="truncate">{apt.assignee_label}</span>
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           {apt.price != null && apt.price > 0 && (

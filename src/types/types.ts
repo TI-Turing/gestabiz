@@ -642,6 +642,16 @@ export interface Appointment {
   // NUEVO: Modelo de Negocio Flexible (21/10/2025)
   resource_id?: string              // ID del recurso físico asignado
   resource?: BusinessResource       // Recurso poblado con JOIN
+
+  // Empleado poblado vía JOIN (cuando employee_id apunta a un profesional)
+  // Paralelo simétrico a `resource`. Usado por cards/listados que mezclan ambos modelos.
+  employee?: {
+    id: string
+    full_name?: string | null
+    email?: string
+    role?: string
+    avatar_url?: string | null
+  }
   
   // Para clases grupales
   capacity_used?: number            // Cupos tomados
