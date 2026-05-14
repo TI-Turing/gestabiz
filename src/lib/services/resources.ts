@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react'
 import supabase from '@/lib/supabase'
-import type { BusinessResource, ResourceService } from '@/types/types'
+import type { BusinessResource, ResourceImage, ResourceService } from '@/types/types'
 
 /**
  * Servicio para gestionar recursos físicos de negocios
@@ -302,6 +302,68 @@ export const resourcesService = {
   async refreshAvailability(): Promise<void> {
     const { error } = await supabase.rpc('refresh_resource_availability')
     if (error) throwResourceError(error, "db_query")
+  },
+}
+
+// ============================================================================
+// CRUD para resource_images
+// ============================================================================
+
+export const resourceImagesService = {
+  async getByResourceId(resourceId: string): Promise<ResourceImage[]> {
+    const { data, error } = await supabase
+      .from('resource_images')
+      .select('*')
+      .eq('resource_id', resourceId)
+      .order('display_order')
+    if (error) throwResourceError(error, 'getImages')
+    return (data || []) as ResourceImage[]
+  },
+
+  async add(resourceId: string, imageUrl: string, altText?: string): Promise<ResourceImage> {
+    const { data: existing } = await supabase
+      .from('resource_images')
+      .select('display_order')
+      .eq('resource_id', resourceId)
+      .order('display_order', { ascending: false })
+      .limit(1)
+    const nextOrder = ((existing?.[0] as { display_order?: number } | undefined)?.display_order ?? -1) + 1
+    const { data, error } = await supabase
+      .from('resource_images')
+      .insert({ resource_id: resourceId, image_url: imageUrl, display_order: nextOrder, alt_text: altText ?? null })
+      .select()
+      .single()
+    if (error) throwResourceError(error, 'addImage')
+    return data as ResourceImage
+  },
+
+  async remove(imageId: string): Promise<void> {
+    const { error } = await supabase
+      .from('resource_images')
+      .delete()
+      .eq('id', imageId)
+    if (error) throwResourceError(error, 'removeImage')
+  },
+
+  async reorder(updates: Array<{ id: string; display_order: number }>): Promise<void> {
+    for (const u of updates) {
+      const { error } = await supabase
+        .from('resource_images')
+        .update({ display_order: u.display_order })
+        .eq('id', u.id)
+      if (error) throwResourceError(error, 'reorderImages')
+    }
+  },
+
+  async uploadAndAdd(resourceId: string, file: File, altText?: string): Promise<ResourceImage> {
+    const ext = file.name.split('.').pop() ?? 'jpg'
+    const path = `resources/${resourceId}/${crypto.randomUUID()}.${ext}`
+    const { error: uploadError } = await supabase.storage
+      .from('business-images')
+      .upload(path, file, { upsert: false })
+    if (uploadError) throwResourceError(uploadError, 'uploadImage')
+    const { data: { publicUrl } } = supabase.storage.from('business-images').getPublicUrl(path)
+    return resourceImagesService.add(resourceId, publicUrl, altText)
   },
 }
 

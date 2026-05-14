@@ -48,6 +48,16 @@ export type PhysicalResourceType =
   | 'bed'           // Camas (hospital, hostel)
   | 'other'         // Otros recursos
 
+// Imagen de la galería de un recurso físico
+export interface ResourceImage {
+  id: string
+  resource_id: string
+  image_url: string
+  display_order: number
+  alt_text?: string | null
+  created_at: string
+}
+
 // Interface para recursos físicos de negocios
 export interface BusinessResource {
   id: string
@@ -84,13 +94,18 @@ export interface BusinessResource {
   price_per_hour?: number
   price_per_day?: number
   currency?: string
-  
+
+  // Multimedia
+  video_url?: string | null
+  video_duration_seconds?: number | null
+
   // Para clases grupales
   max_simultaneous_bookings?: number
-  
+
   // Computed properties (frontend only - poblados con JOINs)
   location?: Location
   services?: Service[]
+  images?: ResourceImage[]
   upcoming_bookings?: number
   next_available_from?: string
 }

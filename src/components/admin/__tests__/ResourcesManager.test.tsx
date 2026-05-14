@@ -32,18 +32,13 @@ vi.mock('@/components/ui/PermissionGate', () => ({
 
 vi.mock('@/hooks/useBusinessResources', () => ({
   useBusinessResources: (id: string) => mockUseBusinessResources(id),
-  useDeleteResource: () => ({
-    mutate: mockDeleteMutate,
-    isPending: false,
-  }),
-  useCreateResource: () => ({
-    mutate: mockCreateMutate,
-    isPending: false,
-  }),
-  useUpdateResource: () => ({
-    mutate: mockUpdateMutate,
-    isPending: false,
-  }),
+  useDeleteResource: () => ({ mutate: mockDeleteMutate, isPending: false }),
+  useCreateResource: () => ({ mutate: mockCreateMutate, isPending: false }),
+  useUpdateResource: () => ({ mutate: mockUpdateMutate, isPending: false }),
+  useResourceImages: () => ({ data: [], isLoading: false }),
+  useUploadResourceImage: () => ({ mutate: vi.fn(), isPending: false }),
+  useDeleteResourceImage: () => ({ mutate: vi.fn(), isPending: false }),
+  useReorderResourceImages: () => ({ mutate: vi.fn(), isPending: false }),
 }))
 
 import { ResourcesManager } from '../ResourcesManager'

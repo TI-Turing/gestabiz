@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { resourcesService } from '@/lib/services/resources'
+import { resourcesService, resourceImagesService } from '@/lib/services/resources'
 import type { BusinessResource } from '@/types/types'
 import { toast } from 'sonner'
 
@@ -14,6 +14,10 @@ import { toast } from 'sonner'
 // ============================================================================
 // QUERY KEYS - Centralizadas para invalidación
 // ============================================================================
+
+export const resourceImagesKeys = {
+  byResource: (resourceId: string) => ['resource-images', resourceId] as const,
+}
 
 export const resourcesKeys = {
   all: ['business-resources'] as const,
@@ -260,17 +264,76 @@ export function useAssignServices() {
  */
 export function useRefreshResourceAvailability() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: () => resourcesService.refreshAvailability(),
     onSuccess: () => {
       // Invalidar todas las queries de disponibilidad
       queryClient.invalidateQueries({ queryKey: resourcesKeys.all })
-      
+
       toast.success('Disponibilidad actualizada')
     },
     onError: (error: Error) => {
       toast.error(`Error al refrescar disponibilidad: ${error.message}`)
+    },
+  })
+}
+
+// ============================================================================
+// HOOKS de galería de imágenes
+// ============================================================================
+
+export function useResourceImages(resourceId: string | null | undefined) {
+  return useQuery({
+    queryKey: resourceImagesKeys.byResource(resourceId ?? ''),
+    queryFn: () => resourceImagesService.getByResourceId(resourceId!),
+    enabled: !!resourceId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useUploadResourceImage(resourceId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ file, altText }: { file: File; altText?: string }) =>
+      resourceImagesService.uploadAndAdd(resourceId, file, altText),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: resourceImagesKeys.byResource(resourceId) })
+      toast.success('Imagen agregada')
+    },
+    onError: (error: Error) => {
+      const msg = error.message?.includes('Máximo 6')
+        ? 'Máximo 6 imágenes por recurso'
+        : `Error al subir imagen: ${error.message}`
+      toast.error(msg)
+    },
+  })
+}
+
+export function useDeleteResourceImage(resourceId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (imageId: string) => resourceImagesService.remove(imageId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: resourceImagesKeys.byResource(resourceId) })
+      toast.success('Imagen eliminada')
+    },
+    onError: (error: Error) => {
+      toast.error(`Error al eliminar imagen: ${error.message}`)
+    },
+  })
+}
+
+export function useReorderResourceImages(resourceId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (updates: Array<{ id: string; display_order: number }>) =>
+      resourceImagesService.reorder(updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: resourceImagesKeys.byResource(resourceId) })
+    },
+    onError: (error: Error) => {
+      toast.error(`Error al reordenar: ${error.message}`)
     },
   })
 }

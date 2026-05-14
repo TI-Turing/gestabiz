@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, DollarSign, MapPin, Users } from 'lucide-react'
+import { useRef, useState, useEffect } from 'react'
+import { Plus, Pencil, Trash2, DollarSign, MapPin, Users, ImagePlus, X, ChevronLeft, ChevronRight, Video } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PermissionGate } from '@/components/ui/PermissionGate'
 import {
@@ -34,7 +34,16 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { useBusinessResources, useDeleteResource, useCreateResource, useUpdateResource } from '@/hooks/useBusinessResources'
+import {
+  useBusinessResources,
+  useDeleteResource,
+  useCreateResource,
+  useUpdateResource,
+  useResourceImages,
+  useUploadResourceImage,
+  useDeleteResourceImage,
+  useReorderResourceImages,
+} from '@/hooks/useBusinessResources'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { supabase } from '@/lib/supabase'
 import type { BusinessResource, Business, Location } from '@/types/types'
@@ -81,12 +90,20 @@ export function ResourcesManager({ business }: Readonly<ResourcesManagerProps>) 
     description: '',
     amenities: '',
     is_active: true,
+    video_url: '',
   })
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   const { data: resources, isLoading } = useBusinessResources(business.id)
   const deleteMutation = useDeleteResource()
   const createMutation = useCreateResource()
   const updateMutation = useUpdateResource()
+
+  // Image gallery hooks (active when editing an existing resource)
+  const { data: resourceImages } = useResourceImages(editingResource?.id)
+  const uploadImageMutation = useUploadResourceImage(editingResource?.id ?? '')
+  const deleteImageMutation = useDeleteResourceImage(editingResource?.id ?? '')
+  const reorderImagesMutation = useReorderResourceImages(editingResource?.id ?? '')
   
   // Estado para ubicaciones del negocio
   const [locations, setLocations] = useState<Location[]>([])
@@ -130,6 +147,7 @@ export function ResourcesManager({ business }: Readonly<ResourcesManagerProps>) 
       description: resource.description || '',
       amenities: resource.amenities?.join(', ') || '',
       is_active: resource.is_active,
+      video_url: resource.video_url || '',
     })
     setIsModalOpen(true)
   }
@@ -153,6 +171,7 @@ export function ResourcesManager({ business }: Readonly<ResourcesManagerProps>) 
       description: '',
       amenities: '',
       is_active: true,
+      video_url: '',
     })
   }
 
@@ -186,6 +205,7 @@ export function ResourcesManager({ business }: Readonly<ResourcesManagerProps>) 
       description: formData.description || undefined,
       amenities: amenitiesArray.length > 0 ? amenitiesArray : undefined,
       is_active: formData.is_active,
+      video_url: formData.video_url.trim() || null,
     }
 
     if (editingResource) {
@@ -524,9 +544,9 @@ export function ResourcesManager({ business }: Readonly<ResourcesManagerProps>) 
               <Label htmlFor="is_active">{t('businessResources.form.status')}</Label>
               <Select
                 value={formData.is_active ? 'active' : 'inactive'}
-                onValueChange={(value) => setFormData(prev => ({ 
-                  ...prev, 
-                  is_active: value === 'active' 
+                onValueChange={(value) => setFormData(prev => ({
+                  ...prev,
+                  is_active: value === 'active'
                 }))}
               >
                 <SelectTrigger>
@@ -538,6 +558,125 @@ export function ResourcesManager({ business }: Readonly<ResourcesManagerProps>) 
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Video URL */}
+            <div className="space-y-2">
+              <Label htmlFor="video_url" className="flex items-center gap-1.5">
+                <Video className="h-4 w-4" />
+                Video promocional
+                <span className="text-xs text-muted-foreground">(máx. 15s — URL pública)</span>
+              </Label>
+              <Input
+                id="video_url"
+                value={formData.video_url}
+                onChange={(e) => setFormData(prev => ({ ...prev, video_url: e.target.value }))}
+                placeholder="https://..."
+              />
+            </div>
+
+            {/* Gallery — solo disponible al editar un recurso ya creado */}
+            {editingResource && (
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <ImagePlus className="h-4 w-4" />
+                  Galería de imágenes
+                  <span className="text-xs text-muted-foreground">
+                    ({resourceImages?.length ?? 0}/6)
+                  </span>
+                </Label>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {(resourceImages ?? []).map((img, idx) => (
+                    <div key={img.id} className="relative group rounded-lg overflow-hidden border border-border aspect-square bg-muted">
+                      <img
+                        src={img.image_url}
+                        alt={img.alt_text ?? `Imagen ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                        {idx > 0 && (
+                          <button
+                            type="button"
+                            title="Mover atrás"
+                            onClick={() => {
+                              const updated = [...(resourceImages ?? [])]
+                              const prev = updated[idx - 1]
+                              const curr = updated[idx]
+                              reorderImagesMutation.mutate([
+                                { id: curr.id, display_order: prev.display_order },
+                                { id: prev.id, display_order: curr.display_order },
+                              ])
+                            }}
+                            className="p-1 rounded bg-white/20 hover:bg-white/40 text-white"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </button>
+                        )}
+                        {idx < (resourceImages?.length ?? 0) - 1 && (
+                          <button
+                            type="button"
+                            title="Mover adelante"
+                            onClick={() => {
+                              const updated = [...(resourceImages ?? [])]
+                              const next = updated[idx + 1]
+                              const curr = updated[idx]
+                              reorderImagesMutation.mutate([
+                                { id: curr.id, display_order: next.display_order },
+                                { id: next.id, display_order: curr.display_order },
+                              ])
+                            }}
+                            className="p-1 rounded bg-white/20 hover:bg-white/40 text-white"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          title="Eliminar imagen"
+                          onClick={() => deleteImageMutation.mutate(img.id)}
+                          className="p-1 rounded bg-destructive/80 hover:bg-destructive text-white"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Slot para subir nueva imagen */}
+                  {(resourceImages?.length ?? 0) < 6 && (
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      disabled={uploadImageMutation.isPending}
+                      className="aspect-square rounded-lg border-2 border-dashed border-border hover:border-primary flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
+                    >
+                      {uploadImageMutation.isPending
+                        ? <span className="text-xs">Subiendo…</span>
+                        : <>
+                            <ImagePlus className="h-6 w-6" />
+                            <span className="text-xs">Agregar</span>
+                          </>
+                      }
+                    </button>
+                  )}
+                </div>
+
+                {/* Hidden file input */}
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      uploadImageMutation.mutate({ file })
+                      e.target.value = ''
+                    }
+                  }}
+                />
+              </div>
+            )}
 
             <DialogFooter>
               <Button
