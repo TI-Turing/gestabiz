@@ -250,8 +250,10 @@ export function DateTimeSelection({
     closingTime.setHours(closeH, closeM, 0, 0);
     const closingTimeUtc = toBogotaLocalAsUTC(new Date(closingTime));
 
-    // Validar disponibilidad por traslado
-    const transferValidation = await validateAvailability(employeeId || resourceId || '', businessId || '', selectedDate, locationId || '');
+    // Validar disponibilidad por traslado — solo aplica a empleados, no a recursos físicos
+    const transferValidation = employeeId
+      ? await validateAvailability(employeeId, businessId || '', selectedDate, locationId || '')
+      : null;
 
     // Regla: si el día no es laborable para el empleado, no hay slots
     const dayOfWeek = selectedDate.getDay(); // 0=Dom, 6=Sáb
@@ -374,7 +376,7 @@ export function DateTimeSelection({
   // Calcular y cachear días deshabilitados del mes (ausencias o sin disponibilidad)
   useEffect(() => {
     const baseDate = selectedDate || new Date();
-    if (!employeeId || !locationId || !businessId || !locationSchedule) return;
+    if ((!employeeId && !resourceId) || !locationId || !businessId || !locationSchedule) return;
 
     const computeMonthDisabled = async () => {
       const start = startOfMonth(baseDate);
@@ -474,13 +476,15 @@ export function DateTimeSelection({
           continue;
         }
 
-        // Traslado
-        const transfer = await validateAvailability(employeeId, businessId, new Date(dayCursor), locationId);
-        if (transfer && !transfer.isAvailable) {
-          disabledSet.add(dateStr);
-          disabledTitle[dateStr] = transfer.reason || 'No disponible por traslado';
-          dayCursor.setDate(dayCursor.getDate() + 1);
-          continue;
+        // Traslado — solo aplica a empleados, no a recursos físicos
+        if (employeeId) {
+          const transfer = await validateAvailability(employeeId, businessId, new Date(dayCursor), locationId);
+          if (transfer && !transfer.isAvailable) {
+            disabledSet.add(dateStr);
+            disabledTitle[dateStr] = transfer.reason || 'No disponible por traslado';
+            dayCursor.setDate(dayCursor.getDate() + 1);
+            continue;
+          }
         }
 
         // Slots

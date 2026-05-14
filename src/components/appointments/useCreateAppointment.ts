@@ -109,6 +109,7 @@ export function useCreateAppointment({
         location_id: wizardData.locationId,
         employee_id: wizardData.employeeId || null,
         resource_id: wizardData.resourceId || null,
+        participants_count: wizardData.participantsCount ?? 1,
         start_time: utcTime.toISOString(),
         end_time: endDateTime.toISOString(),
         status: 'pending' as const,

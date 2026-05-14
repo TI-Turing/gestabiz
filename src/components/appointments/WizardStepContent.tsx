@@ -14,8 +14,8 @@ import {
   ConfirmationStep,
   SuccessStep,
 } from './wizard-steps'
-// TODO: Reimportar ResourceSelection cuando se implemente la selección de recursos en el wizard
-// import { ResourceSelection } from './ResourceSelection'
+import { ResourceSelection } from './ResourceSelection'
+import { ResourceOrEmployeeStep } from './wizard-steps/ResourceOrEmployeeStep'
 import type { WizardData, WizardBusiness } from './wizard-types'
 import type { Appointment } from '@/types/types'
 
@@ -129,10 +129,7 @@ export function WizardStepContent({
         />
       )}
 
-      {/* Employee selection */}
-      {/* TODO: Implementar selección de recursos (ResourceSelection) para negocios con
-          resource_model = 'physical_resource' | 'group_class'. Por ahora siempre se
-          muestran profesionales independientemente del resource_model del negocio. */}
+      {/* Employee selection (professional / hybrid via employee path) */}
       {currentStep === getStepNumber('employee') && (
         <EmployeeSelection
           businessId={effectiveBusiness}
@@ -140,7 +137,7 @@ export function WizardStepContent({
           serviceId={wizardData.serviceId || ''}
           selectedEmployeeId={wizardData.employeeId}
           onSelectEmployee={(employee) => {
-            updateWizardData({ employeeId: employee.id, employee, resourceId: null })
+            updateWizardData({ employeeId: employee.id, employee, resourceId: null, resource: null })
             if (!initiatedFromEmployeeProfile) {
               const contextBusinessId = wizardData.businessId || businessId || null
               if (contextBusinessId) {
@@ -152,6 +149,53 @@ export function WizardStepContent({
             }
           }}
           isPreselected={!!preselectedEmployeeId}
+        />
+      )}
+
+      {/* Resource selection (physical_resource / group_class) */}
+      {currentStep === getStepNumber('resource') && (
+        <ResourceSelection
+          businessId={effectiveBusiness}
+          serviceId={wizardData.serviceId ?? ''}
+          locationId={wizardData.locationId ?? undefined}
+          selectedResourceId={wizardData.resourceId ?? undefined}
+          onSelect={(resource) =>
+            updateWizardData({
+              resourceId: resource.id,
+              resource,
+              employeeId: null,
+              employee: null,
+            })
+          }
+        />
+      )}
+
+      {/* Resource-or-employee toggle (hybrid) */}
+      {currentStep === getStepNumber('resourceOrEmployee') && (
+        <ResourceOrEmployeeStep
+          businessId={effectiveBusiness}
+          locationId={wizardData.locationId || ''}
+          serviceId={wizardData.serviceId || ''}
+          selectedResourceId={wizardData.resourceId}
+          selectedEmployeeId={wizardData.employeeId}
+          onSelectResource={(resource) =>
+            updateWizardData({
+              resourceId: resource.id,
+              resource,
+              employeeId: null,
+              employee: null,
+            })
+          }
+          onSelectEmployee={(employee) => {
+            updateWizardData({ employeeId: employee.id, employee, resourceId: null, resource: null })
+            const contextBusinessId = wizardData.businessId || businessId || null
+            if (contextBusinessId) {
+              updateWizardData({
+                employeeBusinessId: contextBusinessId,
+                employeeBusiness: wizardData.business || null,
+              })
+            }
+          }}
         />
       )}
 

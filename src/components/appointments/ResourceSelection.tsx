@@ -1,20 +1,24 @@
 import { useResourcesForService } from '@/hooks/useBusinessResources'
 import { ResourceCard } from '@/components/cards/ResourceCard'
+import type { BusinessResource } from '@/types/types'
 
 /**
- * Selector de Recursos para AppointmentWizard
- * Alternativa a EmployeeSelection cuando resource_model='physical_resource'
- * 
- * Fecha: 21 de Octubre de 2025
- * Parte del sistema de Modelo de Negocio Flexible
+ * Selector de Recursos para AppointmentWizard.
+ * Alternativa a EmployeeSelection cuando resource_model es
+ * 'physical_resource' o 'group_class', y opción dentro de
+ * ResourceOrEmployeeStep para 'hybrid'.
  */
 
 interface ResourceSelectionProps {
   businessId: string
   serviceId: string
   locationId?: string
-  selectedResourceId?: string
-  onSelect: (resourceId: string) => void
+  selectedResourceId?: string | null
+  /**
+   * Entrega el recurso COMPLETO (no solo el id) para hidratar
+   * wizardData.resource y mostrar nombre/precio/imagen en confirmación.
+   */
+  onSelect: (resource: BusinessResource) => void
 }
 
 
@@ -66,7 +70,7 @@ export function ResourceSelection({
             key={resource.id}
             resource={resource}
             isSelected={resource.id === selectedResourceId}
-            onSelect={(r) => onSelect(r.id)}
+            onSelect={(r) => onSelect(r)}
           />
         ))}
       </div>

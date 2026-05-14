@@ -14,6 +14,7 @@ import { QUERY_CONFIG } from '@/lib/queryConfig'
 import { logger } from '@/lib/logger'
 import type { WizardData, WizardBusiness, WizardEmployee, AppointmentWizardProps } from './wizard-types'
 import type { Service, Location, Appointment } from '@/types/types'
+import { buildWizardStepOrder, canProceedAtStep } from './wizardLogic'
 
 interface UseWizardStateParams {
   open: boolean
@@ -119,6 +120,8 @@ export function useWizardState({
     employeeBusinessId: null,
     employeeBusiness: null,
     resourceId: null,
+    resource: null,
+    participantsCount: 1,
     date: preselectedDate || null,
     startTime: normalizePreselectedTime(preselectedTime) || null,
     endTime: null,
@@ -163,23 +166,21 @@ export function useWizardState({
     !!initiatedFromEmployeeProfile && !!wizardData.employeeId && employeeBusinesses.length > 1
 
   // ── Step order ──────────────────────────────────────────────────────────────
-  const stepOrder = React.useMemo<string[]>(() => {
-    const base = businessId
-      ? ['location', 'service', 'employee', 'dateTime', 'confirmation', 'success']
-      : ['business', 'location', 'service', 'employee', 'dateTime', 'confirmation', 'success']
-
-    // Admin booking: insert clientData step between dateTime and confirmation
-    if (isAdminBooking) {
-      const confIdx = base.indexOf('confirmation')
-      base.splice(confIdx, 0, 'clientData')
-    }
-
-    if (needsEmployeeBusinessSelection) {
-      const idx = base.indexOf('employee')
-      return [...base.slice(0, idx + 1), 'employeeBusiness', ...base.slice(idx + 1)]
-    }
-    return base
-  }, [businessId, needsEmployeeBusinessSelection, isAdminBooking])
+  // El paso "asignee" depende del resource_model del negocio:
+  //   - professional      → 'employee'
+  //   - physical_resource → 'resource'
+  //   - group_class       → 'resource'
+  //   - hybrid            → 'resourceOrEmployee'
+  // Lógica encapsulada en buildWizardStepOrder() (testeada en wizardLogic.test.ts).
+  const stepOrder = React.useMemo<string[]>(
+    () => buildWizardStepOrder({
+      hasBusinessId: !!businessId,
+      resourceModel: wizardData.business?.resource_model ?? null,
+      isAdminBooking: !!isAdminBooking,
+      needsEmployeeBusinessSelection,
+    }),
+    [businessId, wizardData.business?.resource_model, needsEmployeeBusinessSelection, isAdminBooking],
+  )
 
   const getStepOrder = React.useCallback((): string[] => stepOrder, [stepOrder])
 
@@ -305,38 +306,16 @@ export function useWizardState({
   ])
 
   // ── canProceed ──────────────────────────────────────────────────────────────
+  // Lógica encapsulada en canProceedAtStep() (testeada en wizardLogic.test.ts).
   const canProceed = React.useCallback(() => {
-    if (currentStep === getStepNumber('business')) return wizardData.businessId !== null
-    if (currentStep === getStepNumber('location')) return wizardData.locationId !== null
-    if (currentStep === getStepNumber('service')) return wizardData.serviceId !== null
-    if (currentStep === getStepNumber('employee')) {
-      // TODO: Cuando se implemente ResourceSelection, volver a distinguir por resource_model
-      // para retornar wizardData.resourceId !== null en physical_resource / group_class
-      return wizardData.employeeId !== null && isEmployeeOfAnyBusiness
-    }
-    if (currentStep === getStepNumber('employeeBusiness')) return wizardData.employeeBusinessId !== null
-    if (currentStep === getStepNumber('dateTime')) return wizardData.date !== null && wizardData.startTime !== null
-    if (currentStep === getStepNumber('clientData')) {
-      return !!(wizardData.clientPhone && wizardData.clientEmail && wizardData.clientName)
-    }
-    if (currentStep === getStepNumber('confirmation')) return true
-    return false
+    const stepName = stepOrder[currentStep]
+    if (!stepName) return false
+    return canProceedAtStep(stepName, wizardData, { isEmployeeOfAnyBusiness })
   }, [
     currentStep,
-    getStepNumber,
-    wizardData.businessId,
-    wizardData.locationId,
-    wizardData.serviceId,
-    wizardData.business?.resource_model,
-    wizardData.resourceId,
-    wizardData.employeeId,
+    stepOrder,
+    wizardData,
     isEmployeeOfAnyBusiness,
-    wizardData.employeeBusinessId,
-    wizardData.date,
-    wizardData.startTime,
-    wizardData.clientPhone,
-    wizardData.clientEmail,
-    wizardData.clientName,
   ])
 
   // ── Navigation ──────────────────────────────────────────────────────────────
@@ -510,6 +489,8 @@ export function useWizardState({
       employeeBusinessId: null,
       employeeBusiness: null,
       resourceId: null,
+      resource: null,
+      participantsCount: 1,
       date: null,
       startTime: null,
       endTime: null,

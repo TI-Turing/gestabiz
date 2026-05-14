@@ -1,7 +1,7 @@
 /**
  * Tipos compartidos del AppointmentWizard
  */
-import type { Service, Location, Appointment, ResourceModel } from '@/types/types'
+import type { Service, Location, Appointment, ResourceModel, BusinessResource } from '@/types/types'
 
 export interface AppointmentWizardProps {
   open: boolean
@@ -54,6 +54,14 @@ export interface WizardData {
   employeeBusinessId: string | null
   employeeBusiness: WizardBusiness | null
   resourceId: string | null
+  /** Recurso físico poblado — hidrata nombre/precio/imagen en confirmación. */
+  resource: BusinessResource | null
+  /**
+   * Cantidad de personas para esta reserva. Default 1.
+   * Relevante para resource_model === 'group_class' (clase grupal con
+   * cupos compartidos contra business_resources.capacity).
+   */
+  participantsCount: number
   date: Date | null
   startTime: string | null
   endTime: string | null

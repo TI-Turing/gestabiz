@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Clock, MapPin, User, Scissors, Phone } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Scissors, Phone, Box, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -18,6 +18,9 @@ interface WizardData {
   location: { name: string; address?: string | null } | null;
   employeeId: string | null;
   employee: { full_name: string | null; email: string } | null;
+  resourceId?: string | null;
+  resource?: { name: string; price_per_hour?: number | null; image_url?: string | null } | null;
+  participantsCount?: number;
   clientName?: string;
   clientPhone?: string;
   clientPhonePrefix?: string;
@@ -57,7 +60,7 @@ export function ConfirmationStep({
   isEditing,
   isAdminBooking,
 }: ConfirmationStepProps) {
-  const { service, date, startTime, endTime, notes, location, employee } = wizardData;
+  const { service, date, startTime, endTime, notes, location, employee, resource, participantsCount } = wizardData;
   const { t, language } = useLanguage();
   const dateLocale = language === 'es' ? es : enUS;
 
@@ -132,6 +135,30 @@ export function ConfirmationStep({
                 icon={<User className="h-5 w-5" />}
                 label={t('appointments.wizard.professional')}
                 value={employee.full_name || employee.email}
+              />
+            </>
+          )}
+
+          {/* Resource */}
+          {resource && !employee && (
+            <>
+              <Separator className="bg-white/10" />
+              <InfoRow
+                icon={<Box className="h-5 w-5" />}
+                label="Recurso reservado"
+                value={resource.name}
+              />
+            </>
+          )}
+
+          {/* Participants (group_class) */}
+          {typeof participantsCount === 'number' && participantsCount > 1 && (
+            <>
+              <Separator className="bg-white/10" />
+              <InfoRow
+                icon={<Users className="h-5 w-5" />}
+                label="Participantes"
+                value={String(participantsCount)}
               />
             </>
           )}
