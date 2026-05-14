@@ -63,6 +63,18 @@ interface Employee {
   }>;
 }
 
+interface PublicResource {
+  id: string;
+  name: string;
+  resource_type: string;
+  capacity?: number | null;
+  price_per_hour?: number | null;
+  description?: string | null;
+  image_url?: string | null;
+  is_active: boolean;
+  amenities?: string[] | null;
+}
+
 interface BusinessData {
   id: string;
   name: string;
@@ -80,6 +92,8 @@ interface BusinessData {
   locations: Location[];
   services: Service[];
   employees: Employee[];
+  resources: PublicResource[];
+  resource_model?: string | null;
   meta_title?: string;
   meta_description?: string;
   meta_keywords?: string[];
@@ -142,6 +156,7 @@ export function useBusinessProfileData({ businessId, slug, userLocation }: UseBu
           meta_keywords,
           og_image_url,
           is_public,
+          resource_model,
           category_id,
           business_categories!businesses_category_id_fkey (
             id,
@@ -248,7 +263,20 @@ export function useBusinessProfileData({ businessId, slug, userLocation }: UseBu
         }
       }
 
-      // 8. Calcular rating del negocio con las últimas 100 reviews visibles
+      // 8. Fetch active resources (for non-professional businesses)
+      let resourcesData: PublicResource[] = [];
+      const resourceModel = (businessData as any).resource_model as string | null | undefined;
+      if (resourceModel && resourceModel !== 'professional') {
+        const { data: rawResources } = await supabase
+          .from('business_resources')
+          .select('id, name, resource_type, capacity, price_per_hour, description, image_url, is_active, amenities')
+          .eq('business_id', businessData.id)
+          .eq('is_active', true)
+          .order('name');
+        resourcesData = (rawResources as PublicResource[]) ?? [];
+      }
+
+      // 9. Calcular rating del negocio con las últimas 100 reviews visibles
       let businessAverageRating = 0;
       let businessTotalReviews = 0;
       try {
@@ -270,7 +298,7 @@ export function useBusinessProfileData({ businessId, slug, userLocation }: UseBu
         businessTotalReviews = 0;
       }
 
-      // 9. Calculate distances if user location is provided
+      // 10. Calculate distances if user location is provided
       let locationsWithDistance = locationsData || [];
       if (userLocation && locationsData) {
         locationsWithDistance = locationsData.map(loc => ({
@@ -287,7 +315,7 @@ export function useBusinessProfileData({ businessId, slug, userLocation }: UseBu
         locationsWithDistance.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
       }
 
-      // 10. Map employees data
+      // 11. Map employees data
       const mappedEmployees: Employee[] = (employeesData || []).map((emp: any) => {
         const profile = Array.isArray(emp.profiles) ? emp.profiles[0] : emp.profiles;
         
@@ -307,7 +335,7 @@ export function useBusinessProfileData({ businessId, slug, userLocation }: UseBu
         };
       });
 
-      // 11. Build final business object
+      // 12. Build final business object
       const category = Array.isArray(businessData.business_categories) ? businessData.business_categories[0] : businessData.business_categories;
       
       const finalBusiness: BusinessData = {
@@ -335,6 +363,8 @@ export function useBusinessProfileData({ businessId, slug, userLocation }: UseBu
         locations: locationsWithDistance,
         services: servicesData || [],
         employees: mappedEmployees,
+        resources: resourcesData,
+        resource_model: resourceModel ?? null,
         meta_title: businessData.meta_title,
         meta_description: businessData.meta_description,
         meta_keywords: businessData.meta_keywords,

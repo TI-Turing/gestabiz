@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Calendar, Phone, Mail, Globe, Star, MessageCircle, Sparkles, Heart, Dumbbell, BookOpen, Briefcase, Home, Car, UtensilsCrossed, PawPrint, Laptop, Palette, HardHat, MoreHorizontal } from 'lucide-react';
+import { Calendar, Phone, Mail, Globe, Star, MessageCircle, Sparkles, Heart, Dumbbell, BookOpen, Briefcase, Home, Car, UtensilsCrossed, PawPrint, Laptop, Palette, HardHat, MoreHorizontal, Box } from 'lucide-react';
 import { useBusinessProfileData } from '@/hooks/useBusinessProfileData';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ServiceCard } from '@/components/cards/ServiceCard';
 import { LocationCard } from '@/components/cards/LocationCard';
 import { EmployeeCard } from '@/components/cards/EmployeeCard';
+import { ResourceCard } from '@/components/cards/ResourceCard';
 import type { Location } from '@/types/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -440,9 +441,14 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
           <Separator className="my-8" />
 
           {/* Tabs */}
+          {(() => {
+            const hasResourcesTab = business.resource_model && business.resource_model !== 'professional' && business.resources.length > 0;
+            const colCount = hasResourcesTab ? 5 : 4;
+            return (
           <Tabs defaultValue="servicios" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className={`grid w-full grid-cols-${colCount}`}>
               <TabsTrigger value="servicios">Servicios</TabsTrigger>
+              {hasResourcesTab && <TabsTrigger value="espacios"><Box className="w-3 h-3 mr-1" />Espacios</TabsTrigger>}
               <TabsTrigger value="ubicaciones">Ubicaciones</TabsTrigger>
               <TabsTrigger value="equipo">Equipo</TabsTrigger>
               <TabsTrigger value="resenas">Reseñas</TabsTrigger>
@@ -535,6 +541,32 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
               )}
             </TabsContent>
 
+            {/* Spaces Tab — visible for non-professional business models */}
+            {business.resource_model && business.resource_model !== 'professional' && business.resources.length > 0 && (
+              <TabsContent value="espacios" className="space-y-4 mt-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {business.resources.map(res => (
+                    <ResourceCard
+                      key={res.id}
+                      resourceId={res.id}
+                      initialData={res as any}
+                      readOnly
+                      renderActions={canBook ? () => (
+                        <button
+                          type="button"
+                          onClick={() => handleBookAppointment()}
+                          className="mt-1 w-full py-1.5 px-2 rounded text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-1"
+                        >
+                          <Calendar className="h-3 w-3" />
+                          Reservar
+                        </button>
+                      ) : undefined}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+            )}
+
             {/* Reviews Tab */}
             <TabsContent value="resenas" className="mt-6">
               <div className="max-h-[600px] overflow-y-auto">
@@ -544,6 +576,8 @@ export default function PublicBusinessProfile({ slug: slugProp, embedded = false
               </div>
             </TabsContent>
           </Tabs>
+          );
+          })()}
         </div>
 
         {/* Footer CTA - solo visible para clientes (no en modo embebido) */}
