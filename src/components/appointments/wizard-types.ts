@@ -1,7 +1,7 @@
 /**
  * Tipos compartidos del AppointmentWizard
  */
-import type { Service, Location, Appointment } from '@/types/types'
+import type { Service, Location, Appointment, ResourceModel } from '@/types/types'
 
 export interface AppointmentWizardProps {
   open: boolean
@@ -26,7 +26,7 @@ export interface WizardBusiness {
   id: string
   name: string
   description?: string | null
-  resource_model?: string | null
+  resource_model?: ResourceModel | null
 }
 
 export interface WizardEmployee {

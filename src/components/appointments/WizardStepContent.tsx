@@ -125,6 +125,7 @@ export function WizardStepContent({
           isPreselected={!!preselectedServiceId}
           preselectedServiceId={preselectedServiceId}
           filterByEmployeeId={filterByEmployeeId}
+          resourceModel={wizardData.business?.resource_model ?? null}
         />
       )}
 

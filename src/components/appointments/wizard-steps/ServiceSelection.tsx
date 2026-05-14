@@ -3,7 +3,8 @@ import supabase from '@/lib/supabase';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ServiceProfileModal } from '@/components/admin/ServiceProfileModal';
 import { ServiceCard } from '@/components/cards/ServiceCard';
-import type { Service } from '@/types/types';
+import { computeAllowedServiceIds } from '@/lib/services/servicesByModel';
+import type { Service, ResourceModel } from '@/types/types';
 
 interface ServiceSelectionProps {
   readonly businessId: string;
@@ -15,6 +16,12 @@ interface ServiceSelectionProps {
   readonly isPreselected?: boolean; // Compatibilidad existente
   /** Cuando está presente, solo muestra los servicios que ofrece este empleado */
   readonly filterByEmployeeId?: string;
+  /**
+   * Modelo del negocio. Cuando es 'physical_resource' o 'group_class', el
+   * filtro por sede usa resource_services en lugar de employee_services.
+   * En 'hybrid' se unen ambos. Default: 'professional' (back-compat).
+   */
+  readonly resourceModel?: ResourceModel | null;
 }
 
 export function ServiceSelection({
@@ -26,6 +33,7 @@ export function ServiceSelection({
   preselectedServiceId,
   isPreselected = false,
   filterByEmployeeId,
+  resourceModel,
 }: ServiceSelectionProps) {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(!preloadedServices);
@@ -52,33 +60,69 @@ export function ServiceSelection({
         })) as Service[];
       }
 
-      // If location is selected, restrict to services that have at least one
-      // active approved professional in that location.
+      // If location is selected, restrict to services using a filter that
+      // depends on the business resource_model: professional filters by
+      // employee_services, physical_resource/group_class by resource_services,
+      // and hybrid takes the union. See computeAllowedServiceIds() helper.
       if (locationId) {
-        const [employeesRes, employeeServicesRes] = await Promise.all([
-          supabase
-            .from('business_employees')
-            .select('employee_id')
-            .eq('business_id', businessId)
-            .eq('location_id', locationId)
-            .eq('status', 'approved')
-            .eq('is_active', true),
-          supabase
-            .from('employee_services')
-            .select('employee_id, service_id')
-            .eq('business_id', businessId)
-            .eq('location_id', locationId)
-            .eq('is_active', true),
+        const model = resourceModel ?? 'professional';
+        const needsEmployees = model === 'professional' || model === 'hybrid';
+        const needsResources = model === 'physical_resource' || model === 'group_class' || model === 'hybrid';
+
+        const [employeesRes, employeeServicesRes, resourcesRes, resourceServicesRes] = await Promise.all([
+          needsEmployees
+            ? supabase
+                .from('business_employees')
+                .select('employee_id')
+                .eq('business_id', businessId)
+                .eq('location_id', locationId)
+                .eq('status', 'approved')
+                .eq('is_active', true)
+            : Promise.resolve({ data: [] as Array<{ employee_id: string }> }),
+          needsEmployees
+            ? supabase
+                .from('employee_services')
+                .select('employee_id, service_id')
+                .eq('business_id', businessId)
+                .eq('location_id', locationId)
+                .eq('is_active', true)
+            : Promise.resolve({ data: [] as Array<{ employee_id: string; service_id: string }> }),
+          needsResources
+            ? supabase
+                .from('business_resources')
+                .select('id')
+                .eq('business_id', businessId)
+                .eq('location_id', locationId)
+                .eq('is_active', true)
+            : Promise.resolve({ data: [] as Array<{ id: string }> }),
+          needsResources
+            ? supabase
+                .from('resource_services')
+                .select('resource_id, service_id')
+                .eq('is_active', true)
+            : Promise.resolve({ data: [] as Array<{ resource_id: string; service_id: string }> }),
         ]);
 
-        const activeEmployeeIds = new Set((employeesRes.data ?? []).map((row: any) => row.employee_id));
-        const allowedServiceIds = new Set(
-          (employeeServicesRes.data ?? [])
-            .filter((row: any) => activeEmployeeIds.has(row.employee_id))
-            .map((row: any) => row.service_id)
+        const activeEmployeeIds = new Set<string>(
+          (employeesRes.data ?? []).map((row: any) => row.employee_id as string),
+        );
+        const activeResourceIds = new Set<string>(
+          (resourcesRes.data ?? []).map((row: any) => row.id as string),
         );
 
-        allServices = allServices.filter((service) => allowedServiceIds.has(service.id));
+        const allowed = computeAllowedServiceIds({
+          resourceModel: model,
+          hasLocationFilter: true,
+          employeeServices: ((employeeServicesRes.data ?? []) as Array<{ employee_id: string; service_id: string }>),
+          activeEmployeeIds,
+          resourceServices: ((resourceServicesRes.data ?? []) as Array<{ resource_id: string; service_id: string }>),
+          activeResourceIds,
+          allServiceIds: allServices.map((s) => s.id),
+        });
+
+        if (allowed !== null) {
+          allServices = allServices.filter((service) => allowed.has(service.id));
+        }
       }
 
       // If filtering by employee, restrict to services that employee offers
@@ -99,7 +143,7 @@ export function ServiceSelection({
     } finally {
       setLoading(false);
     }
-  }, [businessId, preloadedServices, filterByEmployeeId, locationId]);
+  }, [businessId, preloadedServices, filterByEmployeeId, locationId, resourceModel]);
 
   useEffect(() => {
     loadServices();
